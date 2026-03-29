@@ -6,6 +6,7 @@ import { TabShell } from '@/components/ui/tab-shell'
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { createClient } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
 
 interface Job {
   id: string
@@ -31,20 +32,20 @@ function statusLabel(s: string): string {
   }
 }
 
-function statusColor(s: string): React.CSSProperties {
+function statusBadgeClass(s: string): string {
   switch (s) {
-    case 'quoted': return { background: 'rgba(100,116,139,0.15)', color: 'rgb(203,213,225)' }
-    case 'booked': return { background: 'rgba(59,130,246,0.15)', color: 'rgb(147,197,253)' }
-    case 'in-progress': return { background: 'rgba(245,158,11,0.15)', color: 'rgb(252,211,77)' }
-    case 'complete': return { background: 'rgba(16,185,129,0.15)', color: 'rgb(110,231,183)' }
-    case 'invoiced': return { background: 'rgba(168,85,247,0.15)', color: 'rgb(216,180,254)' }
-    default: return { background: 'var(--glass-interactive-bg)', color: 'var(--text-secondary)' }
+    case 'quoted': return 'bg-slate-500/15 text-slate-300 border-transparent hover:bg-slate-500/20'
+    case 'booked': return 'bg-blue-500/15 text-blue-300 border-transparent hover:bg-blue-500/20'
+    case 'in-progress': return 'bg-amber-500/15 text-amber-300 border-transparent hover:bg-amber-500/20'
+    case 'complete': return 'bg-emerald-500/15 text-emerald-300 border-transparent hover:bg-emerald-500/20'
+    case 'invoiced': return 'bg-purple-500/15 text-purple-300 border-transparent hover:bg-purple-500/20'
+    default: return 'bg-muted text-muted-foreground border-transparent'
   }
 }
 
 function JobCard({ job }: { job: Job }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-3 bb-card-hover">
+    <div className="rounded-lg border border-border bg-card p-3 hover:bg-muted/50 transition-colors">
       <p className="font-medium text-sm truncate">{job.title}</p>
       {job.contact?.name && (
         <p className="text-xs text-muted-foreground mt-1">{job.contact.name}</p>
@@ -127,9 +128,9 @@ function JobsTab() {
           return (
             <div key={status}>
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={statusColor(status)}>
+                <Badge className={`text-xs px-2 py-0.5 ${statusBadgeClass(status)}`}>
                   {statusLabel(status)}
-                </span>
+                </Badge>
                 <span className="text-xs text-muted-foreground">{col.length}</span>
               </div>
               <div className="flex flex-col gap-2">

@@ -1,12 +1,22 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { IconArrowUp, IconFileText, IconLoader2, IconMicrophone, IconMicrophoneOff, IconPaperclip, IconX } from '@tabler/icons-react';
+import { AnimatePresence } from 'motion/react';
+import {
+  IconArrowUp,
+  IconFileText,
+  IconLoader2,
+  IconMicrophone,
+  IconMicrophoneOff,
+  IconPaperclip,
+  IconX,
+} from '@tabler/icons-react';
 import { MiniWaveform } from '../ui/mini-waveform';
 import { useFileUpload, type UploadItem } from '@/hooks/use-file-upload';
 import { useVoiceInput } from '../chat/use-voice-input';
 import { CommandPalette, DEFAULT_CHAT_COMMANDS, type ChatCommand } from '../chat/command-palette';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export type PillMode = 'hidden' | 'voice' | 'text' | 'processing' | 'response';
 export type PillMorphPhase = 'to-floating' | 'to-docked';
@@ -245,23 +255,7 @@ export function VoicePill({
   const hasUploads = fileUpload.uploads.length > 0;
   const canSend = textValue.trim() || fileUpload.readyAttachmentIds.length > 0;
 
-  const pillClass = [
-    'bb-pill',
-    docked && 'bb-pill--docked',
-    docked && compactDocked && !isDockedExpanded && 'bb-pill--docked-compact',
-    docked && (!compactDocked || isDockedExpanded) && 'bb-pill--docked-expanded',
-    floatingAnchor && !docked && 'bb-pill--chat-anchored',
-    morphPhase === 'to-floating' && !docked && 'bb-pill--morph-to-floating',
-    morphPhase === 'to-docked' && docked && 'bb-pill--morph-to-docked',
-    morphing && !docked && 'bb-pill--snap-morph',
-    effectiveMode === 'voice' && 'bb-pill--voice',
-    effectiveMode === 'text' && (docked ? 'bb-pill--text-docked' : 'bb-pill--text'),
-    effectiveMode === 'processing' && 'bb-pill--processing',
-    effectiveMode === 'response' && 'bb-pill--response',
-    isVisible && !isExiting && (docked ? 'bb-pill--docked-visible' : 'bb-pill--visible'),
-    isExiting && 'bb-pill--exiting',
-  ].filter(Boolean).join(' ');
-
+  // Build CSS custom properties for morph animations
   const styleVars: Record<string, string> = {};
   if (Math.abs(morphShift) > 0.5) {
     styleVars['--bb-pill-morph-shift'] = `${morphShift.toFixed(2)}px`;
@@ -277,13 +271,90 @@ export function VoicePill({
   return (
     <div
       ref={pillRef}
-      className={pillClass}
+      data-voice-pill
+      className={cn(
+        // ── Base floating pill ──
+        !docked && [
+          'fixed bottom-4 left-1/2 z-50',
+          'flex items-center gap-0.5',
+          'h-[34px] px-3 rounded-[17px]',
+          'bg-card border border-border',
+          'shadow-[0_4px_16px_rgba(0,0,0,0.25)]',
+          'will-change-[transform,opacity] overflow-visible',
+          // Hidden by default (floating only)
+          'opacity-0 invisible pointer-events-none',
+          '-translate-x-1/2 translate-y-full',
+          'transition-[width,height] duration-[180ms] ease-[cubic-bezier(0.25,1,0.5,1)]',
+        ],
+
+        // ── Docked (inside chat) ──
+        docked && [
+          'relative z-auto',
+          'flex flex-col items-stretch',
+          'w-full max-w-[860px] mx-auto',
+          'rounded-[26px] border border-border bg-card',
+          'opacity-100 visible pointer-events-auto',
+          'transition-[min-height,padding] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
+        ],
+        docked && compactDocked && !isDockedExpanded && 'min-h-[94px] px-[18px] pt-3 pb-2.5',
+        docked && (!compactDocked || isDockedExpanded) && 'min-h-[128px] px-[18px] pt-4 pb-3.5',
+
+        // ── Floating visible ──
+        !docked && isVisible && !isExiting && [
+          'opacity-100 visible pointer-events-auto',
+          '-translate-x-1/2 translate-y-0',
+          'animate-[pill-enter_220ms_cubic-bezier(0.34,1.56,0.64,1)_both]',
+        ],
+
+        // ── Docked visible ──
+        docked && isVisible && !isExiting && [
+          'animate-[pill-dock-enter_250ms_cubic-bezier(0.34,1.56,0.64,1)_both]',
+        ],
+
+        // ── Chat-anchored floating ──
+        !docked && floatingAnchor && [
+          'left-[var(--bb-pill-anchor-left,50%)]',
+          'top-[var(--bb-pill-anchor-top,50%)]',
+          'bottom-auto',
+          '-translate-x-1/2 -translate-y-[calc(50%-14px)]',
+        ],
+        !docked && floatingAnchor && isVisible && !isExiting && [
+          '-translate-x-1/2 -translate-y-1/2',
+          'animate-[pill-chat-anchor-enter_170ms_cubic-bezier(0.22,1,0.36,1)_both]',
+        ],
+
+        // ── Morph phases ──
+        !docked && morphPhase === 'to-floating' && [
+          'animate-[pill-morph-to-floating_120ms_cubic-bezier(0.22,1,0.36,1)_both]',
+        ],
+        docked && morphPhase === 'to-docked' && isVisible && [
+          'animate-[pill-morph-to-docked_110ms_cubic-bezier(0.22,1,0.36,1)_both]',
+        ],
+        !docked && morphing && [
+          'animate-[pill-snap-morph_220ms_cubic-bezier(0.2,1,0.2,1)_both]',
+        ],
+
+        // ── Exit ──
+        isExiting && !docked && 'pointer-events-none animate-[pill-exit_200ms_cubic-bezier(0.4,0,1,1)_both]',
+        isExiting && !docked && floatingAnchor && 'animate-[pill-chat-anchor-exit_170ms_cubic-bezier(0.4,0,1,1)_both]',
+
+        // ── Mode-specific sizes (floating only) ──
+        !docked && effectiveMode === 'voice' && 'w-[160px]',
+        !docked && effectiveMode === 'text' && 'w-[360px]',
+        !docked && effectiveMode === 'processing' && 'w-[100px] justify-center',
+        !docked && effectiveMode === 'response' && [
+          'w-[280px] h-auto max-h-[180px]',
+          'flex-col items-start',
+          'px-3 py-2 gap-[3px] rounded-[14px]',
+        ],
+      )}
       onClick={(e) => e.stopPropagation()}
       role="dialog"
       aria-label="BitBit AI"
       style={pillStyle}
       aria-hidden={!isVisible}
     >
+      {/* ── Voice waveform ── */}
       {effectiveMode === 'voice' && (
         <MiniWaveform
           frequencyData={frequencyData}
@@ -292,14 +363,18 @@ export function VoicePill({
         />
       )}
 
+      {/* ── Processing dots ── */}
       {effectiveMode === 'processing' && (
-        <div className="bb-pill__shimmer-track">
-          <div className="bb-pill__shimmer-dots">
-            <span /><span /><span />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex items-center gap-1">
+            <span className="size-1 rounded-full bg-muted-foreground/50 animate-[pill-dot-bounce_1s_ease-in-out_infinite]" />
+            <span className="size-1 rounded-full bg-muted-foreground/50 animate-[pill-dot-bounce_1s_ease-in-out_infinite_0.15s]" />
+            <span className="size-1 rounded-full bg-muted-foreground/50 animate-[pill-dot-bounce_1s_ease-in-out_infinite_0.3s]" />
           </div>
         </div>
       )}
 
+      {/* ── Text input mode ── */}
       {effectiveMode === 'text' && (
         <>
           {/* Hidden file input for Paperclip button */}
@@ -309,7 +384,7 @@ export function VoicePill({
             accept={FILE_ACCEPT}
             multiple
             onChange={handleFileSelect}
-            style={{ display: 'none' }}
+            className="hidden"
             aria-hidden="true"
           />
 
@@ -317,20 +392,7 @@ export function VoicePill({
             <>
               {/* Upload progress indicators */}
               {hasUploads && (
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  gap: '8px',
-                  padding: '8px 12px 0',
-                  width: '100%',
-                }}>
-                  <style>{`
-                    @keyframes bb-upload-spin {
-                      from { transform: rotate(0deg); }
-                      to { transform: rotate(360deg); }
-                    }
-                  `}</style>
+                <div className="flex flex-row flex-wrap gap-2 px-3 pt-2 w-full">
                   {fileUpload.uploads.map((item) => (
                     <UploadProgressItem
                       key={item.id}
@@ -341,35 +403,37 @@ export function VoicePill({
                 </div>
               )}
 
-              {/* Command palette container - positioned relative to contain absolute-positioned palette */}
-              <div style={{ position: 'relative', width: '100%' }}>
+              {/* Command palette container */}
+              <div className="relative w-full">
                 <textarea
-                ref={textareaRef}
-                className="bb-pill__textarea"
-                placeholder="Message BitBit..."
-                value={textValue}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setTextValue(val);
-                  if (val.startsWith('/') && val.length > 1) {
-                    setShowCommands(true);
-                    setCommandQuery(val.slice(1));
-                  } else {
-                    setShowCommands(false);
-                    setCommandQuery('');
-                  }
-                }}
-                onKeyDown={handleKeyDown}
-                autoComplete="off"
-                spellCheck={false}
-                rows={1}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  boxShadow: 'none',
-                  WebkitAppearance: 'none',
-                }}
+                  ref={textareaRef}
+                  className={cn(
+                    'w-full flex-1 resize-none overflow-y-auto',
+                    'bg-transparent border-0 outline-none shadow-none',
+                    'text-base leading-[1.55] text-foreground',
+                    'placeholder:text-muted-foreground',
+                    'focus-visible:ring-0 focus-visible:border-0',
+                    'max-h-[188px] pr-0.5',
+                    'transition-[min-height] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                    compactDocked && !isDockedExpanded ? 'min-h-[52px]' : 'min-h-[88px]',
+                  )}
+                  placeholder="Message BitBit..."
+                  value={textValue}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTextValue(val);
+                    if (val.startsWith('/') && val.length > 1) {
+                      setShowCommands(true);
+                      setCommandQuery(val.slice(1));
+                    } else {
+                      setShowCommands(false);
+                      setCommandQuery('');
+                    }
+                  }}
+                  onKeyDown={handleKeyDown}
+                  autoComplete="off"
+                  spellCheck={false}
+                  rows={1}
                 />
 
                 {/* Command palette - appears above the textarea */}
@@ -384,57 +448,68 @@ export function VoicePill({
                 </AnimatePresence>
               </div>
 
-              <div className="bb-pill__actions">
-                <button
-                  className="bb-pill__attach"
+              {/* Action buttons row */}
+              <div className={cn(
+                'flex items-center justify-between',
+                compactDocked && !isDockedExpanded ? 'pt-2' : 'pt-2.5',
+              )}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:text-foreground"
                   aria-label="Attach file"
                   type="button"
                   onClick={handlePaperclipClick}
                 >
                   <IconPaperclip size={18} />
-                </button>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                </Button>
+                <div className="flex items-center gap-2">
                   {voice.isSupported && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className={cn(
+                        'rounded-full',
+                        voice.isListening
+                          ? 'text-destructive hover:text-destructive'
+                          : 'text-muted-foreground hover:text-foreground',
+                      )}
                       onClick={voice.toggleListening}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: voice.isListening
-                          ? 'var(--bb-red, #EF4444)'
-                          : 'var(--text-muted, rgba(255,255,255,0.35))',
-                        cursor: 'pointer',
-                        padding: '6px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'color 150ms',
-                      }}
                       aria-label={voice.isListening ? 'Stop listening' : 'Start voice input'}
                       type="button"
                     >
                       {voice.isListening ? <IconMicrophoneOff size={16} /> : <IconMicrophone size={16} />}
-                    </button>
+                    </Button>
                   )}
-                  <button
-                    className="bb-pill__send"
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className={cn(
+                      'text-muted-foreground',
+                      canSend && !fileUpload.isUploading && 'text-foreground hover:text-foreground',
+                    )}
                     onClick={handleSubmit}
                     aria-label="Send"
                     disabled={!canSend || fileUpload.isUploading}
                   >
                     <IconArrowUp size={18} />
-                  </button>
+                  </Button>
                 </div>
               </div>
             </>
           ) : (
-            <div style={{ position: 'relative', width: '100%' }}>
+            /* ── Floating text input ── */
+            <div className="relative w-full flex items-center">
               <input
                 ref={inputRef}
-                className="bb-pill__input"
+                className={cn(
+                  'flex-1 min-w-0',
+                  'bg-transparent border-0 outline-none',
+                  'text-xs text-foreground caret-foreground',
+                  'placeholder:text-muted-foreground',
+                )}
                 type="text"
-                placeholder="Ask BitBit…"
+                placeholder="Ask BitBit\u2026"
                 value={textValue}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -463,29 +538,32 @@ export function VoicePill({
                 )}
               </AnimatePresence>
 
-              <button
-                className="bb-pill__send"
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="shrink-0 rounded-full text-muted-foreground hover:text-foreground"
                 onClick={handleSubmit}
                 aria-label="Send"
                 disabled={!textValue.trim()}
               >
                 <IconArrowUp size={14} />
-              </button>
+              </Button>
             </div>
           )}
         </>
       )}
 
+      {/* ── Response mode ── */}
       {effectiveMode === 'response' && (
-        <div className="bb-pill__response">
+        <div className="flex flex-col gap-[3px] overflow-y-auto max-h-[140px] w-full animate-[pill-content-enter_180ms_cubic-bezier(0.25,1,0.5,1)_both]">
           {error ? (
-            <span className="bb-pill__error">{error}</span>
+            <span className="text-[11px] leading-[1.4] text-destructive">{error}</span>
           ) : (
             <>
               {transcription && (
-                <p className="bb-pill__transcription">&ldquo;{transcription}&rdquo;</p>
+                <p className="text-[10px] leading-[1.3] text-muted-foreground italic">&ldquo;{transcription}&rdquo;</p>
               )}
-              <p className="bb-pill__response-text">{response}</p>
+              <p className="text-[11px] leading-[1.4] text-foreground">{response}</p>
             </>
           )}
         </div>
@@ -503,90 +581,45 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
   const isActive = item.status === 'uploading' || item.status === 'pending';
   const isImage = !!item.previewUrl;
 
-  const THUMB = 64;
-
   return (
-    <div style={{
-      position: 'relative',
-      width: `${THUMB}px`,
-      flexShrink: 0,
-    }}>
+    <div className="relative w-16 shrink-0">
       {/* Thumbnail area */}
-      <div style={{
-        position: 'relative',
-        width: `${THUMB}px`,
-        height: `${THUMB}px`,
-        borderRadius: '8px',
-        overflow: 'hidden',
-        background: isError
-          ? 'rgba(239,68,68,0.15)'
-          : 'rgba(255,255,255,0.06)',
-        border: isError
-          ? '1px solid rgba(239,68,68,0.3)'
-          : '1px solid rgba(255,255,255,0.08)',
-      }}>
+      <div className={cn(
+        'relative size-16 rounded-lg overflow-hidden',
+        isError
+          ? 'bg-destructive/15 border border-destructive/30'
+          : 'bg-muted/40 border border-border',
+      )}>
         {/* Image thumbnail or file icon */}
         {isImage ? (
           <img
             src={item.previewUrl}
             alt=""
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-            }}
+            className="size-full object-cover block"
           />
         ) : (
-          <div style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--bb-color-text-secondary, rgba(255,255,255,0.5))',
-          }}>
+          <div className="size-full flex items-center justify-center text-muted-foreground">
             <IconFileText size={24} />
           </div>
         )}
 
         {/* Uploading overlay: darkened + spinner */}
         {isActive && (
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <IconLoader2
               size={20}
-              style={{
-                color: 'var(--bb-color-accent, #3b82f6)',
-                animation: 'bb-upload-spin 1s linear infinite',
-              }}
+              className="text-primary animate-spin"
             />
           </div>
         )}
 
         {/* Progress bar at bottom of thumbnail */}
         {isActive && (
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: '3px',
-            background: 'rgba(0,0,0,0.3)',
-          }}>
-            <div style={{
-              width: `${item.progress}%`,
-              height: '100%',
-              background: 'var(--bb-color-accent, #3b82f6)',
-              transition: 'width 200ms ease',
-              borderRadius: '0 1px 0 0',
-            }} />
+          <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-black/30">
+            <div
+              className="h-full bg-primary transition-[width] duration-200 ease-out rounded-tr-sm"
+              style={{ width: `${item.progress}%` }}
+            />
           </div>
         )}
 
@@ -595,23 +628,14 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${item.filename}`}
-          style={{
-            position: 'absolute',
-            top: '3px',
-            right: '3px',
-            width: '18px',
-            height: '18px',
-            borderRadius: '50%',
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(4px)',
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer',
-            color: 'rgba(255,255,255,0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className={cn(
+            'absolute top-[3px] right-[3px]',
+            'size-[18px] rounded-full',
+            'bg-black/60 backdrop-blur-sm',
+            'border-0 p-0 cursor-pointer',
+            'text-white/85',
+            'flex items-center justify-center',
+          )}
         >
           <IconX size={10} />
         </button>
@@ -619,40 +643,22 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
 
       {/* Filename below thumbnail for non-image files */}
       {!isImage && (
-        <div style={{
-          marginTop: '3px',
-          fontSize: '10px',
-          lineHeight: '13px',
-          color: isError
-            ? 'var(--bb-color-error, #ef4444)'
-            : 'var(--bb-color-text-secondary, rgba(255,255,255,0.5))',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          textAlign: 'center',
-          maxWidth: `${THUMB}px`,
-        }}>
+        <div className={cn(
+          'mt-[3px] text-[10px] leading-[13px]',
+          'overflow-hidden text-ellipsis whitespace-nowrap text-center',
+          'max-w-16',
+          isError ? 'text-destructive' : 'text-muted-foreground',
+        )}>
           {item.filename}
         </div>
       )}
 
       {/* Error tooltip for images */}
       {isError && isImage && item.error && (
-        <div style={{
-          marginTop: '3px',
-          fontSize: '10px',
-          lineHeight: '13px',
-          color: 'var(--bb-color-error, #ef4444)',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          textAlign: 'center',
-          maxWidth: `${THUMB}px`,
-        }}>
+        <div className="mt-[3px] text-[10px] leading-[13px] text-destructive overflow-hidden text-ellipsis whitespace-nowrap text-center max-w-16">
           {item.error}
         </div>
       )}
-
     </div>
   );
 }

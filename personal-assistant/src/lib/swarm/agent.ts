@@ -22,6 +22,7 @@ import type {
 import { DEFAULT_PERSONAS, DEFAULT_CAPABILITIES } from './types'
 import { runAgentChat } from '@/lib/agent/engine'
 import type { EngineConfig, AgentEvent } from '@/lib/agent/engine'
+import { getDefaultAgentConfigId } from '@/lib/agent/agent-config'
 import { resolveModel, computeCost, type ModelPurpose } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger'
 
@@ -72,6 +73,9 @@ export class SwarmAgent implements SwarmParticipant {
       // Combine role prompt with step prompt
       const fullPrompt = `${rolePrompt}\n\n## Your Task\n${prompt}\n\n${this.buildContextSection(context)}`
 
+      // Resolve the default agent config for run logging
+      const agentConfigId = await getDefaultAgentConfigId(this.supabase, this.orgId)
+
       // Run agent chat with constrained configuration
       const engineConfig: EngineConfig = {
         orgId: this.orgId,
@@ -80,6 +84,7 @@ export class SwarmAgent implements SwarmParticipant {
         maxIterations: 8, // Swarm steps should be focused
         skipCostGuard: true, // Cost managed at swarm level
         agentType: `swarm-${this.role}`,
+        agentConfigId: agentConfigId ?? undefined,
       }
 
       let message = ''

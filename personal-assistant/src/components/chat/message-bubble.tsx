@@ -7,7 +7,7 @@ import { motion } from 'motion/react'
 import { IconRefresh, IconThumbUp, IconThumbDown, IconPencil } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { BitBitFaceAvatar } from './bitbit-face-avatar'
+import { BitBitAsciiAvatar } from '@/components/ui/bitbit-ascii-avatar'
 import { CodeBlock } from './code-block'
 import {
   InlineCitation,
@@ -174,9 +174,10 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
         <motion.div
           layoutId="bitbit-chat-avatar"
           transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-          className="absolute -left-[52px] -top-1 w-10 h-10 flex items-center justify-center"
+          className="absolute -left-[108px] -top-3 flex items-center justify-center"
+          style={{ width: 96, height: 96 }}
         >
-          <BitBitFaceAvatar size={40} emotion={avatarEmotion as any} isThinking={avatarThinking} activity={avatarActivity as any} />
+          <BitBitAsciiAvatar size={96} emotion={avatarEmotion as any} isThinking={avatarThinking} />
         </motion.div>
       )}
       {/* Edit button for user messages (appears on hover) */}
@@ -191,7 +192,7 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
           <IconPencil size={12} />
         </Button>
       )}
-      <div className={isUser ? 'bb-chat__bubble--user' : 'bb-chat__bubble--assistant bb-chat__markdown'}>
+      <div className={isUser ? 'rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] ml-auto' : 'bb-chat__bubble--assistant bb-chat__markdown'}>
         {isUser && isEditing ? (
           <div className="flex flex-col gap-1.5 w-full">
             <Textarea

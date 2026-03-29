@@ -1,45 +1,54 @@
 "use client"
 
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
+import { Skeleton } from "@/components/ui/skeleton"
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-  type ChartConfig,
-} from "@/components/ui/chart"
-import { IconTrendingUp } from "@tabler/icons-react"
-
-const chartData = [
-  { metric: "Speed", current: 92, previous: 78 },
-  { metric: "Accuracy", current: 88, previous: 82 },
-  { metric: "Coverage", current: 76, previous: 65 },
-  { metric: "Autonomy", current: 84, previous: 70 },
-  { metric: "Reliability", current: 95, previous: 88 },
-  { metric: "Efficiency", current: 80, previous: 72 },
-]
+interface Props {
+  data: { avgDurationMs: number; totalRuns: number; approvalRate: number; avgTokensOut: number }
+  loading?: boolean
+}
 
 const chartConfig = {
-  current: { label: "Current", color: "var(--chart-1)" },
-  previous: { label: "Previous", color: "var(--chart-4)" },
+  value: { label: "Score", color: "var(--chart-1)" },
 } satisfies ChartConfig
 
-export function ChartRadarCapabilities() {
+export function ChartRadarCapabilities({ data, loading }: Props) {
+  if (loading) return <Skeleton className="h-[350px] w-full rounded-xl" />
+
+  // Normalize metrics to 0-100 scale
+  const speedScore = data.avgDurationMs > 0 ? Math.min(100, Math.round(10000 / data.avgDurationMs * 10)) : 0
+  const volumeScore = Math.min(100, Math.round(data.totalRuns / 10 * 100))
+  const approvalScore = data.approvalRate
+  const efficiencyScore = data.avgTokensOut > 0 ? Math.min(100, Math.round(5000 / data.avgTokensOut * 10)) : 0
+
+  const chartData = [
+    { metric: "Speed", value: speedScore },
+    { metric: "Volume", value: volumeScore },
+    { metric: "Autonomy", value: approvalScore },
+    { metric: "Efficiency", value: efficiencyScore },
+    { metric: "Coverage", value: Math.min(100, Math.round((speedScore + volumeScore + approvalScore + efficiencyScore) / 4)) },
+  ]
+
+  const allZero = chartData.every(d => d.value === 0)
+
+  if (allZero) {
+    return (
+      <Card>
+        <CardHeader className="items-center"><CardTitle>Agent Performance</CardTitle></CardHeader>
+        <CardContent className="flex h-[250px] items-center justify-center text-muted-foreground text-sm">
+          No performance data yet
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="@container/card flex flex-col">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Agent Capabilities</CardTitle>
-        <CardDescription>Performance across key dimensions</CardDescription>
+        <CardTitle>Agent Performance</CardTitle>
+        <CardDescription>Normalized metrics across dimensions</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[300px] [&_.recharts-surface]:overflow-visible">
@@ -47,30 +56,13 @@ export function ChartRadarCapabilities() {
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
             <PolarAngleAxis dataKey="metric" tick={{ fontSize: 12 }} />
             <PolarGrid />
-            <Radar
-              dataKey="previous"
-              fill="var(--color-previous)"
-              fillOpacity={0.15}
-              stroke="var(--color-previous)"
-              strokeWidth={1}
-            />
-            <Radar
-              dataKey="current"
-              fill="var(--color-current)"
-              fillOpacity={0.25}
-              stroke="var(--color-current)"
-              strokeWidth={2}
-            />
-            <ChartLegend content={<ChartLegendContent />} />
+            <Radar dataKey="value" fill="var(--color-value)" fillOpacity={0.25} stroke="var(--color-value)" strokeWidth={2} />
           </RadarChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Overall improvement +14% <IconTrendingUp className="size-4" />
-        </div>
         <div className="leading-none text-muted-foreground">
-          Comparing current vs previous quarter
+          {data.totalRuns} total runs, {data.avgDurationMs}ms avg
         </div>
       </CardFooter>
     </Card>

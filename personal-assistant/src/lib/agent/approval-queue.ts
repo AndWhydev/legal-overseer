@@ -148,11 +148,12 @@ export async function createApproval(
   // Send push notification to user's mobile devices (lazy import to avoid circular deps)
   import('@/lib/notifications/push-dispatcher').then(({ sendPushToUser }) => {
     // Look up org owner to send push
-    supabase
-      .from('profiles')
-      .select('id')
-      .eq('org_id', params.org_id)
-      .then(({ data: profiles }) => {
+    Promise.resolve(
+      supabase
+        .from('profiles')
+        .select('id')
+        .eq('org_id', params.org_id)
+    ).then(({ data: profiles }) => {
         for (const profile of profiles ?? []) {
           sendPushToUser(profile.id, {
             title: 'Approval Needed',

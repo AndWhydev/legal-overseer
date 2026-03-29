@@ -414,6 +414,9 @@ export function BitBitOverlay({
 
       if (!isTriggerKeyDown(e) || e.repeat) return;
 
+      // Disable quick-summon entirely on the chat page — chat has its own input
+      if (isChatTab) return;
+
       comboKeyPressedRef.current = false;
       const now = Date.now();
       const gap = now - lastTriggerRef.current;
@@ -497,7 +500,7 @@ export function BitBitOverlay({
     if (pillMode === 'hidden' || isDocked) return;
 
     const onClick = (e: MouseEvent) => {
-      const pill = document.querySelector('.bb-pill');
+      const pill = document.querySelector('[data-voice-pill]');
       if (pill && !pill.contains(e.target as Node)) {
         if (isVoiceActiveRef.current) cancelVoice();
         dismiss();

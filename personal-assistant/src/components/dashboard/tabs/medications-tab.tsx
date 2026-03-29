@@ -9,6 +9,7 @@ import { TabShell } from '@/components/ui/tab-shell';
 import { MonthlyGrid } from '@/components/medications/monthly-grid';
 import { PillIcon } from '@/components/medications/pill-icon';
 import { february2026, medications, medicationMap } from '@/lib/medications/seed-data';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { MonthData, DaySchedule } from '@/lib/medications/types';
 
 const MONTH_NAMES = [
@@ -33,7 +34,7 @@ function MedicationsTab() {
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-4">Medications feature is not available</p>
-            <p className="text-xs text-text-muted">Contact support to enable this feature</p>
+            <p className="text-xs text-muted-foreground">Contact support to enable this feature</p>
           </div>
         </div>
       </TabShell>
@@ -98,11 +99,11 @@ function MedicationsTab() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={prevMonth} className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-elevated hover:text-foreground">
+            <button onClick={prevMonth} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
               <IconChevronLeft className="h-4 w-4" />
             </button>
             <span className="min-w-[140px] text-center text-sm font-medium">{MONTH_NAMES[month]} {year}</span>
-            <button onClick={nextMonth} className="rounded-lg p-1.5 text-text-secondary transition-colors hover:bg-elevated hover:text-foreground">
+            <button onClick={nextMonth} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
               <IconChevronRight className="h-4 w-4" />
             </button>
           </div>
@@ -120,48 +121,56 @@ function MedicationsTab() {
                 onTakeAll={handleTakeAll}
               />
             </div>
-            <aside className="hidden xl:block w-72 shrink-0 flex flex-col gap-4">
-              <div className="glass-card rounded-xl p-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Today&apos;s Schedule</h3>
-                {todaySchedule && todaySchedule.medications.length > 0 ? (
-                  <div className="flex flex-col gap-2.5">
-                    {todaySchedule.medications.map((dosage) => {
-                      const med = medicationMap[dosage.medicationId];
-                      if (!med) return null;
-                      return (
-                        <button
-                          key={dosage.medicationId}
-                          onClick={() => handleToggleDose(todayStr, dosage.medicationId)}
-                          className="flex items-center gap-3 w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-elevated"
-                        >
-                          <PillIcon style={med.pillStyle} size={16} taken={dosage.taken} />
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-xs font-medium truncate ${dosage.taken ? 'text-text-muted line-through' : 'text-foreground'}`}>{med.name}</p>
-                            <p className="text-[10px] text-text-muted">{med.doseMg}mg × {dosage.doses}</p>
-                          </div>
-                          {dosage.taken && <span className="text-[10px] text-success font-medium">Done</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-xs text-text-muted">No medications scheduled</p>
-                )}
-              </div>
-              <div className="glass-card rounded-xl p-4">
-                <h3 className="text-sm font-medium text-foreground mb-3">Active Medications</h3>
-                <div className="flex flex-col gap-2">
-                  {medications.map((med) => (
-                    <div key={med.id} className="flex items-center gap-2.5 py-1">
-                      <PillIcon style={med.pillStyle} size={12} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-text-secondary truncate">{med.name}</p>
-                      </div>
-                      <span className="text-[10px] text-text-muted">{med.doseMg}mg</span>
+            <aside className="hidden xl:flex w-72 shrink-0 flex-col gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Today&apos;s Schedule</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {todaySchedule && todaySchedule.medications.length > 0 ? (
+                    <div className="flex flex-col gap-2.5">
+                      {todaySchedule.medications.map((dosage) => {
+                        const med = medicationMap[dosage.medicationId];
+                        if (!med) return null;
+                        return (
+                          <button
+                            key={dosage.medicationId}
+                            onClick={() => handleToggleDose(todayStr, dosage.medicationId)}
+                            className="flex items-center gap-3 w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted"
+                          >
+                            <PillIcon style={med.pillStyle} size={16} taken={dosage.taken} />
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs font-medium truncate ${dosage.taken ? 'text-muted-foreground line-through' : 'text-foreground'}`}>{med.name}</p>
+                              <p className="text-[10px] text-muted-foreground">{med.doseMg}mg × {dosage.doses}</p>
+                            </div>
+                            {dosage.taken && <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">Done</span>}
+                          </button>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No medications scheduled</p>
+                  )}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Active Medications</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col gap-2">
+                    {medications.map((med) => (
+                      <div key={med.id} className="flex items-center gap-2.5 py-1">
+                        <PillIcon style={med.pillStyle} size={12} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-muted-foreground truncate">{med.name}</p>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">{med.doseMg}mg</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </aside>
           </div>
         </div>

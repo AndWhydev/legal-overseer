@@ -1,5 +1,6 @@
 import { runAgentChat, type ChatMessage, type EngineConfig, type AgentEvent } from './engine'
 import { selectModel } from './model-router'
+import { getDefaultAgentConfigId } from '@/lib/agent/agent-config'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface AgentTask {
@@ -46,10 +47,13 @@ export async function orchestrate(
   let message = ''
   let tokensUsed = 0
 
+  const agentConfigId = await getDefaultAgentConfigId(supabase, orgId)
+
   const config: EngineConfig = {
     orgId,
     supabase,
     model: selection.model,
+    agentConfigId: agentConfigId ?? undefined,
   }
 
   for await (const event of runAgentChat(input, config)) {
@@ -109,11 +113,14 @@ export async function orchestrateTasks(config: OrchestratorConfig): Promise<Orch
       break
     }
 
+    const taskAgentConfigId = await getDefaultAgentConfigId(config.supabase, config.orgId)
+
     for (const task of ready) {
       const engineConfig: EngineConfig = {
         orgId: config.orgId,
         supabase: config.supabase,
         model: task.model,
+        agentConfigId: taskAgentConfigId ?? undefined,
       }
 
       let output = ''

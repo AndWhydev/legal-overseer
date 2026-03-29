@@ -406,7 +406,7 @@ export class BaileysBridge {
     const key = msg.key as Record<string, unknown> | undefined
     if (!key) return
 
-    // Skip messages sent by us
+    // Skip messages sent by us — primary check via Baileys key.fromMe flag
     if (key.fromMe) return
 
     const jid = key.remoteJid as string
@@ -416,6 +416,23 @@ export class BaileysBridge {
     if (jid.endsWith('@g.us') || jid === 'status@broadcast') return
 
     const pushName = (msg.pushName as string) || jid
+
+    // Secondary outbound check: Baileys may not set key.fromMe for LID JIDs
+    // in some protocol versions. Detect self-messages by matching our own JID.
+    const selfJid = this.sock?.user?.id as string | undefined
+    if (selfJid) {
+      const selfNumber = selfJid.split(':')[0]?.replace(/@s\.whatsapp\.net$/, '')
+      const remoteNumber = jid.replace(/@(s\.whatsapp\.net|lid)$/, '')
+      if (selfNumber && remoteNumber === selfNumber) {
+        logger.info(JSON.stringify({
+          event: 'baileys_outbound_skipped',
+          orgId: this.orgId,
+          jid,
+          reason: 'self_jid_match',
+        }))
+        return
+      }
+    }
     const messageId = key.id as string
     const messageContent = msg.message as Record<string, unknown> | undefined
     if (!messageContent) return
@@ -508,13 +525,14 @@ export class BaileysBridge {
         channel: 'whatsapp',
         external_id: messageId,
         sender: pushName,
-        sender_email: jid.replace('@s.whatsapp.net', ''),
+        sender_email: jid.replace(/@s\.whatsapp\.net$|@lid$/g, ''),
         subject: 'WhatsApp Message',
         body,
         received_at: new Date().toISOString(),
         is_actionable: !metadata.transcription_failed,
         priority: 'medium',
-        metadata,
+        direction: 'inbound',
+        metadata: { ...metadata, whatsapp_jid: jid },
       })
       .select('*')
       .single()
@@ -528,7 +546,7 @@ export class BaileysBridge {
 
     if (insertedMsg) {
       const processStartMs = Date.now()
-      const senderPhone = jid.replace('@s.whatsapp.net', '')
+      const senderPhone = jid.replace(/@s\.whatsapp\.net$|@lid$/g, '')
 
       // Fire-and-forget: enrich with entity resolution, timeline,
       // relationship linking (unified pipeline intelligence layer)

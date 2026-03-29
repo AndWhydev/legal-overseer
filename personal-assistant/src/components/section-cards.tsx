@@ -9,101 +9,127 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react"
+import { useDashboardStats } from "@/hooks/use-dashboard-stats"
+import { useAppData } from "@/lib/data/app-data-provider"
+import { useChartData } from "@/hooks/use-chart-data"
+
+function formatCurrency(cents: number): string {
+  return `$${(cents / 100).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
 
 export function SectionCards() {
+  const { stats, loading } = useDashboardStats()
+  const { leads, agentRuns } = useAppData()
+  const { data: chartData } = useChartData()
+
+  const revenue = stats?.totalRevenue ?? 0
+  const activeTasks = stats?.activeTasks ?? 0
+  const contacts = stats?.activeContacts ?? 0
+  const agentRunsToday = stats?.agentRunsToday ?? 0
+  const messageCount = chartData.totalMessages
+  const leadCount = leads.length
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i} className="@container/card">
+            <CardHeader>
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-8 w-32 mt-1" />
+            </CardHeader>
+            <CardFooter className="flex-col items-start gap-1.5">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-28" />
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+    <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:bg-card">
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Total Revenue</CardDescription>
+          <CardDescription>Revenue</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            $1,250.00
+            {revenue > 0 ? formatCurrency(revenue) : '—'}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp
-              />
-              +12.5%
-            </Badge>
+            {revenue > 0 ? (
+              <Badge variant="outline"><IconTrendingUp /> Paid</Badge>
+            ) : (
+              <Badge variant="secondary">No invoices</Badge>
+            )}
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month{" "}
-            <IconTrendingUp className="size-4" />
+            {revenue > 0 ? 'From paid invoices' : 'Create your first invoice to track revenue'}
           </div>
           <div className="text-muted-foreground">
-            Visitors for the last 6 months
+            {contacts} contacts
           </div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>New Customers</CardDescription>
+          <CardDescription>Active Tasks</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            1,234
+            {activeTasks.toLocaleString()}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <IconTrendingDown
-              />
-              -20%
-            </Badge>
+            <Badge variant="outline">{activeTasks} open</Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period{" "}
-            <IconTrendingDown className="size-4" />
+            {agentRunsToday > 0 ? `${agentRunsToday} agent runs today` : 'No agent runs yet today'}
           </div>
           <div className="text-muted-foreground">
-            Acquisition needs attention
+            Across all workflows
           </div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Active Accounts</CardDescription>
+          <CardDescription>Messages</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            45,678
+            {messageCount.toLocaleString()}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp
-              />
-              +12.5%
-            </Badge>
+            <Badge variant="outline">All time</Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention{" "}
-            <IconTrendingUp className="size-4" />
+            Across all channels
           </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
+          <div className="text-muted-foreground">
+            {leadCount} leads in pipeline
+          </div>
         </CardFooter>
       </Card>
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Growth Rate</CardDescription>
+          <CardDescription>Agent Runs</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            4.5%
+            {agentRunsToday > 0 ? agentRunsToday.toLocaleString() : '—'}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp
-              />
-              +4.5%
-            </Badge>
+            <Badge variant="outline">Today</Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance increase{" "}
-            <IconTrendingUp className="size-4" />
+            {agentRuns.length > 0 ? `${agentRuns.length} recent runs` : 'Runs logged automatically'}
           </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
+          <div className="text-muted-foreground">
+            Orchestrator + Swarm + Cron
+          </div>
         </CardFooter>
       </Card>
     </div>

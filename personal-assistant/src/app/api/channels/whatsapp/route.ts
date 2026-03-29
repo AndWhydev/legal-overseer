@@ -104,9 +104,35 @@ export async function POST(request: Request) {
 
                 const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || ''
 
+                // Look up our own phone number to filter outbound messages
+                let ownNumber: string | null = null
+                if (phoneNumberId) {
+                    const { data: config } = await supabase
+                        .from('channel_configs' as any)
+                        .select('external_id, metadata')
+                        .eq('org_id', orgId)
+                        .eq('channel', 'whatsapp')
+                        .maybeSingle() as { data: { external_id?: string; metadata?: Record<string, unknown> } | null }
+
+                    ownNumber = (config?.metadata as any)?.display_phone_number?.replace(/\D/g, '') ?? null
+                }
+
                 for (const msg of value.messages) {
                     // Only handle text and audio message types
                     if (msg.type !== 'text' && msg.type !== 'audio') continue
+
+                    // Skip outbound messages (sent by us) — if msg.from matches
+                    // our own WhatsApp number, this is an echo of our outgoing message
+                    if (ownNumber && msg.from === ownNumber) {
+                        logger.info(JSON.stringify({
+                            event: 'whatsapp_outbound_skipped',
+                            orgId,
+                            from: msg.from,
+                            ownNumber,
+                            source: 'cloud_api',
+                        }))
+                        continue
+                    }
 
                     const phone = value.contacts?.[0]?.wa_id || msg.from
                     const name = value.contacts?.[0]?.profile?.name || phone
@@ -185,6 +211,7 @@ export async function POST(request: Request) {
                             received_at: new Date(msg.timestamp * 1000).toISOString(),
                             is_actionable: isActionable,
                             priority: 'medium',
+                            direction: 'inbound',
                             metadata,
                         })
                         .select('*')

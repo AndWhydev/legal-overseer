@@ -420,12 +420,10 @@ html.light ::-webkit-scrollbar-thumb:hover {
   animation: streak-pulse 2s ease-in-out infinite;
 }
 
-
 /* Smooth transitions */
 .transition-smooth {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 
 /* Priority left border preservation on hover */
 .border-l-\[3px\]:hover {

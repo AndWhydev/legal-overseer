@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { extractAuthCallbackPayload } from '@/lib/auth/callback'
@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { ClawdAmbient } from '@/components/ui/clawd-ambient'
+import { ClawdLoginFace } from '@/components/ui/clawd-login-face'
 import { ForceFieldBackground } from '@/components/ui/force-field-background'
 
 type LoginStatus = 'idle' | 'loading' | 'sent' | 'error'
@@ -45,6 +45,25 @@ function LoginPageContent() {
   const [errorMessage, setErrorMessage] = useState(
     queryError ? "Couldn't complete sign-in. Use the email linked to your BitBit invite." : ''
   )
+
+  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null)
+  const [isHoveringSubmit, setIsHoveringSubmit] = useState(false)
+  const [isDark, setIsDark] = useState(true)
+
+  useEffect(() => {
+    const check = () => {
+      setIsDark(
+        document.documentElement.classList.contains('dark') ||
+        window.matchMedia('(prefers-color-scheme: dark)').matches
+      )
+    }
+    check()
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    mq.addEventListener('change', check)
+    const obs = new MutationObserver(check)
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => { mq.removeEventListener('change', check); obs.disconnect() }
+  }, [])
 
   const isBusy = activeMethod !== null
   const canSubmit = email.trim().length > 3 && password.length > 0 && !isBusy
@@ -122,14 +141,15 @@ function LoginPageContent() {
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center bg-background p-6 md:p-10">
       <ForceFieldBackground
-        spacing={16}
+        spacing={24}
         minStroke={1}
         maxStroke={2}
         forceStrength={14}
         magnifierRadius={160}
         friction={0.88}
         restoreSpeed={0.04}
-        particleRgb="255,255,255"
+        bgColor={isDark ? '#000' : '#fafafa'}
+        particleRgb={isDark ? '255,255,255' : '0,0,0'}
       />
       <div className="relative z-10 w-full max-w-sm md:max-w-4xl">
         <div className="flex flex-col gap-6">
@@ -161,6 +181,8 @@ function LoginPageContent() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      onFocus={() => setFocusedField('email')}
+                      onBlur={() => setFocusedField(null)}
                       disabled={isBusy}
                     />
                   </div>
@@ -183,11 +205,19 @@ function LoginPageContent() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setFocusedField('password')}
+                      onBlur={() => setFocusedField(null)}
                       disabled={isBusy}
                     />
                   </div>
 
-                  <Button type="submit" disabled={!canSubmit} className="w-full">
+                  <Button
+                    type="submit"
+                    disabled={!canSubmit}
+                    className="w-full"
+                    onMouseEnter={() => setIsHoveringSubmit(true)}
+                    onMouseLeave={() => setIsHoveringSubmit(false)}
+                  >
                     {activeMethod === 'password' ? <Spinner /> : 'Login'}
                   </Button>
 
@@ -238,9 +268,15 @@ function LoginPageContent() {
                 </div>
               </form>
 
-              {/* ── Right: Clawd ambient animation ── */}
-              <div className="relative hidden min-h-[400px] overflow-hidden rounded-r-xl bg-black md:block">
-                <ClawdAmbient className="absolute inset-0" />
+              {/* ── Right: Interactive BitBit face ── */}
+              <div className="relative hidden min-h-[400px] overflow-hidden rounded-r-xl md:block">
+                <ClawdLoginFace
+                  className="absolute inset-0"
+                  focusedField={focusedField}
+                  isHoveringSubmit={isHoveringSubmit}
+                  hasError={!!errorMessage}
+                  isSubmitting={isBusy}
+                />
               </div>
             </CardContent>
           </Card>

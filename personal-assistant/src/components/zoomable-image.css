@@ -1,0 +1,17 @@
+.zoomable-image-dialog [data-rmiz-modal-overlay="hidden"] {
+  background-color: transparent;
+}
+
+.zoomable-image-dialog [data-rmiz-modal-overlay="visible"] {
+  background-color: var(--background);
+}
+
+.zoomable-image-dialog [data-rmiz-btn-unzoom] {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.zoomable-image-dialog [data-rmiz-btn-unzoom]:focus-visible {
+  outline-offset: 0.25rem;
+  outline: 0.125rem solid var(--ring);
+}

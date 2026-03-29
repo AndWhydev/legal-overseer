@@ -13,6 +13,7 @@ import type Anthropic from '@anthropic-ai/sdk'
 import { resolveChannelIdentity } from './identity-resolver'
 import { resolveActiveThread, storeMessage, loadRecentMessages, generateThreadTitle } from './thread-resolver'
 import { runAgentChat, type AgentEvent, type EngineConfig } from '@/lib/agent/engine'
+import { getDefaultAgentConfigId } from '@/lib/agent/agent-config'
 import { logger } from '@/lib/core/logger'
 import { MemoryConsolidator } from '@/lib/memory/memory-consolidator'
 import { getMemoryExtractor } from '@/lib/memory-palace'
@@ -220,10 +221,14 @@ export class UnifiedConversationPipeline {
     }
 
     // ── Step 5: Run Engine ─────────────────────────────────────────────
+    // Resolve the default agent config for run logging
+    const agentConfigId = await getDefaultAgentConfigId(this.supabase, identity.orgId)
+
     const engineConfig: EngineConfig = {
       orgId: identity.orgId,
       supabase: this.supabase,
       skipCostGuard: true, // Web chat doesn't use cost guard
+      agentConfigId: agentConfigId ?? undefined,
       history,
       // Wire up thread context so the engine activates ContextAssembler
       // for rich history (key facts, compressed summaries, pending actions)

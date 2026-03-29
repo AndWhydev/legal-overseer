@@ -62,7 +62,7 @@ interface CSSVars {
 function extractCSSVariables(html: string): CSSVars {
   const vars: CSSVars = {}
   // Match :root { --var-name: value; } blocks
-  const rootMatch = html.match(/:root\s*\{([^}]+)\}/s)
+  const rootMatch = html.match(/:root\s*\{([^}]+)\}/)
   if (!rootMatch) return vars
 
   const declarations = rootMatch[1]

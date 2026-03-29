@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { TabShell } from '@/components/ui/tab-shell'
 import { Empty, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,12 +42,21 @@ const BOARD_COLUMNS: Array<{
   { id: 'outcome', label: 'Accepted / Declined', statuses: ['accepted', 'declined'] },
 ]
 
-const STATUS_COLORS: Record<ProposalStatus, React.CSSProperties> = {
-  draft: { borderColor: 'rgba(113,113,122,0.3)', background: 'rgba(113,113,122,0.1)', color: 'rgb(161,161,170)' },
-  sent: { borderColor: 'rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.1)', color: 'rgb(147,197,253)' },
-  viewed: { borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.1)', color: 'rgb(252,211,77)' },
-  accepted: { borderColor: 'rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.1)', color: 'rgb(110,231,183)' },
-  declined: { borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.1)', color: 'rgb(252,165,165)' },
+// Tailwind classes per status — border, bg, text
+const STATUS_CARD_CLASSES: Record<ProposalStatus, string> = {
+  draft:    'border-zinc-500/30 bg-zinc-500/10 text-zinc-400',
+  sent:     'border-blue-500/30 bg-blue-500/10 text-blue-300',
+  viewed:   'border-amber-500/30 bg-amber-500/10 text-amber-300',
+  accepted: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+  declined: 'border-red-500/30 bg-red-500/10 text-red-300',
+}
+
+const STATUS_BADGE_CLASSES: Record<ProposalStatus, string> = {
+  draft:    'border-zinc-500/40 bg-zinc-500/15 text-zinc-400',
+  sent:     'border-blue-500/40 bg-blue-500/15 text-blue-300',
+  viewed:   'border-amber-500/40 bg-amber-500/15 text-amber-300',
+  accepted: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300',
+  declined: 'border-red-500/40 bg-red-500/15 text-red-300',
 }
 
 // ---------------------------------------------------------------------------
@@ -196,8 +207,7 @@ function ProposalsKanban() {
                 return (
                   <div
                     key={p.id}
-                    className={`rounded-lg border p-3 transition-colors ${isMoving ? 'opacity-50' : ''}`}
-                    style={STATUS_COLORS[p.status]}
+                    className={`rounded-lg border p-3 transition-colors ${STATUS_CARD_CLASSES[p.status]} ${isMoving ? 'opacity-50' : ''}`}
                   >
                     <p className="text-sm font-medium leading-tight mb-1 line-clamp-2">
                       {p.title}
@@ -222,14 +232,15 @@ function ProposalsKanban() {
                     {options.length > 0 && (
                       <div className="mt-2 flex gap-1 flex-wrap">
                         {options.map((opt) => (
-                          <button
+                          <Badge
                             key={opt}
-                            className="rounded bg-muted px-2 py-0.5 text-xs transition-colors hover:bg-white/20"
-                            onClick={() => moveProposal(p.id, opt)}
-                            disabled={isMoving}
+                            variant="outline"
+                            className={`cursor-pointer transition-opacity hover:opacity-80 ${STATUS_BADGE_CLASSES[opt]}`}
+                            onClick={() => !isMoving && moveProposal(p.id, opt)}
+                            aria-disabled={isMoving}
                           >
                             {opt}
-                          </button>
+                          </Badge>
                         ))}
                       </div>
                     )}

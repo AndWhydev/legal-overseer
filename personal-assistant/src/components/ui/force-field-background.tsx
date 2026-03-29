@@ -105,23 +105,31 @@ export function ForceFieldBackground({
       canvas.style.height = `${h}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       particlesRef.current = generateParticles(w, h)
+      cachedRect = canvas.getBoundingClientRect()
+      rectAge = Date.now()
     }
+
+    // Cache bounding rect to avoid layout thrashing on mousemove
+    let cachedRect = canvas.getBoundingClientRect()
+    let rectAge = Date.now()
 
     resize()
-
-    // Listen on window so mouse position updates even when cursor
-    // is over overlaid UI elements (cards, buttons, etc.)
+    const getRect = () => {
+      const now = Date.now()
+      if (now - rectAge > 500) { cachedRect = canvas.getBoundingClientRect(); rectAge = now }
+      return cachedRect
+    }
     const onMouse = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect()
-      mouseRef.current.x = e.clientX - rect.left
-      mouseRef.current.y = e.clientY - rect.top
+      const r = getRect()
+      mouseRef.current.x = e.clientX - r.left
+      mouseRef.current.y = e.clientY - r.top
     }
     const onTouch = (e: TouchEvent) => {
-      const rect = canvas.getBoundingClientRect()
+      const r = getRect()
       const t = e.touches[0]
       if (t) {
-        mouseRef.current.x = t.clientX - rect.left
-        mouseRef.current.y = t.clientY - rect.top
+        mouseRef.current.x = t.clientX - r.left
+        mouseRef.current.y = t.clientY - r.top
       }
     }
     const onLeave = () => {

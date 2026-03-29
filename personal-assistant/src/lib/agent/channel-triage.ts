@@ -263,15 +263,26 @@ function preClassifyByHeaders(msg: Record<string, unknown>): SenderType {
 
 /**
  * Resolve sender to a known contact. Returns contact ID and name if found.
+ * For WhatsApp messages, also tries the full JID (e.g. "12345@lid") as an alias.
  */
 async function resolveMessageSender(
   supabase: SupabaseClient,
   orgId: string,
   senderEmail: string | null,
   senderName: string | null,
+  metadata?: Record<string, unknown> | null,
 ): Promise<{ contactId: string; contactName: string } | null> {
-  // Try email first (highest confidence), then name
-  const queries = [senderEmail, senderName].filter(Boolean) as string[]
+  // Build candidate queries: email, WhatsApp JID (if present), then name
+  const queries: string[] = []
+  if (senderEmail) queries.push(senderEmail)
+
+  // WhatsApp JID stored in metadata — try as alias (e.g. "12345@lid", "12345@s.whatsapp.net")
+  const whatsappJid = (metadata?.whatsapp_jid ?? (metadata as Record<string, unknown> | undefined)?.jid) as string | undefined
+  if (whatsappJid && whatsappJid !== senderEmail) {
+    queries.push(whatsappJid)
+  }
+
+  if (senderName) queries.push(senderName)
 
   for (const query of queries) {
     const ranked = await resolveEntityRanked(supabase, query, orgId)
@@ -547,6 +558,7 @@ export async function runTriage(
     .select('*')
     .eq('org_id', orgId)
     .eq('processed', false)
+    .neq('direction', 'outbound')
     .order('received_at', { ascending: true })
     .limit(25)
 
@@ -623,8 +635,18 @@ export async function runTriage(
     let contactName: string | null = null
     let isTransientSender = false
 
-    // Determine if we should create a contact for this sender
-    const messageCount = (msg.metadata as any)?.message_count as number | undefined
+    // Determine if we should create a contact for this sender.
+    // If message_count isn't in metadata, query previous messages from this sender.
+    let messageCount = (msg.metadata as any)?.message_count as number | undefined
+    if (messageCount == null && msg.sender_email) {
+      const { count } = await supabase
+        .from('channel_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+        .eq('sender_email', msg.sender_email)
+        .neq('direction', 'outbound')
+      messageCount = (count ?? 0) + 1 // +1 for the current message
+    }
     const shouldCreate = shouldCreateContact({
       senderType,
       senderEmail: msg.sender_email as string | null,
@@ -636,6 +658,7 @@ export async function runTriage(
     // Resolve sender to existing contact, or auto-create if criteria met
     const resolved = await resolveMessageSender(
       supabase, orgId, msg.sender_email, msg.sender as string | null,
+      msg.metadata as Record<string, unknown> | null,
     )
     if (resolved) {
       contactId = resolved.contactId
@@ -646,14 +669,25 @@ export async function runTriage(
       try {
         const senderName = (msg.sender as string) || 'Unknown'
         const senderEmail = msg.sender_email as string | null
+        const meta = (msg.metadata || {}) as Record<string, unknown>
+        const waJid = (meta.whatsapp_jid ?? meta.jid) as string | undefined
+
+        // Build aliases array: include WhatsApp JID for future resolution
+        const aliases: string[] = []
+        if (waJid) aliases.push(waJid)
+
+        // For WhatsApp, senderEmail is the numeric ID — store as phone, not email
+        const isWhatsApp = msg.channel === 'whatsapp'
         const { data: newContact } = await supabase
           .from('contacts')
           .insert({
             org_id: orgId,
             name: senderName,
             type: 'person',
-            emails: senderEmail ? [senderEmail] : [],
-            profile_data: { source: 'auto_triage' },
+            emails: (!isWhatsApp && senderEmail) ? [senderEmail] : [],
+            phones: (isWhatsApp && senderEmail) ? [senderEmail] : [],
+            aliases,
+            profile_data: { source: 'auto_triage', channel: msg.channel },
           })
           .select('id, name')
           .single()
@@ -673,7 +707,16 @@ export async function runTriage(
     }
 
     // 4. Priority scoring via temporal urgency scorer
-    const msgCategory = toMessageCategory(classification, senderType, actionabilitySignals)
+    let msgCategory = toMessageCategory(classification, senderType, actionabilitySignals)
+
+    // Known contacts should never be classified as spam — override to fyi.
+    // URL-only messages from known senders are informational, not spam.
+    if (msgCategory === 'spam' && contactId) {
+      msgCategory = 'fyi'
+      logger.info('[triage] Overriding spam→fyi for known contact', {
+        messageId: msg.id, contactId, contactName,
+      })
+    }
 
     // Compute multi-signal urgency score
     const urgencyResult: UrgencyResult = await computeUrgency(supabase, orgId, {
@@ -967,6 +1010,7 @@ export async function queryInbox(
     .from('channel_messages')
     .select('*', { count: 'exact' })
     .eq('org_id', orgId)
+    .neq('direction', 'outbound')
     .order('received_at', { ascending: false })
 
   if (filters.channel) {

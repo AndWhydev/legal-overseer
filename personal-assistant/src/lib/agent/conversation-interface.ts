@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { runAgentChat, type AgentEvent, type EngineConfig } from './engine'
+import { getDefaultAgentConfigId } from '@/lib/agent/agent-config'
 import { sendSMS } from '@/lib/channels/sms'
 import { sendSlackMessage } from '@/lib/channels/slack'
 import { sendApprovalEmail } from '@/lib/email/email-transport'
@@ -330,11 +331,15 @@ export class ConversationRouter {
       // Load conversation history
       const history = await this.loadConversationHistory(threadId)
 
+      // Resolve the default agent config for run logging
+      const agentConfigId = await getDefaultAgentConfigId(this.supabase, message.metadata.orgId)
+
       // Build config
       const config: EngineConfig = {
         orgId: message.metadata.orgId,
         supabase: this.supabase,
         skipCostGuard: true, // Multi-channel flows skip cost guard by default
+        agentConfigId: agentConfigId ?? undefined,
         ...engineConfig,
       }
 

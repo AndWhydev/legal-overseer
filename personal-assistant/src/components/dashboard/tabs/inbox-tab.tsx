@@ -190,10 +190,10 @@ const PILL_CONFIG: Record<CategoryPillType, {
   all:           { label: 'All',           filter: (m) => m.category !== 'spam' && m.category !== 'marketing' },
   action:        { label: 'Action',        filter: (m) => m.category === 'action_required' },
   waiting:       { label: 'Waiting',       filter: (m) => m.threadStatus === 'waiting_on_you' && m.category !== 'spam' && m.category !== 'marketing' && m.category !== 'automated' },
-  direct:        { label: 'Direct',        filter: (m) => ['whatsapp', 'imessage', 'sms', 'slack'].includes(m.channelType) },
+  direct:        { label: 'Direct',        filter: (m) => ['whatsapp', 'imessage', 'sms', 'slack'].includes(m.channelType) && m.category !== 'spam' && m.category !== 'marketing' },
   email:         { label: 'Email',         filter: (m) => ['gmail', 'outlook'].includes(m.channelType) && m.category !== 'spam' && m.category !== 'marketing' },
   notifications: { label: 'Notifications', filter: (m) => m.category === 'automated' },
-  billing:       { label: 'Billing',       filter: (m) => ['stripe', 'xero'].includes(m.channelType) },
+  billing:       { label: 'Billing',       filter: (m) => ['stripe', 'xero'].includes(m.channelType) && m.category !== 'spam' },
 };
 
 // ---------------------------------------------------------------------------
@@ -269,7 +269,7 @@ const CHANNEL_BRAND_COLORS: Record<string, string> = {
   imessage: 'text-green-400',
   asana: 'text-rose-400',
   calendly: 'text-blue-600',
-  stripe: 'text-violet-500',
+  stripe: 'text-muted-foreground',
 };
 
 // ---------------------------------------------------------------------------
@@ -405,7 +405,7 @@ const SEED_MESSAGES: InboxMessage[] = [
       subject: subjects[i % subjects.length],
       bodyPreview: `Preview text for generated message ${i + 9}. This is a realistic inbox message body preview.`,
       fullBody: `Preview text for generated message ${i + 9}. This is a realistic inbox message body preview.\n\nThis is the full body of the message with additional context that would normally be truncated in the preview.`,
-      aiSummary: i % 3 === 0 ? `AI summary for message ${i + 9}` : null,
+      aiSummary: i % 3 === 0 ? `BitBit summary for message ${i + 9}` : null,
       category: categories[i % categories.length],
       priority: priorities[i % priorities.length],
       significance: (i % 8) + 2,
@@ -1547,7 +1547,7 @@ function ExpandedMessageRow({
     }, 50);
   }, []);
 
-  // AI summary — check cache first
+  // BitBit summary — check cache first
   useEffect(() => {
     if (!showSummary) { setAiLoading(false); return; }
     const cached = aiResultCache.get(message.id);
@@ -1673,7 +1673,7 @@ function ExpandedMessageRow({
           </h3>
         )}
 
-        {/* Content: crossfade from raw body to AI summary */}
+        {/* Content: crossfade from raw body to BitBit summary */}
         <div className="relative min-h-5">
           {/* Raw body */}
           <div className={cn(
@@ -1683,7 +1683,7 @@ function ExpandedMessageRow({
             {sanitizeText(String(message.fullBody || message.bodyPreview || '(No message body)'))}
           </div>
 
-          {/* AI summary */}
+          {/* BitBit summary */}
           {showSummary && aiResult && !aiLoading && (
             <p className={cn(
               'text-sm text-foreground leading-relaxed',
@@ -1693,7 +1693,7 @@ function ExpandedMessageRow({
             </p>
           )}
 
-          {/* AI Loading shimmer */}
+          {/* Loading shimmer */}
           {showSummary && aiLoading && (
             <div className="flex flex-col gap-2">
               <Skeleton className="h-3 w-[90%]" />
@@ -1718,11 +1718,11 @@ function ExpandedMessageRow({
           </p>
         )}
 
-        {/* AI Summary badge */}
+        {/* BitBit Summary badge */}
         {showSummary && aiResult && (
           <div className="flex items-center gap-1.5">
-            <IconSparkles className="size-3 text-purple-400" />
-            <span className="text-[10px] font-medium text-purple-400 uppercase tracking-wide">AI Summary</span>
+            <IconSparkles className="size-3 text-muted-foreground" />
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">BitBit Summary</span>
           </div>
         )}
 

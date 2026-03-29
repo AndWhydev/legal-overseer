@@ -246,7 +246,8 @@ async function updateTriggerStats(supabase: SupabaseClient, ruleId: string): Pro
     .from('workflow_rules')
     .update({
       last_triggered_at: new Date().toISOString(),
-      trigger_count: supabase.rpc ? undefined : 0, // Ideally use RPC for atomic increment
+      // @ts-expect-error — rpc is always defined; keeping legacy guard
+      trigger_count: supabase.rpc ? undefined : 0,
     })
     .eq('id', ruleId)
 
@@ -255,11 +256,10 @@ async function updateTriggerStats(supabase: SupabaseClient, ruleId: string): Pro
   }
 
   // Atomic increment of trigger_count
-  await supabase.rpc('increment_trigger_count', { rule_id: ruleId }).catch(() => {
+  try {
+    await supabase.rpc('increment_trigger_count', { rule_id: ruleId })
+  } catch {
     // Fallback: non-atomic update (acceptable for counter)
-    supabase
-      .from('workflow_rules')
-      .update({ trigger_count: 1 }) // Will be wrong but at least something
-      .eq('id', ruleId)
-  })
+    await supabase.from('workflow_rules').update({ trigger_count: 1 }).eq('id', ruleId)
+  }
 }

@@ -5,6 +5,7 @@ import {
   motion,
   AnimatePresence,
 } from 'motion/react';
+import { BitBitAsciiAvatar } from '@/components/ui/bitbit-ascii-avatar';
 
 interface SplashScreenProps {
   ready?: boolean;
@@ -246,24 +247,14 @@ export function SplashScreen({
                   ))}
 
                   {/* Logo — blur-to-sharp reveal */}
-                  <motion.img
-                    src="/bitbit-logo.svg"
-                    alt="BitBit"
-                    width={72}
-                    height={72}
-                    style={{
-                      position: 'relative',
-                      zIndex: 1,
-                      filter: 'var(--splash-logo-filter, brightness(0) invert(1))',
-                    }}
-                    initial={{ scale: 0.6, opacity: 0, filter: 'var(--splash-logo-filter, brightness(0) invert(1)) blur(8px)' }}
-                    animate={{ scale: 1, opacity: 1, filter: 'var(--splash-logo-filter, brightness(0) invert(1)) blur(0px)' }}
-                    transition={{
-                      duration: 0.7,
-                      ease: [0.25, 1, 0.5, 1],
-                      delay: 0.05,
-                    }}
-                  />
+                  <motion.div
+                    style={{ position: 'relative', zIndex: 1, borderRadius: 12, overflow: 'hidden' }}
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.05 }}
+                  >
+                    <BitBitAsciiAvatar size={200} />
+                  </motion.div>
                 </motion.div>
 
                 {/* Text — swipes in from right after logo swooshes */}

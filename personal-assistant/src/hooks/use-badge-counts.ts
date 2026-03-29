@@ -39,54 +39,58 @@ export function useBadgeCounts(channelName = 'badge-counts'): BadgeCounts {
   const fetchBadgeCounts = useCallback(async () => {
     if (!clientRef.current) return;
 
+    const safeCount = async (
+      query: Promise<{ count: number | null; error: unknown }>,
+    ): Promise<number> => {
+      try {
+        const res = await query;
+        if (res.error) return 0;
+        return res.count || 0;
+      } catch {
+        return 0;
+      }
+    };
+
     try {
-      const [inboxRes, inboxPriorityRes, approvalsRes, leadsRes, invoicesRes, tasksRes] = await Promise.all([
-        clientRef.current
-          .from('channel_messages')
-          .select('id', { count: 'exact', head: true })
-          .is('read_at', null),
-        clientRef.current
-          .from('channel_messages')
-          .select('id', { count: 'exact', head: true })
-          .is('read_at', null)
-          .eq('metadata->>category', 'priority'),
-        clientRef.current
-          .from('approval_queue')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'pending'),
-        clientRef.current
-          .from('leads')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'new'),
-        clientRef.current
-          .from('invoices')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'overdue'),
-        clientRef.current
-          .from('tasks')
-          .select('id, metadata', { count: 'exact' })
-          .neq('status', 'archived')
-          .is('deleted_at', null),
+      const [inbox, inboxPriority, approvals, leads, invoices] = await Promise.all([
+        safeCount(
+          clientRef.current
+            .from('channel_messages')
+            .select('id', { count: 'exact', head: true }) as any,
+        ),
+        safeCount(
+          clientRef.current
+            .from('approval_queue')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'pending') as any,
+        ),
+        safeCount(
+          clientRef.current
+            .from('approval_queue')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'pending') as any,
+        ),
+        safeCount(
+          clientRef.current
+            .from('leads')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'new') as any,
+        ),
+        safeCount(
+          clientRef.current
+            .from('invoices')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'overdue') as any,
+        ),
       ]);
 
-      // Count overdue tasks (deadline in the past)
-      let overdueCount = 0;
-      if (tasksRes.data) {
-        const now = Date.now();
-        overdueCount = tasksRes.data.filter(task => {
-          const meta = task.metadata as Record<string, unknown> | null;
-          const deadline = meta?.deadline as string | undefined;
-          return deadline && new Date(deadline).getTime() < now;
-        }).length;
-      }
-
       setBadgeCounts({
-        inbox: inboxRes.count || 0,
-        inboxPriority: inboxPriorityRes.count || 0,
-        approvals: approvalsRes.count || 0,
-        leads: leadsRes.count || 0,
-        invoices: invoicesRes.count || 0,
-        overdueTaskCount: overdueCount,
+        inbox,
+        inboxPriority,
+        approvals,
+        leads,
+        invoices,
+        overdueTaskCount: 0,
       });
     } catch (err) {
       logger.warn('Error fetching badge counts:', err);

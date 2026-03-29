@@ -9,7 +9,9 @@ import {
   IconUsers, IconMessage, IconLoader2, IconCheck, IconX, IconMenu2,
 } from '@tabler/icons-react'
 import { ConversationDrawer, type Thread } from './conversation-drawer'
-import { BitBitFaceAvatar } from './bitbit-face-avatar'
+import { BitBitAsciiAvatar } from '@/components/ui/bitbit-ascii-avatar'
+import { ClawdLoginFace } from '@/components/ui/clawd-login-face'
+import { ChatBitBitFace } from './chat-bitbit-face'
 import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
 import { useSmartScroll } from './use-smart-scroll'
@@ -1981,7 +1983,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   return (
     <div
-      className={`bb-chat ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}
+      className={`bb-chat bg-background ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -2055,7 +2057,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               transition={{ duration: 0.3 }}
             >
               <div className="bb-chat__center-cluster">
-                <BitBitFaceAvatar size={120} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
+                <ChatBitBitFace />
                 <h2 className="bb-chat__greeting">
                   {getGreeting()}{userName ? `, ${userName}` : ''}
                 </h2>
@@ -2090,9 +2092,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
                         <motion.div
                           layoutId="bitbit-chat-avatar"
                           transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
-                          style={{ position: 'absolute', left: -52, top: -4, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          style={{ position: 'absolute', left: -108, top: -12, width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                          <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
+                          <BitBitAsciiAvatar size={96} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
                         </motion.div>
                         {segmentedReasoningJSX}
                       </div>
@@ -2182,7 +2184,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
                     style={{ position: 'absolute', left: -52, top: -4, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    <BitBitFaceAvatar size={40} emotion={avatarEmotion} isThinking={isThinkingStreaming} activity={avatarActivity} />
+                    <BitBitAsciiAvatar size={48} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
                   </motion.div>
                   {segmentedReasoningJSX}
                 </div>

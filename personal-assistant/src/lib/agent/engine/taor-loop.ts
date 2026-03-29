@@ -466,6 +466,8 @@ export async function* runTAORLoop(
           tool_calls: toolCallCount,
           iterations: iterationCount,
         })
+      } else {
+        logger.debug('[taor] Run logging skipped — no agentConfigId', { orgId: config.orgId })
       }
 
       logger.info('ai_response_complete', { model, purpose, tokens: response.usage })

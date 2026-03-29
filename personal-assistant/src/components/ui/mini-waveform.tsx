@@ -12,7 +12,7 @@ const BAR_COUNT_DEFAULT = 20;
 
 /**
  * Scrolling waveform: new audio enters LEFT, scrolls RIGHT.
- * All bars are white. Uses a ref to frequencyData to avoid stale closures.
+ * All bars use foreground color. Uses a ref to frequencyData to avoid stale closures.
  */
 export function MiniWaveform({
   frequencyData,
@@ -94,12 +94,12 @@ export function MiniWaveform({
   }, [isActive, barCount]);
 
   return (
-    <div className="bb-pill__waveform">
+    <div className="flex items-center gap-0.5 h-[22px] flex-1 min-w-0">
       {Array.from({ length: barCount }, (_, i) => (
         <div
           key={i}
           ref={(el) => { barsRef.current[i] = el; }}
-          className="bb-pill__waveform-bar"
+          className="bg-foreground/90 w-0 flex-[1_1_0] min-h-[2px] rounded-[1px] will-change-[height,opacity]"
           style={{ height: '2px', opacity: 0.15 }}
         />
       ))}

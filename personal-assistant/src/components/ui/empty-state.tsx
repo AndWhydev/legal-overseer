@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { BitBitAsciiAvatar } from '@/components/ui/bitbit-ascii-avatar';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -47,19 +48,11 @@ export function EmptyState({ icon, title, description, action, secondaryAction }
             justifyContent: 'center',
             width: 48,
             height: 48,
+            opacity: 0.3,
           }}
           aria-hidden="true"
         >
-          <Image
-            src="/bitbit-logo.svg"
-            alt=""
-            width={48}
-            height={48}
-            style={{
-              opacity: 0.25,
-              filter: 'var(--empty-icon-filter, grayscale(1) invert(1) brightness(1.5))',
-            }}
-          />
+          <BitBitAsciiAvatar size={48} static />
         </div>
       ) : (
         <div
