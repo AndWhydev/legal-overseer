@@ -9,7 +9,7 @@ import {
   IconUsers, IconMessage, IconLoader2, IconCheck, IconX, IconMenu2,
 } from '@tabler/icons-react'
 import { ConversationDrawer, type Thread } from './conversation-drawer'
-import { BitBitAsciiAvatar } from '@/components/ui/bitbit-ascii-avatar'
+import Image from 'next/image'
 import { ClawdLoginFace } from '@/components/ui/clawd-login-face'
 import { ChatBitBitFace } from './chat-bitbit-face'
 import { useAvatarEmotion } from './use-avatar-emotion'
@@ -1488,6 +1488,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
             detail={detail ?? undefined}
             status={tc0.status}
             resultSummary={summary ?? undefined}
+            index={gIdx}
           >
             {narrationAfter ? (
               <StepsItem className="italic">
@@ -1522,6 +1523,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
             name={label}
             status={anyRunning ? 'running' : 'done'}
             defaultOpen={anyRunning}
+            index={gIdx}
           >
             {group.calls.map((tc, cIdx) => {
               const detail = extractToolDetail(group.name, tc.input, tc.result)
@@ -1588,7 +1590,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
       })()
 
       const statusIcon = isReasoningActive
-        ? <IconLoader2 className="size-4 animate-spin" />
+        ? undefined
         : <IconCheck className="size-4" />
 
       return [
@@ -1633,7 +1635,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
         })()
 
         const segStatusIcon = segIsActive
-          ? <IconLoader2 className="size-4 animate-spin" />
+          ? undefined
           : <IconCheck className="size-4" />
 
         // Each tools segment gets its own Steps block.
@@ -2087,9 +2089,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     {/* Live reasoning chain — segmented (interleaved tools/text) */}
                     {isCurrentResponse && segmentedReasoningJSX && (
                       <div style={{ marginBottom: 4 }}>
-                        <div className="bb-chat__assistant-icon">
-                          <BitBitAsciiAvatar size={48} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
-                        </div>
                         {segmentedReasoningJSX}
                       </div>
                     )}
@@ -2174,9 +2173,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
               {/* Standalone reasoning chain (before assistant message exists) */}
               {showReasoningChain && !currentResponseMsg && segmentedReasoningJSX && (
                 <div style={{ marginBottom: 4 }}>
-                  <div className="bb-chat__assistant-icon">
-                    <BitBitAsciiAvatar size={48} emotion={avatarEmotion} isThinking={isThinkingStreaming} />
-                  </div>
                   {segmentedReasoningJSX}
                 </div>
               )}

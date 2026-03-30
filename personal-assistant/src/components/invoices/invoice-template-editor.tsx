@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { IconLoader2, IconUpload, IconTrash } from '@tabler/icons-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { IconLoader2, IconUpload, IconTrash, IconTemplate, IconPlus, IconCheck } from '@tabler/icons-react'
 import type { InvoiceTemplate } from '@/lib/invoices/template-types'
 
 // ---- Helpers ----------------------------------------------------------------
@@ -21,6 +22,33 @@ const PRESET_SCHEMES = [
   { label: 'Violet', primary: '#8B5CF6', accent: '#7C3AED' },
   { label: 'Rose', primary: '#F43F5E', accent: '#E11D48' },
   { label: 'Slate', primary: '#64748B', accent: '#475569' },
+]
+
+const TEMPLATE_LIBRARY: { id: string; name: string; description: string; defaults: Partial<InvoiceTemplate> }[] = [
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    description: 'Clean and simple with neutral tones',
+    defaults: { primary_color: '#334155', accent_color: '#1E293B', footer_text: 'Payment due within 14 days.' },
+  },
+  {
+    id: 'professional',
+    name: 'Professional',
+    description: 'Bold header with ocean blue accents',
+    defaults: { primary_color: '#0EA5E9', accent_color: '#0284C7', footer_text: 'Payment due within 30 days. Late fees of 2% per month apply.', terms: 'All work remains the intellectual property of the provider until full payment is received.' },
+  },
+  {
+    id: 'creative',
+    name: 'Creative',
+    description: 'Vibrant violet for agencies and studios',
+    defaults: { primary_color: '#8B5CF6', accent_color: '#7C3AED', footer_text: 'Thank you for your business!' },
+  },
+  {
+    id: 'corporate',
+    name: 'Corporate',
+    description: 'Formal slate tones for enterprise clients',
+    defaults: { primary_color: '#64748B', accent_color: '#475569', footer_text: 'Payment is due within 30 days of invoice date. Please reference the invoice number on all payments.', terms: 'Services are provided as outlined in the agreed scope of work. Additional work will be quoted separately.' },
+  },
 ]
 
 // ---- Live Preview -----------------------------------------------------------
@@ -271,14 +299,60 @@ export function InvoiceTemplateEditor() {
 
   if (loading) {
     return (
-      <div className="flex h-[200px] items-center justify-center">
-        <IconLoader2 className="size-6 animate-spin text-muted-foreground" />
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <div className="flex flex-col gap-4">
+          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-48 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+        </div>
+        <Skeleton className="h-[480px] rounded-xl" />
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+    <div className="flex flex-col gap-6">
+      {/* Template Library */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <IconTemplate size={16} />
+            Template Library
+          </CardTitle>
+          <CardDescription>Start from a preset or customize your own</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {TEMPLATE_LIBRARY.map((tpl) => {
+              const isActive = template.primary_color === tpl.defaults.primary_color
+              return (
+                <button
+                  key={tpl.id}
+                  onClick={() => setTemplate((prev) => ({ ...prev, ...tpl.defaults }))}
+                  className={`relative flex flex-col gap-1 rounded-xl border p-3 text-left transition-all hover:bg-accent/50 ${
+                    isActive ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border'
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute right-2 top-2">
+                      <IconCheck size={14} className="text-primary" />
+                    </div>
+                  )}
+                  <div
+                    className="h-1.5 w-8 rounded-full"
+                    style={{ background: tpl.defaults.primary_color }}
+                  />
+                  <span className="text-sm font-medium">{tpl.name}</span>
+                  <span className="text-xs text-muted-foreground line-clamp-2">{tpl.description}</span>
+                </button>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Editor + Preview Grid */}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
       {/* Left: Editor */}
       <div className="flex flex-col gap-4">
         {/* Logo upload */}
@@ -515,6 +589,7 @@ export function InvoiceTemplateEditor() {
       <div className="sticky top-6 self-start">
         <InvoicePreview template={template} orgName={template.company_name?.trim() || orgName} />
       </div>
+    </div>
     </div>
   )
 }

@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   motion,
   AnimatePresence,
 } from 'motion/react';
-import { ClawdLoginFace } from '@/components/ui/clawd-login-face';
-import { BitBitWispIntro } from '@/components/ui/bitbit-wisp-intro';
 
 interface SplashScreenProps {
   ready?: boolean;
@@ -138,64 +136,6 @@ function LoadingShimmer() {
   );
 }
 
-/* ── Splash face — wisp intro builds the face, then reveals live face ── */
-const SPLASH_W = 200;
-const SPLASH_H = 230;
-const SPLASH_FONT = 14;
-
-function SplashFace() {
-  const [wispDone, setWispDone] = useState(false);
-  const [targetText, setTargetText] = useState<string | null>(null);
-
-  // Poll for ASCII text from the hidden ClawdLoginFace
-  useEffect(() => {
-    let raf: number;
-    const poll = () => {
-      const pre = document.querySelector('[data-bitbit-splash-source] pre') as HTMLElement | null;
-      if (pre && pre.textContent && pre.textContent.trim().length > 10) {
-        setTargetText(pre.textContent);
-      } else {
-        raf = requestAnimationFrame(poll);
-      }
-    };
-    const timer = setTimeout(() => { raf = requestAnimationFrame(poll); }, 200);
-    return () => { clearTimeout(timer); cancelAnimationFrame(raf); };
-  }, []);
-
-  const handleComplete = useCallback(() => {
-    setWispDone(true);
-  }, []);
-
-  return (
-    <div style={{ width: SPLASH_W, height: SPLASH_H, position: 'relative' }}>
-      {/* Hidden source face — captures ASCII text for the wisp */}
-      <div
-        data-bitbit-splash-source
-        style={{
-          position: 'absolute',
-          inset: 0,
-          opacity: wispDone ? 1 : 0,
-          pointerEvents: wispDone ? 'auto' : 'none',
-        }}
-      >
-        <ClawdLoginFace className="absolute inset-0" transparent skipWake />
-      </div>
-
-      {/* Wisp animation — streams chars from edges to form the face */}
-      {!wispDone && targetText && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none' }}>
-          <BitBitWispIntro
-            targetText={targetText}
-            fontSize={SPLASH_FONT}
-            width={SPLASH_W}
-            height={SPLASH_H}
-            onComplete={handleComplete}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function SplashScreen({
   ready: readyProp,
@@ -307,14 +247,21 @@ export function SplashScreen({
                   ))}
 
                   {/* Logo — blur-to-sharp reveal */}
-                  <motion.div
-                    style={{ position: 'relative', zIndex: 1, borderRadius: 12, overflow: 'hidden' }}
+                  <motion.img
+                    src="/bitbit-app-icon.png"
+                    alt=""
+                    width={64}
+                    height={64}
+                    style={{
+                      position: 'relative',
+                      zIndex: 1,
+                      filter: 'var(--splash-logo-filter)',
+                    }}
                     initial={{ scale: 0.6, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.05 }}
-                  >
-                    <SplashFace />
-                  </motion.div>
+                    draggable={false}
+                  />
                 </motion.div>
 
                 {/* Text — swipes in from right after logo swooshes */}

@@ -153,6 +153,8 @@ export interface ChainOfThoughtStepProps {
   children?: ReactNode;
   className?: string;
   style?: CSSProperties;
+  /** Index for staggered entrance animation */
+  index?: number;
 }
 
 // Consistent icon column width for alignment — all steps share the same axis
@@ -168,6 +170,7 @@ export const ChainOfThoughtStep = memo(
     status = "complete",
     expandable = false,
     children,
+    index = 0,
   }: ChainOfThoughtStepProps) => {
     const hasIcon = !!Icon;
     const [expanded, setExpanded] = useState(false);
@@ -204,9 +207,9 @@ export const ChainOfThoughtStep = memo(
 
     return (
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.15 }}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.08, ease: [0.25, 1, 0.5, 1] }}
         style={{
           display: "flex",
           alignItems: "flex-start",

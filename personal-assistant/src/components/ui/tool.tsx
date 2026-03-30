@@ -15,6 +15,7 @@ import {
   IconCircleX,
 } from "@tabler/icons-react"
 import { useState } from "react"
+import { motion } from "motion/react"
 
 export type ToolStatus = "running" | "done" | "error"
 
@@ -33,6 +34,8 @@ export type ToolProps = {
   children?: React.ReactNode
   /** Whether the tool content is open by default */
   defaultOpen?: boolean
+  /** Index for staggered entrance animation */
+  index?: number
   className?: string
 }
 
@@ -44,6 +47,7 @@ const Tool = ({
   resultSummary,
   children,
   defaultOpen = false,
+  index = 0,
   className,
 }: ToolProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
@@ -117,17 +121,22 @@ const Tool = ({
     </div>
   )
 
+  const staggerDelay = index * 0.1
+
   // No children — render as a simple row (no collapsible)
   if (!hasContent) {
     return (
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, delay: staggerDelay, ease: [0.25, 1, 0.5, 1] }}
         className={cn(
           "group/tool flex min-w-0 items-center gap-1 py-0.5 text-sm",
           className
         )}
       >
         {trigger}
-      </div>
+      </motion.div>
     )
   }
 

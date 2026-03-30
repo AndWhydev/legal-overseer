@@ -7,7 +7,7 @@ import { motion } from 'motion/react'
 import { IconRefresh, IconThumbUp, IconThumbDown, IconPencil, IconCopy, IconCheck } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { BitBitAsciiAvatar } from '@/components/ui/bitbit-ascii-avatar'
+import Image from 'next/image'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { CodeBlock } from './code-block'
 import {
@@ -194,9 +194,9 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
         <div className="flex flex-col w-full">
           {/* Avatar + label header */}
           {showAvatar && (
-            <div className="flex items-center gap-2 mb-1.5">
-              <BitBitAsciiAvatar size={32} emotion={avatarEmotion as any} isThinking={avatarThinking} />
-              <span className="text-sm font-medium text-foreground">BitBit</span>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Image src="/bitbit-app-icon.png" alt="" width={18} height={18} className="opacity-80 dark:invert" />
+              <span className="text-sm font-medium text-muted-foreground">BitBit</span>
             </div>
           )}
           {/* Message content */}
