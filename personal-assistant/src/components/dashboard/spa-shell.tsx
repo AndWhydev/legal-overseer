@@ -18,7 +18,7 @@ import { OnboardingTour } from './onboarding-tour';
 import { FirstRunGuideProvider } from '@/components/onboarding/first-run-guide';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
-import { GlobalSearch } from './global-search';
+import { Summon } from './summon';
 import { TabSkeleton } from './tabs/tab-skeleton';
 import { Topbar } from './topbar';
 import { TOPBAR_CONFIGS } from './topbar-configs';
@@ -463,8 +463,8 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
           </SidebarProvider>
         </TooltipProvider>
 
-        {/* Global search command palette (Cmd+K or /) */}
-        <GlobalSearch onNavigate={handleTabChange} />
+        {/* Summon command palette (Cmd+K or /) */}
+        <Summon onNavigate={handleTabChange} activeTab={TABS[activeNavIndex]?.id ?? 'dashboard'} />
 
         {/* Keyboard shortcuts cheatsheet (?) */}
         <KeyboardShortcuts open={cheatsheetOpen} onClose={() => setCheatsheetOpen(false)} />
