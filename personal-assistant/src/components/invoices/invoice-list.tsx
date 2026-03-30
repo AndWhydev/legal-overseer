@@ -1,24 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { UniqueIdentifier } from '@dnd-kit/core'
 import {
-  DndContext,
-  DragEndEvent,
-  DragOverEvent,
-  DragOverlay,
-  DragStartEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCorners,
-  useDroppable,
-} from '@dnd-kit/core'
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+  Kanban,
+  KanbanBoard,
+  KanbanColumn,
+  KanbanItem,
+  KanbanOverlay,
+} from '@/components/ui/kanban'
 import {
   IconSearch, IconDownload, IconChevronDown, IconSend, IconCircleCheck,
   IconBan, IconUsers, IconLayoutList, IconEye, IconEyeOff, IconPlus, IconX, IconLoader2, IconReceipt,
@@ -71,11 +61,11 @@ export interface InvoiceRow {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const SECTIONS: { key: SectionKey; label: string; accent: string | null; defaultOpen: boolean; droppable: boolean }[] = [
-  { key: 'attention', label: 'Needs Attention', accent: 'var(--bb-red)', defaultOpen: true, droppable: false },
-  { key: 'awaiting', label: 'Awaiting Payment', accent: null, defaultOpen: true, droppable: true },
-  { key: 'drafts', label: 'Drafts', accent: null, defaultOpen: true, droppable: true },
-  { key: 'completed', label: 'Completed', accent: null, defaultOpen: false, droppable: true },
+const SECTIONS: { key: SectionKey; label: string; accent: string | null; defaultOpen: boolean }[] = [
+  { key: 'attention', label: 'Needs Attention', accent: 'var(--bb-red)', defaultOpen: true },
+  { key: 'awaiting', label: 'Awaiting Payment', accent: null, defaultOpen: true },
+  { key: 'drafts', label: 'Drafts', accent: null, defaultOpen: true },
+  { key: 'completed', label: 'Completed', accent: null, defaultOpen: false },
 ]
 
 const SECTION_STATUS_MAP: Partial<Record<SectionKey, InvoiceStatus>> = {
@@ -294,16 +284,6 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;')
 }
 
-/** Resolve target section from a DnD over ID (could be a section-* or an invoice ID) */
-function resolveTargetSection(
-  overId: string,
-  invoiceSections: Map<string, SectionKey>,
-): SectionKey | null {
-  if (overId.startsWith('section-')) {
-    return overId.replace('section-', '') as SectionKey
-  }
-  return invoiceSections.get(overId) ?? null
-}
 
 // ─── Avatar Colors ──────────────────────────────────────────────────────────
 
@@ -739,9 +719,9 @@ function InvoiceDetailPanel({
   )
 }
 
-// ─── InvoiceRowItem (Sortable + Expandable) ─────────────────────────────────
+// ─── InvoiceRowContent (Expandable) ──────────────────────────────────────────
 
-function InvoiceRowItem({
+function InvoiceRowContent({
   invoice,
   expanded,
   onToggle,
@@ -762,32 +742,6 @@ function InvoiceRowItem({
   const busy = busyId === invoice.id
   const pointerStart = useRef<{ x: number; y: number } | null>(null)
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: invoice.id, disabled: expanded || isDragOverlay })
-
-  // Snappy DnD transitions — override dnd-kit defaults
-  const dndTransition = transition
-    ? transition.replace(/\d+ms/, '120ms').replace(/ease/, SNAP)
-    : undefined
-
-  const dndStyle: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition: [
-      dndTransition,
-      `opacity 80ms ${SNAP}`,
-      `box-shadow 80ms ${SNAP}`,
-    ].filter(Boolean).join(', '),
-    opacity: isDragging ? 0.35 : 1,
-    position: 'relative',
-    zIndex: isDragging ? 10 : expanded ? 5 : 1,
-  }
-
   const urgency = getDueUrgency(invoice.due_date, invoice.status)
   const name = invoice.client_name || 'Unknown'
   const sc = STATUS_COLORS[invoice.status]
@@ -805,13 +759,11 @@ function InvoiceRowItem({
 
   return (
     <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
       style={{
-        ...dndStyle,
         animation: isDragOverlay ? 'none' : `bb-inv-row 120ms ${SPRING} both`,
         animationDelay: isDragOverlay ? '0ms' : `${delay}ms`,
+        position: 'relative',
+        zIndex: expanded ? 5 : 1,
       }}
     >
       <div
@@ -825,7 +777,7 @@ function InvoiceRowItem({
           alignItems: 'center',
           gap: 12,
           padding: '12px 16px',
-          cursor: isDragging ? 'grabbing' : expanded ? 'pointer' : 'grab',
+          cursor: expanded ? 'pointer' : 'default',
           transition: `background 60ms ${SNAP}`,
           background: expanded
             ? 'var(--glass-interactive-bg)'
@@ -864,7 +816,7 @@ function InvoiceRowItem({
         </div>
 
         {/* Hover quick-actions (visible on hover, hidden when expanded) */}
-        {!expanded && !isDragging && !isDragOverlay && (
+        {!expanded && !isDragOverlay && (
           <div
             className="bb-inv-quick-actions"
             style={{
@@ -947,7 +899,6 @@ function InvoiceSection({
   accent,
   invoices,
   defaultOpen,
-  droppable,
   delay,
   expandedId,
   onToggleExpand,
@@ -959,7 +910,6 @@ function InvoiceSection({
   accent: string | null
   invoices: InvoiceRow[]
   defaultOpen: boolean
-  droppable: boolean
   delay: number
   expandedId: string | null
   onToggleExpand: (id: string) => void
@@ -967,29 +917,15 @@ function InvoiceSection({
   busyId: string | null
 }) {
   const [open, setOpen] = useState(defaultOpen)
-  const { isOver, setNodeRef } = useDroppable({
-    id: `section-${sectionKey}`,
-    disabled: !droppable,
-  })
-
-  if (invoices.length === 0 && !isOver) return null
-
-  const ids = invoices.map(inv => inv.id)
 
   return (
-    <div
-      ref={setNodeRef}
+    <KanbanColumn
+      value={sectionKey}
+      className="gap-0 rounded-xl border-0 bg-transparent p-0"
       style={{
         ...glassCard,
         animation: `bb-inv-section 160ms ${SPRING} both`,
         animationDelay: `${delay}ms`,
-        background: isOver
-          ? 'var(--glass-card-bg)'
-          : glassCard.background as string,
-        boxShadow: isOver
-          ? `inset 0 1px 0 var(--hover-bg-strong), 0 0 0 1px ${accent || 'rgba(99, 179, 237, 0.15)'}`
-          : glassCard.boxShadow as string,
-        transition: `background 80ms ${SNAP}, box-shadow 80ms ${SNAP}`,
       }}
     >
       <button
@@ -1030,11 +966,10 @@ function InvoiceSection({
         gridTemplateRows: open ? '1fr' : '0fr',
         transition: `grid-template-rows 160ms ${SPRING}`,
       }}>
-        <div style={{ overflow: 'hidden', minHeight: isOver && invoices.length === 0 ? 48 : 0 }}>
-          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-            {invoices.map((inv, i) => (
-              <InvoiceRowItem
-                key={inv.id}
+        <div style={{ overflow: 'hidden' }}>
+          {invoices.map((inv, i) => (
+            <KanbanItem key={inv.id} value={inv.id} asHandle>
+              <InvoiceRowContent
                 invoice={inv}
                 expanded={expandedId === inv.id}
                 onToggle={() => onToggleExpand(inv.id)}
@@ -1042,22 +977,23 @@ function InvoiceSection({
                 busyId={busyId}
                 delay={open ? i * 20 : 0}
               />
-            ))}
-          </SortableContext>
-          {isOver && invoices.length === 0 && (
+            </KanbanItem>
+          ))}
+          {invoices.length === 0 && (
             <div style={{
               padding: '12px 16px',
               fontSize: 14,
               color: 'var(--text-dim)',
               textAlign: 'center',
               opacity: 0.7,
+              minHeight: 48,
             }}>
               Drop here
             </div>
           )}
         </div>
       </div>
-    </div>
+    </KanbanColumn>
   )
 }
 
@@ -1131,7 +1067,7 @@ function ClientGroupSection({
       }}>
         <div style={{ overflow: 'hidden' }}>
           {invoices.map((inv, i) => (
-            <InvoiceRowItem
+            <InvoiceRowContent
               key={inv.id}
               invoice={inv}
               expanded={expandedId === inv.id}
@@ -1245,10 +1181,7 @@ export function InvoiceList() {
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [busyInvoiceId, setBusyInvoiceId] = useState<string | null>(null)
-  const [activeInvoice, setActiveInvoice] = useState<InvoiceRow | null>(null)
   const [groupMode, setGroupMode] = useState<GroupMode>('status')
-  // Track visual section overrides during drag operations
-  const [sectionOverrides, setSectionOverrides] = useState<Map<string, SectionKey>>(new Map())
   const draggingRef = useRef(false)
   const seed = useSeedData()
 
@@ -1261,10 +1194,6 @@ export function InvoiceList() {
     due_date: '',
   })
   const [isCreating, setIsCreating] = useState(false)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  )
 
   const loadInvoices = useCallback(async () => {
     try {
@@ -1296,16 +1225,16 @@ export function InvoiceList() {
     )
   }, [allInvoices, search])
 
-  const grouped = useMemo(() => groupBySection(filtered, sectionOverrides), [filtered, sectionOverrides])
+  const grouped = useMemo(() => groupBySection(filtered, new Map()), [filtered])
   const clientGroups = useMemo(() => groupByClient(filtered), [filtered])
 
-  // Build a lookup: invoiceId → current visual section (respecting overrides)
-  const invoiceSectionLookup = useMemo(() => {
-    const map = new Map<string, SectionKey>()
-    for (const [key, items] of Object.entries(grouped)) {
-      for (const inv of items) map.set(inv.id, key as SectionKey)
+  // Build kanban value: Record<SectionKey, InvoiceRow[]> for @diceui/kanban
+  const kanbanValue = useMemo(() => {
+    const record: Record<UniqueIdentifier, InvoiceRow[]> = {}
+    for (const s of SECTIONS) {
+      record[s.key] = grouped[s.key]
     }
-    return map
+    return record
   }, [grouped])
 
   const stats = useMemo(() => {
@@ -1418,76 +1347,36 @@ export function InvoiceList() {
     setExpandedId(prev => prev === id ? null : id)
   }
 
-  function handleDragStart(event: DragStartEvent) {
+  const handleKanbanValueChange = useCallback(
+    (newValue: Record<UniqueIdentifier, InvoiceRow[]>) => {
+      // Detect which invoice moved to which section and trigger status mutation
+      for (const [sectionKey, sectionInvoices] of Object.entries(newValue)) {
+        for (const inv of sectionInvoices) {
+          const originalSection = getSection(inv)
+          if (originalSection !== sectionKey) {
+            const targetStatus = SECTION_STATUS_MAP[sectionKey as SectionKey]
+            if (targetStatus) {
+              void mutateStatus(inv.id, targetStatus)
+            }
+          }
+        }
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filtered],
+  )
+
+  function handleDragStart() {
     draggingRef.current = true
     setExpandedId(null)
-    const inv = filtered.find(i => i.id === event.active.id)
-    if (inv) setActiveInvoice(inv)
   }
 
-  function handleDragOver(event: DragOverEvent) {
-    const { active, over } = event
-    if (!over) return
-
-    const activeId = active.id as string
-    const overId = over.id as string
-
-    // Determine the target section
-    const targetSection = resolveTargetSection(overId, invoiceSectionLookup)
-    if (!targetSection) return
-
-    // Only allow drops on droppable sections
-    const sectionDef = SECTIONS.find(s => s.key === targetSection)
-    if (!sectionDef?.droppable) return
-
-    // Get current visual section of the active item
-    const currentSection = sectionOverrides.get(activeId) ?? (invoiceSectionLookup.get(activeId) || getSection(filtered.find(i => i.id === activeId)!))
-
-    if (currentSection !== targetSection) {
-      // Visually move the item to the target section
-      setSectionOverrides(prev => {
-        const next = new Map(prev)
-        next.set(activeId, targetSection)
-        return next
-      })
-    }
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
+  function handleDragEnd() {
     draggingRef.current = false
-    setActiveInvoice(null)
-
-    const { active, over } = event
-    // Clear visual overrides
-    const overrideSection = sectionOverrides.get(active.id as string)
-    setSectionOverrides(new Map())
-
-    if (!over) return
-
-    const overId = over.id as string
-    const activeId = active.id as string
-
-    // Determine target section from override (drag-over) or from where we dropped
-    const targetSection = overrideSection ?? resolveTargetSection(overId, invoiceSectionLookup)
-    if (!targetSection) return
-
-    const targetStatus = SECTION_STATUS_MAP[targetSection]
-    if (!targetStatus) return
-
-    const invoice = filtered.find(i => i.id === activeId)
-    if (!invoice) return
-
-    // Don't mutate if already in this status
-    const currentSection = getSection(invoice)
-    if (currentSection === targetSection) return
-
-    void mutateStatus(invoice.id, targetStatus)
   }
 
   function handleDragCancel() {
     draggingRef.current = false
-    setActiveInvoice(null)
-    setSectionOverrides(new Map())
   }
 
   // Keyboard navigation
@@ -1506,13 +1395,15 @@ export function InvoiceList() {
   if (isLoading) return <TabSkeleton variant="table" />
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
+    <Kanban<InvoiceRow>
+      value={kanbanValue}
+      onValueChange={handleKanbanValueChange}
+      getItemValue={(inv) => inv.id}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
+      orientation="vertical"
+      flatCursor
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <style>{`
@@ -1631,24 +1522,27 @@ export function InvoiceList() {
             )}
           </Empty>
         ) : groupMode === 'status' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {SECTIONS.map((s, i) => (
-              <InvoiceSection
-                key={s.key}
-                sectionKey={s.key}
-                label={s.label}
-                accent={s.accent}
-                invoices={grouped[s.key]}
-                defaultOpen={s.defaultOpen}
-                droppable={s.droppable}
-                delay={i * 50}
-                expandedId={expandedId}
-                onToggleExpand={handleToggleExpand}
-                onAction={(id, status) => void mutateStatus(id, status)}
-                busyId={busyInvoiceId}
-              />
-            ))}
-          </div>
+          <KanbanBoard className="flex-col gap-3">
+            {SECTIONS.map((s, i) => {
+              const sectionInvoices = kanbanValue[s.key] as InvoiceRow[] ?? []
+              if (sectionInvoices.length === 0 && s.key === 'attention') return null
+              return (
+                <InvoiceSection
+                  key={s.key}
+                  sectionKey={s.key}
+                  label={s.label}
+                  accent={s.accent}
+                  invoices={sectionInvoices}
+                  defaultOpen={s.defaultOpen}
+                  delay={i * 50}
+                  expandedId={expandedId}
+                  onToggleExpand={handleToggleExpand}
+                  onAction={(id, status) => void mutateStatus(id, status)}
+                  busyId={busyInvoiceId}
+                />
+              )
+            })}
+          </KanbanBoard>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {clientGroups.map((g, i) => (
@@ -1667,12 +1561,14 @@ export function InvoiceList() {
         )}
       </div>
 
-      <DragOverlay dropAnimation={{
-        duration: 150,
-        easing: SPRING,
-      }}>
-        {activeInvoice ? <DragGhost invoice={activeInvoice} /> : null}
-      </DragOverlay>
+      <KanbanOverlay>
+        {({ value, variant }) => {
+          if (variant === 'column') return null
+          const invoice = filtered.find((i) => i.id === value)
+          if (!invoice) return null
+          return <DragGhost invoice={invoice} />
+        }}
+      </KanbanOverlay>
 
       {/* ---- Create Invoice Dialog ---- */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
@@ -1746,6 +1642,6 @@ export function InvoiceList() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DndContext>
+    </Kanban>
   )
 }
