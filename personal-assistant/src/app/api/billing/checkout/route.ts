@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/server'
 import { createCheckoutSession } from '@/lib/billing/checkout'
+import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { logger } from '@/lib/core/logger';
 
 export async function POST(req: NextRequest) {
@@ -17,6 +18,9 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const rateLimited = checkUserEndpointLimit(user.id, '/api/billing/checkout')
+  if (rateLimited) return rateLimited
 
   let body: Record<string, unknown>
   try {

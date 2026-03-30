@@ -16,7 +16,7 @@ import { MemoryWriter } from './memory-writer'
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const PROMOTION_CONFIDENCE_THRESHOLD = 0.75
-const ARCHIVE_CONFIDENCE_THRESHOLD = 0.05
+const ARCHIVE_CONFIDENCE_THRESHOLD = 0.1
 const MERGE_SIMILARITY_THRESHOLD = 0.75
 const DECAY_BATCH_SIZE = 200
 

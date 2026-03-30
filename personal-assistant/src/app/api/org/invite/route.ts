@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { inviteUser, listPendingInvitations, revokeInvitation } from '@/lib/org/invitations'
 import type { InvitationRole } from '@/lib/org/invitations'
+import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { logger } from '@/lib/core/logger';
 
 /**
@@ -19,6 +20,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const rateLimited = checkUserEndpointLimit(user.id, '/api/org/invite')
+    if (rateLimited) return rateLimited
 
     const { data: profile } = await supabase
       .from('profiles')

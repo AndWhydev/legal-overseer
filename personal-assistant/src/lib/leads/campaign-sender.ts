@@ -101,6 +101,10 @@ export async function sendCampaignEmail(
       html: payload.htmlBody,
       replyTo: payload.replyTo,
       tags: payload.tags,
+      headers: {
+        'List-Unsubscribe': '<mailto:unsubscribe@bitbit.chat>, <https://app.bitbit.chat/settings/notifications>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     })
 
     if (error) {

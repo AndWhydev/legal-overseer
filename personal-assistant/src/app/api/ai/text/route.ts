@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { assembleContext } from '@/lib/context/assembler'
 import { getPack, resolveIndustry } from '@/lib/industry/registry'
 import { resolveModel } from '@/lib/agent/model-registry'
+import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { logger } from '@/lib/core/logger';
 
 export async function POST(request: Request) {
@@ -11,6 +12,9 @@ export async function POST(request: Request) {
   if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rateLimited = checkUserEndpointLimit(user.id, '/api/ai/text')
+  if (rateLimited) return rateLimited
 
   const { query, context: extraContext } = await request.json() as { query: string; context?: string }
 

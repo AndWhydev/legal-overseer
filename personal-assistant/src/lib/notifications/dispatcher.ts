@@ -144,6 +144,10 @@ export async function dispatchNotification(
               <h2>${params.title}</h2>
               <p>${params.body}</p>
             </div>`,
+            headers: {
+              'List-Unsubscribe': '<mailto:unsubscribe@bitbit.chat>, <https://app.bitbit.chat/settings/notifications>',
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
           })
           result.email = !error
         }

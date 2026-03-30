@@ -37,6 +37,10 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
       to: [to],
       subject,
       html,
+      headers: {
+        'List-Unsubscribe': '<mailto:unsubscribe@bitbit.chat>, <https://app.bitbit.chat/settings/notifications>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     })
 
     if (error) {

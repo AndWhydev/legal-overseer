@@ -24,6 +24,7 @@
     { "path": "/api/cron/billing", "schedule": "0 0 * * *" },
     { "path": "/api/cron/role-tick", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/intelligence", "schedule": "0 */6 * * *" },
-    { "path": "/api/cron/revenue-intelligence", "schedule": "0 20 * * *" }
+    { "path": "/api/cron/revenue-intelligence", "schedule": "0 20 * * *" },
+    { "path": "/api/cron/memory-consolidation", "schedule": "0 3 * * *" }
   ]
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { logger } from '@/lib/core/logger'
 
 const GRACE_PERIOD_DAYS = 30
@@ -10,6 +11,9 @@ export async function DELETE(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rateLimited = checkUserEndpointLimit(user.id, '/api/account/delete')
+  if (rateLimited) return rateLimited
 
   // Get user's org_id
   const { data: profile } = await supabase

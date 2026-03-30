@@ -34,6 +34,10 @@ export async function sendInvoiceEmail(
       to: [options.to],
       subject,
       html: options.html,
+      headers: {
+        'List-Unsubscribe': '<mailto:unsubscribe@bitbit.chat>, <https://app.bitbit.chat/settings/notifications>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     })
 
     if (error) {

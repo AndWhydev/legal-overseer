@@ -9,6 +9,7 @@ import { detectInjection, neutralizeInjection } from '@/lib/agent/injection-guar
 import { addTimingJitter } from '@/lib/security/timing-jitter'
 import { buildAttachmentContentBlocks } from '@/lib/attachments/content-blocks'
 import { authenticateBearer } from '@/lib/supabase/bearer-auth'
+import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { logger } from '@/lib/core/logger'
 
 let registryInitialized = false
@@ -90,6 +91,10 @@ export async function POST(request: NextRequest) {
         || undefined
     }
   }
+
+  // Per-user rate limit
+  const rateLimited = checkUserEndpointLimit(userId, '/api/agent/chat')
+  if (rateLimited) return rateLimited
 
   // Injection detection — silent neutralization
   let processedMessage = message

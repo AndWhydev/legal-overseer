@@ -18,7 +18,7 @@ const ENV_VARS: EnvVarSpec[] = [
 
   // Optional — degraded functionality without these
   { name: 'SENTRY_DSN', required: false },
-  { name: 'CRON_SECRET', required: false },
+  { name: 'CRON_SECRET', required: true },
   { name: 'STRIPE_SECRET_KEY', required: false },
   { name: 'WHATSAPP_VERIFY_TOKEN', required: false },
   { name: 'WHATSAPP_APP_SECRET', required: false },

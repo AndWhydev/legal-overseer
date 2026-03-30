@@ -8,6 +8,7 @@
  * for production scale.
  */
 
+import { NextResponse } from 'next/server'
 import { logger } from '@/lib/core/logger'
 
 interface WindowEntry {
@@ -101,6 +102,45 @@ export function checkApiRateLimit(key: string, config: RateLimitConfig): RateLim
   }
 }
 
+/** Per-user endpoint rate limits (keyed by `${userId}:${endpoint}`) */
+export const USER_ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
+  '/api/ai/text': { maxRequests: 10, windowMs: 60_000 },
+  '/api/ai/voice': { maxRequests: 5, windowMs: 60_000 },
+  '/api/agent/chat': { maxRequests: 10, windowMs: 60_000 },
+  '/api/account/delete': { maxRequests: 3, windowMs: 3_600_000 },
+  '/api/billing/checkout': { maxRequests: 10, windowMs: 3_600_000 },
+  '/api/org/invite': { maxRequests: 10, windowMs: 3_600_000 },
+}
+
+/**
+ * Check per-user rate limit for a specific endpoint.
+ * Returns a 429 NextResponse if rate limited, or null if allowed.
+ */
+export function checkUserEndpointLimit(userId: string, endpoint: string): NextResponse | null {
+  const config = USER_ENDPOINT_LIMITS[endpoint]
+  if (!config) return null
+
+  const result = checkApiRateLimit(`user:${userId}:${endpoint}`, config)
+  if (result.allowed) return null
+
+  logger.warn(`[rate-limiter] User ${userId} rate limited on ${endpoint}`, {
+    endpoint,
+    resetMs: result.resetMs,
+  })
+
+  return NextResponse.json(
+    { error: 'Too many requests' },
+    {
+      status: 429,
+      headers: {
+        'Retry-After': String(Math.ceil(result.resetMs / 1000)),
+        'X-RateLimit-Limit': String(config.maxRequests),
+        'X-RateLimit-Remaining': '0',
+      },
+    },
+  )
+}
+
 /**
  * Determine rate limit tier from a pathname.
  */
@@ -111,7 +151,7 @@ export function getTierForPath(pathname: string): RateLimitConfig {
   if (pathname.startsWith('/api/cron/')) {
     return RATE_LIMIT_TIERS.cron
   }
-  if (pathname.startsWith('/api/channels/')) {
+  if (pathname.startsWith('/api/channels/') || pathname.startsWith('/api/webhooks/')) {
     return RATE_LIMIT_TIERS.webhook
   }
   // Chat SSE gets its own rate limit bucket so dashboard tab fetches can't block it

@@ -16,7 +16,7 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
         query: { type: 'string', description: 'What to search for (sender name, subject keywords, content)' },
         channel: { type: 'string', enum: ['gmail', 'outlook', 'whatsapp', 'sms', 'slack'], description: 'Limit to a specific channel' },
         from: { type: 'string', description: 'Filter by sender name or email' },
-        since: { type: 'string', description: 'ISO date — how far back to look (default: 7 days)' },
+        since: { type: 'string', description: 'ISO date — how far back to look (default: 90 days)' },
         limit: { type: 'number', description: 'Max results (default: 10)' },
         unread_only: { type: 'boolean', description: 'Only return unprocessed/unread messages' },
         folder: { type: 'string', enum: ['inbox', 'sent', 'all'], description: 'Email folder to search (default: inbox). Use "sent" to find emails the user wrote.' },
@@ -959,9 +959,8 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     const query = (input.query as string) || ''
     const channel = input.channel as string | undefined
     const from = input.from as string | undefined
-    // Default to 30 days instead of 7 — users often ask about contacts with older history.
-    // The baseplate may show "last contact: 2 weeks ago" but a 7-day default would miss them.
-    const since = input.since ? new Date(input.since as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    // Default to 90 days — users frequently reference contacts and threads well beyond a week.
+    const since = input.since ? new Date(input.since as string) : new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
     const limit = Math.min((input.limit as number) || 10, 50)
     const unreadOnly = input.unread_only as boolean | undefined
     const folder = (input.folder as string) || 'inbox'

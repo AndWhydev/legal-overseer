@@ -58,6 +58,10 @@ export async function sendApprovalEmail(
       to: [getToEmail()],
       subject: `Approval Needed: ${summary}`,
       html,
+      headers: {
+        'List-Unsubscribe': '<mailto:unsubscribe@bitbit.chat>, <https://app.bitbit.chat/settings/notifications>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     })
 
     if (error) {
@@ -112,6 +116,10 @@ export async function sendEscalationEmail(
       to: [getToEmail()],
       subject: `[${severity.toUpperCase()}] Sentry Escalation: ${summary}`,
       html,
+      headers: {
+        'List-Unsubscribe': '<mailto:unsubscribe@bitbit.chat>, <https://app.bitbit.chat/settings/notifications>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     })
 
     if (error) {
@@ -188,6 +196,10 @@ export async function sendDigestEmail(
       to: [getToEmail()],
       subject: `Daily Approval Digest: ${items.length} items pending`,
       html,
+      headers: {
+        'List-Unsubscribe': '<mailto:unsubscribe@bitbit.chat>, <https://app.bitbit.chat/settings/notifications>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     })
 
     if (error) {
@@ -330,6 +342,10 @@ export async function sendLeadAckEmail(
       to: [getToEmail()],
       subject: `Lead Acknowledged: ${leadName} (${channel})`,
       html,
+      headers: {
+        'List-Unsubscribe': '<mailto:unsubscribe@bitbit.chat>, <https://app.bitbit.chat/settings/notifications>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     })
 
     if (error) {

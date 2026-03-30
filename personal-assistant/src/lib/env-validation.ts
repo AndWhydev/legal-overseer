@@ -119,6 +119,22 @@ const envSchema = z.object({
   // Telegram
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
+
+  // RAG / Vector DB (Pinecone + Voyage)
+  PINECONE_API_KEY: z.string().optional(),
+  PINECONE_INDEX_NAME: z.string().optional().default('bitbit-rag'),
+  VOYAGE_API_KEY: z.string().optional(),
+
+  // Knowledge Graph (Kuzu)
+  KUZU_DB_PATH: z.string().optional(),
+
+  // Lead Discovery (SerpAPI)
+  SERPAPI_KEY: z.string().optional(),
+
+  // Webhook verification secrets
+  EMAIL_WEBHOOK_SECRET: z.string().optional(),
+  ASANA_WEBHOOK_SECRET: z.string().optional(),
+  CALENDLY_WEBHOOK_SIGNING_KEY: z.string().optional(),
 })
 
 export type EnvConfig = z.infer<typeof envSchema>
