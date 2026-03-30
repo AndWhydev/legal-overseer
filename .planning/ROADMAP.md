@@ -5,7 +5,7 @@
 - v1.0 MVP -- Phases 1-6 (shipped 2026-02-21)
 - v1.1 Agent Runtime + First Agents -- Phases 7-12 (shipped 2026-02-22)
 - v1.2 Battle-Testing & Sellability -- Phases 13-19 (shipped 2026-03-02)
-- v1.4 Media, Billing & Growth Roles -- Phases 20-29 (in progress, gap closure phases 27-29 pending)
+- ✅ v1.4 Media, Billing & Growth Roles — Phases 20-28 (shipped 2026-03-27)
 - ✅ v1.5 Beta Launch & First Revenue — Phases 29-36 (shipped 2026-03-28)
 
 ## Phases
@@ -179,56 +179,27 @@ Plans:
 
 </details>
 
-### v1.4 Media, Billing & Growth Roles
+<details>
+<summary>v1.4 Media, Billing & Growth Roles (Phases 20-28) -- SHIPPED 2026-03-27</summary>
 
-**Milestone Goal:** Close the media gap (file attachments in chat), add Stripe billing infrastructure for public launch readiness, and ship Growth Roles that extend the agent engine into marketing/content/sales domains.
+- [x] Phase 20: File Attachments & Multimedia (3/3 plans) -- completed 2026-03-18
+- [x] Phase 20b: Role Engine Foundation (4/4 plans) -- completed 2026-03-26
+- [x] Phase 21: Billing Infrastructure (3/3 plans) -- completed 2026-03-18
+- [x] Phase 21b: Finance Role (3/3 plans) -- completed 2026-03-26
+- [x] Phase 22: Cost Controls & Ad Script Generator (2/2 plans) -- completed 2026-03-18
+- [x] Phase 22b: Comms Role (3/3 plans) -- completed 2026-03-26
+- [x] Phase 23: SEO Monitor & Tender Hunter (2/2 plans) -- completed 2026-03-18
+- [x] Phase 23b: Sales Role (3/3 plans) -- completed 2026-03-26
+- [x] Phase 24: Content Creator (1/1 plan) -- completed 2026-03-18
+- [x] Phase 24b: Intelligence Layer (3/3 plans) -- completed 2026-03-26
+- [x] Phase 25: Role Dashboard (3/3 plans) -- completed 2026-03-26
+- [x] Phase 26: SOTA Response Drafter (2/2 plans) -- completed 2026-03-26
+- [x] Phase 27: Role Runtime Import Fix (1/1 plan) -- completed 2026-03-27
+- [x] Phase 28: Intelligence Dashboard Wiring (1/1 plan) -- completed 2026-03-27
 
-- [x] **Phase 20: File Attachments & Multimedia** - Users can upload, preview, and have BitBit analyse files in chat (completed 2026-03-18)
-- [x] **Phase 21: Billing Infrastructure** - Stripe subscription lifecycle, plan gating, usage metering, and pricing page (completed 2026-03-18)
-- [x] **Phase 22: Cost Controls & Ad Script Generator** - Per-execution budgets protect against token spirals; first growth role proves the pattern (completed 2026-03-18)
-- [x] **Phase 23: SEO Monitor & Tender Hunter** - Wrap existing 700+ LOC implementations as plan-gated agent tools with scheduled ticks (completed 2026-03-18)
-- [x] **Phase 24: Content Creator** - Social media post drafting and blog generation via chat with platform-specific formatting (completed 2026-03-18)
-- [x] **Phase 22b: Comms Role** - Wraps channel triage as a role with follow-up tracking, relationship monitoring, tone adaptation, and escalation workflows (completed 2026-03-26)
-- [x] **Phase 23b: Sales Role** - Wraps lead swarm as a role with proposal generation, lead nurture, client onboarding, win/loss learning, and pipeline analytics (completed 2026-03-26)
-- [x] **Phase 24b: Intelligence Layer** - Revenue radar, client health scoring, cash flow projections, capacity oracle, cron recomputation, and API routes (completed 2026-03-26)
-- [x] **Phase 25: Role Dashboard** - Unified role activity feed, status cards, autonomy controls, attention view, intelligence widgets, and dashboard integration (completed 2026-03-26)
-- [x] **Phase 26: SOTA Response Drafter** - Wire ContextAssembler + RAG + Memory Palace + entity briefings into the response drafter for contextually rich, business-aware reply generation (completed 2026-03-26)
-- [x] **Phase 27: Role Runtime Import Fix** - Fix critical role domain module imports so cron-triggered role execution actually fires (gap closure, completed 2026-03-27)
-- [x] **Phase 28: Intelligence Dashboard Wiring** - Wire IntelligenceWidgets to correct API endpoints so dashboard displays live data (gap closure) (completed 2026-03-27)
-- [x] **Phase 29: SEO/Tender Scheduled Monitoring** - Add scheduled ticks and alert pathways for SEO and Tender tools (gap closure) (completed 2026-03-27)
+Full details: milestones/v1.4-ROADMAP.md
 
-## Phase Details
-
-(v1.4 phase details omitted for brevity -- see git history for full phase detail entries)
-
-### Phase 27: Role Runtime Import Fix
-**Goal**: Role domain modules are imported in the cron runtime path so scheduled role execution actually fires -- finance, comms, and sales roles execute on their 5-minute tick
-**Depends on**: Phase 26 (current codebase)
-**Gap Closure**: Closes critical integration gap + "Role scheduled execution" broken flow from audit
-**Requirements**: ROLE-RUNTIME-01, ROLE-RUNTIME-02
-**Plans**: 1 plan
-
-Plans:
-- [x] 27-01-PLAN.md -- Side-effect imports for domain role registration + revenue-intelligence cron entry
-
-### Phase 28: Intelligence Dashboard Wiring
-**Goal**: IntelligenceWidgets fetches from the correct /api/intelligence/[metric] endpoints and displays live business intelligence data instead of permanent "Gathering data..." state
-**Depends on**: Phase 27 (role runtime must work to produce intelligence data)
-**Gap Closure**: Closes major integration gap + "Intelligence dashboard display" broken flow from audit
-**Requirements**: INT-WIRE-01, INT-WIRE-02, INT-WIRE-03, INT-WIRE-04
-**Plans**: 1 plan
-
-Plans:
-- [ ] 28-01-PLAN.md -- Rewire widget fetch to /api/intelligence/[metric] endpoints with response shape mapping
-
-### Phase 29: SEO/Tender Scheduled Monitoring
-**Goal**: SEO and Tender tools run on scheduled ticks and proactively alert users of ranking drops and new tender matches without requiring chat invocation
-**Depends on**: Phase 27 (role runtime must work for role-based scheduling)
-**Requirements**: SEO-03, SEO-04, TNDR-03, TNDR-04
-**Plans**: 1 plan
-
-Plans:
-- [ ] 29-01-PLAN.md -- Growth role implementation (DB migration, type extension, SEO/Tender monitor wrappers, cron wiring, tests)
+</details>
 
 <details>
 <summary>v1.5 Beta Launch & First Revenue (Phases 29-36) -- SHIPPED 2026-03-28</summary>
@@ -272,12 +243,14 @@ Plans:
 | 18. Integration Fixes & Tech Debt | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 19. Credential Provisioning & Live Verification | v1.2 | 3/3 | Complete | 2026-03-02 |
 | 20. File Attachments & Multimedia | v1.4 | 3/3 | Complete | 2026-03-18 |
+| 20b. Role Engine Foundation | v1.4 | 4/4 | Complete | 2026-03-26 |
 | 21. Billing Infrastructure | v1.4 | 3/3 | Complete | 2026-03-18 |
+| 21b. Finance Role | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 22. Cost Controls & Ad Script Generator | v1.4 | 2/2 | Complete | 2026-03-18 |
-| 23. SEO Monitor & Tender Hunter | v1.4 | 2/2 | Complete | 2026-03-18 |
-| 24. Content Creator | v1.4 | 1/1 | Complete | 2026-03-18 |
 | 22b. Comms Role | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 23. SEO Monitor & Tender Hunter | v1.4 | 2/2 | Complete | 2026-03-18 |
 | 23b. Sales Role | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 24. Content Creator | v1.4 | 1/1 | Complete | 2026-03-18 |
 | 24b. Intelligence Layer | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
 | 26. SOTA Response Drafter | v1.4 | 2/2 | Complete | 2026-03-26 |
@@ -292,4 +265,4 @@ Plans:
 | 35. Proactive Workflows | v1.5 | 3/3 | Complete | 2026-03-27 |
 | 36. Mobile-First Experience | v1.5 | 4/4 | Complete | 2026-03-28 |
 
-**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 28/28 plans complete (100%). v1.5: 22/22 plans complete (100%).
+**Overall:** 57/57 plans complete for v1.0+v1.1+v1.2 (100%). v1.4: 34/34 plans complete (100%). v1.5: 22/22 plans complete (100%).

@@ -43,42 +43,51 @@ BitBit understands the business better than the business owner — when Andy say
 - ✓ Integration fixes: TypeScript errors resolved, ignoreBuildErrors removed, relay daemon wired, Fly.io worker live — v1.2
 - ✓ Credential provisioning: OAuth credentials, WhatsApp bridge deployment, smoke test verification — v1.2
 
+- ✓ File attachments: upload via Paperclip/drag-drop, signed URLs, inline previews, AI analysis (Vision + text extraction), org-scoped storage — v1.4
+- ✓ Stripe billing: consolidated webhook, subscription lifecycle, plan gating at tool execution layer, usage metering, 30-day trial, pricing page, customer portal — v1.4
+- ✓ Cost controls: per-execution token budgets, per-role daily limits, circuit breakers — v1.4
+- ✓ Growth tools: Ad Script Generator, SEO Monitor, Tender Hunter, Content Creator — all plan-gated — v1.4
+- ✓ Role engine: composable RoleImplementation interface, autonomy levels, role tick scheduler — v1.4
+- ✓ Domain roles: Finance, Comms, Sales, Intelligence Layer — v1.4
+- ✓ Role dashboard: activity feed, status cards, autonomy controls, attention view, intelligence widgets — v1.4
+- ✓ SOTA response drafter: ContextAssembler + RAG + Memory Palace + entity briefings + tone adaptation — v1.4
+- ✓ Gap closure: role runtime imports, intelligence dashboard wiring — v1.4
+
+- ✓ Onboarding E2E: 5-stage wizard, first-run discovery, welcome conversation, empty states — v1.5
+- ✓ Marketing site: landing page, 3 industry pages, pricing with Stripe Checkout, AWU case study — v1.5
+- ✓ Beta program: invite flow, daily tips, feedback widget, admin usage dashboard — v1.5
+- ✓ Builder role: website generation via chat, template library, WordPress/Elementor export, preview sandbox — v1.5
+- ✓ Proactive workflows: NL rule parser, trigger engine, cross-role tool bridge, workflow dashboard — v1.5
+- ✓ Mobile app: Expo/React Native, chat with streaming, voice input, push notifications, offline queue — v1.5
+
 ### Active
 
-## Current Milestone: v1.4 Media, Billing & Growth Roles
-
-**Goal:** Close the media gap (file attachments and multimedia in chat), add Stripe billing infrastructure for public launch readiness, and ship Growth Roles that extend the v1.3 role engine into marketing/content/sales domains.
-
-**Target features:**
-- File Attachments & Multimedia — upload files in chat, inline image/PDF preview, pipeline processing (BitBit can read/analyse attachments), Paperclip button wired
-- Stripe Billing & Trial — subscription lifecycle, usage metering per role, plan gating, 30-day trial, pricing page
-- Growth Roles — SEO Role (ranking monitoring, fix implementation), Content Role (social scheduling, blog writing), Builder Role (agentic website/app construction), Ad Script Generator, Tender Hunter
-
-**Active requirements:** See REQUIREMENTS.md
+(No active requirements — next milestone not yet started)
 
 ### Out of Scope
 
-- Marketing website, public launch, self-serve signup — v1.5
 - CUA (computer-using agent) — future
-- Mobile app — not planned
-- Real-time chat — high complexity, not core value
+- Real-time collaborative editing — not core value
 - Custom role builder — premature, ship built-in roles first
+- Video file processing — storage costs, low ROI
+- Voice Agent (Eleven Labs) — deferred, needs validated demand
 
 ## Context
 
-Shipped v1.0 MVP with 34,483 LOC TypeScript.
-Tech stack: Next.js 16, Supabase (ap-southeast-2), Vercel, Anthropic API.
-Monorepo: `personal-assistant/` (dashboard), `packages/core` (types/registry), `src/` (agent engine).
-24 database tables (12 existing + 12 new) with full RLS.
-Semantic context engine operational: entity resolution, relationship graph, timeline, context assembler.
-Agent infrastructure built: registry, confidence routing, shared CRUD tools (needs production verification).
+Shipped through v1.5 with ~100K+ LOC TypeScript across 5 milestones (36 phases, 113 plans).
+Tech stack: Next.js 16, React 19, Supabase (Mumbai), Vercel (dashboard), Fly.io (workers), Cloudflare (edge cron), Anthropic API.
+Monorepo: `personal-assistant/` (deployed dashboard), `packages/core` (types), `mobile/` (Expo React Native app).
+120+ database migrations, 100+ tables with RLS.
+Full agent engine: 5 domain roles (finance, comms, sales, growth, intelligence), composable role architecture, SOTA response drafter.
+Billing: Stripe subscription lifecycle, plan gating, usage metering, 30-day trial, pricing page.
+Marketing: landing page, industry pages, case study, beta program with invite flow.
+Mobile: React Native/Expo app with streaming chat, voice input, push notifications, offline queue.
 
 ## Constraints
 
-- **Deployment**: Vercel for dashboard, Hetzner VPS for daemon processes — macOS adapters cannot deploy to cloud
-- **Serverless limits**: Vercel 30s timeout risks IMAP connections — may need Gmail API migration
-- **Architectural risk**: Supabase module-level client pattern blocks multi-tenant — requires DI refactor (~8-12 hrs)
-- **Budget**: Minimal infra spend — $49/mo ($4 new on top of existing Vercel $20 + Supabase $25)
+- **Deployment**: Vercel for dashboard, Fly.io Sydney for workers, Cloudflare for edge cron
+- **Supabase**: Mumbai region, 120+ migrations with some sequence gaps
+- **Budget**: Production infra ~$70/mo (Vercel $20, Supabase $25, Fly.io $15, misc $10)
 
 ## Key Decisions
 
@@ -95,4 +104,4 @@ Agent infrastructure built: registry, confidence routing, shared CRUD tools (nee
 | Entity context capped at 4000 chars | Stay within token budget while providing context | ⚠️ Revisit — may need dynamic budget |
 
 ---
-*Last updated: 2026-03-18 after v1.3 milestone start*
+*Last updated: 2026-03-31 after v1.4 + v1.5 milestones*

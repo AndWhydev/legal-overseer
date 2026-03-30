@@ -1,5 +1,31 @@
 # Milestones
 
+## v1.4 Media, Billing & Growth Roles (Shipped: 2026-03-27)
+
+**Phases completed:** 14 phases (20-28), 34 plans
+**Timeline:** 10 days (2026-03-18 → 2026-03-27)
+**Stats:** 342 commits, 2,383 files changed, 193,719 insertions
+**Requirements:** 44/44 satisfied (MEDIA, BILL, COST, ADS, SEO, TNDR, CONT, ROLE-RUNTIME)
+
+### Delivered
+1. File upload pipeline: signed URLs, Supabase Storage, inline previews, AI analysis of uploads
+2. Stripe billing: subscription lifecycle, plan gating, usage metering, pricing page, 30-day trial
+3. Role engine foundation: 5 architecture tables, composable RoleImplementation interface, autonomy levels
+4. 5 domain roles: Finance, Comms, Sales, Growth (SEO/Tender/Ads/Content), Intelligence
+5. Cost controls: per-execution token budgets, daily limits, circuit breakers
+6. SOTA response drafter: ContextAssembler + RAG + Memory Palace for business-aware replies
+7. Intelligence layer: revenue radar, client health scoring, cash flow projections, capacity oracle
+8. Role dashboard: activity feed, status cards, autonomy controls, attention view, intelligence widgets
+9. Gap closure: role runtime imports (Phase 27), intelligence dashboard wiring (Phase 28)
+
+### Known Gaps (Tech Debt)
+- 9/14 phases missing VERIFICATION.md (verification coverage debt)
+- `convertTrial()` references British spelling `organisations` (dormant bug)
+- `content_calendar` tool returns empty stub (no content_drafts table)
+- Duplicate migration sequence prefixes (092, 093)
+
+---
+
 ## v1.0 MVP (Shipped: 2026-02-21)
 
 **Phases completed:** 6 phases, 19 plans

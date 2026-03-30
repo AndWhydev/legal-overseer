@@ -3,89 +3,40 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Beta Launch & First Revenue
 status: shipped
-stopped_at: v1.5 milestone archived
-last_updated: "2026-03-28T12:00:00.000Z"
-last_activity: "2026-03-28 - Archived v1.5 milestone (8 phases, 22 plans shipped)"
+stopped_at: v1.4 + v1.5 milestones archived
+last_updated: "2026-03-31T00:00:00.000Z"
+last_activity: "2026-03-31 - Archived v1.4 milestone (14 phases, 34 plans)"
 progress:
-  total_phases: 22
-  completed_phases: 14
-  total_plans: 41
-  completed_plans: 39
-  percent: 33
+  total_phases: 36
+  completed_phases: 36
+  total_plans: 113
+  completed_plans: 113
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-18)
+See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** v1.5 complete, next milestone TBD
+**Current focus:** All milestones through v1.5 shipped. Next milestone TBD.
 
 ## Current Position
 
-Phase: v1.5 complete (all 36 phases shipped)
-Plan: N/A (milestone archived)
-Status: v1.5 shipped 2026-03-28
-Last activity: 2026-03-28 - Archived v1.5 milestone
+Phase: All 36 phases shipped (v1.0 through v1.5)
+Plan: N/A (milestones archived)
+Status: v1.4 archived 2026-03-31, v1.5 archived 2026-03-28
+Last activity: 2026-03-31 - Archived v1.4 milestone
 
 Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ======== | 100%
 
 ## Performance Metrics
 
 **Delivery totals:**
-- Total plans completed: 106 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 28, v1.5: 22)
-- Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02), v1.4 (2026-03-26), v1.5 (2026-03-28)
-
-**v1.4 Phases:**
-
-| Phase | Plans | Status |
-|-------|-------|--------|
-| 20. File Attachments & Multimedia | 3 | COMPLETE |
-| 21. Billing Infrastructure | 3 | COMPLETE |
-| 22. Cost Controls & Ad Script Generator | 2 | COMPLETE |
-| 23. SEO Monitor & Tender Hunter | 2 | COMPLETE |
-| 24. Content Creator | 1 | COMPLETE |
-| 22b. Comms Role | 3 | COMPLETE |
-| 23b. Sales Role | 3 | COMPLETE |
-| 24b. Intelligence Layer | 3 | COMPLETE |
-| 25. Role Dashboard | 3 | COMPLETE |
-| 27. Role Runtime Fix | 1 | COMPLETE |
-| 28. Intelligence Dashboard Wiring | 1 | COMPLETE |
-
-**v1.5 Phases (SHIPPED 2026-03-28):**
-
-| Phase | Plans | Status |
-|-------|-------|--------|
-| 29. SEO/Tender Scheduled Monitoring | 1 | COMPLETE |
-| 30. Onboarding E2E | 3 | COMPLETE |
-| 31. Channel Smoke Tests | 3 | COMPLETE |
-| 32. Marketing Site & Checkout | 3 | COMPLETE |
-| 33. Beta Program Infrastructure | 1 | COMPLETE |
-| 34. Builder Role | 4 | COMPLETE |
-| 35. Proactive Workflows | 3 | COMPLETE |
-| 36. Mobile-First Experience | 4 | COMPLETE |
-| Phase 30 P03 | 25min | 2 tasks | 6 files |
-| Phase 32 P03 | 26 | 2 tasks | 9 files |
-| Phase 29 P01 | 15min | 3 tasks | 10 files |
-| Phase 30 P02 | 13min | 2 tasks | 5 files |
-| Phase 30 P01 | 20min | 3 tasks | 4 files |
-| Phase 31 P01 | 9min | 2 tasks | 5 files |
-| Phase 31 P02 | 7min | 2 tasks | 1 file |
-| Phase 32 P02 | 14min | 2 tasks | 5 files |
-| Phase 32 P01 | 15min | 2 tasks | 15 files |
-| Phase 34 P01 | 20min | 3 tasks | 17 files |
-| Phase 34 P02 | 9min | 2 tasks | 5 files |
-| Phase 34 P03 | 15min | 2 tasks | 4 files |
-| Phase 34 P04 | 12min | 2 tasks | 7 files |
-| Phase 35 P01 | 27min | 2 tasks | 7 files |
-| Phase 35 P02 | 15min | 2 tasks | 4 files |
-| Phase 35 P03 | 19min | 2 tasks | 8 files |
-| Phase 36 P01 | 18min | 2 tasks | 17 files |
-| Phase 36 P02 | 14min | 2 tasks | 9 files |
-| Phase 36 P03 | 22min | 2 tasks | 12 files |
-| Phase 36 P04 | 10min | 3 tasks | 9 files |
+- Total plans completed: 113 (v1.0: 19, v1.1: 16, v1.2: 22, v1.4: 34, v1.5: 22)
+- Milestones shipped: v1.0 (2026-02-21), v1.1 (2026-02-22), v1.2 (2026-03-02), v1.4 (2026-03-27), v1.5 (2026-03-28)
 
 ## Accumulated Context
 
