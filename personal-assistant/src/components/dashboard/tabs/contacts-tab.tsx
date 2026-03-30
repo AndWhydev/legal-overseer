@@ -4,10 +4,15 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   IconSearch,
   IconChevronRight,
+  IconChevronDown,
   IconMail,
   IconPhone,
   IconUsers,
   IconAlertCircle,
+  IconUser,
+  IconTarget,
+  IconHeartHandshake,
+  IconBuildingStore,
 } from '@tabler/icons-react'
 import { Input } from '@/components/ui/input'
 import {
@@ -31,6 +36,11 @@ import {
   EmptyMedia,
   EmptyContent,
 } from '@/components/ui/empty'
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '@/components/ui/collapsible'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
 import { EntityDetailDrawer } from '@/components/dashboard/entity-detail-drawer'
 import { ContactsPageTooltip } from '@/components/onboarding/first-run-guide'
@@ -104,6 +114,14 @@ const CONTACT_TYPE_VARIANT: Record<string, 'default' | 'secondary' | 'outline' |
   partner: 'outline',
   vendor: 'outline',
 }
+
+// Type groups with display metadata (order matters)
+const CONTACT_TYPE_GROUPS: { key: string; label: string; icon: React.ElementType }[] = [
+  { key: 'client', label: 'Clients', icon: IconUser },
+  { key: 'lead', label: 'Leads', icon: IconTarget },
+  { key: 'partner', label: 'Partners', icon: IconHeartHandshake },
+  { key: 'vendor', label: 'Vendors', icon: IconBuildingStore },
+]
 
 // Component
 
@@ -288,25 +306,45 @@ function ContactsTab() {
             </Select>
           </div>
 
-          {/* Contact Grid */}
+          {/* Grouped Contacts */}
           {filtered.length === 0 ? (
             <Empty className="py-8">
               <EmptyHeader>
                 <EmptyTitle>No matches</EmptyTitle>
-                <EmptyDescription>No contacts matching "{search}"</EmptyDescription>
+                <EmptyDescription>No contacts matching &ldquo;{search}&rdquo;</EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (
-            <div className="flex flex-col gap-2">
-              {filtered.map((contact, index) => (
-                <ContactCard
-                  key={String(contact.id ?? `${contact.name ?? 'contact'}-${index}`)}
-                  contact={contact}
-                  onOpen={() => {
-                    if (contact.id != null) setSelectedContactId(String(contact.id))
-                  }}
-                />
-              ))}
+            <div className="flex flex-col gap-3">
+              {CONTACT_TYPE_GROUPS.map((group) => {
+                const groupContacts = filtered.filter(
+                  (c) => (c.type ?? 'client') === group.key,
+                )
+                if (groupContacts.length === 0) return null
+                return (
+                  <ContactGroup
+                    key={group.key}
+                    group={group}
+                    contacts={groupContacts}
+                    onOpenContact={(id) => setSelectedContactId(id)}
+                  />
+                )
+              })}
+              {/* Ungrouped contacts (types not in CONTACT_TYPE_GROUPS) */}
+              {(() => {
+                const knownTypes = new Set(CONTACT_TYPE_GROUPS.map((g) => g.key))
+                const ungrouped = filtered.filter(
+                  (c) => !knownTypes.has(c.type ?? 'client'),
+                )
+                if (ungrouped.length === 0) return null
+                return (
+                  <ContactGroup
+                    group={{ key: 'other', label: 'Other', icon: IconUsers }}
+                    contacts={ungrouped}
+                    onOpenContact={(id) => setSelectedContactId(id)}
+                  />
+                )
+              })()}
             </div>
           )}
         </div>
@@ -332,6 +370,52 @@ function StatPill({ value, label, active }: { value: number | string; label: str
       </span>
       <span className="text-xs text-muted-foreground">{label}</span>
     </span>
+  )
+}
+
+// Contact Group (collapsible section by type)
+
+function ContactGroup({
+  group,
+  contacts,
+  onOpenContact,
+}: {
+  group: { key: string; label: string; icon: React.ElementType }
+  contacts: Contact[]
+  onOpenContact: (id: string) => void
+}) {
+  const [open, setOpen] = useState(true)
+  const Icon = group.icon
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+          <Icon size={15} className="shrink-0" />
+          <span>{group.label}</span>
+          <Badge variant="secondary" className="ml-0.5 text-[10px] px-1.5 py-0 tabular-nums">
+            {contacts.length}
+          </Badge>
+          <IconChevronDown
+            size={14}
+            className={`ml-auto shrink-0 transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="flex flex-col gap-1.5 pt-1">
+          {contacts.map((contact, index) => (
+            <ContactCard
+              key={String(contact.id ?? `${contact.name ?? 'contact'}-${index}`)}
+              contact={contact}
+              onOpen={() => {
+                if (contact.id != null) onOpenContact(String(contact.id))
+              }}
+            />
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
 
