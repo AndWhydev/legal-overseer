@@ -1,5 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { resolveModel } from '@/lib/agent/model-registry'
+import { z } from 'zod'
+import { createStructuredTool, parseStructuredOutput } from '@/lib/agent/schemas/structured-output'
+import { logger } from '@/lib/core/logger'
 import type { ToolGroup } from './tools'
 
 export interface PlanOutput {
@@ -52,6 +55,32 @@ export function isTrivialMessage(message: string): boolean {
   return TRIVIAL_PATTERNS.some(p => p.test(trimmed))
 }
 
+// ---------------------------------------------------------------------------
+// Structured Output Schema for the Planner
+// ---------------------------------------------------------------------------
+
+const PlanStageSchema = z.object({
+  id: z.string().describe('snake_case identifier (e.g. "resolve_contact", "create_task")'),
+  label: z.string().describe('User-facing name, 2-3 words max (e.g. "Steve West", "New Task")'),
+  sublabel: z.string().optional().describe('Uppercase action verb, 1-2 words (e.g. "RESOLVING", "CREATING")'),
+  icon: z.string().describe('Single emoji representing the stage'),
+  toolHint: z.string().optional().describe('The tool name BitBit will likely call'),
+})
+
+export { PlanStageSchema }
+
+const PlanOutputSchema = z.object({
+  stages: z.array(PlanStageSchema).min(1).max(4)
+    .describe('Array of 1-4 execution stages, focused on what matters to the user'),
+  toolGroups: z.array(z.string())
+    .describe('Tool groups needed (do NOT include "core" — it is always added). Available: memory, channel, web, comms, agentic'),
+})
+
+export { PlanOutputSchema }
+
+/** Whether to use structured output (tool_use) for planning. Opt-in via env var. */
+const USE_STRUCTURED_PLANNER = process.env.BITBIT_STRUCTURED_PLANNER === 'true'
+
 const PLANNER_SYSTEM = `You are a planning assistant for BitBit, an AI operations platform. Given a user request and context, output a JSON object with execution stages and tool group selections.
 
 Each stage object has:
@@ -84,8 +113,102 @@ Output ONLY the JSON object, no markdown fences or explanation.`
  * Call Haiku to generate a user-meaningful execution plan with tool group selections.
  * Returns stages (2-4 UI steps) and toolGroups (which tool groups to load).
  * Falls back to empty stages/toolGroups on failure (caller handles fallback).
+ *
+ * When BITBIT_STRUCTURED_PLANNER=true, uses Zod-validated structured output
+ * via tool_use for reliable parsing. Otherwise falls back to text-based JSON parsing.
  */
 export async function generatePlan(
+  message: string,
+  entityContext: string,
+  toolNames: string[]
+): Promise<PlanOutput> {
+  if (USE_STRUCTURED_PLANNER) {
+    return generatePlanStructured(message, entityContext, toolNames)
+  }
+  return generatePlanLegacy(message, entityContext, toolNames)
+}
+
+/**
+ * Structured output path: uses tool_use with Zod schema validation.
+ * Claude is forced to return output matching PlanOutputSchema.
+ */
+async function generatePlanStructured(
+  message: string,
+  entityContext: string,
+  toolNames: string[]
+): Promise<PlanOutput> {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+  const systemPrompt = PLANNER_SYSTEM.replace('TOOL_NAMES', toolNames.join(', '))
+  const userPrompt = entityContext
+    ? `User request: "${message}"\n\nKnown context:\n${entityContext}`
+    : `User request: "${message}"`
+
+  const structuredTool = createStructuredTool(PlanOutputSchema, {
+    name: 'generate_plan',
+    description: 'Generate an execution plan with stages and tool group selections for the user request.',
+  })
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 3000)
+
+  try {
+    const response = await client.messages.create(
+      {
+        model: resolveModel('classification'),
+        max_tokens: 512,
+        system: systemPrompt,
+        tools: [structuredTool.tool],
+        tool_choice: structuredTool.toolChoice,
+        messages: [{ role: 'user', content: userPrompt }],
+      },
+      { signal: controller.signal }
+    )
+
+    clearTimeout(timeout)
+
+    const result = parseStructuredOutput(response, structuredTool)
+
+    if (!result.success) {
+      logger.warn('[planner] Structured output failed, falling back to empty plan', {
+        error: result.error,
+      })
+      return { stages: [], toolGroups: [] }
+    }
+
+    const data = result.data
+
+    // Map validated output to PlanOutput format
+    const stages: PlanStage[] = data.stages.map((s: z.infer<typeof PlanStageSchema>) => ({
+      id: s.id,
+      label: s.label,
+      sublabel: s.sublabel,
+      icon: s.icon,
+      toolHint: s.toolHint,
+    }))
+
+    // Validate tool groups: filter to only known valid groups, exclude 'core'
+    const toolGroups = (data.toolGroups ?? []).filter(
+      (g: string): g is ToolGroup => typeof g === 'string' && g !== 'core' && VALID_TOOL_GROUPS.has(g as ToolGroup)
+    )
+
+    logger.info('[planner] Structured plan generated', {
+      stageCount: stages.length,
+      toolGroups,
+    })
+
+    return { stages, toolGroups }
+  } catch {
+    clearTimeout(timeout)
+    return { stages: [], toolGroups: [] }
+  }
+}
+
+/**
+ * Legacy text-based path: parses free-form JSON from Claude's text response.
+ * Kept as fallback when structured output is not enabled.
+ */
+async function generatePlanLegacy(
   message: string,
   entityContext: string,
   toolNames: string[]
