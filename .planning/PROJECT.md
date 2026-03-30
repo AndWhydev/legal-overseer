@@ -62,11 +62,20 @@ BitBit understands the business better than the business owner — when Andy say
 
 ### Active
 
-(No active requirements — next milestone not yet started)
+#### Current Milestone: v2.0 Autonomous Execution
+
+**Goal:** Transform BitBit from an agent that understands and plans into one that autonomously executes real-world tasks — browser automation, multi-step workflows, async background jobs — reliably and generically across industries.
+
+**Target features:**
+- Computer Use Agent (CUA) — browser automation as universal execution fallback
+- Long-running async task executor — background jobs with multi-step orchestration, failure handling, completion reporting
+- Tool priority chain — structured API first → browser fallback → human handoff
+- Workflow learning — remember successful execution patterns for reuse
+- Execution verification — confirm tasks completed, screenshot evidence, status reporting
 
 ### Out of Scope
 
-- CUA (computer-using agent) — future
+- ~~CUA (computer-using agent) — future~~ → Now active in v2.0
 - Real-time collaborative editing — not core value
 - Custom role builder — premature, ship built-in roles first
 - Video file processing — storage costs, low ROI
@@ -104,4 +113,4 @@ Mobile: React Native/Expo app with streaming chat, voice input, push notificatio
 | Entity context capped at 4000 chars | Stay within token budget while providing context | ⚠️ Revisit — may need dynamic budget |
 
 ---
-*Last updated: 2026-03-31 after v1.4 + v1.5 milestones*
+*Last updated: 2026-03-31 after v2.0 milestone started*

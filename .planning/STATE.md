@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.5
-milestone_name: Beta Launch & First Revenue
-status: shipped
-stopped_at: v1.4 + v1.5 milestones archived
+milestone: v2.0
+milestone_name: Autonomous Execution
+status: defining_requirements
+stopped_at: null
 last_updated: "2026-03-31T00:00:00.000Z"
-last_activity: "2026-03-31 - Archived v1.4 milestone (14 phases, 34 plans)"
+last_activity: "2026-03-31 - Milestone v2.0 started"
 progress:
-  total_phases: 36
-  completed_phases: 36
-  total_plans: 113
-  completed_plans: 113
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** BitBit understands the business better than the business owner -- when Andy says "Invoice Sezer for the White House RE work", BitBit knows who Sezer is, what the work was, the rate, and whether it's already been invoiced.
-**Current focus:** All milestones through v1.5 shipped. Next milestone TBD.
+**Current focus:** v2.0 Autonomous Execution — defining requirements
 
 ## Current Position
 
-Phase: All 36 phases shipped (v1.0 through v1.5)
-Plan: N/A (milestones archived)
-Status: v1.4 archived 2026-03-31, v1.5 archived 2026-03-28
-Last activity: 2026-03-31 - Archived v1.4 milestone
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-31 — Milestone v2.0 started
 
-Progress: v1.0 ======== | v1.1 ======== | v1.2 ======== | v1.4 ======== | v1.5 ======== | 100%
+Progress: v1.0-v1.5 ✓ | v2.0 ░░░░░░░░░░ 0%
 
 ## Performance Metrics
 
