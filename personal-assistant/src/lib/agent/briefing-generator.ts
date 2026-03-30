@@ -51,6 +51,7 @@ export async function generateMondayBriefing(
     approvalsSection,
     relationshipSection,
     leadsSection,
+    suggestedActionsSection,
   ] = await Promise.all([
     fetchUpcomingEvents(supabase, orgId),
     fetchOverdueInvoices(supabase, orgId),
@@ -58,6 +59,7 @@ export async function generateMondayBriefing(
     fetchPendingApprovals(supabase, orgId),
     fetchRelationshipAlerts(supabase, orgId),
     fetchRecentLeads(supabase, orgId),
+    fetchSuggestedActions(supabase, orgId),
   ])
 
   const sections = [
@@ -65,6 +67,7 @@ export async function generateMondayBriefing(
     overdueSection,
     pipelineSection,
     approvalsSection,
+    suggestedActionsSection,
     relationshipSection,
     leadsSection,
   ]
@@ -73,7 +76,8 @@ export async function generateMondayBriefing(
     totalActionItems:
       overdueSection.items.length +
       approvalsSection.items.length +
-      relationshipSection.items.length,
+      relationshipSection.items.length +
+      suggestedActionsSection.items.length,
     overdueInvoiceTotal: parseFloat(overdueSection.metric?.toString() ?? '0'),
     pipelineValue: parseFloat(pipelineSection.metric?.toString() ?? '0'),
     pendingApprovals: approvalsSection.items.length,
@@ -403,6 +407,80 @@ async function fetchRecentLeads(
     logger.warn('[briefing] Failed to fetch recent leads', { error: err })
     return { key: 'leads', title: 'Recent Leads (7 days)', emoji: '\u{1F525}', items: [] }
   }
+}
+
+async function fetchSuggestedActions(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<BriefingSection> {
+  const items: BriefingItem[] = []
+
+  try {
+    // 1. Overdue invoices that could be auto-chased
+    const { data: overdueInvoices } = await supabase
+      .from('invoices')
+      .select('invoice_number, total, due_date, contacts(name)')
+      .eq('org_id', orgId)
+      .eq('status', 'overdue')
+      .order('due_date', { ascending: true })
+      .limit(3)
+
+    for (const inv of overdueInvoices ?? []) {
+      const contact = (inv as Record<string, unknown>).contacts as { name: string } | null
+      const daysOverdue = inv.due_date
+        ? Math.floor((Date.now() - new Date(inv.due_date).getTime()) / (1000 * 60 * 60 * 24))
+        : 0
+      if (daysOverdue >= 3) {
+        items.push({
+          label: `Chase invoice #${inv.invoice_number} (${contact?.name ?? 'Unknown'}, $${inv.total})`,
+          detail: `${daysOverdue}d overdue -- reply "chase" to send reminder`,
+          urgency: daysOverdue > 14 ? 'critical' : 'high',
+        })
+      }
+    }
+
+    // 2. Stale leads that need follow-up
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: staleLeads } = await supabase
+      .from('leads')
+      .select('company_name, stage, updated_at')
+      .eq('org_id', orgId)
+      .in('stage', ['new', 'qualified'])
+      .lt('updated_at', threeDaysAgo)
+      .order('updated_at', { ascending: true })
+      .limit(3)
+
+    for (const lead of staleLeads ?? []) {
+      const daysSince = Math.floor((Date.now() - new Date(lead.updated_at).getTime()) / (1000 * 60 * 60 * 24))
+      items.push({
+        label: `Follow up with ${lead.company_name || 'Unknown'} (${lead.stage})`,
+        detail: `${daysSince}d since last activity`,
+        urgency: daysSince > 7 ? 'high' : 'normal',
+      })
+    }
+
+    // 3. Proposals that need sending
+    const { data: draftProposals } = await supabase
+      .from('proposals')
+      .select('id, title, contacts(name)')
+      .eq('org_id', orgId)
+      .eq('status', 'draft')
+      .order('created_at', { ascending: true })
+      .limit(3)
+
+    for (const prop of draftProposals ?? []) {
+      const contact = (prop as Record<string, unknown>).contacts as { name: string } | null
+      items.push({
+        label: `Send draft proposal: ${prop.title ?? 'Untitled'}`,
+        detail: contact?.name ?? '',
+        urgency: 'normal',
+      })
+    }
+  } catch (err) {
+    logger.warn('[briefing] Failed to fetch suggested actions', { error: err })
+  }
+
+  return { key: 'actions', title: 'Suggested Actions', emoji: '\u{26A1}', items }
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
