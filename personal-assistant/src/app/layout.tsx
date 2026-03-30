@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Geist_Mono, JetBrains_Mono, Libre_Baskerville } from "next/font/google";
+import { Geist_Mono, JetBrains_Mono, Libre_Baskerville } from "next/font/google";
 import "./globals.css";
 import "@/styles/animations.css";
 import "@/styles/splash.css";
@@ -9,13 +9,6 @@ import {
   resolveThemeColor,
 } from "@/lib/theme/defaults";
 import { NavBar } from "@/components/marketing/nav-bar";
-
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -196,7 +189,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body
-        className={`${dmSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${libreBaskerville.variable} antialiased bg-background text-foreground`}
+        className={`${geistMono.variable} ${jetbrainsMono.variable} ${libreBaskerville.variable} antialiased bg-background text-foreground`}
       >
         <NavBar />
         {children}

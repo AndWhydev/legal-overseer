@@ -283,7 +283,7 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
           </TooltipProvider>
         </div>
       ) : (
-        <div className={`rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-5 py-3 max-w-[90%] ml-auto text-[15px] leading-relaxed`}>
+        <div className={`rounded-[22px] border border-chat-surface-border bg-chat-surface px-5 py-3 max-w-[90%] ml-auto text-[15px] leading-relaxed shadow-sm`}>
           {isEditing ? (
             <div className="flex flex-col gap-1.5 w-full">
               <Textarea

@@ -132,7 +132,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
               <iframe
                 sandbox="allow-scripts"
                 srcDoc={artifact.content}
-                className="flex-1 border-none bg-white"
+                className="flex-1 border-none bg-background"
                 title={artifact.title}
               />
             ) : (

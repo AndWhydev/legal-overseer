@@ -4,13 +4,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
 import {
-  IconChevronDown, IconSearch, IconCirclePlus, IconPencil, IconEye, IconFileText, IconMail,
-  IconBrain, IconBolt, IconAlertCircle, IconWorld, IconBook, IconCalendar, IconReceipt,
-  IconUsers, IconMessage, IconLoader2, IconCheck, IconX, IconMenu2,
+  IconChevronDown, IconLoader2, IconCheck, IconX, IconMenu2,
 } from '@tabler/icons-react'
 import { ConversationDrawer, type Thread } from './conversation-drawer'
-import Image from 'next/image'
-import { ClawdLoginFace } from '@/components/ui/clawd-login-face'
 import { ChatBitBitFace } from './chat-bitbit-face'
 import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
@@ -19,26 +15,26 @@ import { Whispers } from './whispers'
 import { FollowUpChips } from './follow-up-chips'
 import type { Whisper } from '@/lib/whispers/types'
 import { Shimmer } from '@/components/ai-elements/shimmer'
-import {
-  Steps,
-  StepsTrigger,
-  StepsContent,
-  StepsItem,
-} from '@/components/ui/steps'
-import { Tool } from '@/components/ui/tool'
-import { Checkpoint, CheckpointIcon } from '@/components/ai-elements/checkpoint'
 import { InvoiceArtifact } from './invoice-artifact'
 import { ChatAttachmentList } from './chat-attachment'
 import { CHAT_ATTACHMENTS_EVENT, CHAT_COMMAND_EVENT } from '@/components/dashboard/voice-pill'
 import { useFileUpload } from '@/hooks/use-file-upload'
-import { useArtifacts, type Artifact } from './use-artifacts'
+import { useArtifacts } from './use-artifacts'
 import { ArtifactPanel } from './artifact-panel'
 import { ExportMenu } from './export-menu'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { SmoothText } from './smooth-text'
+import { ToolCallsSection } from '@/components/ui/tool-calls-section'
+import {
+  extractToolDetail,
+  formatToolName,
+  getToolCallIcon as getToolIcon,
+  normalizeToolCallEntry,
+} from '@/lib/tool-calls/presentation'
 
 interface ToolCall {
+  id?: string
   name: string
   input: unknown
   result?: unknown
@@ -61,12 +57,6 @@ interface PendingApproval {
   actionSummary: string
   status: 'pending' | 'approved' | 'rejected'
   resolving?: boolean
-}
-
-interface CheckpointMarker {
-  messageIndex: number
-  label: string
-  afterMessageId: string
 }
 
 interface MessageAttachment {
@@ -100,203 +90,6 @@ function getGreeting(): string {
   if (h >= 17) return 'Good evening'
   if (h >= 12) return 'Good afternoon'
   return 'Good morning'
-}
-
-const TOOL_DISPLAY_NAMES: Record<string, string> = {
-  create_task: 'Creating task',
-  update_task: 'Updating task',
-  search_tasks: 'Searching tasks',
-  search_contacts: 'Searching contacts',
-  get_contact: 'Looking up contact',
-  find_messages: 'Searching messages',
-  read_message: 'Reading message',
-  log_activity: 'Logging activity',
-  compose_creator_notification_mockup: 'Composing notification',
-  search_memory: 'Searching memory',
-  add_memory: 'Saving to memory',
-  send_email: 'Sending email',
-  search_leads: 'Searching leads',
-  get_calendar: 'Checking calendar',
-  create_invoice: 'Creating invoice',
-  generate_invoice: 'Generating invoice',
-  update_lead: 'Updating lead',
-  browse_website: 'Browsing website',
-  draft_reply: 'Drafting reply',
-}
-
-/** snake_case → Title Case fallback for unknown tools */
-function formatToolName(name: string): string {
-  if (TOOL_DISPLAY_NAMES[name]) return TOOL_DISPLAY_NAMES[name]
-  return name
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase())
-}
-
-/** Extract a descriptive detail from tool input/result for richer chain-of-thought steps */
-function extractToolDetail(name: string, input: unknown, result?: unknown): string | null {
-  const inp = (input && typeof input === 'object') ? input as Record<string, unknown> : {}
-  const res = (result && typeof result === 'object') ? result as Record<string, unknown> : {}
-
-  // Search tools — show what's being searched
-  if (name === 'search_tasks' || name === 'search_contacts' || name === 'search_leads' || name === 'find_messages' || name === 'search_memory') {
-    const query = inp.query || inp.search || inp.keyword || inp.q || inp.name
-    if (typeof query === 'string' && query.length > 0) {
-      return query.length > 60 ? query.slice(0, 57) + '...' : query
-    }
-  }
-
-  // Read tools — extract subject/sender from result if available
-  if (name === 'read_message') {
-    // Try result first (has richer data after tool completes)
-    const subject = res.subject || (res as Record<string, unknown>)?.subject
-    if (typeof subject === 'string' && subject.length > 0) {
-      return subject.length > 50 ? subject.slice(0, 47) + '...' : subject
-    }
-    const sender = res.sender || res.sender_name || res.from
-    if (typeof sender === 'string' && sender.length > 0) {
-      return sender.length > 40 ? sender.slice(0, 37) + '...' : sender
-    }
-    // Fall back to input subject
-    const inputSubject = inp.subject
-    if (typeof inputSubject === 'string') return inputSubject.length > 50 ? inputSubject.slice(0, 47) + '...' : inputSubject
-    return null
-  }
-
-  // Contact lookup — show name
-  if (name === 'get_contact') {
-    const contactName = inp.name || inp.contact_name
-    if (typeof contactName === 'string') return contactName
-  }
-
-  // Email — show recipient
-  if (name === 'send_email') {
-    const to = inp.to || inp.recipient
-    if (typeof to === 'string') return `to ${to}`
-  }
-
-  // Task creation — show title
-  if (name === 'create_task') {
-    const title = inp.title
-    if (typeof title === 'string') return title.length > 60 ? title.slice(0, 57) + '...' : title
-  }
-
-  // Memory — show what's being saved (key/category or content preview)
-  if (name === 'add_memory') {
-    const key = inp.key || inp.title || inp.category
-    if (typeof key === 'string' && key.length > 0) {
-      return key.length > 50 ? key.slice(0, 47) + '...' : key
-    }
-    const content = inp.content || inp.text || inp.value
-    if (typeof content === 'string' && content.length > 0) {
-      return content.length > 50 ? content.slice(0, 47) + '...' : content
-    }
-  }
-
-  // Browse website — show URL
-  if (name === 'browse_website') {
-    const url = inp.url || inp.website || inp.href
-    if (typeof url === 'string') {
-      // Strip protocol for cleaner display
-      return url.replace(/^https?:\/\//, '').replace(/\/$/, '')
-    }
-  }
-
-  return null
-}
-
-/** Extract a brief result summary from a completed tool call for inline display */
-function extractResultSummary(name: string, result?: unknown, success?: boolean): string | null {
-  if (success === false) return 'Failed'
-  if (!result) return null
-
-  const res = (typeof result === 'object') ? result as Record<string, unknown> : {}
-
-  // Array results — show count
-  if (Array.isArray(result)) {
-    if (result.length === 0) return 'No results'
-    return `Found ${result.length} result${result.length !== 1 ? 's' : ''}`
-  }
-
-  // Results with a data array
-  if (Array.isArray(res.data)) {
-    const count = res.data.length
-    if (count === 0) return 'No results'
-    return `Found ${count} result${count !== 1 ? 's' : ''}`
-  }
-
-  // Results with a results array
-  if (Array.isArray(res.results)) {
-    const count = res.results.length
-    if (count === 0) return 'No results'
-    return `Found ${count} result${count !== 1 ? 's' : ''}`
-  }
-
-  // Results with a count field
-  if (typeof res.count === 'number') {
-    if (res.count === 0) return 'No results'
-    return `Found ${res.count} result${res.count !== 1 ? 's' : ''}`
-  }
-
-  // Specific tool result shapes
-  if (name === 'send_email' || name === 'send_outlook' || name === 'send_gmail') return 'Sent'
-  if (name === 'create_task') return 'Created'
-  if (name === 'update_task' || name === 'update_lead') return 'Updated'
-  if (name === 'add_memory') return 'Saved'
-  if (name === 'log_activity') return 'Logged'
-  if (name === 'create_invoice') return 'Invoice created'
-  if (name === 'draft_reply') return 'Draft ready'
-
-  // Read tools — generic success
-  if (name === 'read_message' || name === 'get_contact') return 'Done'
-
-  // Browse — generic
-  if (name === 'browse_website') return 'Page loaded'
-
-  // Calendar
-  if (name === 'get_calendar' || name === 'schedule_event' || name === 'get_upcoming') return 'Done'
-
-  // Generic success indicator for unknown tools with truthy result
-  if (success === true) return 'Done'
-
-  return null
-}
-
-/** Tool-specific icon based on name */
-function getToolIcon(name: string): React.ElementType {
-  // Exact matches first
-  const ICON_MAP: Record<string, React.ElementType> = {
-    browse_website: IconWorld,
-    search_memory: IconBrain,
-    add_memory: IconBrain,
-    find_messages: IconSearch,
-    read_message: IconMail,
-    send_email: IconMail,
-    compose_creator_notification_mockup: IconMail,
-    search_contacts: IconUsers,
-    get_contact: IconUsers,
-    search_leads: IconUsers,
-    update_lead: IconUsers,
-    search_tasks: IconFileText,
-    create_task: IconCirclePlus,
-    update_task: IconPencil,
-    get_calendar: IconCalendar,
-    create_invoice: IconReceipt,
-    generate_invoice: IconReceipt,
-    log_activity: IconBook,
-    draft_reply: IconPencil,
-  }
-  if (ICON_MAP[name]) return ICON_MAP[name]
-  // Pattern fallbacks
-  if (name.startsWith('search') || name.startsWith('find')) return IconSearch
-  if (name.startsWith('browse') || name.includes('website') || name.includes('url')) return IconWorld
-  if (name.startsWith('create')) return IconCirclePlus
-  if (name.startsWith('update')) return IconPencil
-  if (name.startsWith('get') || name.startsWith('look')) return IconEye
-  if (name.startsWith('log')) return IconBook
-  if (name.startsWith('compose') || name.startsWith('send')) return IconMail
-  if (name.includes('memory')) return IconBrain
-  if (name.includes('message') || name.includes('email')) return IconMessage
-  return IconBolt
 }
 
 /** Build a human-readable action summary from a tool call for approval cards */
@@ -333,6 +126,35 @@ function buildActionSummary(toolName: string, input: unknown): string {
   return detail ? `${label}: ${detail}` : label
 }
 
+function findStreamingToolIndex(
+  toolCalls: ToolCall[],
+  eventData: { callId?: string; name: string }
+): number {
+  if (eventData.callId) {
+    const exactMatch = toolCalls.findIndex(tc => tc.id === eventData.callId)
+    if (exactMatch !== -1) return exactMatch
+  }
+
+  return toolCalls.findIndex(
+    tc => tc.name === eventData.name && tc.status === 'running'
+  )
+}
+
+function buildToolSectionSummary(toolCount: number, thinkingSeconds?: number, prefix?: string): string {
+  const parts: string[] = []
+
+  if (prefix) {
+    parts.push(prefix)
+  } else if (thinkingSeconds !== undefined && thinkingSeconds > 0) {
+    parts.push(`Thought for ${thinkingSeconds}s`)
+  } else {
+    parts.push('Thought for a few seconds')
+  }
+
+  parts.push(`${toolCount} tool${toolCount !== 1 ? 's' : ''} used`)
+  return parts.join(' \u00B7 ')
+}
+
 /** Inline approval card rendered inside chat message flow */
 function InlineApprovalCard({
   approval,
@@ -348,20 +170,18 @@ function InlineApprovalCard({
   const isApproved = approval.status === 'approved'
   const isRejected = approval.status === 'rejected'
 
-  const ToolIcon = getToolIcon(approval.toolName)
+  const toolIcon = getToolIcon(approval.toolName)
 
   const cardStyle: React.CSSProperties = {
     padding: '12px 16px',
-    borderRadius: 12,
-    background: 'var(--glass-bg, rgba(15, 20, 30, 0.35))',
-    backdropFilter: 'var(--glass-blur, blur(24px) saturate(1.3) brightness(1.05))',
-    WebkitBackdropFilter: 'var(--glass-blur, blur(24px) saturate(1.3) brightness(1.05))',
+    borderRadius: 'var(--radius-lg)',
+    background: 'var(--card)',
     border: isApproved
-      ? '1px solid rgba(34, 197, 94, 0.3)'
+      ? '1px solid var(--status-success-border)'
       : isRejected
-        ? '1px solid rgba(239, 68, 68, 0.25)'
-        : '1px solid var(--glass-border, rgba(255, 255, 255, 0.03))',
-    boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
+        ? '1px solid var(--status-error-border)'
+        : '1px solid var(--border)',
+    boxShadow: 'var(--card-shadow)',
     transition: 'all 200ms',
     maxWidth: '100%',
   }
@@ -378,26 +198,28 @@ function InlineApprovalCard({
     justifyContent: 'center',
     width: 28,
     height: 28,
-    borderRadius: 8,
+    borderRadius: 'var(--radius-sm)',
     background: isApproved
-      ? 'rgba(34, 197, 94, 0.12)'
+      ? 'var(--status-success-bg)'
       : isRejected
-        ? 'rgba(239, 68, 68, 0.12)'
-        : 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+        ? 'var(--status-error-bg)'
+        : 'var(--muted)',
     flexShrink: 0,
     marginTop: 1,
   }
 
   const iconColor = isApproved
-    ? 'var(--bb-green, #22C55E)'
+    ? 'var(--status-success-fg)'
     : isRejected
-      ? 'var(--bb-red, #EF4444)'
-      : 'var(--text-secondary, #94A3B8)'
+      ? 'var(--status-error-fg)'
+      : 'var(--text-secondary)'
+  const toolIconNode = React.createElement(toolIcon, { size: 14, color: iconColor })
+  const toolLabelIconNode = React.createElement(toolIcon, { size: 10 })
 
   const summaryStyle: React.CSSProperties = {
     fontSize: 14,
     fontWeight: 500,
-    color: 'var(--text-primary, #F1F5F9)',
+    color: 'var(--text-primary)',
     lineHeight: 1.4,
     flex: 1,
     minWidth: 0,
@@ -408,12 +230,12 @@ function InlineApprovalCard({
     alignItems: 'center',
     gap: 4,
     padding: '2px 8px',
-    borderRadius: 8,
-    background: 'var(--hover-bg, rgba(255, 255, 255, 0.04))',
+    borderRadius: 'var(--radius-sm)',
+    background: 'var(--secondary)',
     fontSize: 14,
     fontWeight: 500,
     letterSpacing: '0.02em',
-    color: 'var(--text-secondary, #94A3B8)',
+    color: 'var(--text-secondary)',
     marginTop: 8,
   }
 
@@ -427,10 +249,10 @@ function InlineApprovalCard({
     flex: 1,
     height: 40,
     padding: '0 20px',
-    borderRadius: 8,
-    background: 'var(--btn-primary-bg, #F1F5F9)',
+    borderRadius: 'var(--radius-md)',
+    background: 'var(--primary)',
     border: 'none',
-    color: 'var(--btn-primary-fg, #0a0f1a)',
+    color: 'var(--primary-foreground)',
     fontSize: 14,
     fontWeight: 500,
     cursor: isResolving ? 'not-allowed' : 'pointer',
@@ -445,10 +267,10 @@ function InlineApprovalCard({
   const rejectBtnStyle: React.CSSProperties = {
     flex: 1,
     padding: '8px 16px',
-    borderRadius: 12,
+    borderRadius: 'var(--radius-md)',
     background: 'transparent',
-    border: '1px solid rgba(239, 68, 68, 0.35)',
-    color: 'var(--bb-red, #EF4444)',
+    border: '1px solid var(--status-error-border)',
+    color: 'var(--status-error-fg)',
     fontSize: 14,
     fontWeight: 500,
     cursor: isResolving ? 'not-allowed' : 'pointer',
@@ -471,13 +293,13 @@ function InlineApprovalCard({
           ) : isRejected ? (
             <IconX size={14} color={iconColor} />
           ) : (
-            <ToolIcon size={14} color={iconColor} />
+            toolIconNode
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={summaryStyle}>{approval.actionSummary}</div>
           <div style={toolLabelStyle}>
-            <ToolIcon size={10} />
+            {toolLabelIconNode}
             {formatToolName(approval.toolName)}
           </div>
         </div>
@@ -553,7 +375,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [isThinkingStreaming, setIsThinkingStreaming] = useState(false)
   const [thinkingDuration, setThinkingDuration] = useState<number | undefined>()
   const [showReasoning, setShowReasoning] = useState(false)
-  const [narration, setNarration] = useState('')
   const narrationLockedRef = useRef(false) // Once actual content starts, stop capturing narration
   const narrationContentRef = useRef('') // Tracks ONLY pre-tool narration text, separate from assistantContent
   const interToolBufferRef = useRef('') // Buffers content between tool calls (inter-tool narration)
@@ -565,7 +386,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
   // Tracks whether we've seen text content AFTER at least one tool segment
   const hasPostToolTextRef = useRef(false)
   const [activeCitations, setActiveCitations] = useState<Citation[]>([])
-  const [checkpoints, setCheckpoints] = useState<CheckpointMarker[]>([])
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
   const [invoiceArtifacts, setInvoiceArtifacts] = useState<Array<{
     invoiceNumber: string; recipient: string; recipientEmail: string
@@ -587,10 +407,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const smoothStreamOwnerRef = useRef<string | null>(null)
   const requestGenRef = useRef(0) // Increments each handleSend to invalidate stale SSE processing
   const abortRef = useRef<AbortController | null>(null)
-  // Reasoning chain state (controlled collapsible)
-  const [reasoningOpen, setReasoningOpen] = useState(false)
+  // Reasoning chain state
   const prevReasoningActiveRef = useRef(false)
-  const autoOpenedRef = useRef(false)
 
   // Attachment state: IDs and metadata dispatched from VoicePill via custom event
   const pendingAttachmentIdsRef = useRef<string[]>([])
@@ -735,10 +553,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setIsThinkingStreaming(true)
     setThinkingDuration(undefined)
     setShowReasoning(true)
-    setReasoningOpen(false)
     prevReasoningActiveRef.current = false
-    autoOpenedRef.current = false
-    setNarration('')
     narrationLockedRef.current = false
     narrationContentRef.current = ''
     interToolBufferRef.current = ''
@@ -869,18 +684,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
               }
 
-              case 'checkpoint': {
-                setCheckpoints(prev => [...prev, {
-                  messageIndex: event.data.message_index,
-                  label: event.data.label,
-                  afterMessageId: assistantId,
-                }])
-                break
-              }
-
               // Plan/stage events still processed for tool matching
               case 'stage':
               case 'plan':
+              case 'checkpoint':
               case 'plan_stage_update':
                 break
 
@@ -906,6 +713,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 const flushedText = interToolBufferRef.current.trim()
                 interToolBufferRef.current = ''
                 const tc: ToolCall = {
+                  id: event.data.callId,
                   name: event.data.name,
                   input: event.data.input,
                   status: 'running',
@@ -915,7 +723,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
                 // --- Stream segments: track chronological tool/text order ---
                 const segs = streamSegmentsRef.current
-                const lastSeg = segs[segs.length - 1]
 
                 // If this is the very first tool and there's pre-tool narration,
                 // inject it as the first text segment so it renders above the chain.
@@ -973,9 +780,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               }
 
               case 'tool_result': {
-                const idx = toolCalls.findIndex(
-                  tc => tc.name === event.data.name && tc.status === 'running'
-                )
+                const idx = findStreamingToolIndex(toolCalls, event.data)
                 if (idx !== -1) {
                   toolCalls[idx] = {
                     ...toolCalls[idx],
@@ -1005,7 +810,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 }
 
                 if (event.data.queued && event.data.approvalId) {
-                  const matchedInput = toolCalls.find(tc => tc.name === event.data.name)?.input
+                  const matchedTool = idx !== -1
+                    ? toolCalls[idx]
+                    : toolCalls.find(tc => tc.id === event.data.callId || tc.name === event.data.name)
+                  const matchedInput = matchedTool?.input
                   setPendingApprovals(prev => [...prev, {
                     id: event.data.approvalId,
                     toolName: event.data.name,
@@ -1030,9 +838,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
               case 'tool_progress': {
                 // Heartbeat: update elapsed time on running tools
-                const progressIdx = toolCalls.findIndex(
-                  tc => tc.name === event.data.name && tc.status === 'running'
-                )
+                const progressIdx = findStreamingToolIndex(toolCalls, event.data)
                 if (progressIdx !== -1) {
                   toolCalls[progressIdx] = { ...toolCalls[progressIdx], elapsedMs: event.data.elapsed_ms }
                   setMessages(prev =>
@@ -1314,7 +1120,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
       setIsLoading(false)
       setIsThinkingStreaming(false)
     }
-  }, [isLoading, threadId, smoothStream, smartScroll])
+  }, [dragUpload, followUps.length, isLoading, setThreadId, smoothStream, smartScroll, threadId])
 
   const handleEditMessage = useCallback((messageId: string, newContent: string) => {
     const idx = messages.findIndex(m => m.id === messageId)
@@ -1431,40 +1237,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
     currentToolCalls.length > 0
   )
 
-  // Auto-open when actual reasoning content arrives (thinking text or tool calls)
+  // Track reasoning transitions for downstream effects
   useEffect(() => {
-    if (!autoOpenedRef.current && showReasoningChain &&
-        (thinkingContent.length > 0 || currentToolCalls.length > 0)) {
-      autoOpenedRef.current = true
-      setReasoningOpen(true)
-    }
-  }, [showReasoningChain, thinkingContent, currentToolCalls.length])
-
-  // Auto-close when response is done loading — not on reasoning state changes
-  useEffect(() => {
-    const wasActive = prevReasoningActiveRef.current
     prevReasoningActiveRef.current = isReasoningActive
-    if (!isReasoningActive && wasActive && !isLoading) {
-      const timer = setTimeout(() => setReasoningOpen(false), 1200)
-      return () => clearTimeout(timer)
-    }
-  }, [isReasoningActive, isLoading])
-
-  // Build the reasoning chain JSX using chain-of-thought component
-  const headerText = isReasoningActive ? (
-    <Shimmer duration={1}>Thinking</Shimmer>
-  ) : (() => {
-    const parts: string[] = []
-    if (thinkingDuration !== undefined && thinkingDuration > 0) {
-      parts.push(`Thought for ${thinkingDuration}s`)
-    } else {
-      parts.push('Thought for a few seconds')
-    }
-    if (currentToolCalls.length > 0) {
-      parts.push(`${currentToolCalls.length} tool${currentToolCalls.length !== 1 ? 's' : ''} used`)
-    }
-    return parts.join(' · ')
-  })()
+  }, [isReasoningActive])
 
   // Strip markdown formatting from narration for clean chain-of-thought display
   const stripMarkdown = (text: string): string =>
@@ -1476,105 +1252,40 @@ export function ChatInterface({ userName }: { userName?: string }) {
     return firstSentence.length > 100 ? firstSentence.slice(0, 97) + '...' : firstSentence
   }
 
-  /** Build tool step JSX for a subset of tool calls with their narrations using prompt-kit Tool components */
-  const buildToolStepsJSX = (tools: ToolCall[], narrations: string[], keyPrefix: string): React.ReactNode[] => {
-    // Group consecutive same-name tool calls into collapsed steps
-    const groups: { name: string; calls: ToolCall[] }[] = []
-    for (const tc of tools) {
-      const last = groups[groups.length - 1]
-      if (last && last.name === tc.name) {
-        last.calls.push(tc)
-      } else {
-        groups.push({ name: tc.name, calls: [tc] })
-      }
-    }
+  const renderNarrationNotes = (narrations: string[], keyPrefix: string): React.ReactNode[] =>
+    narrations
+      .map((note, idx) => {
+        const formatted = formatNarration(note)
+        if (!formatted) return null
 
-    const elements: React.ReactNode[] = []
-    groups.forEach((group, gIdx) => {
-      const ToolIcon = getToolIcon(group.name)
-      const count = group.calls.length
-      const anyRunning = group.calls.some(tc => tc.status === 'running')
-
-      const narrationAfter = gIdx < narrations.length
-        ? formatNarration(narrations[gIdx])
-        : null
-
-      if (count === 1) {
-        const tc0 = group.calls[0]
-        const detail = extractToolDetail(group.name, tc0.input, tc0.result)
-        const summary = extractResultSummary(group.name, tc0.result, tc0.success)
-        elements.push(
-          <Tool
-            key={`${keyPrefix}-tool-${gIdx}`}
-            icon={ToolIcon}
-            name={formatToolName(group.name)}
-            detail={detail ?? undefined}
-            status={tc0.status}
-            resultSummary={summary ?? undefined}
-            elapsedMs={tc0.elapsedMs}
-            index={gIdx}
+        return (
+          <div
+            key={`${keyPrefix}-note-${idx}`}
+            className="pl-2 text-sm italic text-muted-foreground"
           >
-            {narrationAfter ? (
-              <StepsItem className="italic">
-                {narrationAfter}
-              </StepsItem>
-            ) : undefined}
-          </Tool>
+            {formatted}
+          </div>
         )
-      } else {
-        const COLLAPSED_LABELS: Record<string, (n: number) => string> = {
-          read_message: (n) => `Read ${n} messages`,
-          find_messages: (n) => `Searched ${n} conversations`,
-          search_tasks: (n) => `Searched ${n} tasks`,
-          search_contacts: (n) => `Searched ${n} contacts`,
-          search_memory: () => `Searched memory`,
-          create_task: (n) => `Created ${n} tasks`,
-          update_task: (n) => `Updated ${n} tasks`,
-          send_email: (n) => `Sent ${n} emails`,
-          draft_reply: (n) => `Drafted ${n} replies`,
-          log_activity: (n) => `Logged ${n} activities`,
-          browse_website: (n) => `Browsed ${n} sites`,
-        }
-        const labelFn = COLLAPSED_LABELS[group.name]
-        const label = anyRunning
-          ? `${formatToolName(group.name)} (${count})`
-          : labelFn ? labelFn(count) : `${formatToolName(group.name)} (${count})`
+      })
+      .filter(Boolean) as React.ReactNode[]
 
-        elements.push(
-          <Tool
-            key={`${keyPrefix}-tool-${gIdx}`}
-            icon={ToolIcon}
-            name={label}
-            status={anyRunning ? 'running' : 'done'}
-            elapsedMs={group.calls.find(c => c.status === 'running')?.elapsedMs}
-            defaultOpen={anyRunning}
-            index={gIdx}
-          >
-            {group.calls.map((tc, cIdx) => {
-              const detail = extractToolDetail(group.name, tc.input, tc.result)
-              const summary = extractResultSummary(group.name, tc.result, tc.success)
-              return (
-                <Tool
-                  key={`${keyPrefix}-sub-${gIdx}-${cIdx}`}
-                  name={detail || formatToolName(group.name)}
-                  detail={!detail ? `#${cIdx + 1}` : undefined}
-                  status={tc.status}
-                  elapsedMs={tc.elapsedMs}
-                  resultSummary={summary ?? undefined}
-                />
-              )
-            })}
-            {narrationAfter && (
-              <StepsItem className="italic">
-                {narrationAfter}
-              </StepsItem>
-            )}
-          </Tool>
-        )
-      }
-    })
+  const renderToolSection = (
+    tools: ToolCall[],
+    key: string,
+    summary: string,
+    defaultExpanded: boolean
+  ): React.ReactNode | null => {
+    if (tools.length === 0) return null
 
-    return elements
+    return (
+      <ToolCallsSection
+        key={key}
+        toolCalls={tools.map((tool, index) => normalizeToolCallEntry(tool, index))}
+        defaultExpanded={defaultExpanded}
+        summary={summary}
+        className="max-w-[min(72ch,100%)]"
+      />
+    )
   }
 
   // Determine if we truly have interleaved content (text segments between tool segments).
@@ -1587,49 +1298,96 @@ export function ChatInterface({ userName }: { userName?: string }) {
     return nonTrailingTextSegments.length > 0
   })()
 
-  // Only show expandable content when there are actual steps (tools or narration)
-  const hasChainContent = currentToolCalls.length > 0 || (narration && narration.length > 0)
-
   // Build segment-aware chain-of-thought JSX for the current streaming response.
-  // When there are multiple segments (text interleaved between tool batches),
-  // each tools segment gets its own Steps block.
-  // When there's only a single tools segment, render the classic single block.
+  //
+  // Two rendering modes:
+  //   ACTIVE  — reasoning in progress: tool steps stream in directly (no wrapper)
+  //   COMPLETE — reasoning done: steps collapse under "Thought for Xs" summary header
+  //
+  // The transition ensures the summary only appears once tool steps finish streaming.
   const buildSegmentedReasoningJSX = (): React.ReactNode[] | null => {
     if (!showReasoningChain) return null
 
-    // No interleaving: classic rendering with one chain-of-thought.
-    // This covers: no segments, tools-only, or tools + trailing text.
-    if (!hasInterleavedSegments) {
-      const segHeaderText = isReasoningActive ? (
-        <Shimmer duration={1}>Thinking</Shimmer>
-      ) : (() => {
-        const parts: string[] = []
-        if (thinkingDuration !== undefined && thinkingDuration > 0) {
-          parts.push(`Thought for ${thinkingDuration}s`)
-        } else {
-          parts.push('Thought for a few seconds')
-        }
-        if (currentToolCalls.length > 0) {
-          parts.push(`${currentToolCalls.length} tool${currentToolCalls.length !== 1 ? 's' : ''} used`)
-        }
-        return parts.join(' \u00B7 ')
-      })()
+    // ── ACTIVE MODE: show tool steps inline as they stream ──
+    if (isReasoningActive) {
+      if (currentToolCalls.length === 0) {
+        // Thinking only (no tools yet) — show shimmer indicator
+        return [
+          <motion.div
+            key="cot-thinking"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
+            className="text-muted-foreground text-sm flex items-center gap-1.5 py-1"
+          >
+            <Shimmer duration={1}>Thinking</Shimmer>
+          </motion.div>
+        ]
+      }
 
-      const statusIcon = isReasoningActive
-        ? undefined
-        : <IconCheck className="size-4" />
+      // Tools are running — show steps directly with an animated thread line
+      const elements: React.ReactNode[] = []
 
-      return [
-        <Steps key="cot-single" open={reasoningOpen} onOpenChange={setReasoningOpen}>
-          <StepsTrigger leftIcon={statusIcon}>{segHeaderText}</StepsTrigger>
-          {hasChainContent && <StepsContent>
-            {buildToolStepsJSX(currentToolCalls, interToolNarrations, 'single')}
-          </StepsContent>}
-        </Steps>
-      ]
+      if (!hasInterleavedSegments) {
+        const section = renderToolSection(
+          currentToolCalls,
+          'active-steps',
+          buildToolSectionSummary(currentToolCalls.length, undefined, 'Working through tools'),
+          true
+        )
+        if (section) elements.push(section)
+        elements.push(...renderNarrationNotes(interToolNarrations, 'active'))
+      } else {
+        // Interleaved: show each segment's tools + intermediate text
+        for (let sIdx = 0; sIdx < streamSegments.length; sIdx++) {
+          const seg = streamSegments[sIdx]
+          if (seg.type === 'tools') {
+            const tools = currentToolCalls.slice(seg.startIdx, seg.endIdx + 1)
+            const section = renderToolSection(
+              tools,
+              `active-seg-${sIdx}`,
+              buildToolSectionSummary(tools.length, undefined, sIdx === 0 ? 'Working through tools' : 'Continuing with tools'),
+              true
+            )
+            if (section) elements.push(section)
+            elements.push(...renderNarrationNotes(seg.narrations, `active-${sIdx}`))
+          } else if (seg.type === 'text') {
+            const isLastSegment = sIdx === streamSegments.length - 1
+            if (!isLastSegment && seg.content.trim()) {
+              elements.push(
+                <div
+                  key={`active-text-${sIdx}`}
+                  className="bb-chat__bubble--assistant bb-chat__markdown"
+                  style={{ marginBottom: 4 }}
+                >
+                  <SmoothText content={seg.content.trim()}>
+                    {(revealed) => (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{revealed}</ReactMarkdown>
+                    )}
+                  </SmoothText>
+                </div>
+              )
+            }
+          }
+        }
+      }
+
+      return elements.length > 0 ? elements : null
     }
 
-    // Multiple segments: interleaved rendering
+    // ── COMPLETE MODE: reasoning finished — collapse into summary ──
+    if (!hasInterleavedSegments) {
+      const section = renderToolSection(
+        currentToolCalls,
+        'cot-complete',
+        buildToolSectionSummary(currentToolCalls.length, thinkingDuration),
+        false
+      )
+
+      return section ? [section, ...renderNarrationNotes(interToolNarrations, 'complete')] : null
+    }
+
+    // Interleaved: each tool segment gets its own collapsed summary
     const elements: React.ReactNode[] = []
     let toolSegIdx = 0
 
@@ -1638,79 +1396,41 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
       if (seg.type === 'tools') {
         const tools = currentToolCalls.slice(seg.startIdx, seg.endIdx + 1)
-        const anyRunning = tools.some(tc => tc.status === 'running')
-        const isLastToolSeg = !streamSegments.slice(sIdx + 1).some(s => s.type === 'tools')
-        const segIsActive = anyRunning || (isLoading && isLastToolSeg)
 
-        // Header for this tools segment
-        const segHeader = segIsActive ? (
-          <Shimmer duration={1}>Thinking</Shimmer>
-        ) : (() => {
-          const parts: string[] = []
-          if (toolSegIdx === 0) {
-            if (thinkingDuration !== undefined && thinkingDuration > 0) {
-              parts.push(`Thought for ${thinkingDuration}s`)
-            } else {
-              parts.push('Thought for a few seconds')
-            }
-          } else {
-            parts.push('Continued reasoning')
-          }
-          parts.push(`${tools.length} tool${tools.length !== 1 ? 's' : ''} used`)
-          return parts.join(' \u00B7 ')
-        })()
-
-        const segStatusIcon = segIsActive
-          ? undefined
-          : <IconCheck className="size-4" />
-
-        // Each tools segment gets its own Steps block.
-        // Current active segment: controlled open state via reasoningOpen.
-        // Past segments: uncontrolled (defaultOpen=false), user can click to expand.
-        const isCurrentSegment = isLastToolSeg && isLoading
         elements.push(
-          <div key={`seg-tools-${sIdx}`} style={{ marginBottom: 4 }}>
-            {isCurrentSegment ? (
-              <Steps open={reasoningOpen} onOpenChange={setReasoningOpen}>
-                <StepsTrigger leftIcon={segStatusIcon}>{segHeader}</StepsTrigger>
-                <StepsContent>
-                  {buildToolStepsJSX(tools, seg.narrations, `seg-${sIdx}`)}
-                </StepsContent>
-              </Steps>
-            ) : (
-              <Steps defaultOpen={false}>
-                <StepsTrigger leftIcon={segStatusIcon}>{segHeader}</StepsTrigger>
-                <StepsContent>
-                  {buildToolStepsJSX(tools, seg.narrations, `seg-${sIdx}`)}
-                </StepsContent>
-              </Steps>
+          <motion.div
+            key={`seg-tools-${sIdx}`}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: toolSegIdx * 0.08, ease: [0.25, 1, 0.5, 1] }}
+            style={{ marginBottom: 4 }}
+          >
+            {renderToolSection(
+              tools,
+              `seg-${sIdx}`,
+              buildToolSectionSummary(
+                tools.length,
+                toolSegIdx === 0 ? thinkingDuration : undefined,
+                toolSegIdx === 0 ? undefined : 'Continued reasoning'
+              ),
+              false
             )}
-          </div>
+          </motion.div>
         )
+        elements.push(...renderNarrationNotes(seg.narrations, `seg-${sIdx}`))
         toolSegIdx++
       } else if (seg.type === 'text') {
-        // Check if this is the LAST segment — if so, it's the final response
-        // text which gets rendered via MessageBubble, so skip it here
         const isLastSegment = sIdx === streamSegments.length - 1
         if (!isLastSegment && seg.content.trim()) {
-          // Intermediate text between tool batches — smooth-stream typing effect
-          const trimmed = seg.content.trim()
           elements.push(
             <div
               key={`seg-text-${sIdx}`}
-              className="bb-chat__markdown"
-              style={{
-                fontSize: 14,
-                lineHeight: 1.6,
-                color: 'var(--text-primary)',
-                marginBottom: 4,
-              }}
+              className="bb-chat__bubble--assistant bb-chat__markdown"
+              style={{ marginBottom: 4 }}
             >
-              <SmoothText content={trimmed}>
+              <SmoothText content={seg.content.trim()}>
                 {(revealed) => (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {revealed}
-                  </ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{revealed}</ReactMarkdown>
                 )}
               </SmoothText>
             </div>
@@ -1722,8 +1442,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
     return elements.length > 0 ? elements : null
   }
 
-  // Legacy single-block JSX (used for backward compat checks)
-  const reasoningChainJSX = showReasoningChain ? true : null
   // The actual segmented JSX
   const segmentedReasoningJSX = buildSegmentedReasoningJSX()
 
@@ -1829,7 +1547,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
     // Reset UI state
     setMessages([])
-    setNarration('')
     setThinkingContent('')
     setIsThinkingStreaming(false)
     narrationLockedRef.current = false
@@ -1900,7 +1617,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     } catch {
       // Failed to load — user sees empty state
     }
-  }, [threadId, smoothStream])
+  }, [setThreadId, smoothStream, threadId])
 
   const handleNewConversation = useCallback(() => {
     // Archive current thread and start fresh
@@ -1913,7 +1630,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
     }
     setMessages([])
     setThreadId(null)
-    setNarration('')
     setThinkingContent('')
     setIsThinkingStreaming(false)
     narrationLockedRef.current = false
@@ -1929,7 +1645,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     smoothStream.reset()
     currentAssistantIdRef.current = null
     setWhispersVisible(true)
-  }, [threadId, smoothStream])
+  }, [setThreadId, smoothStream, threadId])
 
   // Listen for slash command events
   useEffect(() => {
@@ -2024,13 +1740,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'rgba(59, 130, 246, 0.08)',
-          border: '2px dashed rgba(59, 130, 246, 0.4)',
-          borderRadius: '12px',
+          background: 'var(--status-info-bg)',
+          border: '2px dashed var(--status-info-border)',
+          borderRadius: 'var(--radius-lg)',
           pointerEvents: 'none',
         }}>
           <span style={{
-            color: 'rgba(59, 130, 246, 0.8)',
+            color: 'var(--status-info-fg)',
             fontSize: '16px',
             fontWeight: 500,
           }}>
@@ -2104,46 +1820,35 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 // Avatar only on the very last assistant message in the entire conversation
                 const isLastAssistantOverall = msg.role === 'assistant' && !messages.slice(i + 1).some(m => m.role === 'assistant')
                 const isCurrentResponse = msg.id === currentAssistantIdRef.current
-                const checkpoint = checkpoints.find(cp => cp.afterMessageId === msg.id)
-
                 return (
                   <div
                     key={msg.id}
                     className={isGroupChange ? 'bb-chat__msg-group-gap' : ''}
                   >
-                    {/* Pre-tool narration is now included in streamSegments as the first text segment */}
-                    {/* Live reasoning chain — segmented (interleaved tools/text) */}
-                    {isCurrentResponse && segmentedReasoningJSX && (
-                      <div style={{ marginBottom: 4 }}>
-                        {segmentedReasoningJSX}
-                      </div>
-                    )}
+                    {/* Live reasoning chain — active steps or collapsed summary */}
+                    <AnimatePresence mode="wait">
+                      {isCurrentResponse && segmentedReasoningJSX && (
+                        <motion.div
+                          key={isReasoningActive ? 'reasoning-active' : 'reasoning-complete'}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
+                          style={{ marginBottom: 4 }}
+                        >
+                          {segmentedReasoningJSX}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                     {/* Past response — collapsed reasoning chain */}
                     {!isCurrentResponse && msg.role === 'assistant' && msg.toolCalls && msg.toolCalls.length > 0 && (
                       <div style={{ marginBottom: 4 }}>
-                        <Steps defaultOpen={false}>
-                          <StepsTrigger leftIcon={<IconCheck className="size-4" />}>
-                            {`Thought for a few seconds \u00B7 ${msg.toolCalls.length} tool${msg.toolCalls.length !== 1 ? 's' : ''} used`}
-                          </StepsTrigger>
-                          <StepsContent>
-                            {msg.toolCalls.map((tc, tcIdx) => {
-                              const ToolIcon = getToolIcon(tc.name)
-                              const detail = extractToolDetail(tc.name, tc.input, tc.result)
-                              const summary = extractResultSummary(tc.name, tc.result, tc.success)
-                              return (
-                                <Tool
-                                  key={tcIdx}
-                                  icon={ToolIcon}
-                                  name={formatToolName(tc.name)}
-                                  detail={detail ?? undefined}
-                                  status={tc.status}
-                                  elapsedMs={tc.elapsedMs}
-                                  resultSummary={summary ?? undefined}
-                                />
-                              )
-                            })}
-                          </StepsContent>
-                        </Steps>
+                        <ToolCallsSection
+                          toolCalls={msg.toolCalls.map((tool, index) => normalizeToolCallEntry(tool, index))}
+                          defaultExpanded={false}
+                          summary={buildToolSectionSummary(msg.toolCalls.length)}
+                          className="max-w-[min(72ch,100%)]"
+                        />
                       </div>
                     )}
                     {/* Inline attachment previews — rendered above message text */}
@@ -2198,11 +1903,20 @@ export function ChatInterface({ userName }: { userName?: string }) {
               })}
 
               {/* Standalone reasoning chain (before assistant message exists) */}
-              {showReasoningChain && !currentResponseMsg && segmentedReasoningJSX && (
-                <div style={{ marginBottom: 4 }}>
-                  {segmentedReasoningJSX}
-                </div>
-              )}
+              <AnimatePresence>
+                {showReasoningChain && !currentResponseMsg && segmentedReasoningJSX && (
+                  <motion.div
+                    key="standalone-reasoning"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
+                    style={{ marginBottom: 4 }}
+                  >
+                    {segmentedReasoningJSX}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Inline approval cards */}
               {pendingApprovals.map(approval => (
@@ -2262,7 +1976,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
             padding: '4px 8px',
             marginBottom: '4px',
             fontSize: '12px',
-            color: 'var(--text-secondary, rgba(255,255,255,0.7))',
+            color: 'var(--text-secondary)',
           }}>
             {dragUpload.uploads.map(item => (
               <span key={item.id} style={{
@@ -2270,12 +1984,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 alignItems: 'center',
                 gap: '4px',
                 padding: '2px 8px',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-sm)',
                 background: item.status === 'error'
-                  ? 'rgba(239,68,68,0.15)'
-                  : 'rgba(255,255,255,0.06)',
+                  ? 'var(--status-error-bg)'
+                  : 'var(--secondary)',
                 color: item.status === 'error'
-                  ? 'var(--bb-color-error, #ef4444)'
+                  ? 'var(--status-error-fg)'
                   : undefined,
               }}>
                 {item.filename}

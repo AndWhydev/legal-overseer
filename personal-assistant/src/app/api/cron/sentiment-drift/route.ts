@@ -30,7 +30,7 @@ export async function GET(request: Request) {
             : ''
 
           await dispatchNotification(supabase, {
-            org_id: org.id,
+            orgId: org.id,
             title: `Sentiment declining: ${alert.contactName}`,
             body: `${alert.contactName}'s tone has shifted ${alert.direction === 'critical' ? 'sharply ' : ''}negative (${alert.previousScore.toFixed(1)} -> ${alert.currentScore.toFixed(1)}).${causes}`,
             urgency,

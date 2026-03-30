@@ -537,7 +537,7 @@ export default function OnboardPage() {
                     id="orgName"
                     value={orgName}
                     onChange={(event) => setOrgName(event.target.value)}
-                    className="h-14 rounded-[22px] border border-white/46 bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(255,255,255,0.2))] px-4 text-[15px] text-[#173357] shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] outline-none backdrop-blur-[18px] transition focus:border-[#8fb5df] focus:ring-4 focus:ring-[#cfe4fb]"
+                    className="h-14 rounded-[10px] border border-white/46 bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(255,255,255,0.2))] px-4 text-[15px] text-[#173357] shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] outline-none backdrop-blur-[18px] transition focus:border-[#8fb5df] focus:ring-4 focus:ring-[#cfe4fb]"
                     placeholder="All Webbed Up"
                     required
                   />
@@ -551,7 +551,7 @@ export default function OnboardPage() {
                       id="ownerName"
                       value={ownerName}
                       onChange={(event) => setOwnerName(event.target.value)}
-                      className="h-14 rounded-[22px] border border-white/46 bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(255,255,255,0.2))] px-4 text-[15px] text-[#173357] shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] outline-none backdrop-blur-[18px] transition focus:border-[#8fb5df] focus:ring-4 focus:ring-[#cfe4fb]"
+                      className="h-14 rounded-[10px] border border-white/46 bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(255,255,255,0.2))] px-4 text-[15px] text-[#173357] shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] outline-none backdrop-blur-[18px] transition focus:border-[#8fb5df] focus:ring-4 focus:ring-[#cfe4fb]"
                       placeholder="Andy Smith"
                       required
                     />
@@ -564,7 +564,7 @@ export default function OnboardPage() {
                       id="industry"
                       value={industry}
                       onChange={(event) => setIndustry(event.target.value)}
-                      className="h-14 rounded-[22px] border border-white/46 bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(255,255,255,0.2))] px-4 text-[15px] text-[#173357] shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] outline-none backdrop-blur-[18px] transition focus:border-[#8fb5df] focus:ring-4 focus:ring-[#cfe4fb]"
+                      className="h-14 rounded-[10px] border border-white/46 bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(255,255,255,0.2))] px-4 text-[15px] text-[#173357] shadow-[inset_0_1px_0_rgba(255,255,255,0.66)] outline-none backdrop-blur-[18px] transition focus:border-[#8fb5df] focus:ring-4 focus:ring-[#cfe4fb]"
                     >
                       {INDUSTRIES.map((item) => (
                         <option key={item.value} value={item.value}>
@@ -576,7 +576,7 @@ export default function OnboardPage() {
                 </div>
 
                 {errorMsg ? (
-                  <div className="rounded-[20px] border border-[#f1c9c3] bg-[#fff3f0] px-4 py-3 text-sm text-[#91574c]">
+                  <div className="rounded-xl border border-[#f1c9c3] bg-[#fff3f0] px-4 py-3 text-sm text-[#91574c]">
                     {errorMsg}
                   </div>
                 ) : null}
@@ -617,7 +617,7 @@ export default function OnboardPage() {
                 />
 
                 <div className="grid gap-4">
-                  <div className="flex flex-wrap items-center gap-4 rounded-[22px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.4),rgba(255,255,255,0.14))] px-4 py-3 shadow-[0_18px_56px_rgba(45,71,117,0.12),inset_0_1px_0_rgba(255,255,255,0.68)] backdrop-blur-[28px]">
+                  <div className="flex flex-wrap items-center gap-4 rounded-[10px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.4),rgba(255,255,255,0.14))] px-4 py-3 shadow-[0_18px_56px_rgba(45,71,117,0.12),inset_0_1px_0_rgba(255,255,255,0.68)] backdrop-blur-[28px]">
                     <div className="flex items-center gap-3 text-sm text-[#24415f]">
                       <div className={`h-2.5 w-2.5 rounded-full ${hasConnection ? 'bg-[#7fb28c]' : 'bg-[#b6c8de]'}`} />
                       <span>
@@ -901,7 +901,7 @@ export default function OnboardPage() {
                 </div>
 
                 {errorMsg ? (
-                  <div className="rounded-[20px] border border-[#f1c9c3] bg-[#fff3f0] px-4 py-3 text-sm text-[#91574c]">
+                  <div className="rounded-xl border border-[#f1c9c3] bg-[#fff3f0] px-4 py-3 text-sm text-[#91574c]">
                     {errorMsg}
                   </div>
                 ) : null}

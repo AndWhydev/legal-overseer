@@ -162,7 +162,7 @@ export async function executeToolBatch(
     if (execution.status === 'rejected') {
       const errorMsg =
         execution.reason instanceof Error ? execution.reason.message : String(execution.reason)
-      events.push({ type: 'tool_result', data: { name: tool.name, result: null, success: false } })
+      events.push({ type: 'tool_result', data: { callId: tool.id, name: tool.name, result: null, success: false } })
       events.push({
         type: 'stage',
         data: { stage: 'tool_execution', status: 'done', meta: { toolName: tool.name, success: false } },
@@ -214,6 +214,7 @@ export async function executeToolBatch(
       events.push({
         type: 'tool_result',
         data: {
+          callId: tool.id,
           name: tool.name,
           result: result.data,
           success: result.success,
@@ -252,7 +253,12 @@ export async function executeToolBatch(
         type: 'tool_result',
         tool_use_id: tool.id,
         content: result.queued
-          ? `Action queued for approval (ID: ${result.approvalId}). Confidence: ${(((result.data as any)?.confidence * 100) || 0).toFixed(0)}%`
+          ? (() => {
+              const confidence = typeof result.data === 'object' && result.data !== null && 'confidence' in result.data
+                ? Number((result.data as { confidence?: unknown }).confidence) || 0
+                : 0
+              return `Action queued for approval (ID: ${result.approvalId}). Confidence: ${(confidence * 100).toFixed(0)}%`
+            })()
           : result.success
             ? (() => {
                 let data = JSON.stringify(result.data)
@@ -271,7 +277,7 @@ export async function executeToolBatch(
       })
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
-      events.push({ type: 'tool_result', data: { name: tool.name, result: null, success: false } })
+      events.push({ type: 'tool_result', data: { callId: tool.id, name: tool.name, result: null, success: false } })
       events.push({
         type: 'stage',
         data: { stage: 'tool_execution', status: 'done', meta: { toolName: tool.name, success: false } },

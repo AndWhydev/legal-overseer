@@ -49,7 +49,6 @@ interface Connection {
   name: string
   description: string
   category: 'communication' | 'productivity' | 'finance'
-  color: string
   auth: 'oauth' | 'api_key' | 'whatsapp_qr'
   comingSoon?: boolean
   featured?: boolean
@@ -61,7 +60,6 @@ const CONNECTIONS: Connection[] = [
     name: 'Gmail',
     description: 'Inbox and drafts',
     category: 'communication',
-    color: '#EA4335',
     auth: 'oauth',
     featured: true,
   },
@@ -70,7 +68,6 @@ const CONNECTIONS: Connection[] = [
     name: 'Outlook',
     description: 'Mail and calendars',
     category: 'communication',
-    color: '#0078D4',
     auth: 'oauth',
     featured: true,
   },
@@ -79,7 +76,6 @@ const CONNECTIONS: Connection[] = [
     name: 'Google Calendar',
     description: 'Meetings and events',
     category: 'productivity',
-    color: '#4285F4',
     auth: 'oauth',
   },
   {
@@ -87,7 +83,6 @@ const CONNECTIONS: Connection[] = [
     name: 'Asana',
     description: 'Tasks and projects',
     category: 'productivity',
-    color: '#F06A6A',
     auth: 'oauth',
   },
   {
@@ -95,7 +90,6 @@ const CONNECTIONS: Connection[] = [
     name: 'Calendly',
     description: 'Bookings and availability',
     category: 'productivity',
-    color: '#006BFF',
     auth: 'oauth',
   },
   {
@@ -103,7 +97,6 @@ const CONNECTIONS: Connection[] = [
     name: 'Stripe',
     description: 'Payments and billing',
     category: 'finance',
-    color: '#635BFF',
     auth: 'api_key',
   },
   {
@@ -111,7 +104,6 @@ const CONNECTIONS: Connection[] = [
     name: 'WhatsApp',
     description: 'Mobile conversations',
     category: 'communication',
-    color: '#25D366',
     auth: 'whatsapp_qr',
   },
   {
@@ -119,7 +111,6 @@ const CONNECTIONS: Connection[] = [
     name: 'Messenger',
     description: 'Meta conversations',
     category: 'communication',
-    color: '#0866FF',
     auth: 'oauth',
     comingSoon: true,
   },
@@ -128,7 +119,6 @@ const CONNECTIONS: Connection[] = [
     name: 'Instagram',
     description: 'Messages and mentions',
     category: 'communication',
-    color: '#FF0069',
     auth: 'oauth',
     comingSoon: true,
   },
@@ -137,7 +127,6 @@ const CONNECTIONS: Connection[] = [
     name: 'Slack',
     description: 'Team conversations',
     category: 'communication',
-    color: '#4A154B',
     auth: 'oauth',
     comingSoon: true,
   },
@@ -146,7 +135,6 @@ const CONNECTIONS: Connection[] = [
     name: 'Xero',
     description: 'Accounting and invoices',
     category: 'finance',
-    color: '#13B5EA',
     auth: 'oauth',
     comingSoon: true,
   },
@@ -258,8 +246,8 @@ interface ConnectionCardProps {
   onDisconnect: (id: string) => void
 }
 
-const BTN_BASE = 'inline-flex min-w-[5.5rem] items-center justify-center rounded-full px-4 py-2 text-[11px] font-medium transition'
-const BTN_COMPACT = 'inline-flex min-w-[5rem] items-center justify-center rounded-full px-3.5 py-2 text-[11px] font-medium transition'
+const BTN_BASE = 'inline-flex min-w-[5.5rem] items-center justify-center rounded-[10px] px-4 py-2 text-base font-medium transition'
+const BTN_COMPACT = 'inline-flex min-w-[5rem] items-center justify-center rounded-[10px] px-3.5 py-2 text-base font-medium transition'
 
 function ConnectionCard({
   connection,
@@ -271,9 +259,9 @@ function ConnectionCard({
 }: ConnectionCardProps) {
   if (variant === 'onboarding') {
     return (
-      <article className="flex items-center gap-3.5 rounded-[20px] border border-black/[0.06] bg-white/76 px-5 py-4 shadow-[0_8px_22px_rgba(15,23,42,0.04)] backdrop-blur-xl transition duration-200 hover:shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+      <article className="flex items-center gap-3.5 rounded-[10px] border border-black/[0.06] bg-white/76 px-5 py-4 shadow-[0_8px_22px_rgba(15,23,42,0.04)] backdrop-blur-xl transition duration-200 hover:shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
         <AppIcon id={connection.id} size={40} />
-        <span className="flex-1 text-[14px] font-medium text-[#171411]">{connection.name}</span>
+        <span className="flex-1 text-base font-medium text-[#171411]">{connection.name}</span>
         {connection.comingSoon ? (
           <span className={`${BTN_COMPACT} shrink-0 border border-black/[0.06] bg-[#f5f0ea] text-[#9b8a7d]`}>Soon</span>
         ) : status.connected ? (
@@ -300,12 +288,12 @@ function ConnectionCard({
   }
 
   return (
-    <article className="flex flex-col gap-3 rounded-[20px] border border-[var(--glass-interactive-border)] bg-[var(--glass-card-bg)] p-4 shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition duration-300 hover:translate-y-[-1px] hover:shadow-[0_16px_44px_rgba(15,23,42,0.08)]">
+    <article className="flex flex-col gap-3 rounded-[10px] border border-[var(--glass-interactive-border)] bg-[var(--glass-card-bg)] p-4 shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition duration-300 hover:translate-y-[-1px] hover:shadow-[0_16px_44px_rgba(15,23,42,0.08)]">
       <div className="flex items-center gap-3">
         <AppIcon id={connection.id} size={40} />
         <div className="min-w-0">
-          <h3 className="text-[14px] font-medium leading-tight text-[#171411]">{connection.name}</h3>
-          <p className="mt-0.5 text-[12px] leading-tight text-[#7d7468]">{connection.description}</p>
+          <h3 className="text-base font-medium leading-tight text-[#171411]">{connection.name}</h3>
+          <p className="mt-0.5 text-base leading-tight text-[#7d7468]">{connection.description}</p>
         </div>
       </div>
 
@@ -605,7 +593,7 @@ export function ConnectionsGrid({
           <h2 className="text-lg font-medium tracking-[-0.02em] text-[#171411]">
             Connections
           </h2>
-          <div className="rounded-full bg-[#f5ede6] px-3 py-1 text-xs font-medium text-[#8c5f41]">
+          <div className="rounded-lg bg-[#f5ede6] px-3 py-1 text-base font-medium text-[#8c5f41]">
             {getConnectedIds(statuses).length} connected
           </div>
         </div>
@@ -622,7 +610,7 @@ export function ConnectionsGrid({
                 role="tab"
                 aria-selected={active}
                 onClick={() => setActiveCategory(category.id)}
-                className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] transition ${
+                className={`rounded-lg px-4 py-2 text-base font-medium uppercase tracking-[0.16em] transition ${
                   active
                     ? 'bg-[#171411] text-white'
                     : 'border border-black/[0.06] bg-white/72 text-[#7d7064] hover:text-[#171411]'

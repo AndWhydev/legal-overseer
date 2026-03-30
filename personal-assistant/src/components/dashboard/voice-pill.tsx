@@ -277,7 +277,7 @@ export function VoicePill({
         !docked && [
           'fixed bottom-4 left-1/2 z-50',
           'flex items-center gap-0.5',
-          'h-[34px] px-3 rounded-[17px]',
+          'h-[34px] px-3 rounded-[22px]',
           'bg-card border border-border',
           'shadow-[0_4px_16px_rgba(0,0,0,0.25)]',
           'will-change-[transform,opacity] overflow-visible',
@@ -292,7 +292,7 @@ export function VoicePill({
           'relative z-auto',
           'flex flex-col items-stretch',
           'w-full max-w-[860px] mx-auto',
-          'rounded-2xl border border-border bg-card',
+          'rounded-[22px] border border-chat-surface-border bg-chat-surface',
           'shadow-sm',
           'opacity-100 visible pointer-events-auto',
           'transition-[min-height,padding] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
@@ -346,7 +346,7 @@ export function VoicePill({
         !docked && effectiveMode === 'response' && [
           'w-[280px] h-auto max-h-[180px]',
           'flex-col items-start',
-          'px-3 py-2 gap-[3px] rounded-[14px]',
+          'px-3 py-2 gap-[3px] rounded-lg',
         ],
       )}
       onClick={(e) => e.stopPropagation()}

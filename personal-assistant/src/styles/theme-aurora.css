@@ -28,7 +28,7 @@
   --text-primary: #1A1A2E;
   --text-secondary: #4A5568;
   --text-dim: #718096;
-  --text-on-accent: #FFFFFF;
+  --text-on-accent: var(--bb-white);
 
   /* ── Glassmorphism ── */
   --glass-bg: rgba(255, 255, 255, 0.28);
@@ -64,7 +64,7 @@
   --pill-active-bg: rgba(255, 255, 255, 0.5);
   --pill-inactive-bg: rgba(0, 0, 0, 0.04);
   --btn-primary-bg: #1A1A2E;
-  --btn-primary-fg: #FFFFFF;
+  --btn-primary-fg: var(--bb-white);
   --btn-primary-hover: #2D2D4E;
 
   /* ── Empty state icon filter ── */
@@ -115,7 +115,7 @@
   --popover-foreground: #1A1A2E;
   --elevated: rgba(255, 255, 255, 0.45);
   --primary: #E04E1A;
-  --primary-foreground: #FFFFFF;
+  --primary-foreground: var(--bb-white);
   --primary-hover: #C74416;
   --primary-light: #F06630;
   --secondary: rgba(255, 255, 255, 0.3);
@@ -123,7 +123,7 @@
   --muted: rgba(200, 210, 230, 0.3);
   --muted-foreground: #718096;
   --accent: #E04E1A;
-  --accent-foreground: #FFFFFF;
+  --accent-foreground: var(--bb-white);
   --destructive: #DC2626;
   --success: #16A34A;
   --warning: #D97706;
@@ -144,7 +144,7 @@
   --sidebar: rgba(255, 255, 255, 0.2);
   --sidebar-foreground: #1A1A2E;
   --sidebar-primary: #E04E1A;
-  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-primary-foreground: var(--bb-white);
   --sidebar-accent: rgba(255, 255, 255, 0.3);
   --sidebar-accent-foreground: #1A1A2E;
   --sidebar-border: rgba(255, 255, 255, 0.35);

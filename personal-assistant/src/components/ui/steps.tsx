@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 import { IconChevronDown } from "@tabler/icons-react"
+import { motion } from "motion/react"
 
 export type StepsItemProps = React.ComponentProps<"div">
 
@@ -96,10 +97,14 @@ export const StepsContent = ({
 export type StepsBarProps = React.HTMLAttributes<HTMLDivElement>
 
 export const StepsBar = ({ className, ...props }: StepsBarProps) => (
-  <div
+  <motion.div
     className={cn("bg-muted h-full w-[2px]", className)}
     aria-hidden
-    {...props}
+    initial={{ scaleY: 0, opacity: 0 }}
+    animate={{ scaleY: 1, opacity: 1 }}
+    transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0.1 }}
+    style={{ transformOrigin: "top" }}
+    {...(props as React.ComponentProps<typeof motion.div>)}
   />
 )
 

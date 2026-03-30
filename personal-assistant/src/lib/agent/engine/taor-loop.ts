@@ -40,9 +40,6 @@ import { executeToolBatch } from './tool-executor'
 /** Safety ceiling — only for runaway cost protection. The model decides when to stop. */
 const SAFETY_CEILING = 50
 
-/** Server-side compaction: API summarizes conversation when context overflows. */
-const COMPACTION_ENABLED = process.env.BITBIT_ENABLE_COMPACTION !== 'false' // default: enabled
-
 // ---------------------------------------------------------------------------
 // TAOR Loop
 // ---------------------------------------------------------------------------
@@ -136,7 +133,7 @@ export async function* runTAORLoop(
   let tools = config.toolGroups
     ? getAgentTools(config.toolGroups as ToolGroup[])
     : getEagerTools()
-  let deferredPromptSection = config.toolGroups ? '' : buildDeferredToolsPrompt()
+  const deferredPromptSection = config.toolGroups ? '' : buildDeferredToolsPrompt()
   let toolNames = tools.map(t => t.name)
   const totalToolCount = tools.length
 
@@ -505,7 +502,7 @@ export async function* runTAORLoop(
       }
 
       yield { type: 'stage', data: { stage: 'tool_execution', status: 'start', meta: { toolName: tool.name, iteration: iterationCount } } }
-      yield { type: 'tool_call', data: { name: tool.name, input: tool.input } }
+      yield { type: 'tool_call', data: { callId: tool.id, name: tool.name, input: tool.input } }
       toolMeta.push({ tool, matchedStage })
     }
 
@@ -533,7 +530,15 @@ export async function* runTAORLoop(
       }
       // Heartbeat: emit progress for each running tool
       for (const tool of toolBlocks) {
-        yield { type: 'tool_progress' as const, data: { name: tool.name, status: 'executing' as const, elapsed_ms: Date.now() - toolStartTime } }
+        yield {
+          type: 'tool_progress' as const,
+          data: {
+            callId: tool.id,
+            name: tool.name,
+            status: 'executing' as const,
+            elapsed_ms: Date.now() - toolStartTime,
+          },
+        }
       }
     }
 
@@ -562,7 +567,7 @@ export async function* runTAORLoop(
       if (matchedStage) {
         // Check if tool succeeded (find corresponding tool_result event)
         const resultEvent = batchResult.events.find(
-          e => e.type === 'tool_result' && (e.data as { name: string }).name === toolMeta[t].tool.name,
+          e => e.type === 'tool_result' && (e.data as { callId?: string; name: string }).callId === toolMeta[t].tool.id,
         )
         const success = resultEvent ? (resultEvent.data as { success: boolean }).success : false
         yield { type: 'plan_stage_update', data: { stageId: matchedStage.id, status: success ? 'done' : 'error' } }
@@ -570,7 +575,7 @@ export async function* runTAORLoop(
         const reactiveMatch = planStages.find(s => s.id === toolMeta[t].tool.name)
         if (reactiveMatch) {
           const resultEvent = batchResult.events.find(
-            e => e.type === 'tool_result' && (e.data as { name: string }).name === toolMeta[t].tool.name,
+            e => e.type === 'tool_result' && (e.data as { callId?: string; name: string }).callId === toolMeta[t].tool.id,
           )
           const success = resultEvent ? (resultEvent.data as { success: boolean }).success : false
           yield { type: 'plan_stage_update', data: { stageId: reactiveMatch.id, status: success ? 'done' : 'error' } }

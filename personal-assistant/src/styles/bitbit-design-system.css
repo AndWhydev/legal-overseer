@@ -8,57 +8,53 @@
    -------------------------------------------------------------------------- */
 
 :root {
-  /* ── Core Backgrounds ── */
-  --bg-primary: #0a0f1a;
-  --bg-secondary: rgba(10, 15, 22, 0.6);
-  --bg-card: rgba(15, 20, 30, 0.35);
-  --bg-card-alpha: rgba(15, 20, 30, 0.35);
-  --bg-sidebar: rgba(10, 15, 22, 0.85);
-  --bg-elevated: rgba(25, 35, 50, 0.8);
-  --bg-input: rgba(13, 17, 23, 0.6);
-  --bg-overlay: rgba(10, 14, 26, 0.7);
+  /* ── Core Backgrounds (Inherited from globals.css) ── */
+  /* Using variables ensures theme responsiveness */
+  --bg-primary-themed: var(--background);
+  --bg-card-themed: var(--card);
+  --bg-sidebar-themed: var(--sidebar);
 
-  /* ── Accent: Monochrome (white is the accent on dark) ── */
-  --bb-accent: #F1F5F9;
-  --bb-accent-dim: rgba(241, 245, 249, 0.12);
+  /* ── Accent: Monochrome (adapts to background) ── */
+  --bb-accent: var(--foreground);
+  --bb-accent-dim: color-mix(in oklch, var(--foreground), transparent 88%);
 
-  /* ── Legacy orange refs (mapped to monochrome for backward compat) ── */
-  --bb-orange: #F1F5F9;
-  --bb-orange-light: #F1F5F9;
-  --bb-orange-glow: rgba(255, 255, 255, 0.08);
-  --bb-orange-glow-sm: 0 0 16px rgba(255, 255, 255, 0.08);
-  --bb-orange-glow-md: 0 0 24px rgba(255, 255, 255, 0.05);
-  --bb-orange-glow-lg: 0 0 60px rgba(255, 255, 255, 0.03);
+  /* ── Legacy orange refs (mapped to primary for backward compat) ── */
+  --bb-orange: var(--foreground);
+  --bb-orange-light: var(--foreground);
+  --bb-orange-glow: color-mix(in oklch, var(--foreground), transparent 92%);
+  --bb-orange-glow-sm: 0 0 16px color-mix(in oklch, var(--foreground), transparent 92%);
+  --bb-orange-glow-md: 0 0 24px color-mix(in oklch, var(--foreground), transparent 95%);
+  --bb-orange-glow-lg: 0 0 60px color-mix(in oklch, var(--foreground), transparent 97%);
 
   /* ── Status Colors (semantic only — success/warning/error) ── */
-  --bb-green: #22C55E;
-  --bb-amber: #eab308;
-  --bb-red: #EF4444;
+  --bb-green: var(--success);
+  --bb-amber: var(--warning);
+  --bb-red: var(--destructive);
 
   /* ── Legacy color refs (mapped to monochrome) ── */
-  --bb-blue: #94A3B8;
-  --bb-purple: #94A3B8;
-  --bb-teal: #94A3B8;
-  --bb-pink: #94A3B8;
-  --bb-cyan: #94A3B8;
+  --bb-blue: var(--muted-foreground);
+  --bb-purple: var(--muted-foreground);
+  --bb-teal: var(--muted-foreground);
+  --bb-pink: var(--muted-foreground);
+  --bb-cyan: var(--muted-foreground);
 
   /* ── Semantic Status Aliases ── */
   --bb-status-success: var(--bb-green);
   --bb-status-warning: var(--bb-amber);
   --bb-status-error: var(--bb-red);
-  --bb-status-info: #94A3B8;
+  --bb-status-info: var(--muted-foreground);
 
   /* ── Surfaces ── */
-  --bb-surface: rgba(15, 20, 30, 0.35);
-  --bb-surface-hover: rgba(20, 28, 40, 0.7);
-  --bb-surface-active: rgba(25, 35, 50, 0.8);
+  --bb-surface: var(--bg-card);
+  --bb-surface-hover: var(--secondary);
+  --bb-surface-active: var(--elevated);
 
   /* ── Text ── */
   /* --text-primary/secondary/dim: defined in globals.css */
-  --text-on-accent: #000000;
+  --text-on-accent: var(--background);
 
   /* ── Typography ── */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: var(--font-stack-ui);
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --tracking-tight: -0.02em;
   --tracking-normal: 0;
@@ -72,11 +68,11 @@
   --gap-xl: 32px;
   --gap-2xl: 40px;
 
-  /* ── Radii (8px–40px range only, no 0/6/10/14/18) ── */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* ── Radii (standard surface radius) ── */
+  --radius-sm: 10px;
+  --radius-md: 10px;
+  --radius-lg: 10px;
+  --radius-xl: 10px;
   --radius-full: 9999px;
 
   /* ── Transitions ── */
@@ -91,13 +87,13 @@
   /* ── Glassmorphism ── */
   --glass-blur: blur(24px) saturate(1.3) brightness(1.05);
   --glass-blur-heavy: blur(28px) saturate(1.4) brightness(1.08);
-  --glass-bg: rgba(15, 20, 30, 0.35);
-  --glass-bg-heavy: rgba(12, 16, 24, 0.85);
-  --glass-card-inset: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-bg: var(--bg-card);
+  --glass-bg-heavy: var(--bg-card);
+  --glass-card-inset: var(--card-shadow), var(--card-inset);
 
   /* ── Hover overlays ── */
-  --hover-bg: rgba(255, 255, 255, 0.04);
-  --hover-bg-strong: rgba(255, 255, 255, 0.08);
+  --hover-bg: color-mix(in oklch, var(--foreground), transparent 96%);
+  --hover-bg-strong: color-mix(in oklch, var(--foreground), transparent 92%);
 
   /* ── Card variant (more opaque) ── */
   --bg-card-solid: rgba(15, 20, 30, 0.6);
@@ -111,7 +107,7 @@
   --z-bitbit: 9999;
 
   /* Legacy compat */
-  --green-primary: #F1F5F9;
+  --green-primary: var(--bb-white);
   --green-neon: #E2E8F0;
   --green-muted: #94A3B8;
   --green-glow-sm: none;
@@ -149,7 +145,7 @@
   --toggle-off-bg: rgba(255, 255, 255, 0.1);
   --pill-active-bg: rgba(255, 255, 255, 0.08);
   --pill-inactive-bg: rgba(10, 14, 23, 0.42);
-  --btn-primary-bg: #F1F5F9;
+  --btn-primary-bg: var(--bb-white);
   --btn-primary-fg: #0a0f1a;
   --btn-primary-hover: #E2E8F0;
 
@@ -486,7 +482,16 @@ html.light .bb-overlay__shortcut {
 
 html {
   font-size: 16px;
-  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+  font-family: var(--font-stack-ui);
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
@@ -514,7 +519,7 @@ body.bitbit-dark {
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.15);
@@ -1068,7 +1073,7 @@ body.bitbit-dark {
   right: 2px;
   min-width: 16px;
   height: 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background-color: var(--bb-red, #EF4444);
   display: flex;
   align-items: center;
@@ -1287,7 +1292,7 @@ body.bitbit-dark {
 .bb-sidebar-panel__badge {
   min-width: 18px;
   height: 18px;
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1337,7 +1342,7 @@ html.light .bb-sidebar__logo-img {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   border: 1.5px dashed transparent;
   background: transparent;
@@ -2115,7 +2120,7 @@ html.light .bb-sidebar__logo-img {
   margin-left: auto;
   background: rgba(255, 255, 255, 0.04);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .bb-overlay__footer {
@@ -2559,7 +2564,7 @@ html.light .bb-ai-shine {
   gap: 16px;
   padding: 0 18px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -2672,7 +2677,7 @@ html.light .bb-ai-shine {
   letter-spacing: 0.03em;
   text-transform: uppercase;
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   line-height: 1.4;
 }
 
@@ -2830,7 +2835,7 @@ html.light .bb-inbox-row__tag--spam {
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--glass-card-bg);
   backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
@@ -2890,7 +2895,7 @@ html.light .bb-inbox-row__tag--spam {
 
 /* Child rows inside groups — recessed, compact, no priority tint */
 .bb-inbox-group__children .bb-inbox-row {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 1px;
   min-height: 42px;
   height: 42px;
@@ -2964,7 +2969,7 @@ html.light .bb-inbox-row__tag--spam {
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--primary, #171717);
   color: #fff;
   font-size: 11px;
@@ -3000,7 +3005,7 @@ html.light .bb-inbox-row__tag--spam {
   justify-content: center;
   width: 22px;
   height: 22px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   border: none;
   background: transparent;
   color: var(--text-dim);
@@ -3285,7 +3290,7 @@ html.light .bb-inbox-row[data-selected] .bb-inbox-row__icon {
 .bb-leads-card {
   position: relative;
   padding: 14px 18px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -3454,7 +3459,7 @@ html.light .bb-inbox-row[data-selected] .bb-inbox-row__icon {
   transition: opacity var(--duration-fast) var(--ease-default);
   background: linear-gradient(90deg, transparent, rgba(10, 14, 23, 0.7) 30%);
   padding-left: 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .bb-leads-card__action {
@@ -3823,7 +3828,7 @@ html.light .bb-leads-card__actions {
 .bb-contacts-search__input {
   width: 100%;
   padding: 10px 14px 10px 38px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -3846,7 +3851,7 @@ html.light .bb-leads-card__actions {
 
 .bb-contacts-sort {
   padding: 8px 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -3875,7 +3880,7 @@ html.light .bb-leads-card__actions {
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -4158,7 +4163,7 @@ html.light .bb-contacts-card__tag {
   font-size: 12px;
   font-weight: 500;
   padding: 6px 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -4198,7 +4203,7 @@ html.light .bb-contacts-card__tag {
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -4392,7 +4397,7 @@ html.light .bb-contacts-card__tag {
 .bb-invoices-detail {
   width: 100%;
   max-width: 480px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: rgba(10, 14, 23, 0.85);
   backdrop-filter: blur(32px) saturate(1.2);
   -webkit-backdrop-filter: blur(32px) saturate(1.2);
@@ -4647,7 +4652,7 @@ html.light .bb-invoices-detail__close:hover {
   font-size: 12px;
   font-weight: 500;
   padding: 6px 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -4700,7 +4705,7 @@ html.light .bb-invoices-detail__close:hover {
   align-items: center;
   justify-content: space-between;
   padding: 6px 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 11px;
   font-weight: 600;
@@ -4742,7 +4747,7 @@ html.light .bb-invoices-detail__close:hover {
 
 .bb-tenders-col__empty {
   padding: 16px 12px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   border: 1px dashed rgba(255, 255, 255, 0.06);
   text-align: center;
   font-family: var(--font-dm-sans), system-ui, sans-serif;
@@ -4755,7 +4760,7 @@ html.light .bb-invoices-detail__close:hover {
 .bb-tenders-card {
   position: relative;
   padding: 14px 16px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -4851,7 +4856,7 @@ html.light .bb-invoices-detail__close:hover {
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -4982,7 +4987,7 @@ html.light .bb-invoices-detail__close:hover {
 
 .bb-tenders-profile {
   padding: 16px 18px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: rgba(10, 14, 23, 0.5);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -5039,7 +5044,7 @@ html.light .bb-invoices-detail__close:hover {
 .bb-tenders-profiles__empty {
   grid-column: 1 / -1;
   padding: 32px 16px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   border: 1px dashed rgba(255, 255, 255, 0.06);
   text-align: center;
   font-family: var(--font-dm-sans), system-ui, sans-serif;
@@ -5172,7 +5177,7 @@ html.light .bb-invoices-detail__close:hover {
   justify-content: center;
   gap: 6px;
   padding: 10px 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   border: none;
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 12px;
@@ -5703,7 +5708,7 @@ html.light .bb-tenders-drawer__close:hover {
   padding: 0 6px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 11px;
   font-weight: 500;
@@ -5959,7 +5964,7 @@ html.light .bb-search-footer button:hover kbd {
   padding: 0 6px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 11px;
   font-weight: 500;
@@ -6136,7 +6141,7 @@ html.light .bb-shortcuts-footer kbd {
   gap: 2px;
   height: 34px;
   padding: 0 12px;
-  border-radius: 17px;
+  border-radius: var(--radius-xl);
   background: var(--bg-card);
   backdrop-filter: blur(20px) saturate(1.2);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
@@ -6274,7 +6279,7 @@ html.light .bb-shortcuts-footer kbd {
   align-items: flex-start;
   padding: 8px 12px;
   gap: 3px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
 }
 
 /* ── Waveform ── */
@@ -6475,7 +6480,7 @@ html.light .bb-shortcuts-footer kbd {
   height: auto;
   min-height: var(--bb-pill-docked-min-height);
   padding: var(--bb-pill-docked-padding);
-  border-radius: 26px;
+  border-radius: var(--radius-xl);
   flex-direction: column;
   align-items: stretch;
   background: rgba(10, 14, 23, 0.42);
@@ -6657,7 +6662,7 @@ html.light .bb-pill__shimmer-dots span {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .bb-chat {
-  --bb-chat-lane-width: min(820px, calc(100% - 40px));
+  --bb-chat-lane-width: min(820px, calc(100% - 16px));
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -6674,7 +6679,7 @@ html.light .bb-pill__shimmer-dots span {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 16px 172px;
+  padding: 12px 8px 200px;
   scroll-behavior: smooth;
   position: relative;
   z-index: 1;
@@ -6707,13 +6712,13 @@ html.light .bb-pill__shimmer-dots span {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 16px;
+  padding: 0 8px;
 }
 
 .bb-chat__msg-list {
   width: var(--bb-chat-lane-width);
   margin: 0 auto;
-  padding: 0 4px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -6732,7 +6737,7 @@ html.light .bb-pill__shimmer-dots span {
   justify-content: center;
   width: min(980px, 100%);
   gap: 0;
-  padding: clamp(8px, 3vh, 32px) 16px 8px;
+  padding: clamp(8px, 3vh, 32px) 8px 8px;
 }
 
 .bb-chat__center-cluster {
@@ -6788,7 +6793,7 @@ html.light .bb-pill__shimmer-dots span {
   -webkit-backdrop-filter: var(--glass-card-blur);
   box-shadow: var(--glass-pill-inset);
   border: none;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   padding: 6px 14px;
   font-size: 12px;
   color: var(--text-secondary);
@@ -6818,7 +6823,7 @@ html.light .bb-pill__shimmer-dots span {
 
 .bb-chat__msg--assistant {
   margin-right: auto;
-  max-width: 100%;
+  max-width: min(72ch, 100%);
 }
 
 /* Edit button visibility on user message hover */
@@ -6888,25 +6893,28 @@ html.light .bb-chat__scroll-btn {
 }
 
 .bb-chat__bubble--user {
-  background: var(--bg-card);
-  backdrop-filter: var(--glass-card-blur);
-  -webkit-backdrop-filter: var(--glass-card-blur);
-  box-shadow: var(--card-shadow), var(--card-inset);
-  border-radius: 18px 18px 4px 18px;
+  background: color-mix(in oklch, var(--secondary), var(--foreground) 10%);
+  border: 1px solid color-mix(in oklch, var(--foreground), transparent 85%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px 12px 4px 12px;
   padding: 10px 14px;
-  color: var(--text-primary);
-  font-size: 14px;
+  color: var(--foreground);
+  font-size: 16px;
   line-height: 1.5;
+  letter-spacing: 0;
+  font-weight: 400;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
 .bb-chat__bubble--assistant {
-  color: var(--text-primary);
+  color: var(--foreground);
   font-size: 16px;
-  line-height: 1.65;
+  line-height: 1.5;
   padding: 4px 0;
+  letter-spacing: 0;
+  font-weight: 400;
   overflow-wrap: break-word;
   word-break: break-word;
   min-width: 0;
@@ -6916,44 +6924,14 @@ html.light .bb-chat__scroll-btn {
 .bb-chat__cursor {
   display: inline;
   margin-left: 1px;
-  color: var(--accent-primary, #3b82f6);
+  color: var(--foreground);
   animation: bb-cursor-blink 1s step-end infinite;
-  font-weight: 300;
+  font-weight: 400;
 }
 
 @keyframes bb-cursor-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
-}
-
-/* Reasoning toggle on completed messages */
-.bb-chat__reasoning-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-dim);
-  font-size: 12px;
-  font-family: inherit;
-  padding: 0;
-  transition: color 0.15s ease;
-}
-
-.bb-chat__reasoning-toggle:hover {
-  color: var(--text-secondary);
-}
-
-.bb-chat__reasoning-content {
-  padding: 8px 0 4px 18px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  white-space: pre-wrap;
-  max-height: 300px;
-  overflow-y: auto;
-  overflow-wrap: break-word;
 }
 
 /* Thinking shimmer inline */
@@ -6964,22 +6942,30 @@ html.light .bb-chat__scroll-btn {
 
 /* ── Streaming Markdown (react-markdown) ── */
 
-.bb-chat__markdown p { margin: 0 0 8px; }
+.bb-chat__markdown p {
+  margin: 0 0 9px;
+}
 .bb-chat__markdown p:last-child { margin-bottom: 0; }
-.bb-chat__markdown strong { font-weight: 600; }
+.bb-chat__markdown strong { font-weight: 650; }
 .bb-chat__markdown em { font-style: italic; }
 
 .bb-chat__markdown code {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 4px;
+  background: var(--secondary);
+  border-radius: var(--radius-sm);
   padding: 1px 5px;
-  font-family: var(--font-bb-mono), 'JetBrains Mono', monospace;
+  font-family: var(--font-stack-mono, 'JetBrains Mono', monospace);
   font-size: 13px;
+  color: var(--foreground);
+}
+
+.bb-chat__bubble--user code {
+  background: rgba(255, 255, 255, 0.15);
+  color: inherit;
 }
 
 .bb-chat__markdown pre {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
+  background: var(--elevated);
+  border-radius: var(--radius-md);
   padding: 12px;
   margin: 8px 0;
   overflow-x: auto;
@@ -6995,10 +6981,10 @@ html.light .bb-chat__scroll-btn {
 .bb-chat__markdown ul,
 .bb-chat__markdown ol {
   padding-left: 20px;
-  margin: 4px 0 8px;
+  margin: 6px 0 10px;
 }
 
-.bb-chat__markdown li { margin-bottom: 2px; }
+.bb-chat__markdown li { margin-bottom: 4px; }
 .bb-chat__markdown li:last-child { margin-bottom: 0; }
 
 .bb-chat__markdown h1,
@@ -7015,7 +7001,7 @@ html.light .bb-chat__scroll-btn {
 .bb-chat__markdown h4 { font-size: 15px; font-weight: 600; margin: 10px 0 4px; }
 
 .bb-chat__markdown a {
-  color: var(--text-primary);
+  color: var(--foreground);
   text-decoration: underline;
   text-underline-offset: 2px;
   font-weight: 500;
@@ -7132,178 +7118,6 @@ html.light .bb-chat__scroll-btn {
   }
 }
 
-/* ── Tool Call Summary ── */
-
-.bb-chat__tc-summary-wrap {
-  margin-left: 32px;
-  margin-top: 4px;
-}
-
-.bb-chat__tc-summary {
-  width: min(528px, calc(74% - 32px));
-  max-width: calc(100% - 32px);
-}
-
-.bb-chat__tc-summary-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  padding: 4px 0;
-  font-size: 12px;
-  color: var(--text-dim);
-  cursor: pointer;
-  transition: color 0.15s ease;
-  font-family: 'Inter', sans-serif;
-}
-
-.bb-chat__tc-summary-header:hover {
-  color: var(--text-secondary);
-}
-
-.bb-chat__tc-summary-list {
-  margin-top: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.bb-chat__tc-summary-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.bb-chat__tc-summary-icon {
-  font-size: 12px;
-  flex-shrink: 0;
-}
-
-.bb-chat__tc-summary-label {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.bb-chat__tc-summary-result {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-dim);
-  font-size: 11px;
-}
-
-.bb-chat__tc-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 32px;
-  padding: 2px 8px;
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-/* ── Legacy Tool Call Cards (kept for reference) ── */
-
-.bb-chat__tc {
-  margin-left: 32px;
-  margin-right: auto;
-  margin-top: 4px;
-  margin-bottom: 4px;
-  width: min(528px, calc(74% - 32px));
-  max-width: calc(100% - 32px);
-}
-
-.bb-chat__tc-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  text-align: left;
-  background: var(--bg-card);
-  backdrop-filter: blur(20px) saturate(1.2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  border: none;
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: color 0.15s ease;
-}
-
-.bb-chat__tc-header:hover {
-  color: var(--text-primary);
-}
-
-.bb-chat__tc-name {
-  font-weight: 500;
-  color: var(--text-primary);
-  opacity: 0.8;
-}
-
-.bb-chat__tc-status {
-  margin-left: auto;
-}
-
-.bb-chat__tc-icon--spin {
-  animation: spin 1s linear infinite;
-  color: var(--primary, #171717);
-}
-
-.bb-chat__tc-icon--done {
-  color: #4DAF6B;
-}
-
-.bb-chat__tc-icon--error {
-  color: #ef4444;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-.bb-chat__tc-body {
-  margin-top: 4px;
-  background: var(--bg-card);
-  backdrop-filter: blur(20px) saturate(1.2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.bb-chat__tc-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.bb-chat__tc-pre {
-  margin-top: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 6px;
-  padding: 8px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--text-primary);
-  opacity: 0.7;
-  overflow-x: auto;
-  white-space: pre-wrap;
-}
-
 /* ── Chat Input Area (pill dock) ── */
 
 .bb-chat__input-area {
@@ -7357,20 +7171,8 @@ html.light .bb-chat__bubble--user {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-html.light .bb-chat__tc-header {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-html.light .bb-chat__tc-body {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
 html.light .bb-chat__code {
   background: rgba(0, 0, 0, 0.05);
-}
-
-html.light .bb-chat__tc-pre {
-  background: rgba(0, 0, 0, 0.04);
 }
 
 /* Links in chat messages — blue, not orange */
@@ -7530,7 +7332,7 @@ html.light .bb-chat__markdown a:hover {
 
 .bb-auth-card {
   padding: 22px;
-  border-radius: 26px;
+  border-radius: var(--radius-xl);
   background: rgba(10, 14, 23, 0.52);
   backdrop-filter: blur(26px) saturate(1.15);
   -webkit-backdrop-filter: blur(26px) saturate(1.15);
@@ -7555,7 +7357,7 @@ html.light .bb-chat__markdown a:hover {
   justify-content: center;
   gap: 8px;
   min-height: 42px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(18, 23, 32, 0.48);
   color: var(--text-primary);
@@ -7629,7 +7431,7 @@ html.light .bb-chat__markdown a:hover {
   width: 100%;
   min-height: 46px;
   border: 1px solid rgba(255, 122, 69, 0.42);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: linear-gradient(
     140deg,
     rgba(255, 122, 69, 0.24) 0%,
@@ -7694,7 +7496,7 @@ html.light .bb-chat__markdown a:hover {
 
   .bb-auth-card {
     padding: 18px;
-    border-radius: 22px;
+    border-radius: var(--radius-lg);
   }
 
   .bb-auth-card__providers {
@@ -7736,7 +7538,7 @@ html.light .bb-chat__markdown a:hover {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-subtle);
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   padding: 32px;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
   width: 100%;
@@ -7747,7 +7549,7 @@ html.light .bb-chat__markdown a:hover {
   align-items: center;
   gap: 8px;
   padding: 10px 24px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: none;
   background: var(--primary, #171717);
   color: white;
@@ -7868,7 +7670,7 @@ html.light .bb-chat__markdown a:hover {
   position: fixed;
   z-index: 9999;
   border: 2px solid var(--bb-orange);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 0 0 4px rgba(255, 90, 31, 0.15);
   pointer-events: none;
   transition: all 0.3s ease;
@@ -7883,7 +7685,7 @@ html.light .bb-chat__markdown a:hover {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 20px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
@@ -7907,7 +7709,7 @@ html.light .bb-chat__markdown a:hover {
   align-items: center;
   gap: 4px;
   padding: 6px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: none;
   background: var(--primary, #171717);
   color: white;
@@ -7921,7 +7723,7 @@ html.light .bb-chat__markdown a:hover {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: transparent;
   color: var(--text-primary);
@@ -7938,7 +7740,7 @@ html.light .bb-chat__markdown a:hover {
 
   .bb-onboarding-wizard__panel {
     padding: 22px;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     margin-top: max(12px, env(safe-area-inset-top));
   }
 
@@ -8014,7 +7816,7 @@ html.light .bb-chat__markdown a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   border: none;
   background: transparent;
   color: var(--text-dim, #64748B);
@@ -8042,7 +7844,7 @@ html.light .bb-chat__markdown a:hover {
   align-items: center;
   gap: 4px;
   padding: 5px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   border: none;
   background: var(--text-primary);
   color: var(--bg-primary);
@@ -8078,7 +7880,7 @@ html.light .bb-chat__markdown a:hover {
 /* Staggered entrance for thread cards — matches sidebar panel items */
 .bb-chat__drawer-card {
   position: relative;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 9px 11px;
   background: var(--bg-card, rgba(255, 255, 255, 0.03));
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
@@ -8150,7 +7952,7 @@ html.light .bb-chat__drawer-card--active {
   right: 7px;
   top: 7px;
   opacity: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 3px;
   border: none;
   background: var(--glass-hover-bg, rgba(255, 255, 255, 0.06));
@@ -8182,7 +7984,7 @@ html.light .bb-chat__drawer-card--active {
   position: relative;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   background: transparent;
   border: none;
   color: #6B7280;
