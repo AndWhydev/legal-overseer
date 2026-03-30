@@ -88,6 +88,8 @@ export type AgentEvent =
   | { type: 'checkpoint'; data: { message_index: number; label: string } }
   | { type: 'sub_agent_start'; data: { agentId: string; description: string } }
   | { type: 'sub_agent_complete'; data: { agentId: string; summary: string } }
+  | { type: 'tool_progress'; data: { name: string; status: 'executing'; elapsed_ms: number } }
+  | { type: 'synthesis_start'; data: { iteration: number } }
   | { type: 'done'; data: unknown }
 
 // ---------------------------------------------------------------------------

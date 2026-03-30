@@ -30,6 +30,8 @@ export type ToolProps = {
   detail?: string
   /** Brief result summary */
   resultSummary?: string
+  /** Elapsed time in ms (shown while running) */
+  elapsedMs?: number
   /** Expandable child content (sub-tasks, narration) */
   children?: React.ReactNode
   /** Whether the tool content is open by default */
@@ -45,6 +47,7 @@ const Tool = ({
   status,
   detail,
   resultSummary,
+  elapsedMs,
   children,
   defaultOpen = false,
   index = 0,
@@ -115,6 +118,11 @@ const Tool = ({
       {detail && (
         <span className="max-w-[min(200px,40vw)] truncate rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
           {detail}
+        </span>
+      )}
+      {status === "running" && elapsedMs != null && elapsedMs >= 2000 && (
+        <span className="text-xs tabular-nums text-muted-foreground/60">
+          {Math.ceil(elapsedMs / 1000)}s
         </span>
       )}
       {getResultBadge()}

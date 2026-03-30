@@ -250,6 +250,11 @@ export async function* runTAORLoop(
   while (iterationCount < SAFETY_CEILING) {
     iterationCount++
 
+    // Signal the frontend that a new synthesis pass is starting (iteration 2+ = post-tool)
+    if (iterationCount > 1) {
+      yield { type: 'synthesis_start', data: { iteration: iterationCount } }
+    }
+
     let response: Anthropic.Message
     const streamedDeltas: string[] = []
     const streamedThinkingDeltas: string[] = []
@@ -504,14 +509,33 @@ export async function* runTAORLoop(
       toolMeta.push({ tool, matchedStage })
     }
 
-    // Execute all tools via the parallel executor
-    const batchResult = await executeToolBatch(
+    // Execute all tools with heartbeat — yields tool_progress every 2s during execution
+    const toolStartTime = Date.now()
+    const batchPromise = executeToolBatch(
       toolBlocks,
       config,
       execOptions,
       executionTokens,
       activeRole,
     )
+
+    // Race between batch completion and 2s heartbeat ticks
+    let batchResult: Awaited<ReturnType<typeof executeToolBatch>> | null = null
+    batchPromise.then(r => { batchResult = r })
+    while (!batchResult) {
+      const tick = await Promise.race([
+        batchPromise.then(r => ({ type: 'result' as const, result: r })),
+        new Promise<{ type: 'tick' }>(resolve => setTimeout(() => resolve({ type: 'tick' }), 2000)),
+      ])
+      if (tick.type === 'result') {
+        batchResult = tick.result
+        break
+      }
+      // Heartbeat: emit progress for each running tool
+      for (const tool of toolBlocks) {
+        yield { type: 'tool_progress' as const, data: { name: tool.name, status: 'executing' as const, elapsed_ms: Date.now() - toolStartTime } }
+      }
+    }
 
     // Yield batch events (tool_result, stage, budget, citation events)
     for (const event of batchResult.events) {

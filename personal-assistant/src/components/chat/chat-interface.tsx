@@ -44,6 +44,7 @@ interface ToolCall {
   result?: unknown
   success?: boolean
   status: 'running' | 'done' | 'error'
+  elapsedMs?: number
 }
 
 export interface Citation {
@@ -1027,6 +1028,28 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
               }
 
+              case 'tool_progress': {
+                // Heartbeat: update elapsed time on running tools
+                const progressIdx = toolCalls.findIndex(
+                  tc => tc.name === event.data.name && tc.status === 'running'
+                )
+                if (progressIdx !== -1) {
+                  toolCalls[progressIdx] = { ...toolCalls[progressIdx], elapsedMs: event.data.elapsed_ms }
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === assistantId ? { ...m, toolCalls: [...toolCalls] } : m
+                    )
+                  )
+                }
+                break
+              }
+
+              case 'synthesis_start': {
+                // Post-tool synthesis starting — show composing indicator
+                setIsThinkingStreaming(true)
+                break
+              }
+
               case 'content_delta': {
                 setIsThinkingStreaming(false)
                 assistantContent += event.data
@@ -1488,6 +1511,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
             detail={detail ?? undefined}
             status={tc0.status}
             resultSummary={summary ?? undefined}
+            elapsedMs={tc0.elapsedMs}
             index={gIdx}
           >
             {narrationAfter ? (
@@ -1522,6 +1546,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
             icon={ToolIcon}
             name={label}
             status={anyRunning ? 'running' : 'done'}
+            elapsedMs={group.calls.find(c => c.status === 'running')?.elapsedMs}
             defaultOpen={anyRunning}
             index={gIdx}
           >
@@ -1534,6 +1559,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   name={detail || formatToolName(group.name)}
                   detail={!detail ? `#${cIdx + 1}` : undefined}
                   status={tc.status}
+                  elapsedMs={tc.elapsedMs}
                   resultSummary={summary ?? undefined}
                 />
               )
@@ -2111,6 +2137,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                                   name={formatToolName(tc.name)}
                                   detail={detail ?? undefined}
                                   status={tc.status}
+                                  elapsedMs={tc.elapsedMs}
                                   resultSummary={summary ?? undefined}
                                 />
                               )
