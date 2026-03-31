@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { PixelWordmark } from '@/components/ui/pixel-heading-word'
 
 /** Routes where the NavBar should NOT render */
 const HIDDEN_PREFIXES = ['/dashboard', '/login', '/onboard', '/callback', '/chat']
@@ -19,11 +20,10 @@ export function NavBar() {
     <nav className="sticky top-0 z-[1000] border-b border-border/30 bg-[rgba(10,10,15,0.85)] px-5 py-3 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1200px] items-center justify-between">
         {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-base font-medium tracking-tight text-foreground no-underline"
-        >
-          BitBit
+        <Link href="/" className="flex items-center gap-2 no-underline">
+          <PixelWordmark className="text-base font-medium text-foreground">
+            BitBit
+          </PixelWordmark>
         </Link>
 
         {/* Nav Links */}

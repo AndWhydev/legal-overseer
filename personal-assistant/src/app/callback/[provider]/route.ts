@@ -141,9 +141,7 @@ export async function GET(
     }
 
     // Exchange code for tokens — redirect_uri must match what was sent in /start
-    const requestOrigin = process.env.NODE_ENV === 'production'
-      ? new URL(request.url).origin
-      : 'http://localhost:3000'
+    const requestOrigin = new URL(request.url).origin
     const tokens = await exchangeOAuthCode(provider, code, codeVerifier, requestOrigin)
 
     // Compute token_expires_at for the token refresh system

@@ -202,7 +202,7 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                 {' · '}
               </>
             )}
-            Powered by <span className="font-medium text-gray-500">BitBit</span>
+            Built with <span className="font-medium text-gray-500">BitBit</span>
           </p>
         </div>
       </footer>

@@ -577,7 +577,7 @@ describe('dispatcher', () => {
       await dispatchNotification(mockSupabase, params)
 
       const call = mockSend.mock.calls[0]?.[0]
-      expect(call?.to).toContain('andy@allwebbedup.com.au')
+      expect(call?.to).toContain('hi@torkay.com')
     })
 
     it('uses default from email when not configured', async () => {

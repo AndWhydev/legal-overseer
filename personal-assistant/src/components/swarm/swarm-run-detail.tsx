@@ -220,7 +220,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
                     <span>${step.cost_estimate.toFixed(4)}</span>
                   )}
                   {step.model_used && (
-                    <span>{step.model_used.replace('claude-', '').split('-')[0]}</span>
+                    <span>{step.model_used.replace(/^[^-]+-/, '').split('-')[0]}</span>
                   )}
                   {step.error_message && (
                     <span className="text-red-500">

@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { UniqueIdentifier } from '@dnd-kit/core'
+import { IconPlus } from '@tabler/icons-react'
+
 import {
   Kanban,
   KanbanBoard as KanbanBoardPrimitive,
@@ -9,18 +11,19 @@ import {
   KanbanItem,
   KanbanOverlay,
 } from '@/components/ui/kanban'
-import { KanbanCard } from './kanban-card'
-import { KanbanToolbar, type FilterState } from './kanban-toolbar'
-import { KanbanActivityStrip } from './kanban-activity-strip'
-import { CompletionAnimation } from './completion-animation'
-import { TaskDialog } from './task-dialog'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
-import { IconPlus } from '@tabler/icons-react'
+import { cn } from '@/lib/utils'
 import type { Task, KanbanColumn as ColumnType } from '@/lib/types'
 import { useRealtime } from '@/hooks/use-realtime'
+
+import { KanbanActivityStrip } from './kanban-activity-strip'
+import { KanbanCard } from './kanban-card'
+import { TaskDialog } from './task-dialog'
+import { KanbanToolbar, type FilterState } from './kanban-toolbar'
 
 interface KanbanBoardProps {
   initialColumns: ColumnType[]
@@ -37,11 +40,32 @@ interface UndoToastState {
 
 const PRIORITY_CYCLE = ['medium', 'high', 'critical', 'low'] as const
 
+function getDeadlineTimestamp(task: Task) {
+  const deadline = (task.metadata as Record<string, unknown>)?.deadline
+  if (typeof deadline !== 'string' || !deadline.trim()) return null
+
+  const parsed = new Date(deadline).getTime()
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+function isTaskOverdue(task: Task, doneColumnId?: string) {
+  const deadline = getDeadlineTimestamp(task)
+  if (deadline === null) return false
+  if (doneColumnId && task.column_id === doneColumnId) return false
+  return deadline < Date.now()
+}
+
+function getColumnSummary(taskCount: number) {
+  if (taskCount === 0) return 'Quiet for now'
+  if (taskCount === 1) return '1 task'
+  return `${taskCount} tasks`
+}
+
 export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: KanbanBoardProps) {
   const deduplicatedColumns = useMemo(() => {
     const seen = new Set<string>()
-    return initialColumns.filter(col => {
-      const key = (col.title ?? col.id).toLowerCase().trim()
+    return initialColumns.filter((column) => {
+      const key = (column.title ?? column.id).toLowerCase().trim()
       if (seen.has(key)) return false
       seen.add(key)
       return true
@@ -53,146 +77,169 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [defaultColumnId, setDefaultColumnId] = useState<string | undefined>()
-
-  const [filters, setFilters] = useState<FilterState>({ priority: null, source: 'all' })
+  const [filters, setFilters] = useState<FilterState>({
+    priority: null,
+    source: 'all',
+    overdueOnly: false,
+  })
   const [searchQuery, setSearchQuery] = useState('')
   const searchInputRef = useRef<HTMLInputElement | null>(null)
-
-  const [completionAnim, setCompletionAnim] = useState<{
-    trigger: boolean
-    x: number
-    y: number
-    variant: 'checkmark' | 'confetti' | 'ripple'
-  }>({ trigger: false, x: 0, y: 0, variant: 'checkmark' })
-
   const [undoToast, setUndoToast] = useState<UndoToastState>({
     visible: false,
     message: '',
     task: null,
     timeoutId: null,
   })
-
   const draggingRef = useRef(false)
 
-  const resolvedDoneId = doneColumnId ?? columns.find(
-    (c) => c.title?.toLowerCase() === 'done'
-  )?.id
+  const resolvedDoneId = doneColumnId ?? columns.find((column) => column.title?.toLowerCase() === 'done')?.id
 
   const filteredTasks = useMemo(() => {
     let result = tasks
+
     if (filters.priority) {
-      result = result.filter((t) => t.priority === filters.priority)
+      result = result.filter((task) => task.priority === filters.priority)
     }
+
     if (filters.source === 'bitbit') {
-      result = result.filter((t) => {
-        const meta = t.metadata as Record<string, unknown>
-        return meta?.source === 'bitbit' || t.assigned_to
+      result = result.filter((task) => {
+        const metadata = task.metadata as Record<string, unknown>
+        return metadata?.source === 'bitbit' || Boolean(task.assigned_to)
       })
     } else if (filters.source === 'you') {
-      result = result.filter((t) => {
-        const meta = t.metadata as Record<string, unknown>
-        return meta?.source !== 'bitbit' && !t.assigned_to
+      result = result.filter((task) => {
+        const metadata = task.metadata as Record<string, unknown>
+        return metadata?.source !== 'bitbit' && !task.assigned_to
       })
     }
+
+    if (filters.overdueOnly) {
+      result = result.filter((task) => isTaskOverdue(task, resolvedDoneId))
+    }
+
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      result = result.filter((t) =>
-        (t.title ?? '').toLowerCase().includes(q) ||
-        (t.description && t.description.toLowerCase().includes(q))
+      const query = searchQuery.toLowerCase()
+      result = result.filter((task) =>
+        (task.title ?? '').toLowerCase().includes(query) ||
+        (task.description ?? '').toLowerCase().includes(query)
       )
     }
+
     return result
-  }, [tasks, filters, searchQuery])
+  }, [tasks, filters, searchQuery, resolvedDoneId])
 
-  const isFiltered = filters.priority !== null || filters.source !== 'all' || searchQuery.trim() !== ''
+  const hasActiveFilters =
+    filters.priority !== null ||
+    filters.source !== 'all' ||
+    filters.overdueOnly ||
+    searchQuery.trim().length > 0
 
-  const overdueCount = useMemo(() => {
-    const now = Date.now()
-    return tasks.filter((t) => {
-      const meta = t.metadata as Record<string, unknown>
-      const dl = meta?.deadline as string | undefined
-      return dl && new Date(dl).getTime() < now
-    }).length
-  }, [tasks])
+  const overdueCount = useMemo(
+    () => tasks.filter((task) => isTaskOverdue(task, resolvedDoneId)).length,
+    [tasks, resolvedDoneId]
+  )
 
   const priorityCounts = useMemo(() => {
     const counts: Record<string, number> = {}
-    for (const t of tasks) {
-      if (t.priority) counts[t.priority] = (counts[t.priority] || 0) + 1
+    for (const task of tasks) {
+      if (task.priority) counts[task.priority] = (counts[task.priority] || 0) + 1
     }
     return counts
   }, [tasks])
 
-  // Build the kanban value: Record<UniqueIdentifier, Task[]>
   const kanbanValue = useMemo(() => {
-    const source = isFiltered ? filteredTasks : tasks
+    const source = hasActiveFilters ? filteredTasks : tasks
     const record: Record<UniqueIdentifier, Task[]> = {}
-    for (const col of columns) {
-      record[col.id] = source
-        .filter((t) => t.column_id === col.id)
-        .sort((a, b) => a.position - b.position)
+
+    for (const column of columns) {
+      record[column.id] = source
+        .filter((task) => task.column_id === column.id)
+        .sort((left, right) => left.position - right.position)
     }
+
     return record
-  }, [columns, tasks, filteredTasks, isFiltered])
+  }, [columns, tasks, filteredTasks, hasActiveFilters])
 
   useRealtime({
     table: 'tasks',
     onChange: (payload) => {
       if (draggingRef.current) return
+
       if (payload.eventType === 'INSERT') {
         const newTask = payload.new as Task
-        setTasks((prev) => {
-          if (prev.some((t) => t.id === newTask.id)) return prev
-          const tempIdx = prev.findIndex(t =>
-            t.id.startsWith('temp-') && t.title === newTask.title && t.column_id === newTask.column_id
+        setTasks((previous) => {
+          if (previous.some((task) => task.id === newTask.id)) return previous
+
+          const optimisticIndex = previous.findIndex(
+            (task) =>
+              task.id.startsWith('temp-') &&
+              task.title === newTask.title &&
+              task.column_id === newTask.column_id
           )
-          if (tempIdx >= 0) {
-            const next = [...prev]
-            next[tempIdx] = newTask
+
+          if (optimisticIndex >= 0) {
+            const next = [...previous]
+            next[optimisticIndex] = newTask
             return next
           }
-          return [...prev, newTask]
+
+          return [...previous, newTask]
         })
       } else if (payload.eventType === 'UPDATE') {
-        const updated = payload.new as Task
-        if (updated.status === 'archived') {
-          setTasks((prev) => prev.filter((t) => t.id !== updated.id))
+        const updatedTask = payload.new as Task
+        if (updatedTask.status === 'archived') {
+          setTasks((previous) => previous.filter((task) => task.id !== updatedTask.id))
         } else {
-          setTasks((prev) =>
-            prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t))
+          setTasks((previous) =>
+            previous.map((task) => (task.id === updatedTask.id ? { ...task, ...updatedTask } : task))
           )
         }
       } else if (payload.eventType === 'DELETE') {
-        const old = payload.old as { id: string }
-        setTasks((prev) => prev.filter((t) => t.id !== old.id))
+        const deletedTask = payload.old as { id: string }
+        setTasks((previous) => previous.filter((task) => task.id !== deletedTask.id))
       }
     },
   })
 
+  const getColumnTasks = useCallback(
+    (columnId: string) => {
+      const source = hasActiveFilters ? filteredTasks : tasks
+      return source
+        .filter((task) => task.column_id === columnId)
+        .sort((left, right) => left.position - right.position)
+    },
+    [tasks, filteredTasks, hasActiveFilters]
+  )
+
   const handleKanbanValueChange = useCallback((newValue: Record<UniqueIdentifier, Task[]>) => {
-    // Flatten back to task array with updated column_id and position
     const updatedTasks: Task[] = []
     const changedTasks: Array<{ id: string; column_id: string; position: number }> = []
 
-    for (const [colId, colTasks] of Object.entries(newValue)) {
-      colTasks.forEach((task, idx) => {
-        const updated = { ...task, column_id: colId, position: idx }
-        updatedTasks.push(updated)
+    for (const [columnId, columnTasks] of Object.entries(newValue)) {
+      columnTasks.forEach((task, index) => {
+        const updatedTask = {
+          ...task,
+          column_id: columnId,
+          position: index,
+        }
 
-        // Track changes for API
-        const original = tasks.find((t) => t.id === task.id)
-        if (!original || original.column_id !== colId || original.position !== idx) {
-          changedTasks.push({ id: task.id, column_id: colId, position: idx })
+        updatedTasks.push(updatedTask)
+
+        const originalTask = tasks.find((candidate) => candidate.id === task.id)
+        if (
+          !originalTask ||
+          originalTask.column_id !== columnId ||
+          originalTask.position !== index
+        ) {
+          changedTasks.push({ id: task.id, column_id: columnId, position: index })
         }
       })
     }
 
-    // Also keep tasks not in any visible column
     const columnIds = new Set(Object.keys(newValue))
-    const orphanedTasks = tasks.filter((t) => !columnIds.has(t.column_id ?? ''))
-    setTasks([...updatedTasks, ...orphanedTasks])
+    const hiddenTasks = tasks.filter((task) => !columnIds.has(task.column_id ?? ''))
+    setTasks([...updatedTasks, ...hiddenTasks])
 
-    // Persist changes
     if (changedTasks.length > 0) {
       fetch('/api/tasks/reorder', {
         method: 'POST',
@@ -202,49 +249,58 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     }
   }, [tasks])
 
-  const getColumnTasks = useCallback(
-    (columnId: string) => {
-      const source = isFiltered ? filteredTasks : tasks
-      return source
-        .filter((t) => t.column_id === columnId)
-        .sort((a, b) => a.position - b.position)
+  const handleQuickAddTask = useCallback(
+    (columnId: string, title: string, priority?: string) => {
+      const tempId = `temp-${Date.now()}`
+      const position = getColumnTasks(columnId).length
+      const now = new Date().toISOString()
+      const resolvedPriority = priority || 'medium'
+
+      setTasks((previous) => [
+        ...previous,
+        {
+          id: tempId,
+          title,
+          description: null,
+          column_id: columnId,
+          priority: resolvedPriority,
+          position,
+          status: 'pending',
+          assigned_to: null,
+          metadata: {},
+          org_id: '',
+          created_at: now,
+          updated_at: now,
+        } as Task,
+      ])
+
+      fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          column_id: columnId,
+          priority: resolvedPriority,
+          position,
+        }),
+      })
+        .then((response) => (response.ok ? response.json() : Promise.reject()))
+        .then(({ task }) => setTasks((previous) => previous.map((item) => (item.id === tempId ? task : item))))
+        .catch(() => setTasks((previous) => previous.filter((item) => item.id !== tempId)))
     },
-    [tasks, filteredTasks, isFiltered]
+    [getColumnTasks]
   )
 
-  const handleQuickAddTask = useCallback(function handleQuickAddTask(columnId: string, title: string, priority?: string) {
-    const tempId = `temp-${Date.now()}`
-    const position = getColumnTasks(columnId).length
-    const now = new Date().toISOString()
-    const pri = priority || 'medium'
-
-    setTasks((prev) => [...prev, {
-      id: tempId, title, description: null, column_id: columnId,
-      priority: pri, position, status: 'pending',
-      assigned_to: null, metadata: {}, org_id: '',
-      created_at: now, updated_at: now,
-    } as Task])
-
-    fetch('/api/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, column_id: columnId, priority: pri, position }),
-    })
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(({ task }) => setTasks(prev => prev.map(t => t.id === tempId ? task : t)))
-      .catch(() => setTasks(prev => prev.filter(t => t.id !== tempId)))
-  }, [getColumnTasks])
-
-  const handleEditTask = useCallback(function handleEditTask(task: Task) {
+  const handleEditTask = useCallback((task: Task) => {
     setEditingTask(task)
     setDefaultColumnId(undefined)
     setDialogOpen(true)
   }, [])
 
-  const handleArchiveTask = useCallback(function handleArchiveTask(task: Task) {
+  const handleArchiveTask = useCallback((task: Task) => {
     if (undoToast.timeoutId) clearTimeout(undoToast.timeoutId)
 
-    setTasks((prev) => prev.filter((t) => t.id !== task.id))
+    setTasks((previous) => previous.filter((candidate) => candidate.id !== task.id))
 
     const timeoutId = setTimeout(() => {
       setUndoToast({ visible: false, message: '', task: null, timeoutId: null })
@@ -252,7 +308,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
 
     setUndoToast({
       visible: true,
-      message: `Task archived`,
+      message: 'Task archived',
       task,
       timeoutId,
     })
@@ -262,23 +318,22 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'archived' }),
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [undoToast.timeoutId])
 
   function handleUndoArchive() {
-    const { task } = undoToast
-    if (!task) return
+    const archivedTask = undoToast.task
+    if (!archivedTask) return
 
     if (undoToast.timeoutId) clearTimeout(undoToast.timeoutId)
 
-    setTasks((prev) => {
-      if (prev.some((t) => t.id === task.id)) return prev
-      return [...prev, task]
+    setTasks((previous) => {
+      if (previous.some((task) => task.id === archivedTask.id)) return previous
+      return [...previous, archivedTask]
     })
 
     setUndoToast({ visible: false, message: '', task: null, timeoutId: null })
 
-    fetch(`/api/tasks/${task.id}`, {
+    fetch(`/api/tasks/${archivedTask.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'pending' }),
@@ -294,7 +349,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
     deadline: string
   }) {
     if (editingTask) {
-      const updated = {
+      const updatedTask = {
         title: data.title,
         description: data.description || null,
         column_id: data.column_id,
@@ -306,40 +361,41 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         },
       }
 
-      setTasks((prev) =>
-        prev.map((t) =>
-          t.id === editingTask.id
-            ? { ...t, ...updated, updated_at: new Date().toISOString() }
-            : t
+      setTasks((previous) =>
+        previous.map((task) =>
+          task.id === editingTask.id
+            ? { ...task, ...updatedTask, updated_at: new Date().toISOString() }
+            : task
         )
       )
 
       fetch(`/api/tasks/${editingTask.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
+        body: JSON.stringify(updatedTask),
       })
-    } else {
-      const res = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: data.title,
-          description: data.description || null,
-          column_id: data.column_id,
-          priority: data.priority,
-          position: getColumnTasks(data.column_id).length,
-          metadata: {
-            tags: data.tags,
-            deadline: data.deadline || undefined,
-          },
-        }),
-      })
+      return
+    }
 
-      if (res.ok) {
-        const { task } = await res.json()
-        setTasks((prev) => [...prev, task])
-      }
+    const response = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: data.title,
+        description: data.description || null,
+        column_id: data.column_id,
+        priority: data.priority,
+        position: getColumnTasks(data.column_id).length,
+        metadata: {
+          tags: data.tags,
+          deadline: data.deadline || undefined,
+        },
+      }),
+    })
+
+    if (response.ok) {
+      const { task } = await response.json()
+      setTasks((previous) => [...previous, task])
     }
   }
 
@@ -350,15 +406,16 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   }
 
   function handleDeleteTask(taskId: string) {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId))
+    setTasks((previous) => previous.filter((task) => task.id !== taskId))
     fetch(`/api/tasks/${taskId}`, { method: 'DELETE' })
   }
 
-  const totalTaskCount = isFiltered ? filteredTasks.length : tasks.length
+  const visibleTaskCount = hasActiveFilters ? filteredTasks.length : tasks.length
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <KanbanToolbar
+        visibleCount={visibleTaskCount}
         totalCount={tasks.length}
         overdueCount={overdueCount}
         priorityCounts={priorityCounts}
@@ -367,106 +424,120 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onCreateClick={handleCreateClick}
-        onOverdueClick={() => setFilters({ priority: null, source: 'all' })}
+        onOverdueClick={() => setFilters((current) => ({ ...current, overdueOnly: !current.overdueOnly }))}
         searchInputRef={searchInputRef}
       />
 
       <KanbanActivityStrip tasks={tasks} />
 
-      <Kanban<Task>
-        value={kanbanValue}
-        onValueChange={handleKanbanValueChange}
-        getItemValue={(task) => task.id}
-        flatCursor
-      >
-        <KanbanBoardPrimitive className="flex min-h-0 flex-1 items-stretch gap-2 overflow-x-auto pb-2">
-          {columns
-            .sort((a, b) => a.position - b.position)
-            .map((column) => {
-              const colTasks = kanbanValue[column.id] ?? []
-              const isEmpty = colTasks.length === 0
-              const progressPct = totalTaskCount > 0 ? (colTasks.length / totalTaskCount) * 100 : 0
-
-              return (
-                <KanbanColumn
-                  key={column.id}
-                  value={column.id}
-                  className="flex h-full flex-col transition-all duration-150"
-                  style={{
-                    flex: isEmpty ? '0 0 auto' : 1,
-                    minWidth: isEmpty ? 120 : 200,
-                  }}
-                >
-                  {/* Column header */}
-                  <div className="px-1.5 pb-1">
-                    <div className="flex items-center gap-2 pb-2">
-                      <h3 className="text-sm font-medium text-muted-foreground">
-                        {column.title}
-                      </h3>
-                      <Badge variant="secondary" className="font-mono text-xs">
-                        {colTasks.length}
-                      </Badge>
-                    </div>
-                    <Progress value={progressPct} className="h-0.5 opacity-0 transition-opacity group-hover/card:opacity-100" />
-                  </div>
-
-                  {/* Droppable area */}
-                  <div
-                    className={`flex flex-1 flex-col gap-2 overflow-y-auto rounded-xl border p-2 transition-colors duration-100 scrollbar-none ${
-                      isEmpty ? 'border-transparent bg-muted/30' : 'border-transparent bg-muted/30'
-                    }`}
-                  >
-                    {colTasks.map((task) => (
-                      <KanbanItem key={task.id} value={task.id} asHandle>
-                        <KanbanCard
-                          task={task}
-                          onEdit={handleEditTask}
-                          onArchive={handleArchiveTask}
-                        />
-                      </KanbanItem>
-                    ))}
-
-                    {/* Quick add button */}
-                    <QuickAddInline
-                      columnId={column.id}
-                      isEmpty={isEmpty}
-                      onQuickAdd={handleQuickAddTask}
-                    />
-                  </div>
-                </KanbanColumn>
-              )
-            })}
-        </KanbanBoardPrimitive>
-
-        <KanbanOverlay>
-          {({ value, variant }) => {
-            if (variant === 'column') return null
-            const task = tasks.find((t) => t.id === value)
-            if (!task) return null
-            return <KanbanCard task={{ ...task, id: `_overlay_` }} />
+      <div className="min-h-0 flex-1 px-4 pb-4 pt-3 sm:px-5">
+        <Kanban<Task>
+          value={kanbanValue}
+          onValueChange={handleKanbanValueChange}
+          getItemValue={(task) => task.id}
+          flatCursor
+          onDragStart={() => {
+            draggingRef.current = true
           }}
-        </KanbanOverlay>
-      </Kanban>
+          onDragCancel={() => {
+            draggingRef.current = false
+          }}
+          onDragEnd={() => {
+            draggingRef.current = false
+          }}
+        >
+          <KanbanBoardPrimitive className="flex h-full min-h-0 items-stretch gap-4 overflow-x-auto pb-2">
+            {[...columns]
+              .sort((left, right) => left.position - right.position)
+              .map((column) => {
+                const columnTasks = kanbanValue[column.id] ?? []
+                const progressPct = visibleTaskCount > 0 ? (columnTasks.length / visibleTaskCount) * 100 : 0
+                const columnHeadingId = `kanban-column-${column.id}`
 
-      <CompletionAnimation
-        trigger={completionAnim.trigger}
-        x={completionAnim.x}
-        y={completionAnim.y}
-        variant={completionAnim.variant}
-        onComplete={() => setCompletionAnim((prev) => ({ ...prev, trigger: false }))}
-      />
+                return (
+                  <KanbanColumn key={column.id} value={column.id} className="flex h-full min-w-[18rem] max-w-[24rem] flex-1">
+                    <section
+                      aria-labelledby={columnHeadingId}
+                      className="flex h-full min-h-0 w-full flex-col rounded-[24px] border border-border/70 bg-background/90 shadow-[0_18px_46px_-34px_rgba(0,0,0,0.75)]"
+                    >
+                      <div className="border-b border-border/60 px-4 pb-4 pt-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <h3 id={columnHeadingId} className="text-sm font-semibold text-foreground">
+                              {column.title}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              {getColumnSummary(columnTasks.length)}
+                            </p>
+                          </div>
 
-      {/* Undo Archive Toast */}
+                          <Badge variant="outline" className="bg-background/70 font-mono">
+                            {columnTasks.length}
+                          </Badge>
+                        </div>
+
+                        <Progress value={progressPct} className="mt-3 h-1.5 bg-muted/80" />
+                      </div>
+
+                      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3 pt-3">
+                        {columnTasks.length === 0 && (
+                          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 px-4 py-6 text-center text-sm text-muted-foreground">
+                            Nothing here yet. Add a task or drop one into this column.
+                          </div>
+                        )}
+
+                        {columnTasks.map((task) => (
+                          <KanbanItem key={task.id} value={task.id} asHandle>
+                            <KanbanCard task={task} onEdit={handleEditTask} onArchive={handleArchiveTask} />
+                          </KanbanItem>
+                        ))}
+
+                        <QuickAddInline columnId={column.id} onQuickAdd={handleQuickAddTask} className={columnTasks.length === 0 ? 'mt-0' : 'mt-auto'} />
+                      </div>
+                    </section>
+                  </KanbanColumn>
+                )
+              })}
+
+            {hasActiveFilters && visibleTaskCount === 0 && (
+              <div className="flex min-h-full min-w-[22rem] flex-1 items-center justify-center">
+                <Empty className="max-w-md border border-dashed border-border/70 bg-muted/15">
+                  <EmptyMedia variant="icon">
+                    <IconPlus size={16} />
+                  </EmptyMedia>
+                  <EmptyTitle>No tasks match the current view</EmptyTitle>
+                  <EmptyDescription>
+                    Clear a filter, refine your search, or create a fresh task to get work moving again.
+                  </EmptyDescription>
+                  <Button type="button" variant="outline" onClick={handleCreateClick}>
+                    Create task
+                  </Button>
+                </Empty>
+              </div>
+            )}
+          </KanbanBoardPrimitive>
+
+          <KanbanOverlay>
+            {({ value, variant }) => {
+              if (variant === 'column') return null
+              const task = tasks.find((candidate) => candidate.id === value)
+              if (!task) return null
+              return <KanbanCard task={{ ...task, id: '_overlay_' }} />
+            }}
+          </KanbanOverlay>
+        </Kanban>
+      </div>
+
       {undoToast.visible && (
-        <div className="fixed bottom-6 left-1/2 z-50 flex min-w-[280px] -translate-x-1/2 items-center gap-3 rounded-lg border border-border bg-popover p-3 shadow-lg animate-in slide-in-from-bottom-2">
-          <span className="flex-1 text-sm font-medium text-popover-foreground">
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 z-50 flex min-w-[18rem] -translate-x-1/2 items-center gap-3 rounded-2xl border border-border/70 bg-background/95 p-3 shadow-[0_20px_40px_-26px_rgba(0,0,0,0.7)] backdrop-blur-sm"
+        >
+          <span className="flex-1 text-sm font-medium text-foreground">
             {undoToast.message}
           </span>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleUndoArchive}
-          >
+          <Button type="button" variant="secondary" size="sm" onClick={handleUndoArchive}>
             Undo
           </Button>
         </div>
@@ -485,92 +556,94 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
   )
 }
 
-// ---------------------------------------------------------------------------
-// Inline quick-add component (extracted from KanbanColumn)
-// ---------------------------------------------------------------------------
-
 function QuickAddInline({
   columnId,
-  isEmpty,
+  className,
   onQuickAdd,
 }: {
   columnId: string
-  isEmpty: boolean
+  className?: string
   onQuickAdd: (columnId: string, title: string, priority?: string) => void
 }) {
   const [isAdding, setIsAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [quickPriority, setQuickPriority] = useState<string>('medium')
-  const inputRef = useRef<HTMLInputElement>(null)
 
-  function handleCreate() {
-    if (!newTitle.trim()) return
-    onQuickAdd(columnId, newTitle.trim(), quickPriority)
+  const priorityIndex = PRIORITY_CYCLE.indexOf(quickPriority as (typeof PRIORITY_CYCLE)[number])
+
+  function resetForm() {
+    setIsAdding(false)
     setNewTitle('')
     setQuickPriority('medium')
   }
 
-  if (isAdding) {
-    return (
-      <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span
-            className="size-1.5 shrink-0 rounded-full transition-colors"
-            style={{
-              backgroundColor:
-                quickPriority === 'critical' ? 'hsl(var(--destructive))' :
-                quickPriority === 'high' ? 'hsl(43 96% 56%)' :
-                'currentColor',
-            }}
-          />
-          <Input
-            ref={inputRef}
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                handleCreate()
-              }
-              if (e.key === 'Tab') {
-                e.preventDefault()
-                const idx = PRIORITY_CYCLE.indexOf(quickPriority as typeof PRIORITY_CYCLE[number])
-                setQuickPriority(PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length])
-              }
-              if (e.key === 'Escape') {
-                setIsAdding(false)
-                setNewTitle('')
-                setQuickPriority('medium')
-              }
-            }}
-            onBlur={() => {
-              if (!newTitle.trim()) {
-                setIsAdding(false)
-                setNewTitle('')
-                setQuickPriority('medium')
-              }
-            }}
-            placeholder="Task title..."
-            className="h-auto border-0 bg-transparent p-0 text-sm font-medium shadow-none focus-visible:ring-0"
-            autoFocus
-          />
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Enter create / Tab priority / Esc close
-        </p>
-      </div>
-    )
+  function handleCreate() {
+    if (!newTitle.trim()) return
+    onQuickAdd(columnId, newTitle.trim(), quickPriority)
+    resetForm()
   }
 
-  return (
+  return isAdding ? (
+    <div className={cn('rounded-2xl border border-dashed border-border/70 bg-muted/10 p-3', className)}>
+      <div className="flex flex-col gap-3">
+        <Input
+          value={newTitle}
+          onChange={(event) => setNewTitle(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              handleCreate()
+            }
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              resetForm()
+            }
+          }}
+          placeholder="Add a task title"
+          className="h-10 rounded-xl bg-background"
+          autoFocus
+        />
+
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setQuickPriority(PRIORITY_CYCLE[(priorityIndex + 1) % PRIORITY_CYCLE.length])
+            }
+          >
+            Priority: {quickPriority}
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={resetForm}>
+              Cancel
+            </Button>
+            <Button type="button" size="sm" onClick={handleCreate} disabled={!newTitle.trim()}>
+              Add task
+            </Button>
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Press Enter to create quickly, or use the priority toggle before saving.
+        </p>
+      </div>
+    </div>
+  ) : (
     <Button
+      type="button"
       variant="ghost"
       size="sm"
       onClick={() => setIsAdding(true)}
-      className={`w-full gap-1 border border-dashed border-border/50 text-muted-foreground hover:border-border hover:text-foreground ${isEmpty ? '' : 'mt-auto'}`}
+      className={cn(
+        'w-full rounded-2xl border border-dashed border-border/70 py-5 text-muted-foreground hover:border-border hover:bg-muted/20 hover:text-foreground',
+        className
+      )}
     >
-      <IconPlus data-icon className="size-3.5" />
-      {!isEmpty && 'Add task'}
+      <IconPlus data-icon className="size-4" />
+      Add task
     </Button>
   )
 }

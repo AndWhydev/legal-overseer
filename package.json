@@ -24,7 +24,9 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
     "jspdf": "^4.2.1",
-    "lazygit": "^1.0.4"
+    "lazygit": "^1.0.4",
+    "tailwindcss": "^4.2.2"
   }
 }

@@ -3,11 +3,10 @@ import type { CrawlResult, CrawledMessage, CrawlProgress } from './intelligence-
 
 // ---- Mocks ------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const crawlAllChannelsMock = vi.fn<any>()
+const crawlAllChannelsMock = vi.fn()
 
 vi.mock('./intelligence-crawl', () => ({
-  crawlAllChannels: (...args: unknown[]) => crawlAllChannelsMock(...args),
+  crawlAllChannels: (...args: any[]) => crawlAllChannelsMock(...args),
 }))
 
 vi.mock('@/lib/core/logger', () => ({
@@ -304,7 +303,7 @@ describe('runFirstRunDiscovery', () => {
 
     // Mock crawlAllChannels to invoke its onProgress callback
     crawlAllChannelsMock.mockImplementation(
-      async (_sb: unknown, _orgId: unknown, opts: { onProgress?: (p: CrawlProgress) => void }) => {
+      async (_sb: any, _orgId: any, opts: any) => {
         opts.onProgress?.({ channel: 'gmail', status: 'crawling', count: 0 })
         opts.onProgress?.({ channel: 'gmail', status: 'done', count: 5 })
         return makeCrawlResult(

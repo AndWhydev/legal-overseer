@@ -241,7 +241,7 @@ describe('detectDuplicateInvoice', () => {
           total: 550,
           status: 'sent',
           invoice_number: 'AWU-202602-001',
-          created_at: '2026-02-22T00:00:00.000Z',
+          created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
         },
       ],
     })

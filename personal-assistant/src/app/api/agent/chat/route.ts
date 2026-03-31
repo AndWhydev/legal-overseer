@@ -12,12 +12,27 @@ import { authenticateBearer } from '@/lib/supabase/bearer-auth'
 import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { logger } from '@/lib/core/logger'
 
+const MAX_MESSAGE_LENGTH = 10_000
+const MAX_THREAD_ID_LENGTH = 128
+const MAX_ATTACHMENT_IDS = 10
+
 let registryInitialized = false
 
 export async function POST(request: NextRequest) {
   const { message, threadId, attachmentIds } = await request.json()
   if (!message) {
     return new Response('Message required', { status: 400 })
+  }
+
+  // Input length validation
+  if (typeof message !== 'string' || message.length > MAX_MESSAGE_LENGTH) {
+    return new Response('Message too long', { status: 400 })
+  }
+  if (threadId && (typeof threadId !== 'string' || threadId.length > MAX_THREAD_ID_LENGTH)) {
+    return new Response('Invalid threadId', { status: 400 })
+  }
+  if (attachmentIds && (!Array.isArray(attachmentIds) || attachmentIds.length > MAX_ATTACHMENT_IDS)) {
+    return new Response('Too many attachments', { status: 400 })
   }
 
   if (!registryInitialized) {

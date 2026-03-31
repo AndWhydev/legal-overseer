@@ -47,3 +47,7 @@ yarn-error.log*
 /test-results/
 /playwright-report/
 .env*.local
+
+# macOS resource forks
+._*
+.DS_Store

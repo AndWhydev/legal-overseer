@@ -88,6 +88,15 @@ function buildSentrySupabase(opts: {
       }
       if (table === 'sentry_alerts') {
         return {
+          select() {
+            return {
+              eq() { return this },
+              in() { return this },
+              is() { return this },
+              limit() { return this },
+              maybeSingle() { return Promise.resolve({ data: null, error: null }) },
+            }
+          },
           insert(payload: Record<string, unknown>) {
             state.alerts.push(payload)
             return Promise.resolve({ data: null, error: null })

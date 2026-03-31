@@ -6604,7 +6604,6 @@ html.light .bb-shortcuts-footer kbd {
   box-shadow: none !important;
   color: var(--text-primary);
   font-size: 14px;
-  font-family: 'Inter', sans-serif;
   line-height: 1.5;
   resize: none;
   overflow-y: auto;
@@ -6776,7 +6775,6 @@ html.light .bb-pill__shimmer-dots span {
   font-weight: 500;
   margin-top: 8px;
   color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
   margin: 0;
   letter-spacing: -0.02em;
 }
@@ -6799,7 +6797,6 @@ html.light .bb-pill__shimmer-dots span {
   color: var(--text-secondary);
   cursor: pointer;
   transition: transform 0.15s ease, color 0.15s ease;
-  font-family: 'Inter', sans-serif;
 }
 
 .bb-chat__chip:hover {
@@ -6867,17 +6864,15 @@ html.light .bb-chat__face-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--glass-pill-bg, rgba(255, 255, 255, 0.06));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: none;
+  background: var(--color-chat-surface);
+  border: 1px solid var(--color-chat-surface-border);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
   transition: opacity 0.2s, color 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   pointer-events: auto;
 }
 
@@ -6887,16 +6882,16 @@ html.light .bb-chat__face-avatar {
 }
 
 html.light .bb-chat__scroll-btn {
-  background: rgba(255, 255, 255, 0.8);
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--color-chat-surface);
+  border: 1px solid var(--color-chat-surface-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .bb-chat__bubble--user {
-  background: color-mix(in oklch, var(--secondary), var(--foreground) 10%);
-  border: 1px solid color-mix(in oklch, var(--foreground), transparent 85%);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-radius: 12px 12px 4px 12px;
+  background: var(--color-chat-surface);
+  border: 1px solid var(--color-chat-surface-border);
+  box-shadow: none;
+  border-radius: 22px 22px 4px 22px;
   padding: 10px 14px;
   color: var(--foreground);
   font-size: 16px;
@@ -7168,7 +7163,7 @@ html.light .bb-chat__chip:hover {
 }
 
 html.light .bb-chat__bubble--user {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: none;
 }
 
 html.light .bb-chat__code {
@@ -7755,231 +7750,8 @@ html.light .bb-chat__markdown a:hover {
   }
 }
 
-/* ─── Conversation Drawer ──────────────────────────────────────────────────── */
-
-.bb-chat__drawer-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  z-index: 90;
-  animation: bb-drawer-fade-in 220ms var(--ease-snap);
-}
-
-@keyframes bb-drawer-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Panel — same slide as sidebar panel (translateX, 220ms, ease-snap) */
-.bb-chat__drawer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 260px;
-  max-width: 80vw;
-  z-index: 91;
-  background: var(--bg-primary, #0A0A0B);
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: bb-drawer-slide-in 220ms var(--ease-snap);
-  will-change: transform;
-}
-
-@keyframes bb-drawer-slide-in {
-  from { transform: translateX(-100%) translateZ(0); }
-  to { transform: translateX(0) translateZ(0); }
-}
-
-/* Header — matches sidebar panel header */
-.bb-chat__drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 14px 10px;
-}
-
-.bb-chat__drawer-title {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-dim, #64748B);
-}
-
-/* Close button — sidebar-style hover */
-.bb-chat__drawer-close {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
-  border: none;
-  background: transparent;
-  color: var(--text-dim, #64748B);
-  cursor: pointer;
-  transition: color 120ms var(--ease-snap),
-              background 120ms var(--ease-snap),
-              transform 180ms var(--ease-spring);
-  transform: scale(1) translateZ(0);
-}
-
-.bb-chat__drawer-close:hover {
-  color: var(--text-secondary, #94A3B8);
-  background: rgba(255, 255, 255, 0.08);
-  transform: scale(1.08) translateZ(0);
-}
-
-.bb-chat__drawer-close:active {
-  transform: scale(0.92) translateZ(0);
-  transition-duration: 60ms;
-}
-
-/* New chat button — compact, theme-aware pill */
-.bb-chat__drawer-new-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  border-radius: var(--radius-md);
-  border: none;
-  background: var(--text-primary);
-  color: var(--bg-primary);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 120ms var(--ease-snap),
-              opacity 120ms var(--ease-snap),
-              transform 180ms var(--ease-spring);
-  transform: scale(1) translateZ(0);
-}
-
-.bb-chat__drawer-new-btn:hover {
-  opacity: 0.85;
-  transform: scale(1.04) translateZ(0);
-}
-
-.bb-chat__drawer-new-btn:active {
-  transform: scale(0.95) translateZ(0);
-  transition-duration: 60ms;
-}
-
-/* Thread list */
-.bb-chat__drawer-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 8px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* Staggered entrance for thread cards — matches sidebar panel items */
-.bb-chat__drawer-card {
-  position: relative;
-  border-radius: var(--radius-lg);
-  padding: 9px 11px;
-  background: var(--bg-card, rgba(255, 255, 255, 0.03));
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-  transition: background 120ms var(--ease-snap);
-  animation: bb-panel-item-in 200ms var(--ease-snap) backwards;
-}
-
-.bb-chat__drawer-card:nth-child(1) { animation-delay: 30ms; }
-.bb-chat__drawer-card:nth-child(2) { animation-delay: 55ms; }
-.bb-chat__drawer-card:nth-child(3) { animation-delay: 75ms; }
-.bb-chat__drawer-card:nth-child(4) { animation-delay: 90ms; }
-.bb-chat__drawer-card:nth-child(5) { animation-delay: 105ms; }
-.bb-chat__drawer-card:nth-child(6) { animation-delay: 115ms; }
-.bb-chat__drawer-card:nth-child(7) { animation-delay: 125ms; }
-
-.bb-chat__drawer-card:hover {
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.bb-chat__drawer-card--active {
-  background: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-}
-
-html.light .bb-chat__drawer-card:hover {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-html.light .bb-chat__drawer-card--active {
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.bb-chat__drawer-card-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary, #F1F5F9);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin: 0;
-}
-
-.bb-chat__drawer-card-preview {
-  font-size: 11px;
-  color: var(--text-dim, #64748B);
-  line-height: 1.35;
-  margin-top: 3px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.bb-chat__drawer-card-meta {
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 9px;
-  color: rgba(148, 163, 184, 0.5);
-}
-
-/* Hover-reveal delete button on cards (same as kanban card X) */
-.bb-chat__drawer-card-x {
-  position: absolute;
-  right: 7px;
-  top: 7px;
-  opacity: 0;
-  border-radius: var(--radius-md);
-  padding: 3px;
-  border: none;
-  background: var(--glass-hover-bg, rgba(255, 255, 255, 0.06));
-  color: var(--text-dim, #64748B);
-  cursor: pointer;
-  display: flex;
-  transition: opacity 0.15s, color 0.15s;
-}
-
-.bb-chat__drawer-card:hover .bb-chat__drawer-card-x {
-  opacity: 1;
-}
-
-.bb-chat__drawer-card-x:hover {
-  color: var(--bb-red, #EF4444);
-}
-
-.bb-chat__drawer-empty {
-  padding: 24px 14px;
-  text-align: center;
-  color: var(--text-dim, #64748B);
-  font-size: 12px;
-}
-
-/* Shared icon button — drawer toggle, notification bell, etc.
+/* Shared icon button — notification bell, etc.
    Hover: icon goes brighter (no background change). Subtle scale. */
-.bb-chat__drawer-toggle,
 .bb-topbar-icon-btn {
   position: relative;
   width: 36px;
@@ -7997,12 +7769,10 @@ html.light .bb-chat__drawer-card--active {
   padding: 0;
 }
 
-.bb-chat__drawer-toggle:hover,
 .bb-topbar-icon-btn:hover {
   color: #9CA3AF;
 }
 
-.bb-chat__drawer-toggle:active,
 .bb-topbar-icon-btn:active {
   color: var(--text-primary, #E2E8F0);
   transform: scale(0.9);
@@ -8013,20 +7783,10 @@ html.light .bb-chat__drawer-card--active {
   color: var(--text-primary, #E2E8F0);
 }
 
-/* Drawer toggle positioning — vertically centered in topbar height */
-.bb-chat__drawer-toggle {
-  position: absolute;
-  top: calc((var(--topbar-height) - 36px) / 2);
-  left: 12px;
-  z-index: 20;
-}
-
-html.light .bb-chat__drawer-toggle:hover,
 html.light .bb-topbar-icon-btn:hover {
   color: #6B7280;
 }
 
-html.light .bb-chat__drawer-toggle:active,
 html.light .bb-topbar-icon-btn:active,
 html.light .bb-topbar-icon-btn[aria-expanded="true"] {
   color: #111827;

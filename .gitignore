@@ -54,3 +54,7 @@ docs/*.html
 .env*.local
 .claude/worktrees/
 ._*
+
+# macOS resource forks
+._*
+.DS_Store

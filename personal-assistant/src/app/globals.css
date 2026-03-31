@@ -67,6 +67,13 @@
   --spacing-sidebar: 64px;
   --spacing-topbar: 56px;
   --font-heading: var(--font-stack-ui);
+  /* ── Geist Pixel font family — registered via geist/font/pixel in layout.tsx ── */
+  --font-pixel-square: var(--font-geist-pixel-square);
+  --font-pixel-grid: var(--font-geist-pixel-grid);
+  --font-pixel-circle: var(--font-geist-pixel-circle);
+  --font-pixel-triangle: var(--font-geist-pixel-triangle);
+  --font-pixel-line: var(--font-geist-pixel-line);
+  --font-brand: var(--font-geist-pixel-square);
   --radius-3xl: var(--radius);
   --radius-4xl: var(--radius);
 }
@@ -103,6 +110,10 @@ body {
   text-rendering: optimizeLegibility;
   font-kerning: normal;
   font-synthesis-weight: auto;
+}
+
+button, [role="button"], [type="button"], [type="submit"], [type="reset"] {
+  cursor: pointer;
 }
 
 /* BitBit base tokens */
@@ -698,4 +709,13 @@ body:has(main.landing-stack) main.landing-stack {
     right: 16px !important;
     width: auto !important;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Theme token cascade fix
+   html[data-theme] has specificity 0-1-1 (type + attribute), beating the
+   generic .dark class (0-1-0) which would otherwise override these values.
+   -------------------------------------------------------------------------- */
+html[data-theme="midnight"] {
+  --background: #242424;
 }

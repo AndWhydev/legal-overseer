@@ -15,6 +15,14 @@ export interface WordPressConfig {
   siteUrl: string
   username: string
   applicationPassword: string
+  /** When set, uses JWT Bearer auth instead of Basic auth */
+  jwtToken?: string
+}
+
+export interface WordPressJwtConfig {
+  siteUrl: string
+  username: string
+  password: string
 }
 
 export interface WPPage {
@@ -52,17 +60,34 @@ interface WPErrorResponse {
 
 export class WordPressClient {
   private readonly baseUrl: string
-  private readonly authHeader: string
+  private authHeader: string
+  private readonly siteUrlBase: string
   private readonly userAgent = 'BitBit-Builder/1.0'
+  private jwtExpiry: number | null = null
+
+  // Stored for JWT refresh
+  private readonly jwtUsername?: string
+  private readonly jwtPassword?: string
 
   constructor(private readonly config: WordPressConfig) {
     // Normalise URL -- strip trailing slash, append REST base
     const siteUrl = config.siteUrl.replace(/\/+$/, '')
+    this.siteUrlBase = siteUrl
     this.baseUrl = `${siteUrl}/wp-json/wp/v2`
 
-    // Basic auth with Application Password
-    const credentials = `${config.username}:${config.applicationPassword}`
-    this.authHeader = `Basic ${btoa(credentials)}`
+    if (config.jwtToken) {
+      // JWT Bearer auth
+      this.authHeader = `Bearer ${config.jwtToken}`
+      // Try to extract expiry from JWT payload
+      try {
+        const payload = JSON.parse(atob(config.jwtToken.split('.')[1]))
+        this.jwtExpiry = payload.exp ? payload.exp * 1000 : null
+      } catch { /* ignore */ }
+    } else {
+      // Basic auth with Application Password
+      const credentials = `${config.username}:${config.applicationPassword}`
+      this.authHeader = `Basic ${btoa(credentials)}`
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -252,6 +277,43 @@ export class WordPressError extends Error {
     super(`WordPress API error [${code}]: ${message}`)
     this.name = 'WordPressError'
   }
+}
+
+// ---------------------------------------------------------------------------
+// JWT Authentication
+// ---------------------------------------------------------------------------
+
+/**
+ * Obtain a JWT token from a WordPress site with the JWT Authentication plugin.
+ * Returns a WordPressClient authenticated via Bearer token.
+ */
+export async function createWordPressClientWithJwt(
+  config: WordPressJwtConfig,
+): Promise<WordPressClient> {
+  const siteUrl = config.siteUrl.replace(/\/+$/, '')
+  const res = await fetch(`${siteUrl}/wp-json/jwt-auth/v1/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: config.username,
+      password: config.password,
+    }),
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new WordPressError('jwt_auth_failed', `JWT auth failed: ${text}`, res.status)
+  }
+
+  const data = (await res.json()) as { token: string; user_id: number; expires_in: number }
+  logger.info('WordPress JWT auth successful', { siteUrl, userId: data.user_id })
+
+  return new WordPressClient({
+    siteUrl: config.siteUrl,
+    username: config.username,
+    applicationPassword: '', // unused with JWT
+    jwtToken: data.token,
+  })
 }
 
 // ---------------------------------------------------------------------------

@@ -1,14 +1,15 @@
 'use client'
 
 import React, { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { cjk } from '@streamdown/cjk'
+import { code } from '@streamdown/code'
+import { math } from '@streamdown/math'
+import { mermaid } from '@streamdown/mermaid'
 import { motion } from 'motion/react'
 import { IconRefresh, IconThumbUp, IconThumbDown, IconPencil, IconCopy, IconCheck } from '@tabler/icons-react'
+import { Streamdown, type Components } from 'streamdown'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import Image from 'next/image'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { CodeBlock } from './code-block'
 import {
   InlineCitation,
@@ -37,19 +38,7 @@ interface Message {
   feedback?: 'up' | 'down' | null
 }
 
-/** Close dangling markdown syntax for mid-stream rendering */
-function patchIncomplete(text: string): string {
-  // Close unclosed code fences
-  const fenceCount = (text.match(/```/g) || []).length
-  if (fenceCount % 2 !== 0) text += '\n```'
-  // Close unclosed bold
-  const boldCount = (text.match(/\*\*/g) || []).length
-  if (boldCount % 2 !== 0) text += '**'
-  // Close unclosed italic (single *)
-  const italicCount = (text.match(/(?<!\*)\*(?!\*)/g) || []).length
-  if (italicCount % 2 !== 0) text += '*'
-  return text
-}
+const streamdownPlugins = { cjk, code, math, mermaid }
 
 /** Render a citation badge with hover card */
 function CitationBadge({ citation }: { citation: Citation }) {
@@ -99,7 +88,7 @@ function renderTextWithCitations(text: string, citations: Citation[]): React.Rea
   return parts
 }
 
-export function MessageBubble({ message, citations, showAvatar = false, avatarEmotion, avatarThinking, avatarActivity, onRegenerate, onFeedback, onEdit, onOpenArtifact }: { message: Message; citations?: Citation[]; showAvatar?: boolean; avatarEmotion?: string; avatarThinking?: boolean; avatarActivity?: string; onRegenerate?: () => void; onFeedback?: (type: 'up' | 'down') => void; onEdit?: (messageId: string, newContent: string) => void; onOpenArtifact?: (content: string, lang: string) => void }) {
+export function MessageBubble({ message, citations, onRegenerate, onFeedback, onEdit, onOpenArtifact, isStreaming = false }: { message: Message; citations?: Citation[]; onRegenerate?: () => void; onFeedback?: (type: 'up' | 'down') => void; onEdit?: (messageId: string, newContent: string) => void; onOpenArtifact?: (content: string, lang: string) => void; isStreaming?: boolean }) {
   const isUser = message.role === 'user'
   const msgCitations = citations || message.citations
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(message.feedback || null)
@@ -127,8 +116,8 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
   if (!message.content && message.toolCalls?.length) return null
   if (!message.content) return null
 
-  const baseComponents = {
-    code: ({ className, children, ...props }: { className?: string; children?: React.ReactNode; [key: string]: any }) => {
+  const baseComponents: Components = {
+    code: ({ className, children }) => {
       const isInline = !className || !String(children).includes('\n')
 
       if (isInline) {
@@ -141,7 +130,7 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
 
       return <CodeBlock className={className} onOpenArtifact={onOpenArtifact}>{String(children).replace(/\n$/, '')}</CodeBlock>
     },
-    pre: ({ children, ...props }: { children?: React.ReactNode; [key: string]: any }) => {
+    pre: ({ children }) => {
       return <>{children}</>
     },
   }
@@ -174,7 +163,7 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
   const markdownComponents = {
     ...baseComponents,
     ...citationComponents,
-  }
+  } as Components
 
   return (
     <div className={`bb-chat__msg ${isUser ? 'bb-chat__msg--user' : 'bb-chat__msg--assistant'} relative`}>
@@ -192,98 +181,68 @@ export function MessageBubble({ message, citations, showAvatar = false, avatarEm
       )}
       {!isUser ? (
         <div className="flex flex-col w-full">
-          {/* Avatar + label header */}
-          {showAvatar && (
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Image src="/bitbit-app-icon.png" alt="" width={18} height={18} className="opacity-80 dark:invert" />
-              <span className="text-sm font-medium text-muted-foreground">BitBit</span>
-            </div>
-          )}
           {/* Message content */}
           <div className="bb-chat__bubble--assistant bb-chat__markdown">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={markdownComponents as any}
+            <Streamdown
+              mode="streaming"
+              isAnimating={isStreaming}
+              animated={isStreaming}
+              plugins={streamdownPlugins}
+              components={markdownComponents}
             >
-              {patchIncomplete(message.content)}
-            </ReactMarkdown>
+              {message.content}
+            </Streamdown>
           </div>
-          {/* Action bar */}
-          <TooltipProvider>
-            <div className="flex gap-1 mt-2 items-center">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <motion.div
-                    animate={feedback === 'up' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                  >
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleFeedback('up')}
-                      className={`size-8 ${feedback === 'up' ? 'text-foreground' : 'text-muted-foreground/50 hover:text-muted-foreground'}`}
-                      aria-label="Good response"
-                    >
-                      <IconThumbUp size={18} fill={feedback === 'up' ? 'currentColor' : 'none'} />
-                    </Button>
-                  </motion.div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Good response</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <motion.div
-                    animate={feedback === 'down' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                  >
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleFeedback('down')}
-                      className={`size-8 ${feedback === 'down' ? 'text-foreground' : 'text-muted-foreground/50 hover:text-muted-foreground'}`}
-                      aria-label="Bad response"
-                    >
-                      <IconThumbDown size={18} fill={feedback === 'down' ? 'currentColor' : 'none'} />
-                    </Button>
-                  </motion.div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Bad response</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={handleCopy}
-                    className="size-8 text-muted-foreground/50 hover:text-muted-foreground"
-                    aria-label="Copy message"
-                  >
-                    {copied ? <IconCheck size={18} /> : <IconCopy size={18} />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{copied ? 'Copied' : 'Copy'}</TooltipContent>
-              </Tooltip>
-              {onRegenerate && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={onRegenerate}
-                      className="size-8 text-muted-foreground/50 hover:text-muted-foreground"
-                      aria-label="Regenerate response"
-                    >
-                      <IconRefresh size={18} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">Regenerate</TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-          </TooltipProvider>
+          {/* Action bar — below message, left-aligned */}
+          <div className="flex gap-0.5 items-center mt-2 -ml-1">
+            <motion.div
+              animate={feedback === 'up' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <button
+                type="button"
+                onClick={() => handleFeedback('up')}
+                className={`p-1 cursor-pointer bg-transparent border-0 outline-none ${feedback === 'up' ? 'text-foreground' : 'text-muted-foreground/40 hover:text-muted-foreground'}`}
+                aria-label="Good response"
+              >
+                <IconThumbUp size={16} fill={feedback === 'up' ? 'currentColor' : 'none'} />
+              </button>
+            </motion.div>
+            <motion.div
+              animate={feedback === 'down' ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <button
+                type="button"
+                onClick={() => handleFeedback('down')}
+                className={`p-1 cursor-pointer bg-transparent border-0 outline-none ${feedback === 'down' ? 'text-foreground' : 'text-muted-foreground/40 hover:text-muted-foreground'}`}
+                aria-label="Bad response"
+              >
+                <IconThumbDown size={16} fill={feedback === 'down' ? 'currentColor' : 'none'} />
+              </button>
+            </motion.div>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="p-1 cursor-pointer bg-transparent border-0 outline-none text-muted-foreground/40 hover:text-muted-foreground"
+              aria-label="Copy message"
+            >
+              {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+            </button>
+            {onRegenerate && (
+              <button
+                type="button"
+                onClick={onRegenerate}
+                className="p-1 cursor-pointer bg-transparent border-0 outline-none text-muted-foreground/40 hover:text-muted-foreground"
+                aria-label="Regenerate response"
+              >
+                <IconRefresh size={16} />
+              </button>
+            )}
+          </div>
         </div>
       ) : (
-        <div className={`rounded-[22px] border border-chat-surface-border bg-chat-surface px-5 py-3 max-w-[90%] ml-auto text-[15px] leading-relaxed shadow-sm`}>
+        <div className="bb-chat__bubble--user ml-auto max-w-[90%]">
           {isEditing ? (
             <div className="flex flex-col gap-1.5 w-full">
               <Textarea

@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       const run = await createSwarmRun(supabase, {
         orgId: membership.org_id,
         name: `${template.name}: ${params?.contact_name ?? 'Manual'}`,
-        dag: template.dag,
+        dag: template.definition,
         inputParams: params ?? {},
         templateId: template.id,
         triggeredBy: 'api',

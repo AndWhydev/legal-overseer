@@ -167,7 +167,7 @@ export function VoicePill({
     const parsedLineHeight = Number.parseFloat(style.lineHeight || '');
     const lineHeight = Number.isFinite(parsedLineHeight) ? parsedLineHeight : 24;
     const twoLineThreshold = lineHeight * 2;
-    const shouldExpand = textarea.scrollHeight > (twoLineThreshold + 8);
+    const shouldExpand = textValue.trim() !== '' && textarea.scrollHeight > (twoLineThreshold + 8);
     setIsDockedExpanded(shouldExpand);
   }, [textValue, docked, displayMode, compactDocked]);
 
@@ -297,8 +297,8 @@ export function VoicePill({
           'opacity-100 visible pointer-events-auto',
           'transition-[min-height,padding] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
         ],
-        docked && compactDocked && !isDockedExpanded && 'min-h-[88px] px-4 pt-3 pb-2.5',
-        docked && (!compactDocked || isDockedExpanded) && 'min-h-[120px] px-4 pt-3.5 pb-3',
+        docked && compactDocked && !isDockedExpanded && 'min-h-[88px] px-5 py-3',
+        docked && (!compactDocked || isDockedExpanded) && 'min-h-[120px] px-5 pt-3.5 pb-3',
 
         // ── Floating visible ──
         !docked && isVisible && !isExiting && [

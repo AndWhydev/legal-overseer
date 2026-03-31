@@ -44,7 +44,7 @@ const METRICS = [
 ];
 
 const PARTNERS = [
-  { name: "Anthropic" },
+  { name: "AI Partner" },
   { name: "Supabase" },
   { name: "Vercel" },
   { name: "Stripe" },

@@ -36,7 +36,7 @@ const METRICS = [
 ]
 
 const PARTNERS = [
-  { name: 'Anthropic', icon: '🧠' },
+  { name: 'AI Partner', icon: '🧠' },
   { name: 'Supabase', icon: '🐘' },
   { name: 'Vercel', icon: '⚡' },
   { name: 'Stripe', icon: '💳' },

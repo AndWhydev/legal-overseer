@@ -187,7 +187,7 @@ async function markActionableSegments(
 
   if (actionableIds.length > 0) {
     await supabase
-      .from('transcript_segments')
+      .from('meeting_transcript_segments')
       .update({ is_actionable: true })
       .eq('meeting_id', meetingId)
       .in('id', actionableIds)

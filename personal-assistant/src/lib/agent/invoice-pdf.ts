@@ -75,9 +75,10 @@ export function generateInvoicePdf(
   const orgName = orgSettings?.company_name?.trim() || 'BitBit'
   const primary = orgSettings?.primary_color?.trim() || '#1a2744'
   const accent = orgSettings?.accent_color?.trim() || '#2d6bc4'
-  const termsDays = invoice.payment_terms_days ?? orgSettings?.payment_terms_days ?? 7
+  const rawTermsDays = invoice.payment_terms_days ?? orgSettings?.payment_terms_days ?? 14
+  const termsDays = (rawTermsDays === 7 || rawTermsDays === 14 || rawTermsDays === 30) ? rawTermsDays : 14
   const abn = orgSettings?.abn?.trim() || ''
-  const gstRegistered = orgSettings?.gst_registered === true
+  const gstRegistered = orgSettings?.gst_registered !== false
   const addressLines = orgSettings?.address_lines ?? []
   const footerText = orgSettings?.footer_text?.trim() || ''
   const termsText = orgSettings?.terms?.trim() || ''
@@ -142,7 +143,8 @@ export function generateInvoicePdf(
         <p style="margin:0;font-size:13px;color:#64748b;">${esc(orgName)}${addressLines.length ? ' - ' + addressLines.map(l => esc(l)).join(', ') : ''}</p>
       </div>
       <div style="text-align:right;">
-        <p style="margin:0 0 2px;font-size:18px;font-weight:700;color:${esc(primary)};">Invoice #${esc(invoice.invoice_number)}</p>
+        ${gstRegistered ? `<p style="margin:0 0 4px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:${esc(accent)};">Tax Invoice</p>` : ''}
+        <p style="margin:0 0 2px;font-size:18px;font-weight:700;color:${esc(primary)};">Invoice #: ${esc(invoice.invoice_number)}</p>
         <p style="margin:0 0 4px;font-size:13px;color:#64748b;line-height:1.8;">
           <strong style="color:#334155;">Date:</strong> ${esc(fmtDate(invoice.issued_date))}<br/>
           <strong style="color:#334155;">Due Date:</strong> ${esc(fmtDate(invoice.due_date))}
@@ -154,7 +156,7 @@ export function generateInvoicePdf(
 
     <!-- Due banner -->
     <div style="margin:28px 48px 0;padding:14px 20px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;font-size:14px;color:#92400e;text-align:center;">
-      <strong style="color:#b45309;">Payment Due: ${esc(fmtDate(invoice.due_date))}</strong> (${termsDays} days from invoice date)
+      <strong style="color:#b45309;">Payment Due: ${esc(fmtDate(invoice.due_date))}</strong> (${termsDays}-day terms)
     </div>
 
     <!-- From / Bill To -->
@@ -164,7 +166,7 @@ export function generateInvoicePdf(
         <p style="margin:0;font-size:15px;font-weight:700;color:#1e293b;">${esc(orgName)}</p>
         ${addressLines.map(l => `<p style="margin:4px 0 0;font-size:13px;color:#475569;">${esc(l)}</p>`).join('')}
         <p style="margin:4px 0 0;font-size:13px;color:#475569;">Email: contact@torkay.com</p>
-        ${abn ? `<p style="margin:4px 0 0;font-size:12px;color:#94a3b8;">ABN: ${esc(abn)}</p>` : ''}
+        ${abn ? `<p style=\"margin:4px 0 0;font-size:12px;color:#94a3b8;\">ABN: ${esc(abn)}${gstRegistered ? ' · GST Registered' : ''}</p>` : ''}
       </div>
       <div style="flex:1;">
         <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#94a3b8;margin-bottom:12px;">BILL TO</div>
@@ -195,10 +197,9 @@ export function generateInvoicePdf(
           <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#64748b;">
             <span>Subtotal:</span><span>${money(invoice.subtotal, invoice.currency)}</span>
           </div>
-          ${gstRegistered ? `
           <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px;color:#64748b;">
-            <span>GST (10%):</span><span>${money(invoice.tax, invoice.currency)}</span>
-          </div>` : ''}
+            <span>${gstRegistered ? 'GST (10%)' : 'Tax (0%)'}:</span><span>${gstRegistered ? money(invoice.tax, invoice.currency) : money(0, invoice.currency)}</span>
+          </div>
           <div style="display:flex;justify-content:space-between;padding:14px 0;border-top:2px solid ${esc(primary)};margin-top:8px;font-size:20px;font-weight:700;color:${esc(primary)};">
             <span>Total Due:</span><span>${money(invoice.total, invoice.currency)} ${esc(invoice.currency)}</span>
           </div>
@@ -207,13 +208,15 @@ export function generateInvoicePdf(
     </div>
 
     <!-- Payment information -->
-    ${hasParsedPayment || bankDetails ? `
+    ${paymentInstructions || hasParsedPayment || bankDetails ? `
     <div style="margin:24px 48px 32px;padding:24px 28px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
       <h3 style="font-size:14px;font-weight:700;color:${esc(primary)};margin-bottom:14px;">Payment Information</h3>
+      <p style="margin:0 0 10px;font-size:13px;color:#334155;">${termsDays}-day terms</p>
       ${hasParsedPayment ? `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 40px;">
         ${paymentPairs.map(p => `<div style="font-size:13px;color:#475569;"><strong style="color:#1e293b;font-weight:600;">${esc(p.label)}:</strong> ${esc(p.value)}</div>`).join('\n        ')}
-      </div>` : `
+      </div>` : paymentInstructions ? `
+      <p style="font-size:13px;color:#475569;">${esc(paymentInstructions)}</p>` : `
       <p style="font-size:13px;color:#475569;">${esc(bankDetails)}</p>`}
       ${termsText ? `
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:12px;color:#64748b;">

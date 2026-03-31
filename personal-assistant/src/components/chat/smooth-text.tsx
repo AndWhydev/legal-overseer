@@ -7,6 +7,8 @@ interface SmoothTextProps {
   content: string
   /** Render function — receives the currently revealed portion of content */
   children: (displayed: string) => React.ReactNode
+  /** Called once the full text has been revealed */
+  onComplete?: () => void
 }
 
 /**
@@ -17,11 +19,13 @@ interface SmoothTextProps {
  *  - Buffer 20-100 chars: 3 chars/frame (smooth feel)
  *  - Buffer < 20 chars: 1 char/frame (graceful coast)
  */
-export const SmoothText = memo(function SmoothText({ content, children }: SmoothTextProps) {
+export const SmoothText = memo(function SmoothText({ content, children, onComplete }: SmoothTextProps) {
   const [displayed, setDisplayed] = useState('')
   const posRef = useRef(0)
   const rafRef = useRef<number | null>(null)
   const contentRef = useRef(content)
+  const completeRef = useRef(false)
+  const onCompleteRef = useRef(onComplete)
 
   // Track content changes
   useEffect(() => {
@@ -29,9 +33,13 @@ export const SmoothText = memo(function SmoothText({ content, children }: Smooth
   }, [content])
 
   useEffect(() => {
+    onCompleteRef.current = onComplete
+  }, [onComplete])
+
+  useEffect(() => {
     // Reset on new content
     posRef.current = 0
-    setDisplayed('')
+    completeRef.current = false
 
     if (!content) return
 
@@ -40,6 +48,10 @@ export const SmoothText = memo(function SmoothText({ content, children }: Smooth
       const remaining = contentRef.current.length - pos
 
       if (remaining <= 0) {
+        if (!completeRef.current) {
+          completeRef.current = true
+          onCompleteRef.current?.()
+        }
         rafRef.current = null
         return
       }

@@ -1,20 +1,17 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { motion } from "motion/react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { AnimatePresence, motion } from "motion/react"
 import {
-  IconAlertCircle,
   IconChevronDown,
-  IconCircleCheck,
   IconLoader2,
 } from "@tabler/icons-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Shimmer } from "@/components/ai-elements/shimmer"
 import { cn } from "@/lib/utils"
 import {
   getToolCategoryIcon,
-  getToolCategoryLabel,
   type IntegrationInfo,
   type ToolCallEntry,
 } from "@/lib/tool-calls/presentation"
@@ -27,49 +24,15 @@ type ToolCallsSectionProps = {
   className?: string
   iconSize?: number
   renderIcon?: (call: ToolCallEntry, size: number) => React.ReactNode
-  renderContent?: (content: unknown) => React.ReactNode
   summary?: React.ReactNode
+  animateEntrance?: boolean
+  /** Auto-expand after icons + summary appear */
+  autoExpand?: boolean
+  /** Auto-collapse when set to true (reasoning finished, response starting) */
+  autoCollapse?: boolean
 }
 
-function DefaultContent({ content }: { content: unknown }) {
-  const text = typeof content === "string" ? content : JSON.stringify(content, null, 2)
-
-  return (
-    <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-[16px] border border-border/50 bg-background/55 p-3 text-[13px] leading-6 text-foreground/76">
-      {text}
-    </pre>
-  )
-}
-
-function ToolStatusBadge({
-  status,
-  elapsedMs,
-  resultSummary,
-}: {
-  status?: ToolCallEntry["status"]
-  elapsedMs?: number
-  resultSummary?: string
-}) {
-  if (status === "running") {
-    return (
-      <Badge variant="secondary" className="gap-1 rounded-full border border-border/60 bg-background/70 px-2.5 text-[11px] text-muted-foreground">
-        <IconLoader2 className="animate-spin" />
-        {elapsedMs && elapsedMs >= 1000 ? `${Math.ceil(elapsedMs / 1000)}s` : "Running"}
-      </Badge>
-    )
-  }
-
-  if (status === "error") {
-    return (
-      <Badge variant="destructive" className="gap-1 rounded-full px-2.5 text-[11px]">
-        <IconAlertCircle />
-        {resultSummary || "Failed"}
-      </Badge>
-    )
-  }
-
-  return null
-}
+// ── Single tool call row ────────────────────────────────────────────────────
 
 function ToolCallRow({
   call,
@@ -78,7 +41,8 @@ function ToolCallRow({
   iconSize,
   integrations,
   renderIcon,
-  renderContent,
+  staggerDelay,
+  animateConnector,
 }: {
   call: ToolCallEntry
   index: number
@@ -86,103 +50,70 @@ function ToolCallRow({
   iconSize: number
   integrations?: Map<string, IntegrationInfo>
   renderIcon?: ToolCallsSectionProps["renderIcon"]
-  renderContent?: ToolCallsSectionProps["renderContent"]
+  staggerDelay: number
+  animateConnector: boolean
 }) {
-  const [open, setOpen] = useState(call.status === "running")
-  const hasDetails = Boolean(call.inputs) || Boolean(call.output)
-  const contentRenderer = renderContent ?? ((content: unknown) => <DefaultContent content={content} />)
-  const label = call.integration_name || integrations?.get(call.tool_category)?.name || getToolCategoryLabel(call.tool_category)
   const iconNode = renderCallIcon({ call, iconSize, integrations, renderIcon })
   const showConnector = index < total - 1
-  const showDoneMarker = call.status === "done"
+  const isRunning = call.status === "running"
+  const isError = call.status === "error"
 
-  const header = (
-    <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-4">
-      <div className="relative flex justify-center">
-        {showConnector && (
-          <span className="absolute bottom-[-20px] top-[56px] w-px bg-border/65" />
-        )}
-        <span className="relative z-10 inline-flex size-12 shrink-0 items-center justify-center rounded-[16px] border border-border/55 bg-background/80 shadow-[0_10px_28px_-22px_rgba(0,0,0,0.85)]">
-          {iconNode}
-        </span>
-      </div>
-      <div className="min-w-0 pb-5 pt-0.5">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="min-w-0 text-[15px] font-medium leading-8 text-foreground/82">
-              {call.message || call.tool_name}
-            </p>
-            {call.show_category !== false && (
-              <p className="mt-[-1px] text-[12px] leading-6 text-muted-foreground/95">
-                {label}
-              </p>
-            )}
-            {call.result_summary && call.status === "error" && (
-              <p className="mt-1 text-[12px] leading-5 text-destructive">
-                {call.result_summary}
-              </p>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-2 pt-1">
-            <ToolStatusBadge
-              status={call.status}
-              elapsedMs={call.elapsed_ms}
-              resultSummary={call.result_summary}
+  return (
+    <motion.div
+      layout="position"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.24,
+        delay: staggerDelay,
+        ease: [0.2, 0.9, 0.2, 1],
+      }}
+    >
+      <div className="grid grid-cols-[36px_minmax(0,1fr)] gap-3">
+        <div className="relative flex justify-center">
+          {showConnector && (
+            <motion.span
+              className="absolute bottom-[-14px] top-[34px] w-px bg-border/60 origin-top"
+              initial={animateConnector ? { scaleY: 0 } : false}
+              animate={{ scaleY: 1 }}
+              transition={{
+                duration: 0.35,
+                delay: staggerDelay + 0.12,
+                ease: [0.2, 0.9, 0.2, 1],
+              }}
             />
-            {showDoneMarker && (
-              <IconCircleCheck size={16} className="text-foreground/28" />
-            )}
-            {hasDetails && (
-              <motion.span
-                animate={{ rotate: open ? 180 : 0 }}
-                transition={{ duration: 0.16 }}
-                className="text-foreground/70"
-              >
-                <IconChevronDown size={18} stroke={2.3} />
-              </motion.span>
+          )}
+          <span className="relative z-10 inline-flex size-8 shrink-0 items-center justify-center rounded-xl border border-border/55 bg-background/88 shadow-[0_12px_26px_-24px_rgba(0,0,0,0.85)]">
+            {iconNode}
+          </span>
+        </div>
+        <div className="min-w-0 pb-3 pt-0.5">
+          <div className="min-w-0 truncate text-[14px] font-medium leading-6">
+            {isRunning ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Shimmer duration={1.4} as="span" className="text-foreground/84">
+                  {call.message || call.tool_name}
+                </Shimmer>
+                <IconLoader2 size={13} className="inline-block shrink-0 animate-spin text-foreground/40" />
+              </span>
+            ) : isError ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="text-foreground/50">{call.message || call.tool_name}</span>
+                <span className="text-[12px] text-destructive">{call.result_summary || "Failed"}</span>
+              </span>
+            ) : (
+              <span className="text-foreground/50">
+                {call.message || call.tool_name}
+              </span>
             )}
           </div>
         </div>
       </div>
-    </div>
-  )
-
-  if (!hasDetails) {
-    return <div>{header}</div>
-  }
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <div>
-        <CollapsibleTrigger asChild>
-          <button className="w-full text-left">
-            {header}
-          </button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="ml-[80px] grid gap-3 pb-5 pr-2">
-            {call.inputs && (
-              <div className="grid gap-2">
-                <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                  Inputs
-                </p>
-                {contentRenderer(call.inputs)}
-              </div>
-            )}
-            {call.output && (
-              <div className="grid gap-2">
-                <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                  Output
-                </p>
-                {contentRenderer(call.output)}
-              </div>
-            )}
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
+    </motion.div>
   )
 }
+
+// ── Icon rendering helper ───────────────────────────────────────────────────
 
 function renderCallIcon({
   call,
@@ -209,6 +140,8 @@ function renderCallIcon({
   return <Icon size={iconSize} className="text-foreground/80" />
 }
 
+// ── Main component ──────────────────────────────────────────────────────────
+
 export function ToolCallsSection({
   toolCalls,
   integrations,
@@ -217,10 +150,16 @@ export function ToolCallsSection({
   className,
   iconSize = 21,
   renderIcon,
-  renderContent,
   summary,
+  animateEntrance = false,
+  autoExpand = false,
+  autoCollapse = false,
 }: ToolCallsSectionProps) {
   const [open, setOpen] = useState(defaultExpanded)
+  const [animatedVisibleIconCount, setAnimatedVisibleIconCount] = useState(0)
+  const [animatedSummaryVisible, setAnimatedSummaryVisible] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const prevAutoCollapseRef = useRef(autoCollapse)
 
   const stackedCalls = useMemo(() => {
     const seen = new Set<string>()
@@ -233,78 +172,170 @@ export function ToolCallsSection({
     }).slice(0, maxIconsToShow)
   }, [maxIconsToShow, toolCalls])
 
+  // Icon stagger animation — slower cadence
+  useEffect(() => {
+    if (!animateEntrance) return
+
+    if (animatedVisibleIconCount < stackedCalls.length) {
+      const timer = window.setTimeout(() => {
+        setAnimatedVisibleIconCount((count) => Math.min(count + 1, stackedCalls.length))
+      }, 180)
+      return () => window.clearTimeout(timer)
+    }
+
+    if (!animatedSummaryVisible) {
+      const timer = window.setTimeout(() => {
+        setAnimatedSummaryVisible(true)
+      }, 300)
+      return () => window.clearTimeout(timer)
+    }
+  }, [animateEntrance, animatedSummaryVisible, animatedVisibleIconCount, stackedCalls.length])
+
+  // Auto-expand: after summary appears, wait then open
+  useEffect(() => {
+    if (!autoExpand || !animatedSummaryVisible || open) return
+
+    const timer = window.setTimeout(() => {
+      setOpen(true)
+    }, 700)
+    return () => window.clearTimeout(timer)
+  }, [autoExpand, animatedSummaryVisible, open])
+
+  // Scroll the section into view when it first expands
+  const hasScrolledOnOpenRef = useRef(false)
+  useEffect(() => {
+    if (open && !hasScrolledOnOpenRef.current) {
+      hasScrolledOnOpenRef.current = true
+      // Scroll the container into view so user sees the expand start
+      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+    }
+    if (!open) hasScrolledOnOpenRef.current = false
+  }, [open])
+
+  // Auto-collapse: smoothly close when autoCollapse transitions to true
+  useEffect(() => {
+    if (autoCollapse && !prevAutoCollapseRef.current && open) {
+      const timer = window.setTimeout(() => {
+        setOpen(false)
+      }, 200)
+      prevAutoCollapseRef.current = autoCollapse
+      return () => window.clearTimeout(timer)
+    }
+    prevAutoCollapseRef.current = autoCollapse
+  }, [autoCollapse, open])
+
   const failedCount = toolCalls.filter((call) => call.status === "error").length
   const runningCount = toolCalls.filter((call) => call.status === "running").length
+  const visibleIconCount = animateEntrance ? animatedVisibleIconCount : stackedCalls.length
+  const summaryVisible = animateEntrance ? animatedSummaryVisible : true
+  const visibleCalls = stackedCalls.slice(0, visibleIconCount)
+  const contentVisible = !animateEntrance || summaryVisible
+  const shouldRenderRows = open && contentVisible
 
-  const supportingLabels = [...new Set(
-    toolCalls
-      .filter((call) => call.show_category !== false)
-      .map((call) => call.integration_name || integrations?.get(call.tool_category)?.name || getToolCategoryLabel(call.tool_category)),
-  )].slice(0, 3)
+  const handleToggle = useCallback(() => {
+    setOpen((prev) => !prev)
+  }, [])
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className={cn("w-full", className)}>
-      <div>
-        <CollapsibleTrigger asChild>
-          <button className="flex w-full items-center gap-4 py-2 text-left">
-            <div className="flex shrink-0 items-center">
-              {stackedCalls.map((call, index) => (
-                <span
-                  key={call.tool_call_id || `${call.tool_name}-${index}`}
-                  className={cn("inline-flex rounded-[18px] border border-border/60 bg-background/82 p-2 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.9)]", index > 0 && "-ml-3")}
-                  style={{
-                    rotate: `${index % 2 === 0 ? -6 : 6}deg`,
-                    zIndex: stackedCalls.length - index,
-                  }}
-                >
-                  {renderCallIcon({ call, iconSize: Math.max(20, iconSize + 1), integrations, renderIcon })}
-                </span>
-              ))}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-medium text-foreground/72">
-                {summary || `${toolCalls.length} tool call${toolCalls.length !== 1 ? "s" : ""}`}
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-muted-foreground/92">
-                {supportingLabels.length > 0 && (
-                  <span className="truncate">
-                    {supportingLabels.join(" · ")}
-                  </span>
+    <div ref={containerRef} className={cn("w-full", className)}>
+      {/* Trigger row: icons + summary + chevron */}
+      <button
+        type="button"
+        onClick={handleToggle}
+        className="flex w-full items-center gap-3 py-2 text-left"
+      >
+        {/* Stacked tool icons */}
+        <div className="flex shrink-0 items-center pr-1">
+          <AnimatePresence initial={false}>
+            {visibleCalls.map((call, index) => (
+              <motion.span
+                key={call.tool_call_id || `${call.tool_name}-${index}`}
+                initial={{ opacity: 0, scale: 0.74, y: 6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.74, y: 6 }}
+                transition={{ duration: 0.32, ease: [0.2, 0.9, 0.2, 1] }}
+                className={cn(
+                  "inline-flex size-10 items-center justify-center rounded-[18px] border border-border/60 bg-background/88 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.9)]",
+                  index > 0 && "-ml-3.5"
                 )}
-                {runningCount > 0 && <Badge variant="secondary" className="rounded-full">{runningCount} running</Badge>}
-                {failedCount > 0 && <Badge variant="destructive" className="rounded-full">{failedCount} failed</Badge>}
-              </div>
-            </div>
-
-            <motion.span
-              animate={{ rotate: open ? 180 : 0 }}
-              transition={{ duration: 0.16 }}
-              className="shrink-0 text-foreground/68"
-            >
-              <IconChevronDown size={18} stroke={2.3} />
-            </motion.span>
-          </button>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent>
-          <div className="grid gap-0 pt-5">
-            {toolCalls.map((call, index) => (
-              <ToolCallRow
-                key={call.tool_call_id || `${call.tool_name}-${call.message}`}
-                call={call}
-                index={index}
-                total={toolCalls.length}
-                iconSize={iconSize}
-                integrations={integrations}
-                renderIcon={renderIcon}
-                renderContent={renderContent}
-              />
+                style={{
+                  rotate: `${index % 2 === 0 ? -7 : 6}deg`,
+                  translateY: `${index % 2 === 0 ? -1 : 1}px`,
+                  zIndex: visibleCalls.length - index,
+                }}
+              >
+                {renderCallIcon({ call, iconSize: Math.max(20, iconSize + 1), integrations, renderIcon })}
+              </motion.span>
             ))}
+          </AnimatePresence>
+        </div>
+
+        {/* Summary text + chevron (inline, not right-aligned) */}
+        <AnimatePresence initial={false}>
+          {summaryVisible && (
+            <motion.div
+              initial={{ opacity: 0, x: 6 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 6 }}
+              transition={{ duration: 0.28, ease: [0.2, 0.9, 0.2, 1] }}
+              className="flex min-w-0 items-center gap-1.5"
+            >
+              <p className="truncate text-[14px] font-medium text-foreground/76">
+                {summary || `${toolCalls.length} tool${toolCalls.length !== 1 ? "s" : ""}`}
+              </p>
+
+              {runningCount > 0 && (
+                <Badge variant="secondary" className="rounded-full px-2 text-[11px]">
+                  {runningCount} running
+                </Badge>
+              )}
+              {failedCount > 0 && (
+                <Badge variant="destructive" className="rounded-full px-2 text-[11px]">
+                  {failedCount} failed
+                </Badge>
+              )}
+
+              <motion.span
+                animate={{ rotate: open ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                className="shrink-0 text-foreground/50"
+              >
+                <IconChevronDown size={16} stroke={2.3} />
+              </motion.span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </button>
+
+      {/* Expandable tool call rows — CSS grid transition for GPU-composited expand/collapse */}
+      <div
+        className="grid transition-[grid-template-rows,opacity] duration-400 ease-[cubic-bezier(0.25,1,0.5,1)]"
+        style={{
+          gridTemplateRows: open && contentVisible ? "1fr" : "0fr",
+          opacity: open && contentVisible ? 1 : 0,
+        }}
+      >
+        <div className="overflow-hidden">
+          <div className="grid gap-0 pt-4">
+            <AnimatePresence initial={false}>
+              {shouldRenderRows && toolCalls.map((call, index) => (
+                <ToolCallRow
+                  key={call.tool_call_id || `${call.tool_name}-${index}`}
+                  call={call}
+                  index={index}
+                  total={toolCalls.length}
+                  iconSize={iconSize}
+                  integrations={integrations}
+                  renderIcon={renderIcon}
+                  staggerDelay={Math.min(index * 0.08, 0.32)}
+                  animateConnector
+                />
+              ))}
+            </AnimatePresence>
           </div>
-        </CollapsibleContent>
+        </div>
       </div>
-    </Collapsible>
+    </div>
   )
 }
 

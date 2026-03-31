@@ -50,7 +50,7 @@ export function ChatInput({
       <div className="flex items-center gap-2 rounded-[22px] border border-chat-surface-border bg-chat-surface p-2">
         <Textarea
           ref={textareaRef}
-          className="min-h-[36px] max-h-[120px] resize-none border-0 bg-transparent text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="min-h-[36px] max-h-[120px] resize-none border-0 bg-transparent text-base focus-visible:ring-0 focus-visible:ring-offset-0"
           placeholder={placeholder}
           onKeyDown={handleKeyDown}
           onChange={(e) => { value.current = e.target.value }}

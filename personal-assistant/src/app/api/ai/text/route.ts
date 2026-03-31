@@ -5,7 +5,11 @@ import { assembleContext } from '@/lib/context/assembler'
 import { getPack, resolveIndustry } from '@/lib/industry/registry'
 import { resolveModel } from '@/lib/agent/model-registry'
 import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
+import { detectInjection, neutralizeInjection } from '@/lib/agent/injection-guard'
 import { logger } from '@/lib/core/logger';
+
+const MAX_QUERY_LENGTH = 10_000
+const MAX_CONTEXT_LENGTH = 20_000
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -21,6 +25,30 @@ export async function POST(request: Request) {
   if (!query || typeof query !== 'string') {
     return NextResponse.json({ error: 'query is required' }, { status: 400 })
   }
+
+  if (query.length > MAX_QUERY_LENGTH) {
+    return NextResponse.json({ error: 'query too long' }, { status: 400 })
+  }
+
+  if (extraContext && extraContext.length > MAX_CONTEXT_LENGTH) {
+    return NextResponse.json({ error: 'context too long' }, { status: 400 })
+  }
+
+  // Injection detection on both query and context
+  const queryInjection = detectInjection(query)
+  const contextInjection = extraContext ? detectInjection(extraContext) : { detected: false, patterns: [] }
+
+  if (queryInjection.detected) {
+    logger.warn('injection_detected_query', { userId: user.id, patterns: queryInjection.patterns })
+  }
+  if (contextInjection.detected) {
+    logger.warn('injection_detected_context', { userId: user.id, patterns: contextInjection.patterns })
+  }
+
+  const processedQuery = queryInjection.detected ? neutralizeInjection(query) : query
+  const processedContext = extraContext
+    ? (contextInjection.detected ? neutralizeInjection(extraContext) : extraContext)
+    : undefined
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -45,7 +73,7 @@ export async function POST(request: Request) {
   // Assemble context from the knowledge graph
   let contextSummary = ''
   try {
-    const briefing = await assembleContext(supabase, orgId, query)
+    const briefing = await assembleContext(supabase, orgId, processedQuery)
     contextSummary = briefing.summary
   } catch (err) {
     logger.warn('[ai/text] Context assembly failed, proceeding without context:', err)
@@ -57,9 +85,6 @@ export async function POST(request: Request) {
   if (contextSummary) {
     systemParts.push(`\nRelevant context from the knowledge graph:\n${contextSummary}`)
   }
-  if (extraContext) {
-    systemParts.push(`\nAdditional context:\n${extraContext}`)
-  }
 
   try {
     const client = new Anthropic({ apiKey })
@@ -67,7 +92,12 @@ export async function POST(request: Request) {
       model: resolveModel('conversation'),
       max_tokens: 1024,
       system: systemParts.join('\n'),
-      messages: [{ role: 'user', content: query }],
+      messages: [{
+        role: 'user',
+        content: processedContext
+          ? `${processedQuery}\n\nAdditional context:\n${processedContext}`
+          : processedQuery,
+      }],
     })
 
     const text = response.content

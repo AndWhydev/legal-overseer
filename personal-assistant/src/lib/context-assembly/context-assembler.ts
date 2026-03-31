@@ -24,7 +24,7 @@ import { getPendingApprovals, type ApprovalRecord } from '@/lib/agent/approval-q
 import { loadRecentMessages, loadThreadSummaries } from '@/lib/conversation/thread-resolver'
 import { scanForEntityMentions } from '@/lib/context/entity-mention-scanner'
 import { TokenBudgetManager, type TierInput } from './token-budget-manager'
-import { proactiveRecall as recallForContext, type ProactiveRecallResult } from '@/lib/memory-palace'
+import { proactiveRecall as recallForContext } from '@/lib/memory-palace'
 import { logger } from '@/lib/core/logger'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -225,12 +225,13 @@ function convertToMessageParam(msg: ConversationMessageRecord): Anthropic.Messag
       if (!msg.tool_data) {
         return { role: 'assistant', content: msg.content }
       }
+      const toolUseId = (msg.metadata?.call_id as string) ?? msg.tool_data.id ?? msg.id
       return {
         role: 'assistant',
         content: [
           {
             type: 'tool_use',
-            id: msg.id, // use message ID as tool_use ID
+            id: toolUseId,
             name: msg.tool_data.name,
             input: msg.tool_data.input ?? {},
           },
@@ -245,7 +246,10 @@ function convertToMessageParam(msg: ConversationMessageRecord): Anthropic.Messag
       // Find the associated tool_call message ID for tool_use_id.
       // We use the content field which should store the tool_call message ID,
       // or fall back to the message ID.
-      const toolUseId = (msg.metadata?.tool_call_message_id as string) ?? msg.id
+      const toolUseId = (msg.metadata?.tool_call_message_id as string)
+        ?? (msg.metadata?.call_id as string)
+        ?? msg.tool_data.id
+        ?? msg.id
       return {
         role: 'user',
         content: [

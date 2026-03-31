@@ -268,7 +268,6 @@ export async function listUserThreads(
 
     if (!rpcError && rpcData) {
       return (rpcData as Array<Record<string, unknown>>)
-        .filter((row) => row.status !== 'archived')
         .map((row) => ({
           id: row.id as string,
           title: (row.title as string | null) ?? null,
@@ -288,7 +287,6 @@ export async function listUserThreads(
       .select('id, title, status, last_channel, message_count, last_activity_at')
       .eq('user_id', userId)
       .eq('org_id', orgId)
-      .neq('status', 'archived')
       .order('last_activity_at', { ascending: false })
       .limit(limit)
 
@@ -361,16 +359,40 @@ export async function generateThreadTitle(
         .map(m => `${m.role}: ${m.content.slice(0, 200)}`)
         .join('\n')
 
-      prompt = `Given this conversation, write a concise title (3-6 words, no quotes):\n\n${context}`
+      prompt = `Summarize this conversation as one short sidebar label.
+
+Rules:
+- 4 to 8 words
+- natural language, not keyword fragments
+- sentence case
+- focus on the main user intent
+- no quotes
+- no punctuation at the end
+- keep it comfortably under 60 characters
+
+Conversation:
+${context}`
     } else {
-      prompt = `Given this first exchange, write a concise title (3-6 words, no quotes):\n\nUser: ${userMessage.slice(0, 300)}\nAssistant: ${assistantResponse.slice(0, 300)}`
+      prompt = `Summarize this chat as one short sidebar label.
+
+Rules:
+- 4 to 8 words
+- natural language, not keyword fragments
+- sentence case
+- focus on the main user intent
+- no quotes
+- no punctuation at the end
+- keep it comfortably under 60 characters
+
+User: ${userMessage.slice(0, 300)}
+Assistant: ${assistantResponse.slice(0, 300)}`
     }
 
     const response = await client.messages.create({
       model: resolveModel('classification'),
       max_tokens: 30,
       messages: [{ role: 'user', content: prompt }],
-      system: 'You generate short conversation titles. Output ONLY the title, nothing else. No quotes, no punctuation at the end. 3-6 words max.',
+      system: 'You generate compact conversation labels for a sidebar. Output ONLY the label. No quotes. No punctuation at the end. Prefer clear, human-readable summaries over terse keyword bundles.',
     })
 
     const title = (response.content[0] as { type: string; text: string }).text
@@ -386,6 +408,42 @@ export async function generateThreadTitle(
     }
   } catch (err) {
     logger.warn('[thread-resolver] Title generation failed (non-fatal):', err)
+  }
+}
+
+/**
+ * Permanently delete a thread owned by the requesting user.
+ * Child records cascade via foreign keys.
+ */
+export async function deleteThread(
+  supabase: SupabaseClient,
+  threadId: string,
+  userId: string,
+): Promise<boolean> {
+  try {
+    const { error, count } = await supabase
+      .from('conversation_threads')
+      .delete({ count: 'exact' })
+      .eq('id', threadId)
+      .eq('user_id', userId)
+
+    if (error) {
+      logger.error('[thread-resolver] deleteThread failed:', error.message)
+      return false
+    }
+
+    if (count !== null && count !== undefined && count === 0) {
+      logger.warn('[thread-resolver] deleteThread: no matching thread for user', {
+        threadId,
+        userId,
+      })
+      return false
+    }
+
+    return true
+  } catch (err) {
+    logger.error('[thread-resolver] deleteThread error:', err)
+    return false
   }
 }
 

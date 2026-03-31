@@ -64,20 +64,20 @@ function createTenancySupabase(seed?: {
     lastTableQueried: '',
   }
 
-  function buildFilterableSelect(rows: Array<{ org_id: string; [key: string]: unknown }>) {
+  function buildFilterableSelect(rows: Array<Record<string, any>>) {
     return {
-      select() {
+      select(..._args: any[]) {
         return {
-          in(_key: string, values: string[]) {
+          in(_key: string, values: any) {
             state.lastOrgFilter = values
             const filtered = rows.filter((row) => values.includes(row.org_id))
             return Promise.resolve({ data: filtered, error: null })
           },
           eq(key: string, value: string) {
-            const filtered = rows.filter((row) => (row as Record<string, unknown>)[key] === value)
+            const filtered = rows.filter((row) => row[key] === value)
             return {
               eq(key2: string, value2: string) {
-                const doubly = filtered.filter((row) => (row as Record<string, unknown>)[key2] === value2)
+                const doubly = filtered.filter((row) => row[key2] === value2)
                 return Promise.resolve({ data: doubly, error: null })
               },
               then: (resolve: (v: any) => void) => resolve({ data: filtered, error: null }),
@@ -89,7 +89,7 @@ function createTenancySupabase(seed?: {
   }
 
   const supabase = {
-    rpc: vi.fn((fn: string) => {
+    rpc: vi.fn((fn: string, _params?: any) => {
       if (fn === 'get_user_accessible_org_ids') {
         return Promise.resolve({ data: state.accessibleOrgIds, error: null })
       }
@@ -253,8 +253,8 @@ describe('Multi-tenant Isolation Integration', () => {
     const result = await supabase.from('invoices').select('*').in('org_id', orgIds ?? [])
 
     expect(result.data).toHaveLength(2)
-    expect(result.data.every((inv: InvoiceRow) => inv.org_id === 'orgA')).toBe(true)
-    expect(result.data.map((inv: InvoiceRow) => inv.id)).toEqual(['inv-1', 'inv-3'])
+    expect(result.data.every((inv: any) => inv.org_id === 'orgA')).toBe(true)
+    expect(result.data.map((inv: any) => inv.id)).toEqual(['inv-1', 'inv-3'])
   })
 
   it('org B cannot see org A invoices (reverse direction)', async () => {
@@ -292,7 +292,7 @@ describe('Multi-tenant Isolation Integration', () => {
     const result = await supabase.from('channel_messages').select('*').in('org_id', orgIds ?? [])
 
     expect(result.data).toHaveLength(2)
-    expect(result.data.every((msg: ChannelMessageRow) => msg.org_id === 'orgA')).toBe(true)
+    expect(result.data.every((msg: any) => msg.org_id === 'orgA')).toBe(true)
   })
 
   it('channel_messages returns nothing for non-member org', async () => {
@@ -326,7 +326,7 @@ describe('Multi-tenant Isolation Integration', () => {
     const result = await supabase.from('conversations').select('*').in('org_id', orgIds ?? [])
 
     expect(result.data).toHaveLength(2)
-    expect(result.data.every((c: ConversationRow) => c.org_id === 'orgA')).toBe(true)
+    expect(result.data.every((c: any) => c.org_id === 'orgA')).toBe(true)
   })
 
   // -----------------------------------------------------------------------

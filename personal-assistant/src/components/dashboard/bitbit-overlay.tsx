@@ -523,7 +523,7 @@ export function BitBitOverlay({
     <VoicePill
       mode={pillMode}
       docked={isDocked}
-      compactDocked={isChatTab && !chatSessionStarted}
+      compactDocked={isChatTab}
       morphing={isChatTab && forceFloating && pillMorphPhase !== 'to-floating' && !shouldAnchorFloating}
       morphPhase={isChatTab ? pillMorphPhase : null}
       morphShift={isChatTab ? pillMorphShift : 0}

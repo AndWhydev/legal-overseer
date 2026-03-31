@@ -41,14 +41,14 @@ export async function GET(
   const { data: steps } = await supabase
     .from('swarm_steps')
     .select('*')
-    .eq('swarm_run_id', id)
-    .order('execution_order', { ascending: true })
+    .eq('run_id', id)
+    .order('created_at', { ascending: true })
 
   // Load messages
   const { data: messages } = await supabase
     .from('swarm_messages')
     .select('*')
-    .eq('swarm_run_id', id)
+    .eq('run_id', id)
     .order('created_at', { ascending: true })
 
   return NextResponse.json({
@@ -98,8 +98,8 @@ export async function PATCH(
   }
 
   if (action === 'pause') {
-    if (run.status !== 'running') {
-      return NextResponse.json({ error: 'Can only pause running swarms' }, { status: 400 })
+    if (run.status !== 'executing') {
+      return NextResponse.json({ error: 'Can only pause executing swarms' }, { status: 400 })
     }
     await supabase
       .from('swarm_runs')

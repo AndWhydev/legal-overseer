@@ -69,7 +69,7 @@ describe('buildClassificationPrompt', () => {
   })
 
   it('truncates long bodies', () => {
-    const longBody = 'x'.repeat(3000)
+    const longBody = 'x'.repeat(5000)
     const msg = makeMessage({ body: longBody })
     const prompt = buildClassificationPrompt(msg, '')
     expect(prompt).toContain('...[truncated]')

@@ -141,12 +141,14 @@ function TendersTab() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [tendersRes, profilesRes] = await Promise.all([
+      const [tendersRes, profilesRes, responsesRes] = await Promise.all([
         fetch('/api/agent/tenders'),
         fetch('/api/agent/tenders/capabilities'),
+        fetch('/api/agent/tenders/responses'),
       ]);
       if (tendersRes.ok) setTenders(await tendersRes.json());
       if (profilesRes.ok) setProfiles(await profilesRes.json());
+      if (responsesRes.ok) setResponses(await responsesRes.json());
     } finally {
       setLoading(false);
     }

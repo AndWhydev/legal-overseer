@@ -289,10 +289,10 @@ export function SplashScreen({
                       <motion.span
                         key={i}
                         style={{
-                          fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+                          fontFamily: 'var(--font-geist-pixel-square)',
                           fontSize: 16,
                           fontWeight: 500,
-                          letterSpacing: '0.04em',
+                          letterSpacing: '0.02em',
                           color: 'var(--text-primary)',
                           display: 'inline-block',
                         }}

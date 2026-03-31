@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
 import { Geist_Mono, JetBrains_Mono, Libre_Baskerville } from "next/font/google";
+import {
+  GeistPixelSquare,
+  GeistPixelGrid,
+  GeistPixelCircle,
+  GeistPixelTriangle,
+  GeistPixelLine,
+} from "geist/font/pixel";
 import "./globals.css";
 import "@/styles/animations.css";
 import "@/styles/splash.css";
@@ -189,7 +196,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body
-        className={`${geistMono.variable} ${jetbrainsMono.variable} ${libreBaskerville.variable} antialiased bg-background text-foreground`}
+        className={`${geistMono.variable} ${jetbrainsMono.variable} ${libreBaskerville.variable} ${GeistPixelSquare.variable} ${GeistPixelGrid.variable} ${GeistPixelCircle.variable} ${GeistPixelTriangle.variable} ${GeistPixelLine.variable} antialiased bg-background text-foreground`}
       >
         <NavBar />
         {children}

@@ -2,34 +2,64 @@
 
 import type { Task } from '@/lib/types'
 
+import { Badge } from '@/components/ui/badge'
+
 interface KanbanActivityStripProps {
   tasks: Task[]
 }
 
+function truncateTitle(title: string) {
+  return title.length > 44 ? `${title.slice(0, 44)}...` : title
+}
+
 export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
-  const activeTasks = tasks.filter((t) => {
-    const status = (t.metadata as Record<string, unknown>)?.agentStatus
-    return t.assigned_to && status === 'working'
+  const activeTasks = tasks.filter((task) => {
+    const status = (task.metadata as Record<string, unknown>)?.agentStatus
+    return task.assigned_to && status === 'working'
   })
 
   if (activeTasks.length === 0) return null
 
   return (
-    <div className="mb-1 flex shrink-0 items-center gap-4 overflow-x-auto border-t py-1.5">
-      {activeTasks.map((task) => (
-        <div
-          key={task.id}
-          className="flex shrink-0 items-center gap-2 whitespace-nowrap text-sm text-muted-foreground"
-        >
-          <span className="size-[5px] shrink-0 animate-pulse rounded-full bg-primary" />
-          <span className="font-mono font-medium">
-            BitBit
-          </span>
-          <span className="text-muted-foreground">
-            working on &ldquo;{task.title.length > 40 ? task.title.slice(0, 40) + '...' : task.title}&rdquo;
-          </span>
+    <section
+      aria-label="BitBit activity"
+      className="mx-4 mt-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 sm:mx-5"
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">
+            BitBit in motion
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Active agent sessions stay visible without crowding the board itself.
+          </p>
         </div>
-      ))}
-    </div>
+        <Badge variant="outline" className="w-fit border-emerald-500/30 bg-background/80 font-mono">
+          {activeTasks.length}
+        </Badge>
+      </div>
+
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        {activeTasks.map((task) => (
+          <div
+            key={task.id}
+            className="flex min-w-[16rem] shrink-0 items-center gap-3 rounded-full border border-border/70 bg-background/90 px-3 py-2 shadow-sm"
+          >
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/12">
+              <span className="size-2 animate-pulse rounded-full bg-emerald-500" />
+            </span>
+
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">
+                {truncateTitle(task.title)}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {task.assigned_to} is working on this now
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }

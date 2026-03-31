@@ -42,6 +42,7 @@
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.6.0",
     "es-toolkit": "^1.45.1",
+    "geist": "^1.7.0",
     "gray-matter": "^4.0.3",
     "imapflow": "^1.2.9",
     "lucide-react": "^0.567.0",

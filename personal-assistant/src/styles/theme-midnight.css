@@ -323,14 +323,6 @@
 }
 
 /* --------------------------------------------------------------------------
-   Midnight: Tab Shell + Panels
-   -------------------------------------------------------------------------- */
-
-[data-theme="midnight"] .bb-tab-panel {
-  background: transparent !important;
-}
-
-/* --------------------------------------------------------------------------
    Midnight: Scrollbar
    -------------------------------------------------------------------------- */
 
@@ -521,10 +513,6 @@
   --border-subtle: rgba(255, 255, 255, 0.08);
 }
 
-[data-theme="midnight"] .bb-chat__messages {
-  background: #242424;
-}
-
 [data-theme="midnight"] .bb-chat__bubble--assistant,
 [data-theme="midnight"] .bb-chat__markdown,
 [data-theme="midnight"] .bb-chat__markdown p,
@@ -537,8 +525,8 @@
 }
 
 [data-theme="midnight"] .bb-chat__bubble--user {
-  background: #313131 !important;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--color-chat-surface) !important;
+  border: 1px solid var(--color-chat-surface-border);
   box-shadow: none !important;
   color: #dadada !important;
 }

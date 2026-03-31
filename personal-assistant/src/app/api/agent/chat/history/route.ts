@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient, isDevBypass } from '@/lib/supabase/server'
 import { getServiceClient } from '@/lib/supabase/service-client'
-import { loadRecentMessages, listUserThreads, archiveThread } from '@/lib/conversation/thread-resolver'
+import { loadRecentMessages, listUserThreads, archiveThread, deleteThread } from '@/lib/conversation/thread-resolver'
 import type { Channel } from '@/lib/conversation/types'
 
 const MAX_LIMIT = 100
@@ -130,7 +130,7 @@ export async function DELETE(request: NextRequest) {
   const { supabase: delSupabase, userId: delUserId } = auth
 
   // Parse body
-  const { threadId } = await request.json()
+  const { threadId, mode } = await request.json()
   if (!threadId) {
     return NextResponse.json({ error: 'threadId is required' }, { status: 400 })
   }
@@ -150,11 +150,19 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
+  if (mode === 'delete') {
+    const deleted = await deleteThread(delSupabase, threadId, delUserId)
+    if (!deleted) {
+      return NextResponse.json({ error: 'Failed to delete thread' }, { status: 500 })
+    }
+    return NextResponse.json({ success: true, mode: 'delete' })
+  }
+
   // Archive the thread (userId check provides defense-in-depth)
   const archived = await archiveThread(delSupabase, threadId, delUserId)
   if (!archived) {
     return NextResponse.json({ error: 'Failed to archive thread' }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, mode: 'archive' })
 }

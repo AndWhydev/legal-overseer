@@ -88,10 +88,14 @@ export interface ConversationMessageRecord {
 }
 
 export interface ToolData {
+  id?: string
   name: string
   input?: Record<string, unknown>
   result?: unknown
   success?: boolean
+  queued?: boolean
+  approvalId?: string
+  elapsedMs?: number
 }
 
 export interface ChannelMetadata {

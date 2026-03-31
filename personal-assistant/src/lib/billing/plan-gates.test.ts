@@ -64,6 +64,10 @@ function createMockSupabase(args: {
       }
       throw new Error(`Unsupported table ${table}`)
     },
+    rpc(_fn: string, _params: unknown) {
+      const totalSize = args.files?.reduce((sum, f) => sum + (f.size as number), 0) ?? args.storageBytes ?? 0
+      return Promise.resolve({ data: totalSize, error: null })
+    },
   }
 
   return {
@@ -343,6 +347,9 @@ describe('checkPlanGate', () => {
           }
           throw new Error(`Unsupported table ${table}`)
         },
+        rpc() {
+          return Promise.resolve({ data: null, error: { message: 'Query error' } })
+        },
       }
 
       const allowed = await checkPlanGate(
@@ -378,7 +385,7 @@ describe('PlanFeatures growthRoles and fileAttachments', () => {
   })
 
   it('growth plan has seo, content, ad-script growthRoles', () => {
-    expect(PLAN_FEATURES.growth.growthRoles).toEqual(['seo', 'content', 'ad-script'])
+    expect(PLAN_FEATURES.growth.growthRoles).toEqual(['seo', 'content', 'ad-script', 'builder'])
   })
 
   it('growth plan has fileAttachments enabled', () => {

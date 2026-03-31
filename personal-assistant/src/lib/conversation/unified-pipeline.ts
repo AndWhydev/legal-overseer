@@ -10,6 +10,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type Anthropic from '@anthropic-ai/sdk'
+import { detectInjection, neutralizeInjection } from '@/lib/agent/injection-guard'
 import { resolveChannelIdentity } from './identity-resolver'
 import { resolveActiveThread, storeMessage, loadRecentMessages, generateThreadTitle } from './thread-resolver'
 import { runAgentChat, type AgentEvent, type EngineConfig } from '@/lib/agent/engine'
@@ -44,6 +45,17 @@ interface PipelineConfig {
   engineOverrides?: Partial<EngineConfig>
   /** Multimodal content blocks from file attachments (images, PDFs, documents) */
   contentBlocks?: Anthropic.ContentBlockParam[]
+}
+
+interface PersistedToolTrace {
+  id: string
+  name: string
+  input: Record<string, unknown> | undefined
+  result?: unknown
+  success?: boolean
+  queued?: boolean
+  approvalId?: string
+  elapsedMs?: number
 }
 
 /**
@@ -90,6 +102,19 @@ export class UnifiedConversationPipeline {
     config: PipelineConfig
   ): AsyncGenerator<PipelineEvent> {
     const startTime = Date.now()
+
+    // ── Step 0: Defense-in-depth injection guard ────────────────────────
+    // This catches injection attempts from ALL channels (WhatsApp, SMS,
+    // email, Telegram, web) even if the route-level guard was bypassed.
+    const injection = detectInjection(inbound.content)
+    if (injection.detected) {
+      logger.warn('[pipeline] injection_detected', {
+        channel: inbound.channel,
+        patterns: injection.patterns,
+        userId: config.identity?.userId ?? inbound.userId,
+      })
+      inbound = { ...inbound, content: neutralizeInjection(inbound.content) }
+    }
 
     // ── Step 1: Identity Resolution ────────────────────────────────────
     let identity: ResolvedIdentity
@@ -243,6 +268,8 @@ export class UnifiedConversationPipeline {
     }
 
     let responseContent = ''
+    const toolTraceOrder: string[] = []
+    const toolTraceById = new Map<string, PersistedToolTrace>()
 
     try {
       const events = runAgentChat(inbound.content, engineConfig)
@@ -250,6 +277,47 @@ export class UnifiedConversationPipeline {
         // Capture the final message text for storage
         if (event.type === 'message') {
           responseContent = event.data
+        }
+
+        if (event.type === 'tool_call') {
+          const callId = event.data.callId
+          if (!toolTraceById.has(callId)) {
+            toolTraceOrder.push(callId)
+          }
+          toolTraceById.set(callId, {
+            id: callId,
+            name: event.data.name,
+            input: (event.data.input && typeof event.data.input === 'object' && !Array.isArray(event.data.input))
+              ? event.data.input as Record<string, unknown>
+              : undefined,
+          })
+        }
+
+        if (event.type === 'tool_progress') {
+          const existing = toolTraceById.get(event.data.callId)
+          if (existing) {
+            existing.elapsedMs = event.data.elapsed_ms
+            toolTraceById.set(event.data.callId, existing)
+          }
+        }
+
+        if (event.type === 'tool_result') {
+          const existing = toolTraceById.get(event.data.callId)
+          const nextTrace: PersistedToolTrace = {
+            id: event.data.callId,
+            name: event.data.name,
+            input: existing?.input,
+            result: event.data.result,
+            success: event.data.success,
+            queued: event.data.queued,
+            approvalId: event.data.approvalId,
+            elapsedMs: existing?.elapsedMs,
+          }
+
+          if (!toolTraceById.has(event.data.callId)) {
+            toolTraceOrder.push(event.data.callId)
+          }
+          toolTraceById.set(event.data.callId, nextTrace)
         }
 
         yield event
@@ -262,7 +330,7 @@ export class UnifiedConversationPipeline {
     }
 
     // ── Step 6: Store Assistant Response ────────────────────────────────
-    if (responseContent && threadId && totalRecallAvailable) {
+    if ((responseContent || toolTraceOrder.length > 0) && threadId && totalRecallAvailable) {
       try {
         await storeMessage(this.supabase, {
           threadId,
@@ -271,6 +339,13 @@ export class UnifiedConversationPipeline {
           role: 'assistant',
           channel: inbound.channel,
           content: responseContent,
+          metadata: toolTraceOrder.length > 0
+            ? {
+                tool_calls: toolTraceOrder
+                  .map(callId => toolTraceById.get(callId))
+                  .filter((trace): trace is PersistedToolTrace => Boolean(trace)),
+              }
+            : undefined,
         })
       } catch (err) {
         logger.error('[pipeline] Failed to store assistant response', { err, threadId })

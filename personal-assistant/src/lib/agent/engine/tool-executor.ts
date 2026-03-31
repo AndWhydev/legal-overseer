@@ -298,3 +298,264 @@ export async function executeToolBatch(
     executionCapHit,
   }
 }
+
+// ---------------------------------------------------------------------------
+// Streaming executor (Phase 3)
+// ---------------------------------------------------------------------------
+
+/**
+ * Streaming variant of executeToolBatch — yields events as each tool completes.
+ *
+ * Tools still run in parallel via Promise, but results stream to the caller in
+ * completion order instead of being batched. Includes heartbeat `tool_progress`
+ * events every 2 s for tools still in flight.
+ *
+ * The returned ToolExecutionResult has `events: []` since all events are yielded
+ * directly. `toolResults` preserves the original index order expected by the
+ * Anthropic API (tool_use_id correspondence).
+ */
+export async function* executeToolBatchStreaming(
+  toolBlocks: Anthropic.ToolUseBlock[],
+  config: EngineConfig,
+  execOptions: ExecuteToolOptions | undefined,
+  executionTokens: number,
+  activeRole: string | undefined,
+): AsyncGenerator<AgentEvent, ToolExecutionResult> {
+  let currentActiveRole = activeRole
+  let executionCapHit = false
+  const toolResults: (Anthropic.ToolResultBlockParam | null)[] = new Array(toolBlocks.length).fill(null)
+
+  // ── Per-role budget check ────────────────────────────────────────────
+  const toolBudgetOverrides = new Map<
+    string,
+    { blocked: boolean; warning: boolean; role: string; result: RoleBudgetResult }
+  >()
+
+  for (const tool of toolBlocks) {
+    const role = TOOL_ROLE_MAP[tool.name]
+    if (!role || config.skipCostGuard) continue
+    if (!currentActiveRole) currentActiveRole = role
+
+    const budget = await checkRoleBudget(config.supabase, config.orgId, role)
+    if (!budget.allowed) {
+      toolBudgetOverrides.set(tool.id, { blocked: true, warning: false, role, result: budget })
+      yield {
+        type: 'budget_blocked',
+        data: { role, dailyUsed: budget.dailyUsed, dailyLimit: budget.dailyLimit },
+      }
+    } else if (budget.warning) {
+      toolBudgetOverrides.set(tool.id, { blocked: false, warning: true, role, result: budget })
+      yield {
+        type: 'budget_warning',
+        data: { role, dailyUsed: budget.dailyUsed, dailyLimit: budget.dailyLimit, remainingTokens: budget.remainingTokens },
+      }
+    }
+  }
+
+  // ── Per-execution token cap ──────────────────────────────────────────
+  if (currentActiveRole && !config.skipCostGuard) {
+    const cap = getExecutionTokenCap(currentActiveRole)
+    if (cap && executionTokens > cap) {
+      yield {
+        type: 'execution_cap_hit',
+        data: { role: currentActiveRole, tokensUsed: executionTokens, cap },
+      }
+      executionCapHit = true
+    }
+  }
+
+  // ── Start all tools in parallel ──────────────────────────────────────
+  type CompletedTool =
+    | { idx: number; status: 'fulfilled'; value: ToolResult }
+    | { idx: number; status: 'rejected'; reason: unknown }
+
+  const completionQueue: CompletedTool[] = []
+  let notifyCompletion: (() => void) | null = null
+  const toolStartTime = Date.now()
+
+  for (let idx = 0; idx < toolBlocks.length; idx++) {
+    const tool = toolBlocks[idx]
+    const override = toolBudgetOverrides.get(tool.id)
+
+    const promise: Promise<ToolResult> = override?.blocked
+      ? Promise.resolve({
+          success: false,
+          error: override.result.reason || `Daily token budget for ${override.role} exhausted`,
+        } as ToolResult)
+      : executionCapHit
+        ? Promise.resolve({
+            success: false,
+            error: `Per-execution token cap reached for ${currentActiveRole}. Provide your best answer with current information.`,
+          } as ToolResult)
+        : executeAgentTool(tool.name, tool.input as Record<string, unknown>, config.orgId, config.supabase, execOptions)
+
+    promise
+      .then((value): CompletedTool => ({ idx, status: 'fulfilled', value }))
+      .catch((reason): CompletedTool => ({ idx, status: 'rejected', reason }))
+      .then(item => {
+        completionQueue.push(item)
+        notifyCompletion?.()
+      })
+  }
+
+  // ── Yield results in completion order with heartbeats ─────────────────
+  let remaining = toolBlocks.length
+
+  while (remaining > 0) {
+    // Drain any items that already completed
+    while (completionQueue.length > 0 && remaining > 0) {
+      const completed = completionQueue.shift()!
+      remaining--
+      const tool = toolBlocks[completed.idx]
+
+      if (completed.status === 'rejected') {
+        const errorMsg =
+          completed.reason instanceof Error ? completed.reason.message : String(completed.reason)
+        yield { type: 'tool_result', data: { callId: tool.id, name: tool.name, result: null, success: false } }
+        yield {
+          type: 'stage',
+          data: { stage: 'tool_execution', status: 'done', meta: { toolName: tool.name, success: false } },
+        }
+        toolResults[completed.idx] = {
+          type: 'tool_result',
+          tool_use_id: tool.id,
+          content: `Tool execution failed: ${errorMsg}`,
+          is_error: true,
+        }
+        continue
+      }
+
+      const result = completed.value
+
+      // Forward side-channel events from tool handlers
+      if (result.sideEvents) {
+        for (const se of result.sideEvents) {
+          yield se as AgentEvent
+        }
+      }
+
+      try {
+        // Extract citations
+        try {
+          const citations = extractCitationsFromToolResult(tool.name, result.data)
+          if (citations && citations.length > 0) {
+            yield { type: 'citation', data: { citations } }
+          }
+
+          if ((!citations || citations.length === 0) && tool.name === 'search_memory') {
+            try {
+              const { extractRAGCitations } = await import('@/lib/agent/citation-extractor')
+              const ragCitations = extractRAGCitations(tool.name, result.data)
+              if (ragCitations.length > 0) {
+                yield { type: 'citation', data: { citations: ragCitations } }
+              }
+            } catch {
+              logger.debug('[engine] RAG citation extraction failed', { tool: tool.name })
+            }
+          }
+        } catch {
+          logger.debug('[engine] Citation extraction failed for tool', { tool: tool.name })
+        }
+
+        yield {
+          type: 'tool_result',
+          data: {
+            callId: tool.id,
+            name: tool.name,
+            result: result.data,
+            success: result.success,
+            queued: result.queued,
+            approvalId: result.approvalId,
+          },
+        }
+        yield {
+          type: 'stage',
+          data: {
+            stage: 'tool_execution',
+            status: 'done',
+            meta: { toolName: tool.name, success: result.success, queued: result.queued, approvalId: result.approvalId },
+          },
+        }
+
+        // Fire-and-forget context write-back
+        if (result.success && !result.queued) {
+          reflectAction(config.supabase, config.orgId, tool.name, tool.input as Record<string, unknown>, result.data)
+            .catch((err) => logger.error('[engine] action reflect failed', { err, tool: tool.name }))
+        }
+
+        // Truncate tool results to prevent token overflow
+        toolResults[completed.idx] = {
+          type: 'tool_result',
+          tool_use_id: tool.id,
+          content: result.queued
+            ? (() => {
+                const confidence = typeof result.data === 'object' && result.data !== null && 'confidence' in result.data
+                  ? Number((result.data as { confidence?: unknown }).confidence) || 0
+                  : 0
+                return `Action queued for approval (ID: ${result.approvalId}). Confidence: ${(confidence * 100).toFixed(0)}%`
+              })()
+            : result.success
+              ? (() => {
+                  let data = JSON.stringify(result.data)
+                  if (data.length > MAX_TOOL_RESULT_CHARS) {
+                    data =
+                      data.slice(0, MAX_TOOL_RESULT_CHARS) +
+                      '\n\n[Content truncated — ' +
+                      (data.length - MAX_TOOL_RESULT_CHARS).toLocaleString() +
+                      ' chars omitted]'
+                  }
+                  const jit = getJITInstruction(tool.name)
+                  return jit ? `${data}\n\n---\n${jit}` : data
+                })()
+              : `Error: ${result.error}`,
+          is_error: !result.success && !result.queued,
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err)
+        yield { type: 'tool_result', data: { callId: tool.id, name: tool.name, result: null, success: false } }
+        yield {
+          type: 'stage',
+          data: { stage: 'tool_execution', status: 'done', meta: { toolName: tool.name, success: false } },
+        }
+        toolResults[completed.idx] = {
+          type: 'tool_result',
+          tool_use_id: tool.id,
+          content: `Tool execution failed: ${errorMsg}`,
+          is_error: true,
+        }
+      }
+    }
+
+    if (remaining === 0) break
+
+    // Wait for next completion or emit heartbeat after 2s
+    const gotCompletion = await Promise.race([
+      new Promise<true>(resolve => { notifyCompletion = () => resolve(true) }),
+      new Promise<false>(resolve => setTimeout(() => resolve(false), 2000)),
+    ])
+    notifyCompletion = null
+
+    if (!gotCompletion) {
+      for (let i = 0; i < toolBlocks.length; i++) {
+        if (toolResults[i] === null) {
+          yield {
+            type: 'tool_progress',
+            data: {
+              callId: toolBlocks[i].id,
+              name: toolBlocks[i].name,
+              status: 'executing',
+              elapsed_ms: Date.now() - toolStartTime,
+            },
+          } as AgentEvent
+        }
+      }
+    }
+  }
+
+  return {
+    toolResults: toolResults as Anthropic.ToolResultBlockParam[],
+    events: [],
+    activeRole: currentActiveRole,
+    executionCapHit,
+  }
+}

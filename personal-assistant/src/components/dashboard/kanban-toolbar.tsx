@@ -1,26 +1,28 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { IconSearch, IconPlus, IconX, IconChevronDown } from '@tabler/icons-react'
-import { Button } from '@/components/ui/button'
+import { IconChevronDown, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
+
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
 
 export interface FilterState {
   priority: string | null
   source: 'all' | 'bitbit' | 'you'
+  overdueOnly: boolean
 }
 
 interface KanbanToolbarProps {
+  visibleCount: number
   totalCount: number
   overdueCount: number
   priorityCounts: Record<string, number>
@@ -34,7 +36,7 @@ interface KanbanToolbarProps {
 }
 
 const PRIORITY_OPTIONS = [
-  { value: null, label: 'All' },
+  { value: 'all', label: 'All priorities' },
   { value: 'critical', label: 'Critical' },
   { value: 'high', label: 'High' },
   { value: 'medium', label: 'Medium' },
@@ -42,12 +44,22 @@ const PRIORITY_OPTIONS = [
 ] as const
 
 const SOURCE_OPTIONS = [
-  { value: 'all' as const, label: 'All' },
-  { value: 'bitbit' as const, label: 'BitBit' },
-  { value: 'you' as const, label: 'You' },
-]
+  { value: 'all', label: 'All sources' },
+  { value: 'bitbit', label: 'BitBit' },
+  { value: 'you', label: 'You' },
+] as const
+
+function formatPriorityLabel(priority: string | null) {
+  if (!priority) return 'All priorities'
+  return priority.charAt(0).toUpperCase() + priority.slice(1)
+}
+
+function formatSourceLabel(source: FilterState['source']) {
+  return SOURCE_OPTIONS.find((option) => option.value === source)?.label ?? 'All sources'
+}
 
 export function KanbanToolbar({
+  visibleCount,
   totalCount,
   overdueCount,
   priorityCounts,
@@ -59,153 +71,194 @@ export function KanbanToolbar({
   onOverdueClick,
   searchInputRef,
 }: KanbanToolbarProps) {
-  const [searchExpanded, setSearchExpanded] = useState(false)
-
   const hasPriorityFilter = filters.priority !== null
   const hasSourceFilter = filters.source !== 'all'
+  const hasSearch = searchQuery.trim().length > 0
+  const hasAnyFilters = hasPriorityFilter || hasSourceFilter || filters.overdueOnly || hasSearch
 
   return (
-    <div className="flex shrink-0 items-center gap-2 pb-3">
-      {/* Left: Title + count */}
-      <h2 className="text-base font-semibold tracking-tight text-foreground">
-        Tasks
-      </h2>
-      <Badge variant="secondary" className="font-mono">
-        {totalCount}
-      </Badge>
-
-      {/* Overdue badge */}
-      {overdueCount > 0 && (
-        <Badge
-          variant="destructive"
-          className="cursor-pointer"
-          onClick={onOverdueClick}
-        >
-          {overdueCount}
-        </Badge>
-      )}
-
-      <Separator orientation="vertical" className="mx-1 h-4" />
-
-      {/* Priority filter */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant={hasPriorityFilter ? 'secondary' : 'outline'} size="sm" className="gap-1">
-            {hasPriorityFilter ? `Priority: ${filters.priority}` : 'Priority'}
-            {hasPriorityFilter ? (
-              <span
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onFiltersChange({ ...filters, priority: null })
-                }}
-                className="flex cursor-pointer"
+    <div className="flex flex-col gap-4 border-b border-border/70 px-4 py-5 sm:px-5">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              Task board
+            </h2>
+            <Badge variant="outline" className="bg-background/80 font-mono">
+              {hasAnyFilters ? `${visibleCount}/${totalCount}` : totalCount}
+            </Badge>
+            {overdueCount > 0 && (
+              <Button
+                type="button"
+                variant={filters.overdueOnly ? 'destructive' : 'outline'}
+                size="sm"
+                onClick={onOverdueClick}
+                aria-pressed={filters.overdueOnly}
+                className="gap-1.5"
               >
-                <IconX data-icon className="size-3" />
-              </span>
-            ) : (
-              <IconChevronDown data-icon className="size-3 opacity-60" />
+                Overdue
+                <Badge
+                  variant={filters.overdueOnly ? 'secondary' : 'outline'}
+                  className="bg-transparent px-1.5 text-[11px]"
+                >
+                  {overdueCount}
+                </Badge>
+              </Button>
             )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuLabel>Filter by priority</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {PRIORITY_OPTIONS.map((opt) => (
-            <DropdownMenuItem
-              key={opt.label}
-              onClick={() => onFiltersChange({ ...filters, priority: opt.value })}
-              className={filters.priority === opt.value ? 'bg-accent font-semibold' : ''}
-            >
-              {opt.label}
-              {opt.value && (
-                <span className="ml-auto font-mono text-xs text-muted-foreground">
-                  {priorityCounts[opt.value] || 0}
-                </span>
-              )}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* Source filter */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant={hasSourceFilter ? 'secondary' : 'outline'} size="sm" className="gap-1">
-            {hasSourceFilter ? `Source: ${filters.source}` : 'Source'}
-            {hasSourceFilter ? (
-              <span
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onFiltersChange({ ...filters, source: 'all' })
-                }}
-                className="flex cursor-pointer"
-              >
-                <IconX data-icon className="size-3" />
-              </span>
-            ) : (
-              <IconChevronDown data-icon className="size-3 opacity-60" />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuLabel>Filter by source</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {SOURCE_OPTIONS.map((opt) => (
-            <DropdownMenuItem
-              key={opt.value}
-              onClick={() => onFiltersChange({ ...filters, source: opt.value })}
-              className={filters.source === opt.value ? 'bg-accent font-semibold' : ''}
-            >
-              {opt.label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Search */}
-      <div className="relative flex items-center">
-        {searchExpanded ? (
-          <div className="flex items-center gap-1">
-            <IconSearch data-icon className="size-4 text-muted-foreground" />
-            <Input
-              ref={searchInputRef}
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              onBlur={() => { if (!searchQuery) setSearchExpanded(false) }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  onSearchChange('')
-                  setSearchExpanded(false)
-                  ;(e.target as HTMLInputElement).blur()
-                }
-              }}
-              placeholder="Search..."
-              className="h-7 w-48"
-              autoFocus
-            />
           </div>
-        ) : (
-          <Button
-            variant="outline"
-            size="icon-sm"
-            onClick={() => {
-              setSearchExpanded(true)
-              setTimeout(() => searchInputRef.current?.focus(), 50)
-            }}
-          >
-            <IconSearch data-icon />
-          </Button>
-        )}
-      </div>
 
-      {/* Create button */}
-      <Button variant="outline" size="sm" onClick={onCreateClick} className="gap-1">
-        <IconPlus data-icon />
-        New
-      </Button>
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+            Move work with confidence, filter down to what needs attention, and keep creation quick
+            without turning the board into visual noise.
+          </p>
+
+          <p className="text-xs text-muted-foreground">
+            {hasAnyFilters
+              ? `Showing ${visibleCount} of ${totalCount} tasks.`
+              : 'Showing the full board.'}
+          </p>
+        </div>
+
+        <div className="flex w-full flex-col gap-3 xl:max-w-xl xl:items-end">
+          <div className="flex flex-wrap items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant={hasPriorityFilter ? 'secondary' : 'outline'}
+                  size="sm"
+                  className="gap-2"
+                >
+                  Priority
+                  <span className="truncate text-muted-foreground">
+                    {formatPriorityLabel(filters.priority)}
+                  </span>
+                  <IconChevronDown data-icon className="size-3.5 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuLabel>Filter by priority</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup
+                  value={filters.priority ?? 'all'}
+                  onValueChange={(value) =>
+                    onFiltersChange({
+                      ...filters,
+                      priority: value === 'all' ? null : value,
+                    })
+                  }
+                >
+                  {PRIORITY_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem key={option.value} value={option.value}>
+                      {option.label}
+                      {option.value !== 'all' && (
+                        <span className="ml-auto font-mono text-xs text-muted-foreground">
+                          {priorityCounts[option.value] ?? 0}
+                        </span>
+                      )}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant={hasSourceFilter ? 'secondary' : 'outline'}
+                  size="sm"
+                  className="gap-2"
+                >
+                  Source
+                  <span className="truncate text-muted-foreground">
+                    {formatSourceLabel(filters.source)}
+                  </span>
+                  <IconChevronDown data-icon className="size-3.5 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuLabel>Filter by source</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup
+                  value={filters.source}
+                  onValueChange={(value) =>
+                    onFiltersChange({
+                      ...filters,
+                      source: value as FilterState['source'],
+                    })
+                  }
+                >
+                  {SOURCE_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem key={option.value} value={option.value}>
+                      {option.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {hasAnyFilters && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  onFiltersChange({
+                    priority: null,
+                    source: 'all',
+                    overdueOnly: false,
+                  })
+                }
+                className="gap-1.5 text-muted-foreground"
+              >
+                <IconX data-icon className="size-3.5" />
+                Clear filters
+              </Button>
+            )}
+          </div>
+
+          <div className="flex w-full flex-col gap-2 sm:flex-row xl:w-auto">
+            <div className="relative min-w-0 flex-1 sm:min-w-[18rem] xl:min-w-[20rem]">
+              <label htmlFor="tasks-search" className="sr-only">
+                Search tasks
+              </label>
+              <IconSearch
+                data-icon
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                id="tasks-search"
+                ref={searchInputRef}
+                value={searchQuery}
+                onChange={(event) => onSearchChange(event.target.value)}
+                placeholder="Search titles or notes"
+                className="h-9 w-full rounded-xl bg-background pl-9 pr-10"
+              />
+              {hasSearch && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => {
+                    onSearchChange('')
+                    searchInputRef.current?.focus()
+                  }}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2"
+                  aria-label="Clear task search"
+                >
+                  <IconX data-icon className="size-3.5" />
+                </Button>
+              )}
+            </div>
+
+            <Button type="button" size="lg" onClick={onCreateClick} className="gap-2 rounded-xl px-4">
+              <IconPlus data-icon className="size-4" />
+              New task
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

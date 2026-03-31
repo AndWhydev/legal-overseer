@@ -74,8 +74,8 @@ export function CommandPalette({ query, commands, onSelect }: CommandPaletteProp
 export const DEFAULT_CHAT_COMMANDS: ChatCommand[] = [
   { id: 'new', label: 'new', description: 'Start a new conversation', icon: IconFileText },
   { id: 'clear', label: 'clear', description: 'Clear current conversation', icon: IconTrash },
-  { id: 'search', label: 'search', description: 'Search conversation history', icon: IconSearch },
+  { id: 'search', label: 'search', description: 'Jump to your conversations in the sidebar', icon: IconSearch },
   { id: 'memory', label: 'memory', description: 'Search your memory', icon: IconBrain },
-  { id: 'history', label: 'history', description: 'Open conversation drawer', icon: IconHistory },
+  { id: 'history', label: 'history', description: 'Focus the conversation list in the sidebar', icon: IconHistory },
   { id: 'export', label: 'export', description: 'Export this conversation', icon: IconDownload },
 ]

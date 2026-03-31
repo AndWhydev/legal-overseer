@@ -37,7 +37,7 @@ export async function createMeeting(
       status: 'pending' as MeetingStatus,
       scheduled_at: request.scheduled_at || null,
       contact_id: request.contact_id || null,
-      source: 'upload',
+      source: request.source || 'upload',
       created_by: request.created_by || null,
     })
     .select()

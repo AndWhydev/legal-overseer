@@ -31,7 +31,7 @@ import { detectTopicShift } from '@/lib/agent/citation-extractor'
 
 import type { EngineConfig, AgentEvent } from './types'
 import { preFlightChecks } from './pre-flight'
-import { executeToolBatch } from './tool-executor'
+import { executeToolBatchStreaming, type ToolExecutionResult } from './tool-executor'
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -506,9 +506,8 @@ export async function* runTAORLoop(
       toolMeta.push({ tool, matchedStage })
     }
 
-    // Execute all tools with heartbeat — yields tool_progress every 2s during execution
-    const toolStartTime = Date.now()
-    const batchPromise = executeToolBatch(
+    // Execute all tools — streams results in completion order with heartbeats
+    const batchGen = executeToolBatchStreaming(
       toolBlocks,
       config,
       execOptions,
@@ -516,35 +515,21 @@ export async function* runTAORLoop(
       activeRole,
     )
 
-    // Race between batch completion and 2s heartbeat ticks
-    let batchResult: Awaited<ReturnType<typeof executeToolBatch>> | null = null
-    batchPromise.then(r => { batchResult = r })
-    while (!batchResult) {
-      const tick = await Promise.race([
-        batchPromise.then(r => ({ type: 'result' as const, result: r })),
-        new Promise<{ type: 'tick' }>(resolve => setTimeout(() => resolve({ type: 'tick' }), 2000)),
-      ])
-      if (tick.type === 'result') {
-        batchResult = tick.result
+    // Consume generator: yields events as each tool completes
+    const toolOutcomes = new Map<string, boolean>() // callId → success
+    let batchResult!: ToolExecutionResult
+    while (true) {
+      const { value, done } = await batchGen.next()
+      if (done) {
+        batchResult = value
         break
       }
-      // Heartbeat: emit progress for each running tool
-      for (const tool of toolBlocks) {
-        yield {
-          type: 'tool_progress' as const,
-          data: {
-            callId: tool.id,
-            name: tool.name,
-            status: 'executing' as const,
-            elapsed_ms: Date.now() - toolStartTime,
-          },
-        }
+      // Track tool outcomes for plan stage updates
+      if (value.type === 'tool_result') {
+        const data = value.data as { callId?: string; success: boolean }
+        if (data.callId) toolOutcomes.set(data.callId, data.success)
       }
-    }
-
-    // Yield batch events (tool_result, stage, budget, citation events)
-    for (const event of batchResult.events) {
-      yield event
+      yield value
     }
     activeRole = batchResult.activeRole
 
@@ -565,19 +550,12 @@ export async function* runTAORLoop(
     for (let t = 0; t < toolMeta.length; t++) {
       const { matchedStage } = toolMeta[t]
       if (matchedStage) {
-        // Check if tool succeeded (find corresponding tool_result event)
-        const resultEvent = batchResult.events.find(
-          e => e.type === 'tool_result' && (e.data as { callId?: string; name: string }).callId === toolMeta[t].tool.id,
-        )
-        const success = resultEvent ? (resultEvent.data as { success: boolean }).success : false
+        const success = toolOutcomes.get(toolMeta[t].tool.id) ?? false
         yield { type: 'plan_stage_update', data: { stageId: matchedStage.id, status: success ? 'done' : 'error' } }
       } else if (planStages.length > 0) {
         const reactiveMatch = planStages.find(s => s.id === toolMeta[t].tool.name)
         if (reactiveMatch) {
-          const resultEvent = batchResult.events.find(
-            e => e.type === 'tool_result' && (e.data as { callId?: string; name: string }).callId === toolMeta[t].tool.id,
-          )
-          const success = resultEvent ? (resultEvent.data as { success: boolean }).success : false
+          const success = toolOutcomes.get(toolMeta[t].tool.id) ?? false
           yield { type: 'plan_stage_update', data: { stageId: reactiveMatch.id, status: success ? 'done' : 'error' } }
         }
       }
