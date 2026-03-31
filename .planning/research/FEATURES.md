@@ -1,416 +1,224 @@
-# Feature Landscape
+# Feature Landscape: Autonomous Execution (v2.0)
 
-**Domain:** Agentic AI operations platform -- file attachments, SaaS billing, growth agent roles
-**Researched:** 2026-03-18
-**Confidence:** MEDIUM-HIGH (existing codebase patterns well understood; growth role scope varies)
+**Domain:** Autonomous AI agent execution -- browser automation, async task management, workflow orchestration, execution verification
+**Researched:** 2026-03-31
+**Confidence:** MEDIUM-HIGH (grounded in real product analysis of Devin, Operator, Anthropic CUA, Stagehand, and industry patterns; verified against official docs)
 
 ---
 
-## Category 1: File Attachments & Multimedia in Chat
+## Table Stakes
 
-### Table Stakes
+Features users expect from an autonomous execution platform. Missing any of these and the system feels broken or unsafe.
 
-Features users expect from any AI chat with file support. Missing = feels broken.
+| Feature | Why Expected | Complexity | Dependencies on Existing BitBit | Notes |
+|---------|-------------|------------|--------------------------------|-------|
+| **Real-time execution visibility** | Every major product (Devin, Operator, Claude Cowork) shows what the agent is doing in real-time. Users refuse to trust a black box. | Med | Extends existing `AgentEvent` SSE streaming in TAOR loop | Devin shows Shell/Browser/Editor/Planner tabs with <50ms latency. Operator shows a live browser view with narration. BitBit needs equivalent: a live activity feed showing current step, elapsed time, and what tool is active. |
+| **Step-by-step execution plan** | Operator, Devin, and Pulumi Neo all show the plan before or during execution. Users need to see "here are the 5 things I will do" before the agent acts. | Low | Extends existing `PlanStage` system (planner.ts already generates plans) | BitBit already has plan generation and plan_stage_update events. Extend to cover multi-step async executions, not just single-turn tool calls. |
+| **Human confirmation for sensitive actions** | Anthropic CUA, Operator, and Claude Cowork all pause for confirmation on logins, payments, form submissions, and consent actions. This is table stakes for trust and safety. | Med | Extends existing approval-queue.ts and confidence routing | BitBit already has approval flow with confidence thresholds (act/ask/escalate). Extend to cover real-time execution pauses where the agent stops mid-workflow and waits for user confirmation. Currently approvals are fire-and-forget; needs to become synchronous mid-execution gates. |
+| **Task cancellation** | MCP async tasks spec, Devin, and Operator all support user-initiated cancellation. An unstoppable autonomous agent is terrifying. | Med | New -- no existing cancellation mechanism for in-flight tool executions | Must implement clean cancellation semantics: stop current step, transition to `cancelled` state, never resume. The TAOR loop's safety ceiling (50 iterations) is not the same as user-initiated cancel. |
+| **Execution progress tracking** | Users need to know: how far along is this task? MCP Tasks spec defines `working`/`completed`/`failed`/`cancelled` states. Devin shows a Progress tab. | Med | Extends existing `tool_progress` event type in AgentEvent | Current `tool_progress` only tracks elapsed_ms for a single tool. Need durable task state: a DB-backed task record with lifecycle states, percentage progress, and status messages. |
+| **Error recovery and retry** | Long-running tasks fail. Every production system implements retry with exponential backoff and dead letter queues. Research shows "doubling task duration quadruples the failure rate." | High | Extends existing DLQ (dlq.ts) and circuit breaker (circuit-breaker.ts) | BitBit already has circuit breakers and a dead letter queue. Extend to per-step retry within multi-step executions, with configurable retry policies per action type. |
+| **Execution history and audit log** | Users need to review what the agent did after the fact. Devin records every terminal command, file edit, and browser action in a full replay timeline. | Med | Extends existing run-logger.ts (logAgentRun) | Current logging tracks token usage and cost. Extend to capture every action taken, every screenshot captured, every decision made, stored in a durable execution_steps table. |
+| **Tool priority chain (API-first, browser fallback)** | The "all-or-nothing" approach to autonomy is brittle. Best practice: try structured API first, fall back to browser automation if no API exists, escalate to human if browser fails. | High | New orchestration layer above existing tool system | This is the architectural core of v2.0. Current tools are all API-based (invoice, email, etc.). Need a resolver that: (1) checks if a structured tool exists, (2) falls back to CUA/browser, (3) escalates to human. Each level has different cost, speed, and reliability characteristics. |
 
-| Feature | Why Expected | Complexity | Dependencies | Notes |
-|---------|-------------|------------|--------------|-------|
-| Paperclip button in chat composer | Universal pattern (ChatGPT, Gemini, Claude.ai) | Low | Chat interface UI | Hidden `<input type="file">` triggered by icon button |
-| Drag-and-drop file onto chat | Every modern chat supports this | Low | Chat interface UI | `onDragOver`/`onDrop` handlers on chat container |
-| Upload progress indicator | Users need feedback on large files | Low | None | Local state bar, no backend dependency |
-| Inline image preview | Images should render in chat, not just filename | Medium | Supabase Storage signed URLs | Generate thumbnail + signed download URL |
-| Inline PDF preview | PDFs are the most common business file type | Medium | Existing `attachment-processor.ts` | Embed viewer or first-page thumbnail |
-| File size limits with clear error | Prevent 500MB uploads silently failing | Low | None | Client-side validation, 10MB default per file |
-| Accepted file type filtering | Don't accept .exe, .dmg etc. | Low | None | `accept` attribute on input + server validation |
-| Agent can read/analyze uploaded files | Core value -- "here's the brief, summarize it" | High | Claude Vision API, `attachment-processor.ts` | Pass images as base64 to Claude vision; extract text from docs |
-| Attachment metadata on messages | Messages with files show filename, size, type | Low | `ChannelMetadata.attachments` (already typed) | Existing type has `attachments` array in conversation types |
-| Storage scoped to org | Multi-tenant isolation | Medium | Supabase Storage RLS, `org_id` | Bucket path: `{org_id}/{thread_id}/{filename}` |
+## Differentiators
 
-### Differentiators
+Features that would set BitBit apart. Not expected by users, but create significant competitive advantage.
 
-| Feature | Value Proposition | Complexity | Dependencies | Notes |
-|---------|-------------------|------------|--------------|-------|
-| Agent auto-ingests docs to knowledge graph | "Upload your client folder, BitBit learns everything" | High | RAG pipeline, embedding service | Trigger embedding + entity extraction on upload |
-| Multi-file upload (batch) | Upload 5 files at once, agent processes all | Medium | Queue/concurrency management | Promise.allSettled pattern already used in gmail-attachments |
-| Image analysis via Claude Vision | "What's in this screenshot?" / "Read this receipt" | Medium | Claude API (vision already supported) | base64 encode, send as image content block |
-| Voice note upload + transcription | Parity with WhatsApp voice notes (already built) | Medium | Whisper API (already integrated) | Reuse WhatsApp voice note pipeline |
-| File reference in future messages | "That PDF I uploaded yesterday" -- agent finds it | High | Thread-scoped file registry | Query attachments table by thread/org |
+| Feature | Value Proposition | Complexity | Dependencies on Existing BitBit | Notes |
+|---------|-------------------|------------|--------------------------------|-------|
+| **Workflow learning and replay** | Remember successful multi-step executions and replay them faster next time. Stagehand v3's auto-caching (cache selector paths, replay without LLM inference, re-engage AI only on failure) is the gold standard. AFLOW (ICLR 2025) uses MCTS to preserve and reuse workflow experiences. | High | Extends existing Memory Palace and workflow-rule-engine | When BitBit successfully completes "invoice Sezer for White House RE work" via 4 steps, store that execution trace. Next time a similar request comes in, replay the cached workflow without full LLM reasoning on each step. Falls back to LLM reasoning only when the cached path fails. This compounds -- the more BitBit works, the faster and cheaper it gets. |
+| **Evidence capture and verification** | After completing a task, capture proof: screenshots of the result, API response confirmations, before/after state comparison. No competing product for business operations does this well. | Med | Extends existing file attachment system (signed URLs, storage) | Screenshot the invoice after sending, capture the confirmation email, store the Stripe payment receipt. Users can see "here is proof I did what you asked." This is the difference between "I sent the invoice" and "here is the sent invoice, the recipient email, and the delivery confirmation." |
+| **Proactive execution suggestions** | When the agent notices a pattern ("you invoice Sezer every month around the 15th"), suggest pre-building the next execution. Move from reactive to proactive without being asked. | Med | Extends existing role tick scheduler and workflow templates | BitBit already has proactive role ticks and workflow rules. Layer execution pattern recognition on top: detect recurring multi-step tasks, suggest automating them, and eventually auto-execute with high-confidence approval bypass. |
+| **Cross-role orchestration for multi-step tasks** | A single user request like "Onboard new client FooBar" might need Sales (create contact, log deal), Finance (set up billing), Comms (send welcome email), and Builder (spin up staging site). Orchestrate across roles seamlessly. | High | Extends existing role system (5 roles) and workflow-tool-bridge.ts | BitBit already has cross-role tool bridge and role registry. Need an orchestrator that decomposes a complex request into role-specific sub-tasks, executes them in the right order (respecting dependencies), and aggregates results. Similar to Devin's "orchestrate Devins" feature where a coordinator delegates to specialists. |
+| **Execution cost prediction** | Before executing, show the user "this will cost ~$0.45 in API calls and take ~3 minutes." Users can then decide if it is worth running autonomously vs. doing it manually. | Low | Extends existing cost-guard.ts and estimateRunCost | No competing product surfaces cost prediction pre-execution for business operations agents. BitBit already tracks per-execution costs. Extend to predict costs based on historical execution data for similar tasks. |
+| **Contextual browser session management** | For CUA tasks, maintain browser sessions with saved cookies, logins, and state across executions. Reuse sessions for the same service (e.g., always logged into the client's WordPress admin). | High | New -- requires session persistence layer | Operator runs ephemeral browser sessions (cookies discarded). For a business ops agent, persistent sessions are more valuable -- stay logged into Xero, WordPress, Asana. Requires careful security (encrypted credential vault, session isolation per org). |
+| **Async task inbox/dashboard** | A dedicated view showing all running, completed, and failed background tasks. Like a "job queue" UI that non-technical users understand. | Med | Extends existing role dashboard (activity feed, status cards) | Current role dashboard shows role activity. Add a "Tasks" view that shows background executions: running tasks with live progress, completed tasks with evidence links, failed tasks with retry buttons. |
 
-### Anti-Features
+## Anti-Features
+
+Features to explicitly NOT build. These look tempting but would damage the product.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Real-time collaborative editing | Not a Google Docs competitor; massive complexity | View-only previews, download links |
-| Video file processing | Huge storage costs, slow, low ROI for agency use | Accept video but don't process; link to YouTube/Vimeo |
-| File versioning | Premature; agencies don't version files in chat | Store latest only; if needed later, add append-only history |
-| Custom file type plugins | Over-engineering for launch | Support standard formats (PDF, DOCX, images, CSV, TXT) |
+|-------------|-----------|-------------------|
+| **Full desktop/OS control (a la Claude Cowork)** | BitBit is a web platform, not a desktop app. Desktop CUA requires OS-level access, introduces massive security surface area, and is not relevant for business operations. Anthropic's own CUA is macOS-only and requires local installation. | Use headless browser automation (Browserbase/Stagehand) running server-side. Users see the result, not the agent controlling their computer. This is the Operator model, not the Cowork model. |
+| **Autonomous social media posting** | Anthropic explicitly limits CUA for social media impersonation. Autonomous posting risks brand damage, legal liability, and platform bans. Even Claude refuses this. | Build draft-and-approve workflows for social content. The agent drafts the post, the human reviews and publishes. Never auto-publish. |
+| **Unrestricted autonomous execution without escape hatch** | "All-or-nothing autonomy is too brittle." Research consistently shows the hybrid model (human can interrupt at any time) outperforms fully autonomous systems in trust, adoption, and actual outcomes. | Always provide: (1) live visibility, (2) ability to pause, (3) ability to cancel, (4) ability to take over manually. The agent should never be running where the user cannot intervene. |
+| **Building a custom browser engine** | Stagehand v3 already removed Playwright dependency and talks directly to CDP. Building a browser from scratch is years of work. Even OpenAI uses a custom browser (Atlas) but it is their core product. | Use Browserbase + Stagehand (TypeScript-native, CDP-direct, auto-caching, self-healing). Or Playwright for the structured 80% and Stagehand for the AI-driven 20%. |
+| **Real-time screen sharing / co-browsing** | Technically cool but enormously complex (WebRTC, low-latency streaming, coordinate synchronization). Devin does this because it IS a coding workspace. BitBit is an operations platform. | Show task progress via event stream and screenshots. Users do not need to watch the agent browse in real-time for business tasks. Periodic screenshot evidence is sufficient. |
+| **Autonomous financial transactions without confirmation** | Even with high confidence routing, auto-executing payments, wire transfers, or contract signatures is a liability disaster. Every major platform blocks this by default. | Financial actions always require human confirmation, regardless of confidence score. This is a hard rule, not a threshold. |
+| **Per-website custom scrapers** | Tempting to build custom integrations for every SaaS tool. This does not scale and creates massive maintenance burden. Skyvern specifically exists because per-site customization fails. | Use CUA/browser automation as the universal fallback. It works on any website without per-site code. Build structured API integrations only for high-frequency, high-value services (Stripe, Xero, Gmail -- which BitBit already has). |
+| **Multi-tab browser orchestration** | Complex, fragile, and full of edge cases. Popups, modals, cross-origin iframes all break. | One tab per task. If multi-tab is needed, spawn separate CUA sessions. Keep each browser context simple and isolated. |
 
-### Feature Dependencies
-
-```
-Paperclip button --> Supabase Storage bucket --> Signed upload URL --> File stored
-File stored --> Message metadata updated --> Inline preview rendered
-File stored --> Agent analysis triggered (optional, user-initiated or auto)
-File stored + Image type --> Claude Vision API --> Response with visual analysis
-File stored + Document type --> attachment-processor.ts --> Text extraction --> RAG pipeline
-```
-
-### Existing Code to Leverage
-
-- `ChannelMetadata.attachments` -- already typed with `{ type, url, name }` array
-- `attachment-processor.ts` -- PDF (pdf-parse) and DOCX (mammoth) text extraction working
-- `gmail-attachments.ts` -- Gmail attachment download + processing pipeline
-- `plan-gates.ts` -- Storage limit checking already implemented per plan tier
-
----
-
-## Category 2: Stripe Billing & Trial Infrastructure
-
-### Table Stakes
-
-Features required for any SaaS to charge money. Missing = cannot launch publicly.
-
-| Feature | Why Expected | Complexity | Dependencies | Notes |
-|---------|-------------|------------|--------------|-------|
-| Stripe Checkout Session for signup | Standard pattern; Stripe hosts the payment page | Medium | Stripe SDK, API route | `stripe.checkout.sessions.create()` with price IDs |
-| Webhook handler for subscription events | Without this, app never knows payment status | Medium | API route at `/api/stripe/webhook` | Must verify signature with `stripe.webhooks.constructEvent()` |
-| Subscription status sync to Supabase | App needs local subscription state | Medium | `subscriptions` table (referenced in existing code) | Sync on `customer.subscription.*` events |
-| Plan gating (feature access by tier) | Already partially built in `plan-gates.ts` | Low | Extend existing `PLAN_FEATURES` | Add growth role agents to plan tiers |
-| 30-day free trial | Standard SaaS expectation | Medium | Stripe trial periods | `subscription_data: { trial_period_days: 30 }` |
-| Trial expiry handling | Users must convert or lose access | Medium | Cron job + webhook | Listen for `customer.subscription.updated` with `status: past_due` |
-| Pricing page | Users need to see what they're paying for | Medium | Static page + Stripe price IDs | Server-render prices from Stripe or hardcode |
-| Billing portal (manage subscription) | Users expect self-serve upgrade/cancel | Low | Stripe Customer Portal | `stripe.billingPortal.sessions.create()` -- Stripe hosts everything |
-| Subscription lifecycle: create/upgrade/downgrade/cancel | Full CRUD on subscriptions | High | Multiple webhook events | Handle `checkout.session.completed`, `invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted` |
-| Grace period on failed payment | Don't instantly cut access on card decline | Low | Stripe retry settings | Configure Stripe's Smart Retries; 3-day grace via `past_due` status |
-
-### Differentiators
-
-| Feature | Value Proposition | Complexity | Dependencies | Notes |
-|---------|-------------------|------------|--------------|-------|
-| Usage metering per role/agent | "See exactly what each agent costs you" | Medium | `usage-metering.ts` (already built) | Extend to track per-role usage (SEO role tokens vs Content role tokens) |
-| AI cost transparency dashboard | Show token consumption, estimated cost, projected monthly | Medium | Usage metering + dashboard component | Users trust products that show costs openly |
-| Role-based upsell nudges | "Upgrade to Growth to unlock SEO Role" | Low | Plan gates + UI component | Soft gate: show feature locked, link to upgrade |
-| Hybrid pricing (base + usage overage) | Predictable base fee + fair usage-based overage | High | Stripe metered billing | Base subscription + metered price for token overages |
-| Trial conversion flow (in-app) | "3 days left -- here's what you've accomplished" | Medium | Trial end date tracking | Show value delivered during trial to drive conversion |
-
-### Anti-Features
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Custom payment processor | Stripe is the standard; rolling your own is liability | Use Stripe exclusively |
-| Free tier with agent access | AI costs are real; free users cost money | Free trial (time-limited), then paid only |
-| Annual billing at launch | Premature optimization; monthly is simpler to start | Add annual after product-market fit signal |
-| In-app invoice/receipt generation | Stripe handles this automatically | Link to Stripe-hosted invoices |
-| Complex per-seat pricing | AWU is 1-2 users; per-seat adds friction | Simple plan tiers; add seat pricing in v2 if orgs grow |
-
-### Feature Dependencies
+## Feature Dependencies
 
 ```
-Stripe Products/Prices created in Stripe Dashboard
-  --> Pricing page renders plan options
-  --> Checkout Session created --> Stripe hosted payment
-  --> Webhook receives checkout.session.completed
-  --> Subscription row created in Supabase
-  --> plan-gates.ts reads subscription status
-  --> Features gated/ungated based on plan
-
-Trial flow:
-  Signup --> 30-day trial (trialing status) --> trial_will_end event (7 days before)
-  --> In-app notification --> Convert or expire --> past_due/canceled
+Execution Visibility -----> SSE Event System (existing)
+       |
+       v
+Step-by-Step Plans -------> Planner (existing, extend)
+       |
+       v
+Durable Task Store -------> New DB table: execution_tasks
+       |                         |
+       v                         v
+Progress Tracking           Task Cancellation
+       |                         |
+       v                         v
+Error Recovery & Retry ---> Circuit Breaker (existing, extend)
+       |
+       v
+Tool Priority Chain ------> New: ToolResolver layer
+       |                    |              |
+       v                    v              v
+  API Tools (existing)  CUA/Browser    Human Handoff
+                        (new)          (approval-queue, extend)
+       |
+       v
+Evidence Capture ---------> File Storage (existing, extend)
+       |
+       v
+Workflow Learning --------> Memory Palace (existing, extend)
+       |
+       v
+Execution History --------> run-logger (existing, extend)
 ```
 
-### Existing Code to Leverage
-
-- `plan-gates.ts` -- Plan definitions (free/starter/growth/scale), feature checking, gate enforcement all working
-- `usage-metering.ts` -- Track/query usage events (tokens, agent runs, storage) with cost estimation
-- `usage-metering.test.ts` -- Full test suite for usage tracking
-- `subscriptions` table -- Already referenced in plan-gates queries (status, plan, current_period_start)
-- OAUTH-06 -- Stripe OAuth/API key flow already connected in channel settings
-
-### Critical Webhook Events to Handle
-
-| Event | What Happens | Action |
-|-------|-------------|--------|
-| `checkout.session.completed` | User completes payment | Create/update subscription in Supabase |
-| `invoice.paid` | Renewal succeeds | Update `current_period_start/end`, ensure `active` status |
-| `invoice.payment_failed` | Card declined | Set `past_due`, notify user via email + in-app |
-| `customer.subscription.updated` | Plan change, trial end, cancellation scheduled | Sync all fields to Supabase |
-| `customer.subscription.deleted` | Subscription fully ended | Set `canceled` status, gate features |
-| `customer.subscription.trial_will_end` | 3 days before trial expires | Send conversion email + in-app prompt |
-
----
-
-## Category 3: Growth Roles
-
-All Growth Roles depend on the v1.3 Role Engine (agent registry, role configuration, permission model). Each role registers via `self-registration` pattern already in the agent registry.
-
-### 3a: SEO Role (Ranking Monitor + Fix Implementation)
-
-#### Table Stakes
-
-| Feature | Why Expected | Complexity | Dependencies | Notes |
-|---------|-------------|------------|--------------|-------|
-| Keyword rank tracking (daily) | Core SEO tool function | High | External rank API (SerpAPI/DataForSEO) | Cannot build rank checking from scratch; need a data provider |
-| Position change alerts | "Your main keyword dropped 5 positions" | Medium | Rank data + notification system | Trigger via cron, deliver via inbox/WhatsApp |
-| Basic technical audit | Broken links, missing meta tags, slow pages | Medium | Site crawl (Lighthouse API or custom) | Run Lighthouse programmatically, parse results |
-| Competitor keyword tracking | "Your competitor ranks #2, you rank #8" | Medium | Same rank API, competitor config | Store competitor domains in role config |
-| Search Console integration | Real data source for impressions/clicks | Medium | Google Search Console API + OAuth | Reuse existing Google OAuth pattern |
-| Actionable recommendations | "Add H1 tag to /about page" not just "H1 missing" | Medium | LLM analysis of audit results | Agent interprets raw data into specific tasks |
-
-#### Differentiators
-
-| Feature | Value Proposition | Complexity | Dependencies | Notes |
-|---------|-------------------|------------|--------------|-------|
-| Auto-fix implementation | Agent directly edits site meta/content (for sites BitBit has access to) | Very High | Builder Role or CMS API access | Requires write access to client's site -- scope carefully |
-| AI Overview / LLM citation tracking | Track when brand appears in AI-generated search results | High | Custom scraping or specialized API | Emerging field; no standard API yet. Flag as LOW confidence |
-| Content decay detection | "This blog post lost 40% traffic in 30 days" | Medium | Search Console data + trend analysis | Compare 30-day windows |
-| SEO task auto-creation | Audit findings become kanban tasks automatically | Low | Existing task creation tools | Agent creates tasks via existing `create_task` tool |
-
-#### Anti-Features
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Full site crawler (Screaming Frog clone) | Massive engineering effort; commodity tool | Integrate with DataForSEO Site Audit API or Lighthouse |
-| Backlink building/outreach | Spam risk, reputation liability | Monitor backlinks only; flag lost/toxic ones |
-| Content generation for SEO | Overlap with Content Role | SEO Role identifies opportunities; Content Role writes |
-
----
-
-### 3b: Content Role (Social Scheduling + Blog Writing)
-
-#### Table Stakes
-
-| Feature | Why Expected | Complexity | Dependencies | Notes |
-|---------|-------------|------------|--------------|-------|
-| Generate social post copy | "Write a LinkedIn post about our new project" | Low | LLM (existing engine) | Agent writes copy using org voice profile |
-| Multi-platform formatting | LinkedIn vs Instagram vs X have different norms | Low | Template/prompt per platform | Different character limits, hashtag conventions, tone |
-| Content calendar view | See upcoming scheduled posts | Medium | New UI component + `scheduled_content` table | Calendar grid or timeline view |
-| Blog post drafting | "Write a blog post about web accessibility" | Medium | LLM + voice profile | Generate with SEO keywords from SEO Role |
-| Draft review/edit flow | User approves before publish | Low | Approval pattern (already built for invoices/leads) | Reuse existing approval flow |
-| Publish to social platforms | Actually post to LinkedIn, Instagram, etc. | High | Platform APIs (LinkedIn, Meta, X) | Each platform has its own API + OAuth |
-
-#### Differentiators
-
-| Feature | Value Proposition | Complexity | Dependencies | Notes |
-|---------|-------------------|------------|--------------|-------|
-| Optimal time scheduling | Post when audience is most active | Medium | Platform analytics API | Use engagement data to predict best times |
-| Content repurposing | Blog post --> 5 social posts --> email newsletter | Medium | LLM transformation prompts | Agent generates variants from one source |
-| Engagement tracking | "Your last post got 3x more engagement than average" | Medium | Platform APIs for metrics | Pull post performance data |
-| Brand voice consistency scoring | Rate draft against established voice profile | Low | Voice profiles (already built) | Score draft similarity to voice profile |
-
-#### Anti-Features
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Image/graphic generation | Separate domain (Canva, Midjourney) | Accept uploaded images; don't generate |
-| Community management / reply automation | High risk of brand damage if agent replies poorly | Flag engagement opportunities; human replies |
-| Full CMS integration | Too many CMS platforms to support | Publish via API to WordPress/Ghost, or generate markdown for manual paste |
-
----
-
-### 3c: Builder Role (Agentic Website/App Construction)
-
-#### Table Stakes
-
-| Feature | Why Expected | Complexity | Dependencies | Notes |
-|---------|-------------|------------|--------------|-------|
-| Generate website from brief | "Build a landing page for client X" | High | Code generation via LLM | Output HTML/CSS/JS or framework components |
-| Live preview | See generated site before deploying | Medium | Sandboxed iframe or preview service | Render generated code in isolated environment |
-| Iterative refinement | "Make the hero bigger, change the CTA color" | Medium | Conversation-driven code edits | Agent maintains code state across turns |
-| Template library | Starting points for common site types | Medium | Pre-built templates (landing, portfolio, services) | Accelerate generation with good starting points |
-| Responsive output | Generated sites must work on mobile | Medium | LLM prompt engineering | Enforce responsive patterns in generation |
-
-#### Differentiators
-
-| Feature | Value Proposition | Complexity | Dependencies | Notes |
-|---------|-------------------|------------|--------------|-------|
-| Deploy to hosting | One-click deploy to Vercel/Netlify/client hosting | High | Hosting API integration | Vercel API for deployments is well-documented |
-| Client brand auto-application | Pull brand colors/fonts from knowledge graph | Medium | Knowledge graph data | Agent uses stored brand guidelines |
-| SEO-optimized output | Generated sites score well on Lighthouse | Low | Prompt engineering + Lighthouse validation | Include meta tags, semantic HTML, performance |
-| Component library generation | Generate reusable React/Vue components, not just pages | High | Framework-specific code gen | More powerful than page-level generation |
-
-#### Anti-Features
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Full IDE/code editor in-app | Competing with VS Code/Cursor is foolish | Generate code, provide download or deploy |
-| Database/backend generation | Backend is orders of magnitude more complex than frontend | Generate frontend only; use existing SaaS backends |
-| E-commerce store builder | Shopify/WooCommerce own this space | Generate marketing sites, link to existing e-commerce |
-| Custom domain management | DNS/SSL complexity, support burden | Deploy to Vercel (they handle domains) |
-
----
-
-### 3d: Ad Script Generator
-
-#### Table Stakes
-
-| Feature | Why Expected | Complexity | Dependencies | Notes |
-|---------|-------------|------------|--------------|-------|
-| Generate video ad scripts | "Write a 30-second ad for client X's new service" | Low | LLM + voice profile + project context | Structured output: hook, body, CTA |
-| Multiple hook variations | A/B testing requires variation | Low | LLM generates N variants | 3-5 hook variations per script |
-| Platform-specific formatting | TikTok vs YouTube vs Instagram Reels differ | Low | Platform templates in prompt | Duration limits, aspect ratio notes, tone |
-| Script structure (hook/body/CTA) | Industry-standard format for video ads | Low | Structured output format | JSON schema or markdown sections |
-| Client/project context injection | Scripts should reference actual services/offers | Low | Existing context assembler | Pull client, project, service details from knowledge graph |
-
-#### Differentiators
-
-| Feature | Value Proposition | Complexity | Dependencies | Notes |
-|---------|-------------------|------------|--------------|-------|
-| Storyboard generation | Visual shot-by-shot breakdown alongside script | Medium | LLM structured output | Text-based storyboard (scene descriptions) |
-| Performance framework templates | AIDA, PAS, BAB frameworks as starting points | Low | Prompt library | Pre-built prompt patterns for proven frameworks |
-| Script-to-social-post conversion | Generate social captions from ad scripts | Low | Content Role collaboration | Cross-role capability |
-
-#### Anti-Features
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Video production/rendering | Totally different domain; use Creatify/Arcads | Generate scripts only; user produces video separately |
-| AI avatar generation | Uncanny valley risk, brand safety concerns | Script + storyboard; human talent records |
-| Ad platform integration (Meta Ads, Google Ads) | Complex APIs, compliance risk, budget liability | Generate creative; user uploads to ad platform |
-
----
-
-### 3e: Tender Hunter
-
-#### Table Stakes
-
-| Feature | Why Expected | Complexity | Dependencies | Notes |
-|---------|-------------|------------|--------------|-------|
-| AusTender monitoring | Primary Australian government tender source | High | AusTender OCDS API (auth token required) | Official API exists at `api.tenders.gov.au` |
-| Keyword/category filtering | Only show relevant tenders (web, digital, design) | Medium | Filter configuration per org | CPV codes + keyword matching |
-| Tender summary generation | AI reads tender doc, produces executive summary | Medium | LLM + document processing | Reuse attachment-processor for tender PDFs |
-| Relevance scoring | "90% match for your capabilities" | Medium | LLM scoring against org profile | Compare tender requirements vs org capabilities |
-| Alert on new matches | "3 new tenders matching your profile" | Medium | Cron job + notification system | Daily check, deliver via inbox/WhatsApp |
-| Tender pipeline view | See all tracked tenders with status/deadlines | Medium | New UI component + `tenders` table | Kanban-like view: discovered/evaluating/responding/submitted |
-
-#### Differentiators
-
-| Feature | Value Proposition | Complexity | Dependencies | Notes |
-|---------|-------------------|------------|--------------|-------|
-| Go/No-Go recommendation | Agent advises whether to bid based on fit, competition, capacity | Medium | LLM analysis + org capacity data | "Recommend GO: 85% capability match, 3 week timeline fits" |
-| Response draft generation | Auto-generate tender response sections from org knowledge | High | Knowledge graph + LLM | Pull past project descriptions, team bios, methodology |
-| State government tender sources | QLD, NSW, VIC each have separate portals | High | Multiple scrapers/APIs | Queensland: QTenders; NSW: eTendering; etc. |
-| Deadline tracking with reminders | "Tender closes in 3 days, response not started" | Low | Cron job + deadline field | Escalating reminders at 7d, 3d, 1d |
-| Compliance checklist extraction | Parse tender doc, extract all mandatory requirements | Medium | LLM document analysis | Output structured checklist from tender PDF |
-
-#### Anti-Features
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Full proposal writing | Massive scope; each tender is unique | Generate sections/drafts, human assembles final |
-| Bid management (pricing/costing) | Financial decisions need human judgment | Provide tender scope summary; human sets price |
-| International tender sources | AWU is Brisbane-based; Australian focus first | Start with AusTender only; add state portals later |
-| Direct tender submission | Compliance risk; tenders have strict format requirements | Generate response content; human submits on portal |
-
----
-
-## Cross-Cutting Feature Dependencies
-
-### All Growth Roles depend on:
-
-```
-v1.3 Role Engine (agent registry + role config + permissions)
-  --> Role self-registration pattern
-  --> Role-specific tools registered
-  --> Plan gates check role access per plan tier
-
-Billing infrastructure:
-  Growth roles gated to 'growth' and 'scale' plans
-  --> plan-gates.ts needs role-level gating (not just agent-level)
-  --> Usage metering needs per-role tracking
-
-File attachments (indirect):
-  SEO Role: upload competitor reports, audit exports
-  Content Role: upload images for social posts
-  Builder Role: upload brand assets, logos
-  Tender Hunter: upload tender documents for analysis
-```
-
-### Dependency Graph (build order)
-
-```
-File Attachments (no dependencies on other v1.4 features)
-  |
-Stripe Billing (no dependencies on other v1.4 features)
-  |
-  +--> Plan gates extended for growth roles
-  |
-Growth Roles (depend on v1.3 Role Engine + extended plan gates)
-  |
-  +--> Ad Script Generator (simplest, no external API)
-  +--> Content Role (needs platform APIs for publish)
-  +--> SEO Role (needs external rank data provider)
-  +--> Builder Role (needs preview/deploy infrastructure)
-  +--> Tender Hunter (needs AusTender API access)
-```
-
----
+Key dependency chain:
+1. **Durable Task Store** must exist before anything else (progress tracking, cancellation, retry all depend on it)
+2. **Tool Priority Chain** (ToolResolver) must exist before CUA can be a fallback
+3. **CUA/Browser automation** requires headless browser infrastructure (Browserbase or self-hosted)
+4. **Workflow Learning** depends on Evidence Capture (need to know what succeeded) and Execution History (need the trace to replay)
 
 ## MVP Recommendation
 
-### Phase 1 -- Build First (no external dependencies)
+### Phase 1: Async Task Engine + Execution Visibility (foundation)
+Build the durable task store, progress tracking, cancellation, and execution visibility first. These are the infrastructure that everything else depends on.
 
-1. **File Attachments** -- Paperclip button, drag-and-drop, Supabase Storage, inline preview, agent analysis. Already 60% of the plumbing exists.
-2. **Stripe Billing** -- Webhook handler, subscription sync, pricing page, trial flow. Existing plan-gates and usage-metering provide strong foundation.
-3. **Ad Script Generator** -- Pure LLM, no external API needed. Quick win to prove growth role pattern.
+Prioritize:
+1. **Durable execution_tasks table** with lifecycle states (pending, working, paused, completed, failed, cancelled) -- follows MCP Tasks 5-state FSM
+2. **Extended AgentEvent streaming** for multi-step async executions
+3. **Task cancellation** via user action (AbortController pattern)
+4. **Execution history** stored per-step in execution_steps table
 
-### Phase 2 -- Build Next (external API dependencies)
+### Phase 2: Tool Priority Chain + Human Handoff Extensions
+Build the ToolResolver that implements API-first, browser-fallback, human-handoff. This is the architectural core.
 
-4. **Content Role** -- Social copy generation (LLM only) first, then platform publishing APIs.
-5. **SEO Role** -- Needs DataForSEO or SerpAPI subscription; start with Search Console integration.
-6. **Tender Hunter** -- Needs AusTender API token; start with monitoring, then add response generation.
+Prioritize:
+1. **ToolResolver abstraction** that wraps existing tool system with priority resolution
+2. **Human handoff as synchronous mid-execution gate** (extend approval-queue to support blocking waits)
+3. **Confirmation flow for sensitive actions** during execution (per-tool gates, not per-agent)
 
-### Defer
+### Phase 3: CUA / Browser Automation
+Add headless browser automation as the universal fallback tool.
 
-7. **Builder Role** -- Highest complexity, most uncertain value. Ship after other roles prove the pattern. The agency (AWU) builds sites manually today and may not trust AI-generated sites for clients yet.
+Prioritize:
+1. **Browserbase + Stagehand integration** (TypeScript-native, auto-caching, self-healing) on Fly.io workers
+2. **Screenshot capture pipeline** for evidence and verification
+3. **Anthropic Computer Use API integration** via beta header for vision-driven browser control
 
----
+### Phase 4: Workflow Learning + Evidence + Dashboard
+Layer intelligence on top of the working execution engine.
 
-## Complexity Summary
+Prioritize:
+1. **Evidence capture** (screenshots, API confirmations, before/after state)
+2. **Execution pattern detection** and cached replay (Stagehand auto-caching model)
+3. **Async task inbox/dashboard** UI
 
-| Feature Area | Overall Complexity | Existing Foundation | External Dependencies |
-|-------------|-------------------|--------------------|-----------------------|
-| File Attachments | Medium | Strong (types, processor, gmail pipeline) | Supabase Storage (already provisioned) |
-| Stripe Billing | Medium | Strong (plan-gates, usage-metering, Stripe OAuth) | Stripe SDK + Dashboard config |
-| Ad Script Generator | Low | Medium (LLM engine, voice profiles) | None |
-| Content Role | Medium-High | Medium (LLM engine, approval flow) | Platform APIs (LinkedIn, Meta, X) |
-| SEO Role | High | Low (no SEO infra exists) | Rank API provider, Search Console API |
-| Tender Hunter | High | Low (no tender infra exists) | AusTender API token, PDF processing |
-| Builder Role | Very High | Low (no code gen infra exists) | Preview service, deployment API |
+Defer:
+- **Contextual browser sessions** (persistent logins) -- complex security implications, revisit after core CUA is proven
+- **Cross-role orchestration** -- start with single-role multi-step, add cross-role after patterns emerge
+- **Cost prediction** -- nice to have, build after enough execution history exists to make predictions meaningful
+- **Proactive execution suggestions** -- depends on workflow learning being mature
 
----
+## Product Comparisons: How Others Handle Each Feature
+
+### Execution Transparency
+
+| Product | Approach | Lesson for BitBit |
+|---------|----------|-------------------|
+| **Devin** | 4-tab workspace (Shell, Browser, Editor, Planner) with "Following" mode showing real-time tab switching. Full replay timeline with slide bar. Pulsating indicator + text description of current action. Time to first action reduced to ~10 seconds. | Best-in-class but overkill for business ops. BitBit needs the activity feed and current-step indicator, not a full IDE view. |
+| **OpenAI Operator** | Small browser window with on-screen narration of each action. Users can interrupt and take over at any point. Now integrated into ChatGPT as "agent mode" dropdown. | Right model for BitBit: show a compact progress view with narration text, not a full workspace. |
+| **Claude Cowork** | Desktop control with user confirmation before actions. Natural language explanations of what it will do. Safety guardrails block trading/banking/adult content. | Confirmation-before-action is essential. BitBit should narrate intent before each significant step. |
+
+### Browser Automation
+
+| Product | Approach | Lesson for BitBit |
+|---------|----------|-------------------|
+| **Anthropic CUA API** | Screenshot-analyze-act loop. Client-side tool: you provide the browser, Claude provides the intelligence. Beta header `computer-use-2025-11-24` for Opus 4.6/Sonnet 4.6. TypeScript SDK supported. 735 tokens per tool definition. Enhanced actions include zoom for detailed region inspection. | Direct integration path via Anthropic SDK (BitBit already uses). Run headless browser server-side, send screenshots to Claude, execute returned actions. |
+| **Stagehand v3** | AI-native browser automation. CDP-direct (no Playwright dependency). `act()` for single actions, `agent()` for multi-step. Auto-caching: cache selector paths, replay without LLM, re-engage on failure. 44% faster than v2. Self-healing execution adapts when DOM shifts. | Best option for BitBit. TypeScript-native. Auto-caching aligns perfectly with workflow learning goal. `agent()` method handles multi-step browser tasks natively. |
+| **Browserbase** | Cloud browser infrastructure. Stealth mode, session recording, proxy rotation. Managed browsers that Stagehand connects to. | Pairs with Stagehand. Provides the headless browser infra without self-hosting. Critical for server-side execution (BitBit runs on Fly.io/Vercel). |
+| **Skyvern** | LLM + computer vision to automate workflows on unseen websites. No per-site customization. No-code builder for non-developers. | Good for handling broken accessibility on government/insurance portals. Overkill for BitBit's use case -- Stagehand + Anthropic CUA covers the same ground with more control. |
+
+### Async Task Management
+
+| Product | Approach | Lesson for BitBit |
+|---------|----------|-------------------|
+| **MCP Tasks Spec** | 5-state FSM (working, input_required, completed, failed, cancelled). Durable task store pattern. Polling via `tasks/get`. Blocking result fetch via `tasks/result`. Progress via `progressToken`. TTL-based task expiry. Idempotency keys for retry dedup. | The specification to follow. Implement this state machine in the execution_tasks table. |
+| **Devin** | Session-based. Each task runs in an isolated cloud sandbox with full environment. Coordinator can delegate to parallel sub-Devins. | Overkill for BitBit. But the "coordinator delegates to parallel workers" pattern maps well to cross-role orchestration. |
+| **Azure Agent Framework** | 202 Accepted + task ID pattern. Background workers. Client polls for status with real-time progress. Durable state storage. | Standard REST pattern. BitBit should expose task creation via API route that returns task ID immediately, then SSE for live updates. |
+
+### Human Handoff
+
+| Product | Approach | Lesson for BitBit |
+|---------|----------|-------------------|
+| **OpenAI Operator** | Pauses for login credentials, CAPTCHAs, and sensitive actions. Monitoring model detects suspicious content and pauses. | Two-layer approach: (1) predefined rules for known sensitive actions, (2) model-level detection for unexpected situations. |
+| **OpenAI Agents SDK** | Handoff primitive: agent delegates to another agent (or human) via special tool call. Full conversation context transfers. | BitBit already has approval-queue with context_snapshot. Extend to support real-time mid-execution handoff, not just queued approvals. |
+| **Microsoft Semantic Kernel** | HITL gates scoped to specific tool invocations, not full agent outputs. Low-risk actions proceed autonomously; sensitive operations require approval. | Exactly what BitBit needs: per-tool confirmation gates. The tool priority chain should mark certain tool categories (financial, external communication, account changes) as always-confirm. |
+
+### Workflow Learning
+
+| Product | Approach | Lesson for BitBit |
+|---------|----------|-------------------|
+| **Stagehand v3 Auto-Caching** | When an AI-driven action succeeds, record the selector path. Replay on subsequent runs without LLM. If replay fails, re-engage AI and update cache. | Direct implementation path for BitBit. Cache successful tool call sequences. Replay them. Fall back to LLM reasoning on cache miss/failure. |
+| **AFLOW (ICLR 2025)** | MCTS-based workflow optimization. Preserves exploration tree. Reuses past successful experiences. Records performance metrics per workflow. | Academic but the principle applies: track which execution paths work, prune failures, and exploit successes. BitBit's Memory Palace can store workflow traces. |
+| **AgentQ** | Self-critique + Monte Carlo Tree Search + DPO fine-tuning. The agent literally improves its own decision-making over time. | Too heavy for BitBit's use case. The simpler Stagehand-style caching is sufficient for business operations workflows. |
+
+## Complexity Assessment
+
+| Feature Category | Complexity | Rationale |
+|-----------------|------------|-----------|
+| Durable Task Store | **Medium** | New DB table + state machine. Well-understood pattern (MCP spec provides the exact design). |
+| Execution Visibility | **Low-Medium** | Extends existing SSE events. BitBit already streams agent events to the frontend. |
+| Task Cancellation | **Medium** | Requires clean shutdown of in-flight operations. AbortController pattern in Node.js. |
+| Tool Priority Chain | **High** | New architectural layer. Needs resolver logic, fallback chain, and integration with all existing tools. |
+| CUA / Browser Automation | **High** | New infrastructure: headless browser (Browserbase), Stagehand integration, screenshot pipeline, Anthropic CUA API integration. Runs on Fly.io workers. |
+| Human Handoff Extensions | **Medium** | Extends existing approval-queue to support synchronous blocking during execution. |
+| Evidence Capture | **Medium** | Screenshot storage, API response archival. Extends existing file attachment system. |
+| Workflow Learning | **High** | Execution trace storage, pattern matching, cached replay, fallback logic. Novel for BitBit. |
+| Async Task Dashboard | **Medium** | New UI page. Data already flows through execution_tasks table. |
+| Cross-Role Orchestration | **High** | Dependency graph resolution, parallel sub-task execution, result aggregation across 5 roles. |
 
 ## Sources
 
-### File Attachments
-- [Supabase Storage Access Control](https://supabase.com/docs/guides/storage/security/access-control) -- MEDIUM confidence
-- [Supabase Signed Upload URLs](https://supabase.com/docs/reference/javascript/storage-from-createsigneduploadurl) -- HIGH confidence
-- [Claude Vision API](https://platform.claude.com/docs/en/build-with-claude/vision) -- HIGH confidence
-- [Supabase Storage Implementation Guide](https://nikofischer.com/supabase-storage-file-upload-guide) -- MEDIUM confidence
+### Official Documentation (HIGH confidence)
+- [Anthropic Computer Use Tool API](https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool) -- Tool definition format, supported actions, TypeScript SDK, beta headers, implementation guide
+- [Anthropic Computer Use Reference Implementation](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo) -- Docker container, agent loop, tool implementations
+- [AI SDK Computer Use Guide](https://ai-sdk.dev/cookbook/guides/computer-use) -- Vercel AI SDK integration for Computer Use
+- [OpenAI Operator Introduction](https://openai.com/index/introducing-operator/) -- Product launch, CUA model, confirmation patterns
+- [OpenAI CUA](https://openai.com/index/computer-using-agent/) -- Technical architecture, perception-reasoning-action loop
+- [OpenAI OWL/Atlas Architecture](https://openai.com/index/building-chatgpt-atlas/) -- How they built the agent browser
+- [Stagehand v3 Launch](https://www.browserbase.com/blog/stagehand-v3) -- AI-native rewrite, CDP-direct, auto-caching, 44% faster
+- [Stagehand GitHub](https://github.com/browserbase/stagehand) -- Open source, TypeScript, act/agent/extract API
+- [Browserbase](https://www.browserbase.com) -- Cloud browser infrastructure for AI agents
+- [Devin Session Tools Docs](https://docs.devin.ai/work-with-devin/devin-session-tools) -- Shell, IDE, Browser workspace
+- [MCP Async Tasks](https://workos.com/blog/mcp-async-tasks-ai-agent-workflows) -- Task lifecycle, polling, cancellation, durable store pattern
+- [MCP Long-Running Operations Issue](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1391) -- SEP-1391 specification discussion
+- [OpenAI Agents SDK Handoffs](https://openai.github.io/openai-agents-python/handoffs/) -- Agent-to-agent and agent-to-human handoff pattern
 
-### Stripe Billing
-- [Stripe Subscription Lifecycle in Next.js 2026](https://dev.to/thekarlesi/stripe-subscription-lifecycle-in-nextjs-the-complete-developer-guide-2026-4l9d) -- MEDIUM confidence
-- [Stripe Usage-Based Billing Docs](https://docs.stripe.com/billing/subscriptions/usage-based) -- HIGH confidence
-- [Stripe Pay-As-You-Go Implementation](https://docs.stripe.com/billing/subscriptions/usage-based/implementation-guide) -- HIGH confidence
-- [Stripe Webhooks with Supabase](https://supabase.com/docs/guides/functions/examples/stripe-webhooks) -- MEDIUM confidence
-- [Vercel Next.js Subscription Starter](https://github.com/vercel/nextjs-subscription-payments) -- HIGH confidence
+### Industry Analysis (MEDIUM confidence)
+- [Agentic Browser Landscape 2026](https://nohacks.co/blog/agentic-browser-landscape-2026) -- Comprehensive comparison of Stagehand, Browser Use, Playwright, Skyvern
+- [Stagehand vs Browser Use vs Playwright](https://www.nxcode.io/resources/news/stagehand-vs-browser-use-vs-playwright-ai-browser-automation-2026) -- Comparison matrix
+- [Browser Use vs Stagehand](https://www.skyvern.com/blog/browser-use-vs-stagehand-which-is-better/) -- Detailed feature comparison
+- [AI Agent Design Patterns - Azure](https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/ai-agent-design-patterns) -- Orchestration patterns including handoff
+- [Cognition Devin 2025 Performance Review](https://cognition.ai/blog/devin-annual-performance-review-2025) -- PR merge rate improvement, execution patterns
+- [Designing for Autonomy UX Principles](https://www.uxmatters.com/mt/archives/2025/12/designing-for-autonomy-ux-principles-for-agentic-ai.php) -- Transparency, trust, and control in agentic UX
+- [Enterprise Browser Agents](https://engineering.silnahealth.com/posts/autonomous-browser-agents-enterprise) -- Production experience: context management > model scale
 
-### SEO Monitoring
-- [AI SEO Tracking Tools 2026 Analysis](https://www.searchinfluence.com/blog/ai-seo-tracking-tools-2026-analysis-platforms/) -- MEDIUM confidence
-- [Best AI SEO Agents 2026](https://www.allaboutai.com/ai-agents/best-ai-seo-agents/) -- MEDIUM confidence
-
-### Content Scheduling
-- [Best AI Social Media Automation Tools 2026](https://www.enrichlabs.ai/blog/best-ai-social-media-automation-tools) -- MEDIUM confidence
-- [AI Agents Replacing Manual Social Media Management](https://nackemedia.com/how-ai-agents-are-replacing-manual-social-media-management-in-2026/) -- MEDIUM confidence
-
-### Agentic Coding / Builder
-- [Top 5 Agentic AI Website Builders](https://machinelearningmastery.com/top-5-agentic-ai-website-builders-that-actually-ship/) -- MEDIUM confidence
-- [Agentic Engineering Patterns (Simon Willison)](https://simonwillison.net/2026/Feb/23/agentic-engineering-patterns/) -- HIGH confidence
-
-### Tender Hunting
-- [AusTender OCDS API](https://github.com/austender/austender-ocds-api) -- HIGH confidence
-- [AI Tender Management Software 2026](https://autorfp.ai/blog/tender-software) -- MEDIUM confidence
-- [Sweetspot - AI for Government Contracting](https://www.sweetspot.so/) -- MEDIUM confidence
-
-### Ad Script Generation
-- [Creatify AI Scriptwriter](https://creatify.ai/features/ai-scriptwriter) -- MEDIUM confidence
-- [Zeely AI Ad Script Generator](https://zeely.ai/ai-ad-script-generator/) -- MEDIUM confidence
+### Research (MEDIUM confidence)
+- [AFLOW - ICLR 2025](https://arxiv.org/pdf/2410.10762) -- Workflow optimization via MCTS, experience caching and replay
+- [Agent Skills Architecture](https://arxiv.org/html/2602.12430v3) -- Skill acquisition, security, agent-tool integration
+- [AgentQ](https://github.com/sentient-engineering/agent-q) -- Self-critique + MCTS + DPO for browser agents
+- [Checkpoint/Restore for AI Agents](https://eunomia.dev/blog/2025/05/11/checkpointrestore-systems-evolution-techniques-and-applications-in-ai-agents/) -- State persistence, recovery patterns
+- [Atomix: Transactional Tool Use](https://arxiv.org/html/2602.14849v1) -- Reliability patterns for agentic workflows
+- [Building Browser Agents: Architecture and Security](https://arxiv.org/html/2511.19477v1) -- Architecture decisions > model scale
