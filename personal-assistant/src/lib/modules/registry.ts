@@ -21,12 +21,12 @@ const CORE_MODULES = [
 export const ALL_MODULES = [
   ...CORE_MODULES,
   'creator-studio',
+  'companies',
   'contacts',
   'leads',
   'invoices',
   'tenders',
   'approvals',
-  'medications',
   'meetings',
   'ad-scripts',
   'ai-search',
@@ -50,6 +50,7 @@ export type ModuleId = (typeof ALL_MODULES)[number];
 const TIER_MODULES: Record<string, readonly string[] | 'all'> = {
   beta: [
     ...CORE_MODULES,
+    'companies',
     'contacts',
     'leads',
     'invoices',
@@ -68,6 +69,7 @@ const TIER_MODULES: Record<string, readonly string[] | 'all'> = {
   ],
   growth: [
     ...CORE_MODULES,
+    'companies',
     'contacts',
     'leads',
     'invoices',
@@ -81,6 +83,7 @@ const TIER_MODULES: Record<string, readonly string[] | 'all'> = {
   ],
   scale: [
     ...CORE_MODULES,
+    'companies',
     'contacts',
     'leads',
     'invoices',
@@ -169,7 +172,7 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
   { id: 'messages',     label: 'Messages',     icon: 'MessageSquare',   items: ['chat', 'inbox', 'creator-studio', 'tasks'] },
   { id: 'business',     label: 'Business',     icon: 'Briefcase',       items: ['leads', 'invoices', 'tenders', 'contacts', 'approvals'] },
   { id: 'intelligence', label: 'Intelligence', icon: 'Brain',           items: ['meetings', 'swarm', 'workflows', 'sentry', 'ad-scripts', 'ai-search', 'reports', 'knowledge', 'analytics'] },
-  { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['activity', 'costs', 'admin', 'monitoring', 'beta-admin', 'medications'] },
+  { id: 'operations',   label: 'Operations',   icon: 'Wrench',          items: ['activity', 'costs', 'admin', 'monitoring', 'beta-admin'] },
   { id: 'settings',      label: 'Settings',     icon: 'Settings',        items: ['settings-connections', 'settings-automations', 'settings-appearance', 'settings-billing'] },
 ];
 
@@ -212,7 +215,7 @@ export const FULL_COMPOSITION: UIComposition = {
   profileId: 'full',
   visibleModules: [...ALL_MODULES],
   primaryModules: ['command-center', 'dashboard', 'chat', 'inbox', 'leads', 'invoices', 'tenders', 'contacts', 'approvals'],
-  advancedModules: ['creator-studio', 'medications', 'meetings', 'sentry', 'costs', 'activity', 'admin', 'monitoring', 'knowledge', 'analytics', 'ad-scripts', 'ai-search', 'reports'],
+  advancedModules: ['creator-studio', 'meetings', 'sentry', 'costs', 'activity', 'admin', 'monitoring', 'knowledge', 'analytics', 'ad-scripts', 'ai-search', 'reports'],
   categories: SIDEBAR_CATEGORIES.filter(c => c.id !== 'settings'),
   defaultTab: 'dashboard',
   sidebarStyle: 'full',

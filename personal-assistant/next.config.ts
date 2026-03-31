@@ -7,15 +7,8 @@ const withAnalyzer = withBundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/dashboard',
-        permanent: false,
-      },
-    ];
-  },
+  // Landing page is served at / — authenticated users can navigate to /dashboard
+  // via the app's own routing. No blanket redirect.
   serverExternalPackages: [
     '@whiskeysockets/baileys',
     'jimp',

@@ -32,7 +32,6 @@ import {
   IconPuzzle,
   IconPalette,
   IconDeviceDesktop,
-  IconPill,
   IconBug,
   IconUsers as IconSwarm,
   IconBuilding,
@@ -43,6 +42,13 @@ import {
   IconCalendar,
   IconMessageChatbot,
   IconCheckbox,
+  IconClockPause,
+  IconSend,
+  IconFlag,
+  IconAlertOctagon,
+  IconCalendarEvent,
+  IconTrash,
+  IconFileText as IconDraft,
 } from '@tabler/icons-react';
 import type { TabDef } from './spa-shell';
 import type { SidebarCategory } from '@/lib/modules/registry';
@@ -61,6 +67,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -86,6 +93,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { ChatSidebarPanel } from '@/components/chat/chat-sidebar-panel';
+import { PixelWordmark } from '@/components/ui/pixel-heading-word';
 
 // ---- Icon map: tab/module ID -> Tabler icon ----
 
@@ -95,7 +104,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   chat: IconMessage,
   inbox: IconInbox,
   'creator-studio': IconBell,
-  medications: IconPill,
+  companies: IconBuilding,
   contacts: IconUsers,
   leads: IconHeartHandshake,
   invoices: IconReceipt,
@@ -150,6 +159,7 @@ const NAV_ITEMS = [
   { id: 'tasks', label: 'Tasks' },
   // Business
   { id: 'leads', label: 'Leads' },
+  { id: 'companies', label: 'Companies' },
   { id: 'contacts', label: 'Contacts' },
   { id: 'invoices', label: 'Invoices' },
   { id: 'tenders', label: 'Tenders' },
@@ -183,6 +193,7 @@ interface ContextItem {
 
 interface ContextConfig {
   cta?: { label: string; icon: React.ElementType };
+  ctaCompact?: boolean;
   items: ContextItem[];
   sections?: { label: string; items: ContextItem[] }[];
 }
@@ -192,21 +203,17 @@ function getContextConfig(tabId: string): ContextConfig | null {
     case 'inbox':
       return {
         cta: { label: 'New Message', icon: IconPlus },
+        ctaCompact: true,
         items: [
           { icon: IconInbox, label: 'Inbox', count: 0 },
-          { label: 'Starred' },
-          { label: 'Snoozed' },
-          { label: 'Archived' },
+          { icon: IconClockPause, label: 'Snoozed' },
+          { icon: IconSend, label: 'Sent' },
+          { icon: IconDraft, label: 'Draft' },
+          { icon: IconAlertOctagon, label: 'Spam' },
+          { icon: IconFlag, label: 'Important' },
+          { icon: IconCalendarEvent, label: 'Scheduled' },
+          { icon: IconTrash, label: 'Trash' },
         ],
-        sections: [{
-          label: 'Channels',
-          items: [
-            { label: 'Email' },
-            { label: 'WhatsApp' },
-            { label: 'SMS' },
-            { label: 'Web Chat' },
-          ],
-        }],
       };
     case 'leads':
       return {
@@ -483,19 +490,14 @@ export function SidebarNav({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                  <div className="relative flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_2px_4px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]">
-                    <Image
-                      src="/bitbit-app-icon.png"
-                      alt="BitBit"
-                      width={32}
-                      height={32}
-                      priority
-                    />
+                  <div className="relative flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_2px_4px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]" style={{ filter: 'grayscale(1) brightness(1.9)' }}>
+                    <img src="/bitbit-icon-mark-light.png" alt="BitBit" width={22} height={22} className="dark:hidden" style={{ filter: 'brightness(0.45)' }} />
+                    <img src="/bitbit-icon-mark.png" alt="BitBit" width={22} height={22} className="hidden dark:block" style={{ filter: 'invert(1) brightness(0.55)' }} />
                     <div className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-b from-white/20 via-transparent to-black/10" />
                     <div className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-white/10" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">BitBit</span>
+                    <PixelWordmark className="truncate font-medium text-sm" style={{ WebkitTextStroke: '0.5px currentColor' }}>BitBit</PixelWordmark>
                     <span className="truncate text-xs text-muted-foreground">
                       {activeOrg?.name ?? 'Personal'}
                     </span>
@@ -540,90 +542,143 @@ export function SidebarNav({
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
-        {/* Flat nav — direct page links (GAIA-style) */}
-        <SidebarGroup>
-          <SidebarMenu>
-            {NAV_ITEMS.filter(item => enabledModules.includes(item.id)).map(item => {
-              const Icon = ICON_MAP[item.id];
-              const isActive = item.id === activeTabId;
-              const label = tabLabels[item.id] ?? item.label;
-              const badgeDef = BADGE_CONFIG[item.id];
-              const badgeCount = badgeDef ? (badgeCounts[badgeDef.key] ?? 0) : 0;
+      <SidebarContent className="overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <SidebarGroup className="h-full min-h-0 pb-1">
+            <div className="h-full overflow-y-auto pr-1">
+              <SidebarMenu>
+                {NAV_ITEMS.filter(item => enabledModules.includes(item.id)).map(item => {
+                  const Icon = ICON_MAP[item.id];
+                  const isActive = item.id === activeTabId;
+                  const label = tabLabels[item.id] ?? item.label;
+                  const badgeDef = BADGE_CONFIG[item.id];
+                  const badgeCount = badgeDef ? (badgeCounts[badgeDef.key] ?? 0) : 0;
 
-              return (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    isActive={isActive}
-                    onClick={() => handleItemClick(item.id)}
-                    tooltip={label}
-                  >
-                    {Icon && <Icon data-icon />}
-                    <span>{label}</span>
-                  </SidebarMenuButton>
-                  {badgeCount > 0 && (
-                    <SidebarMenuBadge>
-                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                        {badgeCount}
-                      </Badge>
-                    </SidebarMenuBadge>
-                  )}
-                </SidebarMenuItem>
-              );
-            })}
-          </SidebarMenu>
-        </SidebarGroup>
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => handleItemClick(item.id)}
+                        tooltip={label}
+                      >
+                        {Icon && <Icon data-icon />}
+                        <span>{label}</span>
+                      </SidebarMenuButton>
+                      {badgeCount > 0 && (
+                        <SidebarMenuBadge>
+                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                            {badgeCount}
+                          </Badge>
+                        </SidebarMenuBadge>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </div>
+          </SidebarGroup>
+        </div>
 
-        {/* Contextual panel — GAIA-style, changes per active tab */}
+        {/* Contextual panel — isolated scroll region independent from page navigation */}
         {(() => {
           const ctx = getContextConfig(activeTabId);
           if (!ctx) return null;
           return (
-            <>
-              <Separator className="mx-2" />
-              <SidebarGroup>
-                {ctx.cta && (
-                  <SidebarMenu>
-                    <SidebarMenuItem>
-                      <Button variant="default" size="sm" className="w-full justify-start gap-2 mb-1">
-                        <ctx.cta.icon className="size-4" />
-                        {ctx.cta.label}
-                      </Button>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
-                )}
-                <SidebarMenu>
-                  {ctx.items.map(item => (
-                    <SidebarMenuItem key={item.label}>
-                      <SidebarMenuButton onClick={() => {}}>
-                        {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
-                        {item.icon && <item.icon className="size-4" />}
-                        <span>{item.label}</span>
-                        {item.count !== undefined && (
-                          <span className="ml-auto text-xs text-muted-foreground tabular-nums">{item.count}</span>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-                {ctx.sections?.map(section => (
-                  <React.Fragment key={section.label}>
-                    <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+            <div className="min-h-[20rem] max-h-[48%] shrink-0 overflow-hidden px-2 pb-2">
+              <Separator className="mx-0 mb-3" />
+              <div className="h-full min-h-0 overflow-y-auto">
+                {activeTabId === 'chat' ? (
+                  <ChatSidebarPanel />
+                ) : activeTabId === 'inbox' ? (
+                  <SidebarGroup className="h-full min-h-0 p-0">
+                    <SidebarMenu className="gap-1">
+                      {ctx.items.map((item, idx) => {
+                        const showCompactCta = idx === 0 && ctx.ctaCompact && ctx.cta;
+
+                        return (
+                          <SidebarMenuItem key={item.label}>
+                            <SidebarMenuButton
+                              onClick={() => {}}
+                              isActive={idx === 0}
+                              className={cn(showCompactCta && 'pr-10')}
+                            >
+                              {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
+                              {item.icon && <item.icon className="size-4" />}
+                              <span>{item.label}</span>
+                              {item.count !== undefined && item.count > 0 && (
+                                <SidebarMenuBadge>{item.count}</SidebarMenuBadge>
+                              )}
+                            </SidebarMenuButton>
+
+                            {showCompactCta && (
+                              <SidebarMenuAction
+                                aria-label={ctx.cta.label}
+                                className="border-sidebar-border/60 bg-sidebar top-1.5 right-1 rounded-md border"
+                              >
+                                <ctx.cta.icon className="size-3.5" />
+                              </SidebarMenuAction>
+                            )}
+                          </SidebarMenuItem>
+                        );
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroup>
+                ) : (
+                  <SidebarGroup className="h-full min-h-0 p-0">
+                    {ctx.cta && !ctx.ctaCompact && (
+                      <SidebarMenu>
+                        <SidebarMenuItem>
+                          <Button variant="default" size="sm" className="mb-1 w-full justify-start gap-2">
+                            <ctx.cta.icon className="size-4" />
+                            {ctx.cta.label}
+                          </Button>
+                        </SidebarMenuItem>
+                      </SidebarMenu>
+                    )}
                     <SidebarMenu>
-                      {section.items.map(item => (
+                      {ctx.items.map((item, idx) => (
                         <SidebarMenuItem key={item.label}>
                           <SidebarMenuButton onClick={() => {}}>
                             {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
                             {item.icon && <item.icon className="size-4" />}
                             <span>{item.label}</span>
+                            {item.count !== undefined && (
+                              <span className="ml-auto text-xs text-muted-foreground tabular-nums">{item.count}</span>
+                            )}
                           </SidebarMenuButton>
+                          {idx === 0 && ctx.ctaCompact && ctx.cta && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 shrink-0"
+                              aria-label={ctx.cta.label}
+                            >
+                              <ctx.cta.icon className="size-4" />
+                            </Button>
+                          )}
                         </SidebarMenuItem>
                       ))}
                     </SidebarMenu>
-                  </React.Fragment>
-                ))}
-              </SidebarGroup>
-            </>
+                    {ctx.sections?.map(section => (
+                      <React.Fragment key={section.label}>
+                        <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+                        <SidebarMenu>
+                          {section.items.map(item => (
+                            <SidebarMenuItem key={item.label}>
+                              <SidebarMenuButton onClick={() => {}}>
+                                {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
+                                {item.icon && <item.icon className="size-4" />}
+                                <span>{item.label}</span>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          ))}
+                        </SidebarMenu>
+                      </React.Fragment>
+                    ))}
+                  </SidebarGroup>
+                )}
+              </div>
+            </div>
           );
         })()}
       </SidebarContent>

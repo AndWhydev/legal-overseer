@@ -34,6 +34,8 @@ import { FeedbackWidget } from '@/components/beta/feedback-widget';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/animate-ui/components/radix/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { ChatThreadsProvider } from '@/components/chat/chat-threads-context';
+import { UserProfileProvider } from '@/lib/user/user-profile-context';
 
 // ---- Tab definitions ----
 
@@ -50,7 +52,7 @@ export const TABS: TabDef[] = [
   { id: 'creator-studio', label: 'Creator Studio', path: '/dashboard/creator-studio' },
   { id: 'tasks', label: 'Tasks', path: '/dashboard/tasks' },
 
-  { id: 'medications', label: 'Medications', path: '/dashboard/medications' },
+  { id: 'companies', label: 'Companies', path: '/dashboard/companies' },
   { id: 'contacts', label: 'Contacts', path: '/dashboard/contacts' },
   { id: 'leads', label: 'Leads', path: '/dashboard/leads' },
   { id: 'invoices', label: 'Invoices', path: '/dashboard/invoices' },
@@ -87,7 +89,7 @@ const tabImports: Record<string, Promise<{ default: React.ComponentType }>> = {
   'creator-studio': import('./tabs/creator-studio-tab'),
   tasks: import('./tabs/tasks-tab'),
 
-  medications: import('./tabs/medications-tab'),
+  companies: import('./tabs/companies-tab'),
   contacts: import('./tabs/contacts-tab'),
   leads: import('./tabs/leads-tab'),
   invoices: import('./tabs/invoices-tab'),
@@ -123,7 +125,7 @@ const TabComponents: Record<string, React.LazyExoticComponent<React.ComponentTyp
   'creator-studio': lazy(() => tabImports['creator-studio']),
   tasks: lazy(() => tabImports.tasks),
 
-  medications: lazy(() => tabImports.medications),
+  companies: lazy(() => tabImports.companies),
   contacts: lazy(() => tabImports.contacts),
   leads: lazy(() => tabImports.leads),
   invoices: lazy(() => tabImports.invoices),
@@ -361,6 +363,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
 
   return (
     <ThemeProvider>
+    <UserProfileProvider displayName={displayName} initials={initials} isNewUser={isNewUser}>
     <ToastProvider>
     <FirstRunGuideProvider>
     <EnabledModulesContext.Provider value={enabledModulesState}>
@@ -374,6 +377,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
           Skip to content
         </a>
         <TooltipProvider>
+          <ChatThreadsProvider>
           <SidebarProvider
             defaultOpen={true}
             data-focus-mode={focusMode || undefined}
@@ -420,7 +424,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
               {/* SPA Content Area */}
               <main
                 id="main-content"
-                className="relative flex-1 overflow-hidden"
+                className="relative flex-1 overflow-hidden bg-background"
                 tabIndex={-1}
               >
                 {(() => {
@@ -430,7 +434,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                   return (
                     <div
                       key={tab.id}
-                      className="bb-tab-panel"
+                      className="bb-tab-panel h-full"
                       role="tabpanel"
                       id={`tabpanel-${tab.id}`}
                       aria-labelledby={`tab-${tab.id}`}
@@ -461,6 +465,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
               </div>
             </SidebarInset>
           </SidebarProvider>
+          </ChatThreadsProvider>
         </TooltipProvider>
 
         {/* Summon command palette (Cmd+K or /) */}
@@ -485,6 +490,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     </EnabledModulesContext.Provider>
     </FirstRunGuideProvider>
     </ToastProvider>
+    </UserProfileProvider>
     </ThemeProvider>
   );
 }
