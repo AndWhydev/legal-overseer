@@ -339,7 +339,7 @@ function getContextConfig(tabId: string): ContextConfig | null {
 interface Org {
   id: string;
   name: string;
-  plan_tier: string;
+  plan: string;
 }
 
 // ---- Props ----
@@ -396,10 +396,20 @@ export function SidebarNav({
         .eq('id', user.id)
         .single();
 
-      const { data: userOrgs } = await supabase!
-        .from('organisations')
-        .select('id, name, plan_tier')
-        .order('name');
+      const { data: memberships } = await supabase!
+        .from('org_members')
+        .select('org_id')
+        .eq('user_id', user.id);
+
+      const orgIds = memberships?.map(m => m.org_id) ?? [];
+
+      const { data: userOrgs } = orgIds.length > 0
+        ? await supabase!
+            .from('organisations')
+            .select('id, name, plan')
+            .in('id', orgIds)
+            .order('name')
+        : { data: [] as Org[] };
 
       if (userOrgs && !cancelled) {
         setOrgs(userOrgs);
@@ -612,10 +622,10 @@ export function SidebarNav({
 
                             {showCompactCta && (
                               <SidebarMenuAction
-                                aria-label={ctx.cta.label}
+                                aria-label={ctx.cta?.label}
                                 className="border-sidebar-border/60 bg-sidebar top-1.5 right-1 rounded-md border"
                               >
-                                <ctx.cta.icon className="size-3.5" />
+                                {ctx.cta?.icon && <ctx.cta.icon className="size-3.5" />}
                               </SidebarMenuAction>
                             )}
                           </SidebarMenuItem>
@@ -702,7 +712,7 @@ export function SidebarNav({
                       {displayName || 'User'}
                     </span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {activeOrg?.plan_tier ?? 'Free'} plan
+                      {activeOrg?.plan ?? 'Free'} plan
                     </span>
                   </div>
                   <IconSelector className="ml-auto size-4" />
@@ -725,7 +735,7 @@ export function SidebarNav({
                         {displayName || 'User'}
                       </span>
                       <span className="truncate text-xs text-muted-foreground">
-                        {activeOrg?.plan_tier ?? 'Free'} plan
+                        {activeOrg?.plan ?? 'Free'} plan
                       </span>
                     </div>
                   </div>

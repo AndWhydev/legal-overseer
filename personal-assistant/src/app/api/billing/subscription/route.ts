@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { type PlanName, getPlanFeatures } from '@/lib/billing/plan-gates'
 
-const PLAN_ORDER: PlanName[] = ['free', 'starter', 'growth', 'scale']
+const PLAN_ORDER: PlanName[] = ['free', 'starter', 'growth', 'scale', 'enterprise']
 
 export async function GET() {
   const supabase = await createClient()

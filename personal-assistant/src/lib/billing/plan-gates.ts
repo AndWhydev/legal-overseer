@@ -5,7 +5,7 @@ import { logger } from '@/lib/core/logger';
 // Plan types
 // ---------------------------------------------------------------------------
 
-export type PlanName = 'free' | 'starter' | 'growth' | 'scale'
+export type PlanName = 'free' | 'starter' | 'growth' | 'scale' | 'enterprise'
 
 export interface PlanFeatures {
   maxChannels: number
@@ -78,13 +78,25 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     multiUser: true,
     maxUsers: 99,
   },
+  enterprise: {
+    maxChannels: 99,
+    maxLeads: 99999,
+    maxInvoicesPerMonth: 9999,
+    agents: ['all'],
+    growthRoles: ['all'],
+    fileAttachments: true,
+    whatsapp: true,
+    proposals: true,
+    multiUser: true,
+    maxUsers: 999,
+  },
 }
 
 // ---------------------------------------------------------------------------
 // Utilities
 // ---------------------------------------------------------------------------
 
-const VALID_PLANS = new Set<string>(['free', 'starter', 'growth', 'scale'])
+const VALID_PLANS = new Set<string>(['free', 'starter', 'growth', 'scale', 'enterprise'])
 
 function isPlanName(value: string): value is PlanName {
   return VALID_PLANS.has(value)
@@ -95,6 +107,7 @@ export async function getOrgPlan(
   client: SupabaseClient,
   orgId: string,
 ): Promise<PlanName> {
+  // 1. Check active Stripe subscription first
   const { data } = await client
     .from('subscriptions')
     .select('plan, status')
@@ -104,8 +117,19 @@ export async function getOrgPlan(
     .limit(1)
     .maybeSingle()
 
-  const plan = data?.plan as string | undefined
-  if (plan && isPlanName(plan)) return plan
+  const subPlan = data?.plan as string | undefined
+  if (subPlan && isPlanName(subPlan)) return subPlan
+
+  // 2. Fall back to plan set directly on the organization (internal/test users)
+  const { data: org } = await client
+    .from('organizations')
+    .select('plan')
+    .eq('id', orgId)
+    .maybeSingle()
+
+  const orgPlan = org?.plan as string | undefined
+  if (orgPlan && isPlanName(orgPlan)) return orgPlan
+
   return 'free'
 }
 
@@ -132,7 +156,7 @@ export function isFeatureEnabled(
 // ---------------------------------------------------------------------------
 
 /** Ordered list of plan tiers from lowest to highest. */
-const PLAN_ORDER: PlanName[] = ['free', 'starter', 'growth', 'scale']
+const PLAN_ORDER: PlanName[] = ['free', 'starter', 'growth', 'scale', 'enterprise']
 
 /**
  * Map each growth tool name to its minimum required plan.
@@ -249,6 +273,7 @@ export async function checkPlanGate(
         starter: 500,
         growth: 2000,
         scale: 99999,
+        enterprise: 99999,
       }
 
       const limit = storageLimits[plan]

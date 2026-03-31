@@ -2,8 +2,11 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import { cjk } from '@streamdown/cjk'
+import { code } from '@streamdown/code'
+import { math } from '@streamdown/math'
+import { mermaid } from '@streamdown/mermaid'
 import { MessageBubble } from './message-bubble'
-import Image from 'next/image'
 import {
   IconChevronDown, IconLoader2, IconCheck, IconX,
 } from '@tabler/icons-react'
@@ -22,16 +25,18 @@ import { useArtifacts } from './use-artifacts'
 import { ArtifactPanel } from './artifact-panel'
 import { ExportMenu } from './export-menu'
 import { useChatThreads } from './chat-threads-context'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { SmoothText } from './smooth-text'
+import { useUserProfile } from '@/lib/user/user-profile-context'
+import { getPersonalisedGreeting } from '@/lib/chat/personalised-greeting'
 import { ToolCallsSection } from '@/components/ui/tool-calls-section'
+import { PixelWordmark } from '@/components/ui/pixel-heading-word'
 import {
   extractToolDetail,
   formatToolName,
   getToolCallIcon as getToolIcon,
   normalizeToolCallEntry,
 } from '@/lib/tool-calls/presentation'
+import { Streamdown } from 'streamdown'
 
 interface ToolCall {
   id?: string
@@ -109,30 +114,18 @@ type PersistedToolTrace = {
   elapsedMs?: number
 }
 
+const streamdownPlugins = { cjk, code, math, mermaid }
+
 function BitBitHeader() {
   return (
     <div className="inline-flex items-center gap-2 mb-2 select-none">
       <span className="shrink-0">
-        <Image
-          src="/bitbit-icon-mark-light.png"
-          alt=""
-          width={22}
-          height={22}
-          className="dark:hidden"
-          aria-hidden
-        />
-        <Image
-          src="/bitbit-icon-mark.png"
-          alt=""
-          width={22}
-          height={22}
-          className="hidden dark:block"
-          aria-hidden
-        />
+        <img src="/bitbit-icon-mark-light.png" alt="" width={20} height={20} className="dark:hidden" aria-hidden />
+        <img src="/bitbit-icon-mark.png" alt="" width={20} height={20} className="hidden dark:block" aria-hidden />
       </span>
-      <span className="text-[15px] font-bold tracking-[-0.01em] text-foreground">
+      <PixelWordmark className="text-[20px] font-bold text-foreground" style={{ WebkitTextStroke: '0.6px currentColor' }}>
         BitBit
-      </span>
+      </PixelWordmark>
     </div>
   )
 }
@@ -266,14 +259,6 @@ function restoreHistory(rows: HistoryRow[]): {
   return { messages: loaded, invoiceArtifacts }
 }
 
-function getGreeting(): string {
-  const h = new Date().getHours()
-  if (h >= 22) return 'Working late?'
-  if (h >= 17) return 'Good evening'
-  if (h >= 12) return 'Good afternoon'
-  return 'Good morning'
-}
-
 /** Build a human-readable action summary from a tool call for approval cards */
 function buildActionSummary(toolName: string, input: unknown): string {
   const inp = (input && typeof input === 'object') ? input as Record<string, unknown> : {}
@@ -333,7 +318,7 @@ function buildToolSectionSummary(toolCount: number, thinkingSeconds?: number, pr
     parts.push('Thought for a few seconds')
   }
 
-  parts.push(`${toolCount} tool${toolCount !== 1 ? 's' : ''} used`)
+  parts.push(`${toolCount} tool${toolCount !== 1 ? 's' : ''}`)
   return parts.join(' \u00B7 ')
 }
 
@@ -533,7 +518,9 @@ function InlineApprovalCard({
 const CHAT_SEND_EVENT = 'bitbit-chat-send'
 const CHAT_LAYOUT_EVENT = 'bitbit-chat-layout'
 
-export function ChatInterface({ userName }: { userName?: string }) {
+export function ChatInterface() {
+  const { firstName } = useUserProfile()
+  const greeting = getPersonalisedGreeting({ firstName: firstName || undefined })
   const {
     activeThreadId: threadId,
     newConversationRequest,
@@ -556,12 +543,12 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const [interToolNarrations, setInterToolNarrations] = useState<string[]>([]) // Confirmed inter-tool narration steps
   // Chronologically ordered segments for the current streaming response
   const [streamSegments, setStreamSegments] = useState<StreamSegment[]>([])
+  const [completedNarrationSegments, setCompletedNarrationSegments] = useState<Record<string, boolean>>({})
   // Mutable ref mirroring streamSegments during SSE processing (avoids stale closures)
   const streamSegmentsRef = useRef<StreamSegment[]>([])
   // Tracks whether we've seen text content AFTER at least one tool segment
   const hasPostToolTextRef = useRef(false)
   const [activeCitations, setActiveCitations] = useState<Citation[]>([])
-  const [planStages, setPlanStages] = useState<Array<{ id: string; label: string; sublabel?: string; icon: string; status: 'pending' | 'active' | 'done' | 'error' }>>([])
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
   const [invoiceArtifacts, setInvoiceArtifacts] = useState<Array<{
     invoiceNumber: string; recipient: string; recipientEmail: string
@@ -609,8 +596,21 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setMessages(prev => {
       const existing = prev.find(m => m.id === aid)
       if (existing) {
+        // Build the full content by combining any existing intermediate narration
+        // segments with the current smooth-streaming text (which represents the 
+        // last text segment in the chronological stream).
+        const segments = streamSegmentsRef.current
+        const intermediateNarrations = segments
+          .filter((s, idx) => s.type === 'text' && idx < segments.length - 1)
+          .map(s => (s as { type: 'text'; content: string }).content.trim())
+          .filter(Boolean)
+
+        const fullContent = intermediateNarrations.length > 0
+          ? intermediateNarrations.join('\n\n') + '\n\n' + smoothStream.displayedContent
+          : smoothStream.displayedContent
+
         return prev.map(m =>
-          m.id === aid ? { ...m, content: smoothStream.displayedContent } : m
+          m.id === aid ? { ...m, content: fullContent } : m
         )
       }
       return [
@@ -689,10 +689,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
     interToolBufferRef.current = ''
     setInterToolNarrations([])
     setStreamSegments([])
+    setCompletedNarrationSegments({})
     streamSegmentsRef.current = []
     hasPostToolTextRef.current = false
     setActiveCitations([])
-    setPlanStages([])
     setPendingApprovals([])
     setFollowUps([])
     // Finalize previous message content if smooth stream was mid-drain.
@@ -820,25 +820,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
 
               case 'plan': {
-                // Stagger plan stage rendering with 200ms delays
-                const stages = event.data?.stages || []
-                stages.forEach((stage: { id: string; label: string; sublabel?: string; icon: string }, i: number) => {
-                  setTimeout(() => {
-                    if (requestGenRef.current !== gen) return
-                    setPlanStages(prev => {
-                      if (prev.some(s => s.id === stage.id)) return prev
-                      return [...prev, { ...stage, status: 'pending' as const }]
-                    })
-                  }, i * 200)
-                })
                 break
               }
 
               case 'plan_stage_update': {
-                const { stageId, status } = event.data
-                setPlanStages(prev =>
-                  prev.map(s => s.id === stageId ? { ...s, status } : s)
-                )
                 break
               }
 
@@ -957,6 +942,25 @@ export function ChatInterface({ userName }: { userName?: string }) {
                       subject: r.subject as string,
                       afterMessageId: assistantId,
                     }])
+                  }
+                }
+
+                // Capture website builder artifacts for artifact panel
+                if (
+                  (event.data.name === 'generate_website' || event.data.name === 'revise_website') &&
+                  event.data.success &&
+                  event.data.result
+                ) {
+                  const r = event.data.result as Record<string, unknown>
+                  const artifact = r.artifact as Record<string, unknown> | undefined
+                  if (artifact?.content) {
+                    addArtifact({
+                      id: `website-${(r.project_id as string) ?? Date.now()}`,
+                      type: 'html',
+                      title: (artifact.title as string) ?? 'Website Preview',
+                      content: artifact.content as string,
+                      messageId: assistantId,
+                    })
                   }
                 }
 
@@ -1280,9 +1284,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
     if (idx === -1) return
     // Truncate conversation at this message (remove it and everything after)
     setMessages(prev => prev.slice(0, idx))
-    // Clear related artifacts
+    // Clear related artifacts for this message and everything after it
     setInvoiceArtifacts(prev => {
-      const removedIds = new Set(messages.slice(idx + 1).map(m => m.id))
+      const removedIds = new Set(messages.slice(idx).map(m => m.id))
       return prev.filter(inv => !removedIds.has(inv.afterMessageId))
     })
     setFollowUps([])
@@ -1293,13 +1297,16 @@ export function ChatInterface({ userName }: { userName?: string }) {
   const handleRegenerate = useCallback(() => {
     const lastUserMsg = [...messages].reverse().find(m => m.role === 'user')
     if (!lastUserMsg || isLoading) return
-    // Remove the last assistant message
+
+    // Remove the last assistant message AND its parent user message
+    // so handleSend doesn't create a duplicate user message.
     setMessages(prev => {
-      const lastAssistantIdx = [...prev].reverse().findIndex(m => m.role === 'assistant')
-      if (lastAssistantIdx === -1) return prev
-      const actualIdx = prev.length - 1 - lastAssistantIdx
+      const lastUserIdx = [...prev].reverse().findIndex(m => m.role === 'user')
+      if (lastUserIdx === -1) return prev
+      const actualIdx = prev.length - 1 - lastUserIdx
       return prev.slice(0, actualIdx)
     })
+
     // Re-send the same user message
     handleSend(lastUserMsg.content)
   }, [messages, isLoading, handleSend])
@@ -1371,6 +1378,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   useEffect(() => {
     return () => {
+      abortRef.current?.abort()
       window.dispatchEvent(new CustomEvent(CHAT_LAYOUT_EVENT, { detail: { started: false } }))
     }
   }, [])
@@ -1378,11 +1386,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
   // Reasoning chain: unified thinking + tool calls display
   const currentResponseMsg = messages.find(m => m.id === currentAssistantIdRef.current) ?? null
   const currentToolCalls = currentResponseMsg?.toolCalls || []
-  // Reasoning is active while: thinking is streaming, tools are running,
-  // OR we're still loading and tools have been used (inter-tool narration phase)
+  // Reasoning is active while: thinking is streaming OR tools are running.
+  // Once tools are finished, the reasoning chain collapses into a summary
+  // even if the assistant is still narrating the final response.
   const isReasoningActive = isThinkingStreaming
     || currentToolCalls.some(tc => tc.status === 'running')
-    || (isLoading && currentToolCalls.length > 0)
   const showReasoningChain = showReasoning && (
     isThinkingStreaming ||
     thinkingContent.length > 0 ||
@@ -1426,7 +1434,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
     tools: ToolCall[],
     key: string,
     summary: string,
-    defaultExpanded: boolean
+    defaultExpanded: boolean,
+    animateEntrance = false,
+    opts?: { autoExpand?: boolean; autoCollapse?: boolean }
   ): React.ReactNode | null => {
     if (tools.length === 0) return null
 
@@ -1436,10 +1446,40 @@ export function ChatInterface({ userName }: { userName?: string }) {
         toolCalls={tools.map((tool, index) => normalizeToolCallEntry(tool, index))}
         defaultExpanded={defaultExpanded}
         summary={summary}
+        animateEntrance={animateEntrance}
+        autoExpand={opts?.autoExpand}
+        autoCollapse={opts?.autoCollapse}
         className="max-w-[min(72ch,100%)]"
       />
     )
   }
+
+  const handleNarrationSegmentComplete = useCallback((key: string) => {
+    setCompletedNarrationSegments((prev) => {
+      if (prev[key]) return prev
+      return { ...prev, [key]: true }
+    })
+  }, [])
+
+  const renderNarrationSegment = (
+    key: string,
+    content: string,
+    onComplete?: () => void
+  ): React.ReactNode => (
+    <div
+      key={key}
+      className="bb-chat__bubble--assistant bb-chat__markdown"
+      style={{ marginBottom: 4 }}
+    >
+      <SmoothText content={content.trim()} onComplete={onComplete}>
+        {(revealed) => (
+          <Streamdown plugins={streamdownPlugins}>
+            {revealed}
+          </Streamdown>
+        )}
+      </SmoothText>
+    </div>
+  )
 
   // Determine if we truly have interleaved content (text segments between tool segments).
   // A trailing text segment (the final response) doesn't count since MessageBubble handles it.
@@ -1481,44 +1521,14 @@ export function ChatInterface({ userName }: { userName?: string }) {
       // Tools are running — show steps directly with an animated thread line
       const elements: React.ReactNode[] = []
 
-      // Plan stages indicator (staggered in via setTimeout in the plan event handler)
-      if (planStages.length > 0) {
-        elements.push(
-          <div key="plan-stages" className="mb-2 space-y-1">
-            {planStages.map((stage, i) => (
-              <motion.div
-                key={stage.id}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.2, delay: i * 0.05 }}
-                className="flex items-center gap-2 text-sm"
-              >
-                <span className="w-5 text-center">{stage.icon}</span>
-                <span className={
-                  stage.status === 'done' ? 'text-muted-foreground/60 line-through' :
-                  stage.status === 'active' ? 'text-foreground font-medium' :
-                  stage.status === 'error' ? 'text-destructive' :
-                  'text-muted-foreground'
-                }>
-                  {stage.label}
-                </span>
-                {stage.sublabel && stage.status === 'active' && (
-                  <span className="text-xs uppercase tracking-wider text-muted-foreground/70">
-                    <Shimmer duration={1.2}>{stage.sublabel}</Shimmer>
-                  </span>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        )
-      }
-
       if (!hasInterleavedSegments) {
         const section = renderToolSection(
           currentToolCalls,
           'active-steps',
           buildToolSectionSummary(currentToolCalls.length, undefined, 'Working through tools'),
-          true
+          false,
+          true,
+          { autoExpand: true }
         )
         if (section) elements.push(section)
         elements.push(...renderNarrationNotes(interToolNarrations, 'active'))
@@ -1527,30 +1537,33 @@ export function ChatInterface({ userName }: { userName?: string }) {
         for (let sIdx = 0; sIdx < streamSegments.length; sIdx++) {
           const seg = streamSegments[sIdx]
           if (seg.type === 'tools') {
+            const previousSegment = streamSegments[sIdx - 1]
+            const requiredNarrationKey = previousSegment?.type === 'text' ? `active-text-${sIdx - 1}` : null
+            if (requiredNarrationKey && !completedNarrationSegments[requiredNarrationKey]) {
+              continue
+            }
+
             const tools = currentToolCalls.slice(seg.startIdx, seg.endIdx + 1)
             const section = renderToolSection(
               tools,
               `active-seg-${sIdx}`,
               buildToolSectionSummary(tools.length, undefined, sIdx === 0 ? 'Working through tools' : 'Continuing with tools'),
-              true
+              false,
+              true,
+              { autoExpand: true }
             )
             if (section) elements.push(section)
             elements.push(...renderNarrationNotes(seg.narrations, `active-${sIdx}`))
           } else if (seg.type === 'text') {
             const isLastSegment = sIdx === streamSegments.length - 1
             if (!isLastSegment && seg.content.trim()) {
+              const segmentKey = `active-text-${sIdx}`
               elements.push(
-                <div
-                  key={`active-text-${sIdx}`}
-                  className="bb-chat__bubble--assistant bb-chat__markdown"
-                  style={{ marginBottom: 4 }}
-                >
-                  <SmoothText content={seg.content.trim()}>
-                    {(revealed) => (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{revealed}</ReactMarkdown>
-                    )}
-                  </SmoothText>
-                </div>
+                renderNarrationSegment(
+                  segmentKey,
+                  seg.content,
+                  () => handleNarrationSegmentComplete(segmentKey)
+                )
               )
             }
           }
@@ -1613,11 +1626,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
               className="bb-chat__bubble--assistant bb-chat__markdown"
               style={{ marginBottom: 4 }}
             >
-              <SmoothText content={seg.content.trim()}>
-                {(revealed) => (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{revealed}</ReactMarkdown>
-                )}
-              </SmoothText>
+              <Streamdown plugins={streamdownPlugins}>
+                {seg.content.trim()}
+              </Streamdown>
             </div>
           )
         }
@@ -1632,8 +1643,10 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   const resetConversationState = useCallback((nextWhispersVisible: boolean) => {
     setMessages([])
+    setIsLoading(false)
     setThinkingContent('')
     setIsThinkingStreaming(false)
+    setThinkingDuration(undefined)
     narrationLockedRef.current = false
     narrationContentRef.current = ''
     interToolBufferRef.current = ''
@@ -1810,7 +1823,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               <div className="bb-chat__center-cluster">
                 <ChatBitBitFace />
                 <h2 className="bb-chat__greeting">
-                  {getGreeting()}{userName ? `, ${userName}` : ''}
+                  {greeting}
                 </h2>
                 <Whispers onTapWhisper={handleWhisperTap} visible={whispersVisible} />
               </div>
@@ -1892,6 +1905,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                         }
                         return { ...msg, content: cleaned }
                       })()}
+                      isStreaming={isCurrentResponse && isLoading}
                       citations={msg.citations || (isLastAssistantOverall && isLoading ? activeCitations : undefined)}
                       onRegenerate={isLastAssistantOverall && !isLoading ? handleRegenerate : undefined}
                       onEdit={msg.role === 'user' ? handleEditMessage : undefined}
