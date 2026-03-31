@@ -74,7 +74,7 @@ export async function dispatchRoleAction(
           action_payload: action.payload,
           action_summary: action.summary,
           confidence_score: action.confidence,
-          routing_decision: 'act',
+          routing_decision: 'ask',
           priority: 'normal',
           context_snapshot: {
             autonomy_mode: roleConfig.autonomy_level,
@@ -156,7 +156,8 @@ export async function dispatchRoleAction(
 
       // Surface insights via dashboard notification so they're visible
       dispatchNotification(supabase, {
-        org_id: roleConfig.org_id,
+        orgId: roleConfig.org_id,
+        type: 'info',
         title: `${roleConfig.role_type} insight`,
         body: action.summary,
         urgency: 'low',
@@ -173,7 +174,8 @@ export async function dispatchRoleAction(
 
       // Escalations are urgent — notify all channels
       dispatchNotification(supabase, {
-        org_id: roleConfig.org_id,
+        orgId: roleConfig.org_id,
+        type: 'alert_escalation',
         title: `${roleConfig.role_type} needs attention`,
         body: action.summary,
         urgency: 'high',

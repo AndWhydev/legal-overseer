@@ -3,12 +3,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { MessageBubble } from './message-bubble'
+import Image from 'next/image'
 import {
-  IconChevronDown, IconLoader2, IconCheck, IconX, IconMenu2,
+  IconChevronDown, IconLoader2, IconCheck, IconX,
 } from '@tabler/icons-react'
-import { ConversationDrawer, type Thread } from './conversation-drawer'
 import { ChatBitBitFace } from './chat-bitbit-face'
-import { useAvatarEmotion } from './use-avatar-emotion'
 import { useSmoothStream } from './use-smooth-stream'
 import { useSmartScroll } from './use-smart-scroll'
 import { Whispers } from './whispers'
@@ -22,6 +21,7 @@ import { useFileUpload } from '@/hooks/use-file-upload'
 import { useArtifacts } from './use-artifacts'
 import { ArtifactPanel } from './artifact-panel'
 import { ExportMenu } from './export-menu'
+import { useChatThreads } from './chat-threads-context'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { SmoothText } from './smooth-text'
@@ -83,6 +83,188 @@ interface Message {
 type StreamSegment =
   | { type: 'tools'; startIdx: number; endIdx: number; narrations: string[] }
   | { type: 'text'; content: string }
+
+type HistoryRow = Record<string, unknown>
+
+type RestoredInvoiceArtifact = {
+  invoiceNumber: string
+  recipient: string
+  recipientEmail: string
+  total: string
+  dueDate: string
+  description: string
+  html: string
+  subject: string
+  afterMessageId: string
+}
+
+type PersistedToolTrace = {
+  id?: string
+  name?: string
+  input?: unknown
+  result?: unknown
+  success?: boolean
+  queued?: boolean
+  approvalId?: string
+  elapsedMs?: number
+}
+
+function BitBitHeader() {
+  return (
+    <div className="inline-flex items-center gap-2 mb-2 select-none">
+      <span className="shrink-0">
+        <Image
+          src="/bitbit-icon-mark-light.png"
+          alt=""
+          width={22}
+          height={22}
+          className="dark:hidden"
+          aria-hidden
+        />
+        <Image
+          src="/bitbit-icon-mark.png"
+          alt=""
+          width={22}
+          height={22}
+          className="hidden dark:block"
+          aria-hidden
+        />
+      </span>
+      <span className="text-[15px] font-bold tracking-[-0.01em] text-foreground">
+        BitBit
+      </span>
+    </div>
+  )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function restoreHistory(rows: HistoryRow[]): {
+  messages: Message[]
+  invoiceArtifacts: RestoredInvoiceArtifact[]
+} {
+  const loaded: Message[] = []
+  const invoiceArtifacts: RestoredInvoiceArtifact[] = []
+  const assistantIndexById = new Map<string, number>()
+  let lastAssistantId: string | null = null
+
+  const getAssistantMessage = (assistantMessageId: string | null): Message | null => {
+    if (!assistantMessageId) return null
+    const index = assistantIndexById.get(assistantMessageId)
+    return typeof index === 'number' ? loaded[index] : null
+  }
+
+  const ensureToolCall = (
+    target: Message,
+    toolId: string | undefined,
+    toolName: string,
+    input: unknown,
+  ): ToolCall => {
+    const existing = target.toolCalls?.find(tc => (toolId && tc.id === toolId) || tc.name === toolName)
+    if (existing) return existing
+
+    const created: ToolCall = {
+      id: toolId,
+      name: toolName,
+      input,
+      status: 'running',
+    }
+    target.toolCalls = [...(target.toolCalls || []), created]
+    return created
+  }
+
+  const applyToolTrace = (target: Message, trace: PersistedToolTrace) => {
+    const toolName = trace.name || 'tool'
+    const restoredCall = ensureToolCall(target, trace.id, toolName, trace.input)
+    restoredCall.result = trace.result
+    restoredCall.success = trace.success
+    restoredCall.status = trace.success === false ? 'error' : 'done'
+    if (typeof trace.elapsedMs === 'number') {
+      restoredCall.elapsedMs = trace.elapsedMs
+    }
+
+    if (toolName === 'generate_invoice' && trace.result && isRecord(trace.result)) {
+      const result = trace.result
+      if (result.html && result.invoice_number) {
+        invoiceArtifacts.push({
+          invoiceNumber: result.invoice_number as string,
+          recipient: result.recipient as string || '',
+          recipientEmail: result.recipient_email as string || '',
+          total: result.total as string || '',
+          dueDate: result.due_date as string || '',
+          description: result.description as string || '',
+          html: result.html as string,
+          subject: result.subject as string || '',
+          afterMessageId: target.id,
+        })
+      }
+    }
+  }
+
+  for (const row of rows) {
+    const role = row.role as string
+    const id = row.id as string || `hist-${Math.random()}`
+    const metadata = isRecord(row.metadata) ? row.metadata : {}
+    const toolData = isRecord(row.tool_data) ? row.tool_data : null
+
+    if (role === 'user' || role === 'assistant') {
+      const nextMessage: Message = {
+        id,
+        role: role as 'user' | 'assistant',
+        content: row.content as string || '',
+        timestamp: new Date(row.created_at as string || Date.now()),
+      }
+      loaded.push(nextMessage)
+
+      if (role === 'assistant') {
+        lastAssistantId = id
+        assistantIndexById.set(id, loaded.length - 1)
+
+        const persistedToolCalls = Array.isArray(metadata.tool_calls)
+          ? metadata.tool_calls.filter(isRecord) as PersistedToolTrace[]
+          : []
+        for (const trace of persistedToolCalls) {
+          applyToolTrace(nextMessage, trace)
+        }
+      }
+      continue
+    }
+
+    if (!toolData || (role !== 'tool_call' && role !== 'tool_result')) {
+      continue
+    }
+
+    const assistantMessageId = (metadata.assistant_message_id as string | undefined) || lastAssistantId
+    const targetAssistant = getAssistantMessage(assistantMessageId)
+    if (!targetAssistant) continue
+
+    const toolId = (toolData.id as string | undefined) || (metadata.call_id as string | undefined)
+    const toolName = (toolData.name as string | undefined) || 'tool'
+
+    if (role === 'tool_call') {
+      const restoredCall = ensureToolCall(targetAssistant, toolId, toolName, toolData.input)
+      if (typeof toolData.elapsedMs === 'number') {
+        restoredCall.elapsedMs = toolData.elapsedMs
+      }
+      continue
+    }
+
+    applyToolTrace(targetAssistant, {
+      id: toolId,
+      name: toolName,
+      input: toolData.input,
+      result: toolData.result,
+      success: typeof toolData.success === 'boolean' ? toolData.success : true,
+      queued: typeof toolData.queued === 'boolean' ? toolData.queued : undefined,
+      approvalId: typeof toolData.approvalId === 'string' ? toolData.approvalId : undefined,
+      elapsedMs: typeof toolData.elapsedMs === 'number' ? toolData.elapsedMs : undefined,
+    })
+  }
+
+  return { messages: loaded, invoiceArtifacts }
+}
 
 function getGreeting(): string {
   const h = new Date().getHours()
@@ -350,26 +532,19 @@ function InlineApprovalCard({
 
 const CHAT_SEND_EVENT = 'bitbit-chat-send'
 const CHAT_LAYOUT_EVENT = 'bitbit-chat-layout'
-const THREAD_STORAGE_KEY = 'bb-active-thread'
 
 export function ChatInterface({ userName }: { userName?: string }) {
+  const {
+    activeThreadId: threadId,
+    newConversationRequest,
+    refreshThreads,
+    requestNewConversation,
+    requestThreadPanelFocus,
+    selectionRequest,
+    setResolvedThreadId: setThreadId,
+  } = useChatThreads()
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [threadId, setThreadIdRaw] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem(THREAD_STORAGE_KEY)
-    }
-    return null
-  })
-
-  // Wrap setThreadId to sync with sessionStorage
-  const setThreadId = useCallback((id: string | null) => {
-    setThreadIdRaw(id)
-    if (typeof window !== 'undefined') {
-      if (id) sessionStorage.setItem(THREAD_STORAGE_KEY, id)
-      else sessionStorage.removeItem(THREAD_STORAGE_KEY)
-    }
-  }, [])
   // Reasoning state
   const [thinkingContent, setThinkingContent] = useState('')
   const [isThinkingStreaming, setIsThinkingStreaming] = useState(false)
@@ -386,16 +561,13 @@ export function ChatInterface({ userName }: { userName?: string }) {
   // Tracks whether we've seen text content AFTER at least one tool segment
   const hasPostToolTextRef = useRef(false)
   const [activeCitations, setActiveCitations] = useState<Citation[]>([])
+  const [planStages, setPlanStages] = useState<Array<{ id: string; label: string; sublabel?: string; icon: string; status: 'pending' | 'active' | 'done' | 'error' }>>([])
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
   const [invoiceArtifacts, setInvoiceArtifacts] = useState<Array<{
     invoiceNumber: string; recipient: string; recipientEmail: string
     total: string; dueDate: string; description: string
     html: string; subject: string; afterMessageId: string
   }>>([])
-  // Conversation drawer state
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [drawerThreads, setDrawerThreads] = useState<Thread[]>([])
-  const [drawerLoading, setDrawerLoading] = useState(false)
   // Whispers visible state (hides when typing or conversation starts)
   const [whispersVisible, setWhispersVisible] = useState(true)
   // Follow-up suggestions state
@@ -425,48 +597,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
 
   // Artifact panel hook
   const { activeArtifact, addArtifact, closeArtifact } = useArtifacts()
-
-  // Compute emotion state for face avatar
-  const lastMsgForEmotion = messages[messages.length - 1]
-  const isToolRunning = lastMsgForEmotion?.toolCalls?.some(tc => tc.status === 'running') ?? false
-  const activeRunningTool = lastMsgForEmotion?.toolCalls?.find(tc => tc.status === 'running')?.name ?? null
-
-  // Sticky tool name — holds the last active tool until a new one starts or loading ends.
-  // This prevents the avatar from flickering to idle between tool calls.
-  const stickyToolRef = useRef<string | null>(null)
-  if (activeRunningTool) {
-    stickyToolRef.current = activeRunningTool
-  } else if (!isLoading) {
-    stickyToolRef.current = null
-  }
-  const effectiveToolName = activeRunningTool ?? (isLoading ? stickyToolRef.current : null)
-
-  const isContentStreaming = isLoading && !isThinkingStreaming && messages.some(m => m.role === 'assistant' && m.content.length > 0)
-  const hasResponseError = lastMsgForEmotion?.role === 'assistant' && lastMsgForEmotion.content.startsWith('Something went wrong:')
-  const avatarEmotion = useAvatarEmotion({
-    isThinking: isThinkingStreaming,
-    isToolRunning: isToolRunning || (isLoading && !!effectiveToolName),
-    isStreaming: isContentStreaming,
-    hasError: hasResponseError,
-    activeToolName: effectiveToolName,
-  })
-
-  // Map active tool to avatar activity for prop overlays
-  const avatarActivity = (() => {
-    if (isThinkingStreaming) return 'thinking' as const
-    const tool = effectiveToolName
-    if (!tool) {
-      // If still loading but no tool, show thinking
-      if (isLoading && !isContentStreaming) return 'thinking' as const
-      return 'idle' as const
-    }
-    if (tool.includes('search') || tool.includes('find')) return 'searching' as const
-    if (tool.includes('read') || tool === 'get_contact') return 'reading' as const
-    if (tool.includes('create') || tool.includes('draft')) return 'creating' as const
-    if (tool.includes('send') || tool.includes('compose')) return 'sending' as const
-    if (tool.includes('browse') || tool.includes('website')) return 'browsing' as const
-    return 'thinking' as const
-  })()
 
   // Update messages from smooth stream and auto-scroll.
   // Only apply content if it belongs to the current assistant message
@@ -562,6 +692,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     streamSegmentsRef.current = []
     hasPostToolTextRef.current = false
     setActiveCitations([])
+    setPlanStages([])
     setPendingApprovals([])
     setFollowUps([])
     // Finalize previous message content if smooth stream was mid-drain.
@@ -652,7 +783,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
               case 'thread': {
                 const tid = event.data.threadId
                 setThreadId(tid)
-                // threadId kept in state only — no persistence
+                refreshThreads(false)
                 break
               }
 
@@ -684,12 +815,32 @@ export function ChatInterface({ userName }: { userName?: string }) {
                 break
               }
 
-              // Plan/stage events still processed for tool matching
               case 'stage':
-              case 'plan':
               case 'checkpoint':
-              case 'plan_stage_update':
                 break
+
+              case 'plan': {
+                // Stagger plan stage rendering with 200ms delays
+                const stages = event.data?.stages || []
+                stages.forEach((stage: { id: string; label: string; sublabel?: string; icon: string }, i: number) => {
+                  setTimeout(() => {
+                    if (requestGenRef.current !== gen) return
+                    setPlanStages(prev => {
+                      if (prev.some(s => s.id === stage.id)) return prev
+                      return [...prev, { ...stage, status: 'pending' as const }]
+                    })
+                  }, i * 200)
+                })
+                break
+              }
+
+              case 'plan_stage_update': {
+                const { stageId, status } = event.data
+                setPlanStages(prev =>
+                  prev.map(s => s.id === stageId ? { ...s, status } : s)
+                )
+                break
+              }
 
               case 'sub_agent_start': {
                 // Handled via chain of thought — the tool_call for spawn_agent already shows
@@ -1091,6 +1242,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                   if (contentToAnalyze.includes('```')) suggestions.push('Can you modify this code?')
                   if (suggestions.length > 0) setFollowUps(suggestions.slice(0, 3))
                 }
+                refreshThreads(false)
                 break
               }
             }
@@ -1119,8 +1271,9 @@ export function ChatInterface({ userName }: { userName?: string }) {
       if (requestGenRef.current !== gen) return
       setIsLoading(false)
       setIsThinkingStreaming(false)
+      refreshThreads(false)
     }
-  }, [dragUpload, followUps.length, isLoading, setThreadId, smoothStream, smartScroll, threadId])
+  }, [dragUpload, followUps.length, isLoading, refreshThreads, setThreadId, smoothStream, smartScroll, threadId])
 
   const handleEditMessage = useCallback((messageId: string, newContent: string) => {
     const idx = messages.findIndex(m => m.id === messageId)
@@ -1328,6 +1481,38 @@ export function ChatInterface({ userName }: { userName?: string }) {
       // Tools are running — show steps directly with an animated thread line
       const elements: React.ReactNode[] = []
 
+      // Plan stages indicator (staggered in via setTimeout in the plan event handler)
+      if (planStages.length > 0) {
+        elements.push(
+          <div key="plan-stages" className="mb-2 space-y-1">
+            {planStages.map((stage, i) => (
+              <motion.div
+                key={stage.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.2, delay: i * 0.05 }}
+                className="flex items-center gap-2 text-sm"
+              >
+                <span className="w-5 text-center">{stage.icon}</span>
+                <span className={
+                  stage.status === 'done' ? 'text-muted-foreground/60 line-through' :
+                  stage.status === 'active' ? 'text-foreground font-medium' :
+                  stage.status === 'error' ? 'text-destructive' :
+                  'text-muted-foreground'
+                }>
+                  {stage.label}
+                </span>
+                {stage.sublabel && stage.status === 'active' && (
+                  <span className="text-xs uppercase tracking-wider text-muted-foreground/70">
+                    <Shimmer duration={1.2}>{stage.sublabel}</Shimmer>
+                  </span>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )
+      }
+
       if (!hasInterleavedSegments) {
         const section = renderToolSection(
           currentToolCalls,
@@ -1445,107 +1630,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
   // The actual segmented JSX
   const segmentedReasoningJSX = buildSegmentedReasoningJSX()
 
-  // Fetch thread list for the drawer
-  const threadCacheRef = useRef(false) // true once we've fetched at least once
-  const fetchThreadList = useCallback(async (showSkeleton = true) => {
-    if (showSkeleton && !threadCacheRef.current) setDrawerLoading(true)
-    try {
-      const res = await fetch('/api/agent/chat/history?list=threads&channel=web')
-      if (res.ok) {
-        const data = await res.json()
-        setDrawerThreads(
-          (data.threads || []).map((t: Record<string, unknown>) => ({
-            id: t.id as string,
-            title: t.title as string | null,
-            lastActivity: t.lastActivity as string || t.last_activity_at as string || '',
-            messageCount: t.messageCount as number || t.message_count as number || 0,
-            preview: t.preview as string | null,
-          }))
-        )
-        threadCacheRef.current = true
-      }
-    } catch {
-      // Silently fail — drawer will show cached or empty state
-    } finally {
-      setDrawerLoading(false)
-    }
-  }, [])
-
-  // On mount: pre-fetch thread list + restore history if we have a threadId from session
-  useEffect(() => {
-    fetchThreadList(false)
-    const restoredId = sessionStorage.getItem(THREAD_STORAGE_KEY)
-    if (restoredId && messages.length === 0) {
-      fetch(`/api/agent/chat/history?threadId=${restoredId}&limit=50`)
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (!data?.messages?.length) return
-          const allRows = data.messages as Array<Record<string, unknown>>
-          const loaded: Message[] = []
-          const restoredArtifacts: Array<{
-            invoiceNumber: string; recipient: string; recipientEmail: string
-            total: string; dueDate: string; description: string
-            html: string; subject: string; afterMessageId: string
-          }> = []
-          let lastAsstId: string | null = null
-
-          for (const m of allRows) {
-            const role = m.role as string
-            const id = m.id as string || `hist-${Math.random()}`
-            if (role === 'user' || role === 'assistant') {
-              loaded.push({
-                id,
-                role: role as 'user' | 'assistant',
-                content: m.content as string || '',
-                timestamp: new Date(m.created_at as string || Date.now()),
-              })
-              if (role === 'assistant') lastAsstId = id
-            }
-            if (role === 'tool_result' && m.tool_data) {
-              const td = m.tool_data as Record<string, unknown>
-              if (td.name === 'generate_invoice' && td.result) {
-                const r = td.result as Record<string, unknown>
-                if (r.html && r.invoice_number) {
-                  restoredArtifacts.push({
-                    invoiceNumber: r.invoice_number as string,
-                    recipient: r.recipient as string || '',
-                    recipientEmail: r.recipient_email as string || '',
-                    total: r.total as string || '',
-                    dueDate: r.due_date as string || '',
-                    description: r.description as string || '',
-                    html: r.html as string,
-                    subject: r.subject as string || '',
-                    afterMessageId: lastAsstId || id,
-                  })
-                }
-              }
-            }
-          }
-          setMessages(loaded)
-          if (restoredArtifacts.length > 0) setInvoiceArtifacts(restoredArtifacts)
-          setWhispersVisible(false)
-        })
-        .catch(() => {})
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchThreadList])
-
-  // Open drawer — uses cached data, refreshes in background
-  const handleOpenDrawer = useCallback(() => {
-    setDrawerOpen(true)
-    if (threadCacheRef.current) {
-      // Already have data — refresh silently in background
-      fetchThreadList(false)
-    } else {
-      fetchThreadList(true)
-    }
-  }, [fetchThreadList])
-
-  // Switch to a different thread
-  const handleSelectThread = useCallback(async (selectedThreadId: string) => {
-    if (selectedThreadId === threadId) return
-
-    // Reset UI state
+  const resetConversationState = useCallback((nextWhispersVisible: boolean) => {
     setMessages([])
     setThinkingContent('')
     setIsThinkingStreaming(false)
@@ -1561,100 +1646,67 @@ export function ChatInterface({ userName }: { userName?: string }) {
     setInvoiceArtifacts([])
     smoothStream.reset()
     currentAssistantIdRef.current = null
+    setWhispersVisible(nextWhispersVisible)
+  }, [smoothStream])
 
-    setThreadId(selectedThreadId)
-
-    // Load history for the selected thread
+  const loadThreadHistory = useCallback(async (selectedThreadId: string) => {
+    resetConversationState(false)
     try {
       const res = await fetch(`/api/agent/chat/history?threadId=${selectedThreadId}&limit=50`)
       if (res.ok) {
         const data = await res.json()
-        const allRows = (data.messages || []) as Array<Record<string, unknown>>
-        const loaded: Message[] = []
-        const restoredArtifacts: typeof invoiceArtifacts = []
-        let lastAssistantId: string | null = null
-
-        for (const m of allRows) {
-          const role = m.role as string
-          const id = m.id as string || `hist-${Math.random()}`
-
-          if (role === 'user' || role === 'assistant') {
-            loaded.push({
-              id,
-              role: role as 'user' | 'assistant',
-              content: m.content as string || '',
-              timestamp: new Date(m.created_at as string || Date.now()),
-            })
-            if (role === 'assistant') lastAssistantId = id
-          }
-
-          // Reconstruct invoice artifacts from tool_result rows
-          if (role === 'tool_result' && m.tool_data) {
-            const td = m.tool_data as Record<string, unknown>
-            if (td.name === 'generate_invoice' && td.result) {
-              const r = td.result as Record<string, unknown>
-              if (r.html && r.invoice_number) {
-                restoredArtifacts.push({
-                  invoiceNumber: r.invoice_number as string,
-                  recipient: r.recipient as string || '',
-                  recipientEmail: r.recipient_email as string || '',
-                  total: r.total as string || '',
-                  dueDate: r.due_date as string || '',
-                  description: r.description as string || '',
-                  html: r.html as string,
-                  subject: r.subject as string || '',
-                  afterMessageId: lastAssistantId || id,
-                })
-              }
-            }
-          }
-        }
-
-        setMessages(loaded)
-        if (restoredArtifacts.length > 0) setInvoiceArtifacts(restoredArtifacts)
-        setWhispersVisible(loaded.length === 0)
+        const restored = restoreHistory((data.messages || []) as HistoryRow[])
+        setMessages(restored.messages)
+        if (restored.invoiceArtifacts.length > 0) setInvoiceArtifacts(restored.invoiceArtifacts)
+        setWhispersVisible(restored.messages.length === 0)
       }
     } catch {
       // Failed to load — user sees empty state
     }
-  }, [setThreadId, smoothStream, threadId])
+  }, [resetConversationState])
 
-  const handleNewConversation = useCallback(() => {
-    // Archive current thread and start fresh
+  const restoredInitialHistoryRef = useRef(false)
+  useEffect(() => {
+    if (restoredInitialHistoryRef.current) return
+    restoredInitialHistoryRef.current = true
     if (threadId) {
+      loadThreadHistory(threadId)
+    }
+  }, [loadThreadHistory, threadId])
+
+  useEffect(() => {
+    if (!selectionRequest.nonce || !selectionRequest.threadId) return
+    loadThreadHistory(selectionRequest.threadId)
+  }, [loadThreadHistory, selectionRequest.nonce, selectionRequest.threadId])
+
+  const handleNewConversation = useCallback((threadToArchive: string | null) => {
+    // Archive current thread and start fresh
+    if (threadToArchive) {
       fetch('/api/agent/chat/history', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ threadId }),
-      }).catch(() => {}) // fire-and-forget archive
+        body: JSON.stringify({ threadId: threadToArchive }),
+      })
+        .finally(() => refreshThreads(false))
+        .catch(() => {}) // fire-and-forget archive
+    } else {
+      refreshThreads(false)
     }
-    setMessages([])
     setThreadId(null)
-    setThinkingContent('')
-    setIsThinkingStreaming(false)
-    narrationLockedRef.current = false
-    narrationContentRef.current = ''
-    interToolBufferRef.current = ''
-    setInterToolNarrations([])
-    setStreamSegments([])
-    streamSegmentsRef.current = []
-    hasPostToolTextRef.current = false
-    setActiveCitations([])
-    setPendingApprovals([])
-    setInvoiceArtifacts([])
-    smoothStream.reset()
-    currentAssistantIdRef.current = null
-    setWhispersVisible(true)
-  }, [setThreadId, smoothStream, threadId])
+    resetConversationState(true)
+  }, [refreshThreads, resetConversationState, setThreadId])
+
+  useEffect(() => {
+    if (!newConversationRequest.nonce) return
+    handleNewConversation(newConversationRequest.fromThreadId)
+  }, [handleNewConversation, newConversationRequest.fromThreadId, newConversationRequest.nonce])
 
   // Listen for slash command events
   useEffect(() => {
     const handler = (e: Event) => {
       const cmdId = (e as CustomEvent<string>).detail
-      if (cmdId === 'new') handleNewConversation()
-      if (cmdId === 'history') handleOpenDrawer()
-      if (cmdId === 'clear') handleNewConversation()
-      if (cmdId === 'search') setDrawerOpen(true) // Drawer will show search
+      if (cmdId === 'new' || cmdId === 'clear') requestNewConversation()
+      if (cmdId === 'history' || cmdId === 'search') requestThreadPanelFocus()
       if (cmdId === 'memory') {
         window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'knowledge' } }))
       }
@@ -1665,27 +1717,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
     }
     window.addEventListener(CHAT_COMMAND_EVENT, handler)
     return () => window.removeEventListener(CHAT_COMMAND_EVENT, handler)
-  }, [handleNewConversation, handleOpenDrawer])
-
-  // Delete (archive) a thread from the drawer
-  const handleDeleteThread = useCallback(async (deleteThreadId: string) => {
-    // Optimistic removal from drawer list
-    setDrawerThreads(prev => prev.filter(t => t.id !== deleteThreadId))
-
-    // Archive on server
-    fetch('/api/agent/chat/history', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ threadId: deleteThreadId }),
-    }).catch(() => {})
-
-    // If we deleted the active thread, reset to fresh state
-    if (deleteThreadId === threadId) {
-      setMessages([])
-      setThreadId(null)
-      setWhispersVisible(true)
-    }
-  }, [threadId, setThreadId])
+  }, [requestNewConversation, requestThreadPanelFocus])
 
   // Drag-and-drop handlers for file upload
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -1754,34 +1786,11 @@ export function ChatInterface({ userName }: { userName?: string }) {
           </span>
         </div>
       )}
-      {/* Conversation drawer toggle — always visible */}
-      <button
-        className="bb-chat__drawer-toggle"
-        onClick={handleOpenDrawer}
-        title="Conversations"
-      >
-        <IconMenu2 size={18} stroke={1.8} />
-      </button>
-
       {/* Export menu — vertically centered in topbar, offset left to avoid notification bell */}
       {hasMessages && (
         <div style={{ position: 'absolute', top: 0, right: 52, height: 'var(--topbar-height)', display: 'flex', alignItems: 'center', zIndex: 10 }}>
           <ExportMenu messages={messages} />
         </div>
-      )}
-
-      {/* Conversation drawer — pure CSS animations for performance */}
-      {drawerOpen && (
-        <ConversationDrawer
-          isOpen={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          threads={drawerThreads}
-          activeThreadId={threadId}
-          onSelectThread={handleSelectThread}
-          onNewConversation={handleNewConversation}
-          onDeleteThread={handleDeleteThread}
-          isLoading={drawerLoading}
-        />
       )}
       {/* Messages or empty state */}
       <div
@@ -1817,7 +1826,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
               {messages.map((msg, i) => {
                 const prev = messages[i - 1]
                 const isGroupChange = prev && prev.role !== msg.role
-                // Avatar only on the very last assistant message in the entire conversation
                 const isLastAssistantOverall = msg.role === 'assistant' && !messages.slice(i + 1).some(m => m.role === 'assistant')
                 const isCurrentResponse = msg.id === currentAssistantIdRef.current
                 return (
@@ -1825,6 +1833,8 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     key={msg.id}
                     className={isGroupChange ? 'bb-chat__msg-group-gap' : ''}
                   >
+                    {/* BitBit header — above all assistant message blocks */}
+                    {msg.role === 'assistant' && <BitBitHeader />}
                     {/* Live reasoning chain — active steps or collapsed summary */}
                     <AnimatePresence mode="wait">
                       {isCurrentResponse && segmentedReasoningJSX && (
@@ -1882,10 +1892,6 @@ export function ChatInterface({ userName }: { userName?: string }) {
                         }
                         return { ...msg, content: cleaned }
                       })()}
-                      showAvatar={isLastAssistantOverall && !segmentedReasoningJSX && !showReasoningChain}
-                      avatarEmotion={isCurrentResponse ? avatarEmotion : 'neutral'}
-                      avatarThinking={isCurrentResponse ? isThinkingStreaming : false}
-                      avatarActivity={isCurrentResponse ? avatarActivity : 'idle'}
                       citations={msg.citations || (isLastAssistantOverall && isLoading ? activeCitations : undefined)}
                       onRegenerate={isLastAssistantOverall && !isLoading ? handleRegenerate : undefined}
                       onEdit={msg.role === 'user' ? handleEditMessage : undefined}
@@ -1913,6 +1919,7 @@ export function ChatInterface({ userName }: { userName?: string }) {
                     transition={{ duration: 0.25, ease: [0.25, 1, 0.5, 1] }}
                     style={{ marginBottom: 4 }}
                   >
+                    <BitBitHeader />
                     {segmentedReasoningJSX}
                   </motion.div>
                 )}
