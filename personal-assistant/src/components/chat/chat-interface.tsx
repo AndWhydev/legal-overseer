@@ -17,6 +17,7 @@ import { Whispers } from './whispers'
 import { FollowUpChips } from './follow-up-chips'
 import type { Whisper } from '@/lib/whispers/types'
 import { Shimmer } from '@/components/ai-elements/shimmer'
+import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
 import { InvoiceArtifact } from './invoice-artifact'
 import { ChatAttachmentList } from './chat-attachment'
 import { CHAT_ATTACHMENTS_EVENT, CHAT_COMMAND_EVENT } from '@/components/dashboard/voice-pill'
@@ -1508,22 +1509,29 @@ export function ChatInterface() {
     // ── ACTIVE MODE: show tool steps inline as they stream ──
     if (isReasoningActive) {
       if (currentToolCalls.length === 0) {
-        // Thinking only (no tools yet) — show shimmer indicator
+        // Thinking only (no tools yet) — show collapsible reasoning content
         return [
-          <motion.div
-            key="cot-thinking"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-            className="text-muted-foreground text-sm flex items-center gap-1.5 py-1"
-          >
-            <Shimmer duration={1}>Thinking</Shimmer>
-          </motion.div>
+          <Reasoning key="cot-thinking" isStreaming={isThinkingStreaming} duration={thinkingDuration}>
+            <ReasoningTrigger />
+            {thinkingContent.length > 0 && (
+              <ReasoningContent>{thinkingContent}</ReasoningContent>
+            )}
+          </Reasoning>
         ]
       }
 
       // Tools are running — show steps directly with an animated thread line
       const elements: React.ReactNode[] = []
+
+      // Show collapsible reasoning if thinking content was captured before tools started
+      if (thinkingContent.length > 0) {
+        elements.push(
+          <Reasoning key="cot-before-tools" isStreaming={false} duration={thinkingDuration} defaultOpen={false}>
+            <ReasoningTrigger />
+            <ReasoningContent>{thinkingContent}</ReasoningContent>
+          </Reasoning>
+        )
+      }
 
       if (!hasInterleavedSegments) {
         const section = renderToolSection(
@@ -1578,19 +1586,31 @@ export function ChatInterface() {
     }
 
     // ── COMPLETE MODE: reasoning finished — collapse into summary ──
+    // Show collapsible thinking content if captured
+    const completedReasoningElement = thinkingContent.length > 0 ? (
+      <Reasoning key="cot-complete-reasoning" isStreaming={false} duration={thinkingDuration} defaultOpen={false}>
+        <ReasoningTrigger />
+        <ReasoningContent>{thinkingContent}</ReasoningContent>
+      </Reasoning>
+    ) : null
+
     if (!hasInterleavedSegments) {
       const section = renderToolSection(
         currentToolCalls,
         'cot-complete',
-        buildToolSectionSummary(currentToolCalls.length, thinkingDuration),
+        buildToolSectionSummary(currentToolCalls.length, completedReasoningElement ? undefined : thinkingDuration),
         false
       )
 
-      return section ? [section, ...renderNarrationNotes(interToolNarrations, 'complete')] : null
+      const result: React.ReactNode[] = []
+      if (completedReasoningElement) result.push(completedReasoningElement)
+      if (section) result.push(section, ...renderNarrationNotes(interToolNarrations, 'complete'))
+      return result.length > 0 ? result : null
     }
 
     // Interleaved: each tool segment gets its own collapsed summary
     const elements: React.ReactNode[] = []
+    if (completedReasoningElement) elements.push(completedReasoningElement)
     let toolSegIdx = 0
 
     for (let sIdx = 0; sIdx < streamSegments.length; sIdx++) {
