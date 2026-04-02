@@ -4,15 +4,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { VoicePill } from './voice-pill';
 import type { PillMode } from './voice-pill';
-<<<<<<< HEAD
-import { useVoiceRecording } from '@/hooks/use-voice-recording';
-import { useVoicePlayback } from '@/hooks/use-voice-playback';
-||||||| 0c01f0de
-import { useVoiceRecording } from '../../hooks/use-voice-recording';
-=======
 import { useVoiceRecording } from '../../hooks/use-voice-recording';
 import { useVoicePlayback } from '../../hooks/use-voice-playback';
->>>>>>> feat/ai-sdk-patterns-integration
 
 interface BitBitOverlayProps {
   children: React.ReactNode;

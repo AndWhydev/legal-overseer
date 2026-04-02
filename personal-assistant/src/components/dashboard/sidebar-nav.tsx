@@ -67,7 +67,6 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -94,7 +93,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ChatSidebarPanel } from '@/components/chat/chat-sidebar-panel';
-import { SidebarContextTransition } from './sidebar-context-transition';
 import { PixelWordmark } from '@/components/ui/pixel-heading-word';
 
 // ---- Icon map: tab/module ID -> Tabler icon ----
@@ -194,7 +192,6 @@ interface ContextItem {
 
 interface ContextConfig {
   cta?: { label: string; icon: React.ElementType };
-  ctaCompact?: boolean;
   items: ContextItem[];
   sections?: { label: string; items: ContextItem[] }[];
 }
@@ -204,7 +201,6 @@ function getContextConfig(tabId: string): ContextConfig | null {
     case 'inbox':
       return {
         cta: { label: 'New Message', icon: IconPlus },
-        ctaCompact: true,
         items: [
           { icon: IconInbox, label: 'Inbox', count: 0 },
           { icon: IconClockPause, label: 'Snoozed' },
@@ -435,7 +431,8 @@ export function SidebarNav({
     setActiveOrg(switched);
   }, [orgs]);
 
-  // Track which category groups are open
+  // Ref for SidebarContent — reset scrollTop on tab switch to prevent
+  // stale scroll position from scrollIntoView contamination (e.g. chat panel).
   const sidebarContentRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = sidebarContentRef.current;
@@ -444,6 +441,7 @@ export function SidebarNav({
     }
   }, [activeTabId]);
 
+  // Track which category groups are open
   const activeCategory = getCategoryForTab(activeTabId) ?? 'home';
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set([activeCategory]));
 
@@ -599,89 +597,58 @@ export function SidebarNav({
         {/* Contextual panel — isolated scroll region independent from page navigation */}
         {(() => {
           const ctx = getContextConfig(activeTabId);
+          if (!ctx) return null;
           return (
-            <SidebarContextTransition contextKey={ctx ? activeTabId : null}>
+            <div className="min-h-[20rem] max-h-[48%] shrink-0 overflow-hidden px-2 pb-2">
+              <Separator className="mx-0 mb-3" />
+              <div className="h-full min-h-0 overflow-y-auto">
                 {activeTabId === 'chat' ? (
                   <ChatSidebarPanel />
-                ) : activeTabId === 'inbox' ? (
-                  <SidebarGroup className="h-full min-h-0 p-0">
-                    <SidebarMenu className="gap-1">
-                      {ctx?.items.map((item, idx) => {
-                        const showCompactCta = idx === 0 && ctx.ctaCompact && ctx.cta;
-
-                        return (
-                          <SidebarMenuItem key={item.label}>
-                            <SidebarMenuButton
-                              onClick={() => {}}
-                              isActive={idx === 0}
-                              className={cn(showCompactCta && 'pr-10')}
-                            >
-                              {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
-                              {item.icon && <item.icon className="size-4" />}
-                              <span>{item.label}</span>
-                              {item.count !== undefined && item.count > 0 && (
-                                <SidebarMenuBadge>{item.count}</SidebarMenuBadge>
-                              )}
-                            </SidebarMenuButton>
-
-                            {showCompactCta && (
-                              <SidebarMenuAction
-                                aria-label={ctx.cta?.label}
-                                className="border-sidebar-border/60 bg-sidebar top-1.5 right-1 rounded-md border"
-                              >
-                                {ctx.cta?.icon && <ctx.cta.icon className="size-3.5" />}
-                              </SidebarMenuAction>
-                            )}
-                          </SidebarMenuItem>
-                        );
-                      })}
-                    </SidebarMenu>
-                  </SidebarGroup>
-                ) : ctx ? (
-                  <SidebarGroup className="h-full min-h-0 p-0">
-                    {ctx.cta && !ctx.ctaCompact && (
-                      <SidebarMenu>
-                        <SidebarMenuItem>
-                          <Button variant="default" size="sm" className="mb-1 w-full justify-start gap-2">
-                            <ctx.cta.icon className="size-4" />
-                            {ctx.cta.label}
-                          </Button>
-                        </SidebarMenuItem>
-                      </SidebarMenu>
+                ) : (
+                  <div className="flex h-full min-h-0 flex-col gap-2.5 pt-1">
+                    {ctx.cta && (
+                      <Button variant="default" size="default" className="h-8 w-full justify-start rounded-xl bg-foreground px-3 text-sm font-medium text-background shadow-sm hover:bg-foreground/90 gap-2">
+                        <ctx.cta.icon className="size-4" />
+                        {ctx.cta.label}
+                      </Button>
                     )}
+
                     <SidebarMenu>
                       {ctx.items.map((item, idx) => (
                         <SidebarMenuItem key={item.label}>
-                          <SidebarMenuButton onClick={() => {}}>
+                          <SidebarMenuButton
+                            onClick={() => {}}
+                            isActive={idx === 0}
+                            className="h-8"
+                          >
                             {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
-                            {item.icon && <item.icon className="size-4" />}
+                            {item.icon && <item.icon className="size-4 shrink-0" />}
                             <span>{item.label}</span>
                             {item.count !== undefined && (
-                              <span className="ml-auto text-xs text-muted-foreground tabular-nums">{item.count}</span>
+                              <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background/70 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                                {item.count}
+                              </SidebarMenuBadge>
                             )}
                           </SidebarMenuButton>
-                          {idx === 0 && ctx.ctaCompact && ctx.cta && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-7 shrink-0"
-                              aria-label={ctx.cta.label}
-                            >
-                              <ctx.cta.icon className="size-4" />
-                            </Button>
-                          )}
                         </SidebarMenuItem>
                       ))}
                     </SidebarMenu>
+
                     {ctx.sections?.map(section => (
                       <React.Fragment key={section.label}>
-                        <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+                        <div className="relative mt-1 mb-0.5">
+                          <div aria-hidden className="pointer-events-none absolute inset-x-1 top-0 z-10 h-px bg-sidebar-border/55" />
+                          <SidebarGroupLabel className="pt-2">{section.label}</SidebarGroupLabel>
+                        </div>
                         <SidebarMenu>
                           {section.items.map(item => (
                             <SidebarMenuItem key={item.label}>
-                              <SidebarMenuButton onClick={() => {}}>
+                              <SidebarMenuButton
+                                onClick={() => {}}
+                                className="h-8"
+                              >
                                 {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
-                                {item.icon && <item.icon className="size-4" />}
+                                {item.icon && <item.icon className="size-4 shrink-0" />}
                                 <span>{item.label}</span>
                               </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -689,9 +656,10 @@ export function SidebarNav({
                         </SidebarMenu>
                       </React.Fragment>
                     ))}
-                  </SidebarGroup>
-                ) : null}
-            </SidebarContextTransition>
+                  </div>
+                )}
+              </div>
+            </div>
           );
         })()}
       </SidebarContent>
