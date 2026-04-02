@@ -14,7 +14,7 @@ import { ChatBitBitFace } from './chat-bitbit-face'
 import { useSmoothStream } from './use-smooth-stream'
 import { useSmartScroll } from './use-smart-scroll'
 import { Whispers } from './whispers'
-import { FollowUpChips } from './follow-up-chips'
+
 import type { Whisper } from '@/lib/whispers/types'
 import { Shimmer } from '@/components/ai-elements/shimmer'
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
@@ -2182,10 +2182,23 @@ export function ChatInterface() {
 
               {/* Follow-up suggestions */}
               {!isLoading && !smoothStream.isBuffering && followUps.length > 0 && messages.length > 0 && (
-                <FollowUpChips
-                  suggestions={followUps}
-                  onSelect={(text) => handleSend(text)}
-                />
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: 0.3 }}
+                  className="mt-2 max-w-[600px]"
+                >
+                  <Suggestions>
+                    {followUps.map((text, i) => (
+                      <Suggestion
+                        key={i}
+                        suggestion={text}
+                        onClick={(s) => handleSend(s)}
+                        className="text-muted-foreground hover:text-foreground hover:border-primary/30 whitespace-nowrap"
+                      />
+                    ))}
+                  </Suggestions>
+                </motion.div>
               )}
             </motion.div>
           )}
