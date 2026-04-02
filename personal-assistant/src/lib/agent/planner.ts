@@ -1,7 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk'
-import { resolveModel } from '@/lib/agent/model-registry'
+import { generateObject, generateText } from 'ai'
+import { models } from '@/lib/ai'
 import { z } from 'zod'
-import { createStructuredTool, parseStructuredOutput } from '@/lib/agent/schemas/structured-output'
 import { logger } from '@/lib/core/logger'
 import type { ToolGroup } from './tools'
 
@@ -129,54 +128,33 @@ export async function generatePlan(
 }
 
 /**
- * Structured output path: uses tool_use with Zod schema validation.
- * Claude is forced to return output matching PlanOutputSchema.
+ * Structured output path: uses generateObject with Zod schema validation.
+ * AI SDK forces output matching PlanOutputSchema.
  */
 async function generatePlanStructured(
   message: string,
   entityContext: string,
   toolNames: string[]
 ): Promise<PlanOutput> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
   const systemPrompt = PLANNER_SYSTEM.replace('TOOL_NAMES', toolNames.join(', '))
   const userPrompt = entityContext
     ? `User request: "${message}"\n\nKnown context:\n${entityContext}`
     : `User request: "${message}"`
 
-  const structuredTool = createStructuredTool(PlanOutputSchema, {
-    name: 'generate_plan',
-    description: 'Generate an execution plan with stages and tool group selections for the user request.',
-  })
-
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 3000)
 
   try {
-    const response = await client.messages.create(
-      {
-        model: resolveModel('classification'),
-        max_tokens: 512,
-        system: systemPrompt,
-        tools: [structuredTool.tool],
-        tool_choice: structuredTool.toolChoice,
-        messages: [{ role: 'user', content: userPrompt }],
-      },
-      { signal: controller.signal }
-    )
+    const { object: data } = await generateObject({
+      model: models.fast,
+      schema: PlanOutputSchema,
+      maxOutputTokens: 512,
+      system: systemPrompt,
+      prompt: userPrompt,
+      abortSignal: controller.signal,
+    })
 
     clearTimeout(timeout)
-
-    const result = parseStructuredOutput(response, structuredTool)
-
-    if (!result.success) {
-      logger.warn('[planner] Structured output failed, falling back to empty plan', {
-        error: result.error,
-      })
-      return { stages: [], toolGroups: [] }
-    }
-
-    const data = result.data
 
     // Map validated output to PlanOutput format
     const stages: PlanStage[] = data.stages.map((s: z.infer<typeof PlanStageSchema>) => ({
@@ -213,8 +191,6 @@ async function generatePlanLegacy(
   entityContext: string,
   toolNames: string[]
 ): Promise<PlanOutput> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
   const systemPrompt = PLANNER_SYSTEM.replace('TOOL_NAMES', toolNames.join(', '))
   const userPrompt = entityContext
     ? `User request: "${message}"\n\nKnown context:\n${entityContext}`
@@ -224,22 +200,15 @@ async function generatePlanLegacy(
   const timeout = setTimeout(() => controller.abort(), 3000)
 
   try {
-    const response = await client.messages.create(
-      {
-        model: resolveModel('classification'),
-        max_tokens: 512,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-      },
-      { signal: controller.signal }
-    )
+    const { text } = await generateText({
+      model: models.fast,
+      maxOutputTokens: 512,
+      system: systemPrompt,
+      prompt: userPrompt,
+      abortSignal: controller.signal,
+    })
 
     clearTimeout(timeout)
-
-    const text = response.content
-      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-      .map(b => b.text)
-      .join('')
 
     // Parse JSON, stripping any accidental markdown fences
     const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()

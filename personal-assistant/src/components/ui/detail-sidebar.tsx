@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { createPortal } from "react-dom"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -92,28 +93,46 @@ function DetailSidebarContent({
     )
   }
 
-  return (
-    <aside
-      data-slot="detail-sidebar-content"
-      data-side={side}
-      data-state={open ? "open" : "closed"}
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => { setMounted(true) }, [])
+
+  const fixedPanel = (
+    <div
+      data-slot="detail-sidebar-fixed"
       aria-hidden={!open}
       className={cn(
-        "relative hidden h-full min-h-0 shrink-0 overflow-hidden border-l border-sidebar-border/70 bg-sidebar text-sidebar-foreground transition-[width,border-color] duration-300 ease-out md:block",
-        open ? cn("w-[min(34rem,42vw)] xl:w-[36rem]", className) : "w-0 border-l-transparent",
+        "fixed inset-y-0 right-0 z-10 hidden h-svh p-2 pl-0 text-sidebar-foreground transition-[width] duration-300 ease-out md:flex",
+        open ? desktopWidthClass : "w-0",
+        className,
       )}
       {...props}
     >
       <div
         className={cn(
-          "flex h-full max-w-full flex-col bg-sidebar text-sidebar-foreground shadow-none transition-transform duration-300 ease-out",
-          desktopWidthClass,
-          open ? "translate-x-0" : "translate-x-full"
+          "flex h-full w-full flex-col overflow-hidden rounded-xl border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-sm transition-opacity duration-300",
+          open ? "opacity-100" : "opacity-0"
         )}
       >
         {children}
       </div>
-    </aside>
+    </div>
+  )
+
+  return (
+    <>
+      {/* Gap: takes up space in the flow so sibling content shifts over */}
+      <div
+        data-slot="detail-sidebar-content"
+        data-side={side}
+        data-state={open ? "open" : "closed"}
+        className={cn(
+          "hidden shrink-0 bg-transparent transition-[width] duration-300 ease-out md:block",
+          open ? desktopWidthClass : "w-0",
+        )}
+      />
+      {/* Fixed panel: portalled to body so it escapes contain/overflow contexts */}
+      {mounted && createPortal(fixedPanel, document.body)}
+    </>
   )
 }
 

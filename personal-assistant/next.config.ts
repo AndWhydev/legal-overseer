@@ -7,8 +7,6 @@ const withAnalyzer = withBundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
-  // Landing page is served at / — authenticated users can navigate to /dashboard
-  // via the app's own routing. No blanket redirect.
   serverExternalPackages: [
     '@whiskeysockets/baileys',
     'jimp',
@@ -19,23 +17,13 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**.supabase.co',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.gravatar.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-      },
+      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: '**.gravatar.com' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
   },
-  turbopack: {},
+  turbopack: { root: "/home/claude/bitbit" },
   webpack: (config, { isServer }) => {
-    // Force voyageai to use CJS build (ESM has broken directory imports)
     if (isServer) {
       config.resolve = config.resolve || {};
       config.resolve.alias = {
@@ -47,16 +35,19 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withAnalyzer(
-  withSentryConfig(nextConfig, {
-    org: process.env.SENTRY_ORG?.trim() || 'bitbit-d1',
-    project: process.env.SENTRY_PROJECT?.trim() || 'bitbit-dashboard',
-    silent: true,
-    widenClientFileUpload: true,
-    disableLogger: true,
-    // Prevent Sentry source map upload failures from crashing production builds
-    errorHandler: (err) => {
-      console.warn('Sentry source map upload warning:', err.message);
-    },
-  })
-);
+const isDev = process.env.NODE_ENV !== 'production';
+const withSentry = isDev
+  ? (c: NextConfig) => c
+  : (c: NextConfig) =>
+      withSentryConfig(c, {
+        org: process.env.SENTRY_ORG?.trim() || 'bitbit-d1',
+        project: process.env.SENTRY_PROJECT?.trim() || 'bitbit-dashboard',
+        silent: true,
+        widenClientFileUpload: true,
+        disableLogger: true,
+        errorHandler: (err) => {
+          console.warn('Sentry source map upload warning:', err.message);
+        },
+      });
+
+export default withAnalyzer(withSentry(nextConfig));

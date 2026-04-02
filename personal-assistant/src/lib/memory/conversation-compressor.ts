@@ -10,7 +10,8 @@
  * Context loading (loadThreadContext) is sync and on the critical path.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { generateText } from 'ai'
+import { models } from '@/lib/ai'
 import { logger } from '@/lib/core/logger'
 import type {
   ConversationMessageRecord,
@@ -106,7 +107,6 @@ function serializeTurns(turns: ConversationMessageRecord[]): string {
 
 export class ConversationCompressor {
   private supabase: SupabaseClient
-  private anthropic: Anthropic
   private config: CompressionConfig
 
   constructor(
@@ -114,7 +114,6 @@ export class ConversationCompressor {
     config?: Partial<CompressionConfig>,
   ) {
     this.supabase = supabase
-    this.anthropic = new Anthropic()
     this.config = { ...DEFAULT_COMPRESSION_CONFIG, ...config }
   }
 
@@ -372,17 +371,13 @@ export class ConversationCompressor {
       prompt = FULL_SUMMARY_PROMPT.replace('{TURNS_JSON}', turnsText)
     }
 
-    const response = await this.anthropic.messages.create({
-      model: this.config.summarizationModel,
-      max_tokens: 300,
-      messages: [{ role: 'user', content: prompt }],
+    const { text: summaryText, usage } = await generateText({
+      model: models.fast,
+      maxOutputTokens: 300,
+      prompt,
     })
 
-    const textBlock = response.content.find(b => b.type === 'text')
-    const summaryText = textBlock && textBlock.type === 'text'
-      ? textBlock.text
-      : ''
-    const tokenCount = response.usage?.output_tokens ?? estimateTokens(summaryText)
+    const tokenCount = usage?.outputTokens ?? estimateTokens(summaryText)
 
     return {
       turn_range_start: existing?.turn_range_start ?? turns[0].turn_number,
@@ -404,16 +399,13 @@ export class ConversationCompressor {
     const prompt = KEY_FACTS_PROMPT.replace('{TURNS_JSON}', turnsText)
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: this.config.summarizationModel,
-        max_tokens: 500,
-        messages: [{ role: 'user', content: prompt }],
+      const { text: responseText } = await generateText({
+        model: models.fast,
+        maxOutputTokens: 500,
+        prompt,
       })
 
-      const textBlock = response.content.find(b => b.type === 'text')
-      if (!textBlock || textBlock.type !== 'text') return []
-
-      const jsonMatch = textBlock.text.match(/\[[\s\S]*\]/)
+      const jsonMatch = responseText.match(/\[[\s\S]*\]/)
       if (!jsonMatch) return []
 
       const parsed = JSON.parse(jsonMatch[0]) as Array<{

@@ -1,5 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk'
-import { resolveModel } from '@/lib/agent/model-registry'
+import { generateObject } from 'ai'
+import { z } from 'zod'
+import { models } from '@/lib/ai'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -81,8 +82,17 @@ export function analyzeSentimentFast(text: string): SentimentResult {
 // LLM-based sentiment (Haiku for cost)
 // ---------------------------------------------------------------------------
 
+// Zod schema for structured sentiment output
+const SentimentSchema = z.object({
+  label: z.enum(['positive', 'neutral', 'negative']),
+  score: z.number().min(-1).max(1),
+  confidence: z.number().min(0).max(1),
+  urgency: z.boolean(),
+  keywords: z.array(z.string()).max(5),
+})
+
 /**
- * Analyze sentiment using Claude Haiku.
+ * Analyze sentiment using Claude Haiku via AI SDK generateObject.
  * Falls back to keyword-based on failure.
  */
 export async function analyzeSentiment(text: string): Promise<SentimentResult> {
@@ -90,59 +100,30 @@ export async function analyzeSentiment(text: string): Promise<SentimentResult> {
     return { label: 'neutral', score: 0, confidence: 0.5, urgency: false, keywords: [] }
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return analyzeSentimentFast(text)
   }
 
   try {
-    const client = new Anthropic({ apiKey })
-
     const truncated = text.length > 1000 ? text.slice(0, 1000) + '...' : text
 
-    const response = await client.messages.create({
-      model: resolveModel('classification'),
-      max_tokens: 200,
-      messages: [{
-        role: 'user',
-        content: `Analyze the sentiment of this client message. Return ONLY valid JSON.
+    const { object } = await generateObject({
+      model: models.fast,
+      schema: SentimentSchema,
+      maxOutputTokens: 200,
+      prompt: `Analyze the sentiment of this client message.
 
 Message: "${truncated}"
 
-Return JSON:
-{
-  "label": "positive" | "neutral" | "negative",
-  "score": <-1.0 to 1.0>,
-  "confidence": <0-1>,
-  "urgency": <true|false>,
-  "keywords": ["key phrase 1", "key phrase 2"]
-}`,
-      }],
+Return the sentiment label (positive/neutral/negative), a score from -1.0 to 1.0, confidence 0-1, whether it's urgent, and key phrases driving the sentiment.`,
     })
 
-    const textBlock = response.content.find(b => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
-      return analyzeSentimentFast(text)
-    }
-
-    const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      return analyzeSentimentFast(text)
-    }
-
-    const parsed = JSON.parse(jsonMatch[0])
-
-    const validLabels: SentimentLabel[] = ['positive', 'neutral', 'negative']
-    const label = validLabels.includes(parsed.label) ? parsed.label : 'neutral'
-    const score = Math.max(-1, Math.min(1, Number(parsed.score) || 0))
-    const confidence = Math.max(0, Math.min(1, Number(parsed.confidence) || 0.5))
-
     return {
-      label,
-      score,
-      confidence,
-      urgency: Boolean(parsed.urgency),
-      keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 5) : [],
+      label: object.label,
+      score: Math.max(-1, Math.min(1, object.score)),
+      confidence: Math.max(0, Math.min(1, object.confidence)),
+      urgency: object.urgency,
+      keywords: object.keywords.slice(0, 5),
     }
   } catch {
     return analyzeSentimentFast(text)

@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage } from '@/lib/channels/types'
-import Anthropic from '@anthropic-ai/sdk'
+import { generateObject } from 'ai'
+import { z } from 'zod'
+import { models } from '@/lib/ai'
 import { assembleContext } from '@/lib/context/assembler'
 import { resolveModel } from '@/lib/agent/model-registry'
 import { logger } from '@/lib/core/logger';
@@ -381,6 +383,18 @@ function parseClassificationResponse(text: string): ClassificationResult {
   }
 }
 
+// Zod schema for classification structured output
+const ClassificationSchema = z.object({
+  significance: z.number().min(1).max(10),
+  timeSensitivity: z.enum(['immediate', 'today', 'this_week', 'whenever', 'none']),
+  resolves: z.array(z.string()),
+  unblocks: z.array(z.string()),
+  recommendedActions: z.array(z.string()),
+  reasoning: z.string(),
+  category: z.enum(['lead', 'client', 'vendor', 'personal', 'spam', 'notification', 'newsletter']),
+  summary: z.string(),
+})
+
 /**
  * Classify a message using Haiku for cost-optimized significance scoring.
  * Never throws -- returns default low-significance result on failure.
@@ -391,27 +405,29 @@ export async function classifyMessage(
   orgId: string,
 ): Promise<ClassificationResult> {
   try {
-    const client = new Anthropic()
-
     // Assemble context for the sender to enrich classification
     const query = `${message.sender} ${message.senderEmail || ''}`.trim()
     const context = await assembleContext(supabase, orgId, query)
 
     const prompt = buildClassificationPrompt(message, context.summary)
 
-    const response = await client.messages.create({
-      model: resolveModel('classification'),
-      max_tokens: 500,
-      messages: [{ role: 'user', content: prompt }],
+    const { object } = await generateObject({
+      model: models.fast,
+      schema: ClassificationSchema,
+      maxOutputTokens: 500,
+      prompt,
     })
 
-    const textBlock = response.content.find((b) => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
-      logger.warn('[classifier] No text block in response')
-      return DEFAULT_RESULT
+    const result: ClassificationResult = {
+      significance: Math.max(1, Math.min(10, Math.round(object.significance))),
+      timeSensitivity: object.timeSensitivity,
+      resolves: object.resolves,
+      unblocks: object.unblocks,
+      recommendedActions: object.recommendedActions,
+      reasoning: object.reasoning,
+      category: object.category,
+      summary: object.summary,
     }
-
-    const result = parseClassificationResponse(textBlock.text)
 
     // Store classification on the message row
     await supabase

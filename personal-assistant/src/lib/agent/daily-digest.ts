@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
-import { resolveModel } from '@/lib/agent/model-registry'
+import { generateText } from 'ai'
+import { models } from '@/lib/ai'
 import { generateDigest, getActiveThreads, type ThreadInfo } from './channel-triage'
 import { logger } from '@/lib/core/logger';
 
@@ -169,22 +169,17 @@ function formatDigestForWhatsApp(sections: DigestSection[]): string {
 
 async function generateAISummary(sections: DigestSection[]): Promise<string> {
   try {
-    const client = new Anthropic()
     const sectionText = sections.map(s =>
       `${s.title}:\n${s.items.map(i => `- ${i}`).join('\n')}`
     ).join('\n\n')
 
-    const response = await client.messages.create({
-      model: resolveModel('classification'),
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: `Summarize this daily briefing in 2-3 short sentences for a busy business owner. Be direct and actionable.\n\n${sectionText}`,
-      }],
+    const { text } = await generateText({
+      model: models.fast,
+      maxOutputTokens: 300,
+      prompt: `Summarize this daily briefing in 2-3 short sentences for a busy business owner. Be direct and actionable.\n\n${sectionText}`,
     })
 
-    const textBlock = response.content.find(b => b.type === 'text')
-    return textBlock && textBlock.type === 'text' ? textBlock.text : ''
+    return text
   } catch {
     return ''
   }

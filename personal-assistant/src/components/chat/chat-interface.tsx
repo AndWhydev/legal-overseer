@@ -14,9 +14,29 @@ import { ChatBitBitFace } from './chat-bitbit-face'
 import { useSmoothStream } from './use-smooth-stream'
 import { useSmartScroll } from './use-smart-scroll'
 import { Whispers } from './whispers'
-import { FollowUpChips } from './follow-up-chips'
+
 import type { Whisper } from '@/lib/whispers/types'
 import { Shimmer } from '@/components/ai-elements/shimmer'
+import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
+import {
+  Plan,
+  PlanHeader,
+  PlanTitle,
+  PlanDescription,
+  PlanAction,
+  PlanContent,
+  PlanTrigger,
+} from '@/components/ai-elements/plan'
+import {
+  Confirmation,
+  ConfirmationTitle,
+  ConfirmationRequest,
+  ConfirmationAccepted,
+  ConfirmationRejected,
+  ConfirmationActions,
+  ConfirmationAction,
+} from '@/components/ai-elements/confirmation'
+import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
 import { InvoiceArtifact } from './invoice-artifact'
 import { ChatAttachmentList } from './chat-attachment'
 import { CHAT_ATTACHMENTS_EVENT, CHAT_COMMAND_EVENT } from '@/components/dashboard/voice-pill'
@@ -53,6 +73,19 @@ export interface Citation {
   url: string
   title: string
   description?: string
+}
+
+interface PlanStage {
+  id: string
+  title: string
+  description?: string
+  status: 'pending' | 'in_progress' | 'complete' | 'error'
+}
+
+interface PlanData {
+  title: string
+  description?: string
+  stages: PlanStage[]
 }
 
 interface PendingApproval {
@@ -561,6 +594,8 @@ export function ChatInterface() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   // Follow-up suggestions state
   const [followUps, setFollowUps] = useState<string[]>([])
+  // Execution plan state
+  const [planData, setPlanData] = useState<PlanData | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const currentAssistantIdRef = useRef<string | null>(null)
   // Tracks which assistant message the smooth stream content belongs to.
@@ -697,6 +732,7 @@ export function ChatInterface() {
     setActiveCitations([])
     setPendingApprovals([])
     setFollowUps([])
+    setPlanData(null)
     // Finalize previous message content if smooth stream was mid-drain.
     // This prevents content loss when the user sends before the typing
     // animation finishes, and stops stale content from leaking into the
@@ -822,10 +858,38 @@ export function ChatInterface() {
                 break
 
               case 'plan': {
+                const plan = event.data
+                if (plan && plan.title) {
+                  const stages: PlanStage[] = (plan.stages || []).map((s: Record<string, unknown>, i: number) => ({
+                    id: (s.id as string) || `stage-${i}`,
+                    title: (s.title as string) || `Step ${i + 1}`,
+                    description: (s.description as string) || undefined,
+                    status: (s.status as PlanStage['status']) || 'pending',
+                  }))
+                  setPlanData({
+                    title: plan.title,
+                    description: plan.description || undefined,
+                    stages,
+                  })
+                }
                 break
               }
 
               case 'plan_stage_update': {
+                const update = event.data
+                if (update && update.stageId) {
+                  setPlanData(prev => {
+                    if (!prev) return prev
+                    return {
+                      ...prev,
+                      stages: prev.stages.map(s =>
+                        s.id === update.stageId
+                          ? { ...s, status: update.status || s.status }
+                          : s
+                      ),
+                    }
+                  })
+                }
                 break
               }
 
@@ -1514,22 +1578,29 @@ export function ChatInterface() {
     // ── ACTIVE MODE: show tool steps inline as they stream ──
     if (isReasoningActive) {
       if (currentToolCalls.length === 0) {
-        // Thinking only (no tools yet) — show shimmer indicator
+        // Thinking only (no tools yet) — show collapsible reasoning content
         return [
-          <motion.div
-            key="cot-thinking"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-            className="text-muted-foreground text-sm flex items-center gap-1.5 py-1"
-          >
-            <Shimmer duration={1}>Thinking</Shimmer>
-          </motion.div>
+          <Reasoning key="cot-thinking" isStreaming={isThinkingStreaming} duration={thinkingDuration}>
+            <ReasoningTrigger />
+            {thinkingContent.length > 0 && (
+              <ReasoningContent>{thinkingContent}</ReasoningContent>
+            )}
+          </Reasoning>
         ]
       }
 
       // Tools are running — show steps directly with an animated thread line
       const elements: React.ReactNode[] = []
+
+      // Show collapsible reasoning if thinking content was captured before tools started
+      if (thinkingContent.length > 0) {
+        elements.push(
+          <Reasoning key="cot-before-tools" isStreaming={false} duration={thinkingDuration} defaultOpen={false}>
+            <ReasoningTrigger />
+            <ReasoningContent>{thinkingContent}</ReasoningContent>
+          </Reasoning>
+        )
+      }
 
       if (!hasInterleavedSegments) {
         const section = renderToolSection(
@@ -1584,19 +1655,31 @@ export function ChatInterface() {
     }
 
     // ── COMPLETE MODE: reasoning finished — collapse into summary ──
+    // Show collapsible thinking content if captured
+    const completedReasoningElement = thinkingContent.length > 0 ? (
+      <Reasoning key="cot-complete-reasoning" isStreaming={false} duration={thinkingDuration} defaultOpen={false}>
+        <ReasoningTrigger />
+        <ReasoningContent>{thinkingContent}</ReasoningContent>
+      </Reasoning>
+    ) : null
+
     if (!hasInterleavedSegments) {
       const section = renderToolSection(
         currentToolCalls,
         'cot-complete',
-        buildToolSectionSummary(currentToolCalls.length, thinkingDuration),
+        buildToolSectionSummary(currentToolCalls.length, completedReasoningElement ? undefined : thinkingDuration),
         false
       )
 
-      return section ? [section, ...renderNarrationNotes(interToolNarrations, 'complete')] : null
+      const result: React.ReactNode[] = []
+      if (completedReasoningElement) result.push(completedReasoningElement)
+      if (section) result.push(section, ...renderNarrationNotes(interToolNarrations, 'complete'))
+      return result.length > 0 ? result : null
     }
 
     // Interleaved: each tool segment gets its own collapsed summary
     const elements: React.ReactNode[] = []
+    if (completedReasoningElement) elements.push(completedReasoningElement)
     let toolSegIdx = 0
 
     for (let sIdx = 0; sIdx < streamSegments.length; sIdx++) {
@@ -1667,6 +1750,7 @@ export function ChatInterface() {
     setActiveCitations([])
     setPendingApprovals([])
     setInvoiceArtifacts([])
+    setPlanData(null)
     smoothStream.reset()
     currentAssistantIdRef.current = null
     setWhispersVisible(nextWhispersVisible)
@@ -1910,6 +1994,55 @@ export function ChatInterface() {
                   >
                     {/* BitBit header — above all assistant message blocks */}
                     {msg.role === 'assistant' && <BitBitHeader />}
+                    {/* Execution plan — shown above reasoning chain */}
+                    {isCurrentResponse && planData && (
+                      <motion.div
+                        key="plan"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
+                        style={{ marginBottom: 8, maxWidth: 480 }}
+                      >
+                        <Plan isStreaming={isLoading} defaultOpen>
+                          <PlanHeader>
+                            <div>
+                              <PlanTitle>{planData.title}</PlanTitle>
+                              {planData.description && (
+                                <PlanDescription>{planData.description}</PlanDescription>
+                              )}
+                            </div>
+                            <PlanAction>
+                              <PlanTrigger />
+                            </PlanAction>
+                          </PlanHeader>
+                          <PlanContent>
+                            <div className="flex flex-col gap-2">
+                              {planData.stages.map(stage => {
+                                const statusIcon =
+                                  stage.status === 'complete' ? '✓' :
+                                  stage.status === 'in_progress' ? '●' :
+                                  stage.status === 'error' ? '✗' : '○'
+                                const statusColor =
+                                  stage.status === 'complete' ? 'text-green-500' :
+                                  stage.status === 'in_progress' ? 'text-blue-500' :
+                                  stage.status === 'error' ? 'text-red-500' : 'text-muted-foreground'
+                                return (
+                                  <div key={stage.id} className="flex items-start gap-2 text-sm">
+                                    <span className={`shrink-0 font-mono ${statusColor}`}>{statusIcon}</span>
+                                    <div>
+                                      <div className="font-medium">{stage.title}</div>
+                                      {stage.description && (
+                                        <div className="text-muted-foreground text-xs">{stage.description}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </PlanContent>
+                        </Plan>
+                      </motion.div>
+                    )}
                     {/* Live reasoning chain — active steps or collapsed summary */}
                     <AnimatePresence mode="wait">
                       {isCurrentResponse && segmentedReasoningJSX && (
@@ -2002,28 +2135,76 @@ export function ChatInterface() {
               </AnimatePresence>
 
               {/* Inline approval cards */}
-              {pendingApprovals.map(approval => (
-                <motion.div
-                  key={approval.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                  style={{ marginTop: 8, maxWidth: 480 }}
-                >
-                  <InlineApprovalCard
-                    approval={approval}
-                    onApprove={(id) => handleApprovalDecision(id, 'approved')}
-                    onReject={(id) => handleApprovalDecision(id, 'rejected')}
-                  />
-                </motion.div>
-              ))}
+              {pendingApprovals.map(approval => {
+                const confirmationApproval = approval.status === 'approved'
+                  ? { id: approval.id, approved: true as const }
+                  : approval.status === 'rejected'
+                    ? { id: approval.id, approved: false as const }
+                    : { id: approval.id }
+                const confirmationState = approval.resolving
+                  ? 'approval-requested' as const
+                  : approval.status === 'approved'
+                    ? 'approval-responded' as const
+                    : approval.status === 'rejected'
+                      ? 'output-denied' as const
+                      : 'approval-requested' as const
+                return (
+                  <motion.div
+                    key={approval.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                    style={{ marginTop: 8, maxWidth: 480 }}
+                  >
+                    <Confirmation approval={confirmationApproval} state={confirmationState}>
+                      <ConfirmationTitle>{approval.actionSummary}</ConfirmationTitle>
+                      <ConfirmationRequest>
+                        <ConfirmationActions>
+                          <ConfirmationAction
+                            variant="outline"
+                            onClick={() => handleApprovalDecision(approval.id, 'rejected')}
+                            disabled={approval.resolving}
+                          >
+                            Reject
+                          </ConfirmationAction>
+                          <ConfirmationAction
+                            onClick={() => handleApprovalDecision(approval.id, 'approved')}
+                            disabled={approval.resolving}
+                          >
+                            {approval.resolving ? 'Resolving...' : 'Approve'}
+                          </ConfirmationAction>
+                        </ConfirmationActions>
+                      </ConfirmationRequest>
+                      <ConfirmationAccepted>
+                        <ConfirmationTitle>Approved — sending...</ConfirmationTitle>
+                      </ConfirmationAccepted>
+                      <ConfirmationRejected>
+                        <ConfirmationTitle>Rejected.</ConfirmationTitle>
+                      </ConfirmationRejected>
+                    </Confirmation>
+                  </motion.div>
+                )
+              })}
 
               {/* Follow-up suggestions */}
               {!isLoading && !smoothStream.isBuffering && followUps.length > 0 && messages.length > 0 && (
-                <FollowUpChips
-                  suggestions={followUps}
-                  onSelect={(text) => handleSend(text)}
-                />
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: 0.3 }}
+                  className="mt-2 max-w-[600px]"
+                >
+                  <Suggestions>
+                    {followUps.map((text, i) => (
+                      <Suggestion
+                        key={i}
+                        suggestion={text}
+                        onClick={(s) => handleSend(s)}
+                        className="text-muted-foreground hover:text-foreground hover:border-primary/30 whitespace-nowrap"
+                      />
+                    ))}
+                  </Suggestions>
+                </motion.div>
               )}
             </motion.div>
           )}

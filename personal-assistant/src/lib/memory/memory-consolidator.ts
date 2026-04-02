@@ -9,8 +9,8 @@
  * 5. Write to Context Baseplate (semantic_memories, entity_timeline, xref cache)
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
-import { resolveModel } from '@/lib/agent/model-registry'
+import { generateText } from 'ai'
+import { models } from '@/lib/ai'
 import { logger } from '@/lib/core/logger'
 import type { ConversationMessageRecord, KeyFact } from '@/lib/conversation/types'
 import {
@@ -112,11 +112,9 @@ Answer:`
 
 export class MemoryConsolidator {
   private supabase: SupabaseClient
-  private anthropic: Anthropic
 
   constructor(supabase: SupabaseClient) {
     this.supabase = supabase
-    this.anthropic = new Anthropic()
   }
 
   /**
@@ -220,16 +218,13 @@ export class MemoryConsolidator {
       .replace('{ENTITY_NAMES_LIST}', entityNamesList)
 
     try {
-      const response = await this.anthropic.messages.create({
-        model: resolveModel('classification'),
-        max_tokens: 400,
-        messages: [{ role: 'user', content: prompt }],
+      const { text: responseText } = await generateText({
+        model: models.fast,
+        maxOutputTokens: 400,
+        prompt,
       })
 
-      const textBlock = response.content.find(b => b.type === 'text')
-      if (!textBlock || textBlock.type !== 'text') return []
-
-      const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/)
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
       if (!jsonMatch) return []
 
       const parsed = JSON.parse(jsonMatch[0]) as {
@@ -323,16 +318,13 @@ export class MemoryConsolidator {
         .replace('{EXISTING_FACT}', existingFact)
         .replace('{NEW_FACT}', newFact)
 
-      const response = await this.anthropic.messages.create({
-        model: resolveModel('classification'),
-        max_tokens: 10,
-        messages: [{ role: 'user', content: prompt }],
+      const { text: responseText } = await generateText({
+        model: models.fast,
+        maxOutputTokens: 10,
+        prompt,
       })
 
-      const textBlock = response.content.find(b => b.type === 'text')
-      if (!textBlock || textBlock.type !== 'text') return false
-
-      return textBlock.text.trim().toLowerCase().startsWith('yes')
+      return responseText.trim().toLowerCase().startsWith('yes')
     } catch {
       return false // fail open — don't block on contradiction check errors
     }
