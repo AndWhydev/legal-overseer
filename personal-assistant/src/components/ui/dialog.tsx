@@ -13,7 +13,7 @@ import {
   DialogContent as AnimatedDialogContent,
   DialogClose,
   DialogTrigger,
-  DialogHeader,
+  DialogHeader as _AnimatedDialogHeader,
   DialogFooter as AnimatedDialogFooter,
   DialogTitle as AnimatedDialogTitle,
   DialogDescription as AnimatedDialogDescription,

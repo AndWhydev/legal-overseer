@@ -19,7 +19,12 @@ export interface UseVoiceRecording {
   error: string | null;
 }
 
-export function useVoiceRecording(): UseVoiceRecording {
+export function useVoiceRecording(options?: UseVoiceRecordingOptions): UseVoiceRecording {
+  const silenceDetection = options?.silenceDetection ?? false;
+  const silenceThreshold = options?.silenceThreshold ?? 0.01;
+  const silenceDurationMs = options?.silenceDurationMs ?? 2000;
+  const minRecordingMs = options?.minRecordingMs ?? 500;
+
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
@@ -32,6 +37,9 @@ export function useVoiceRecording(): UseVoiceRecording {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const rafRef = useRef<number>(0);
   const chunksRef = useRef<Blob[]>([]);
+  const silenceStartRef = useRef<number | null>(null);
+  const recordingStartRef = useRef<number>(0);
+  const autoStopTriggeredRef = useRef(false);
 
   const cleanup = useCallback(() => {
     if (rafRef.current) {
@@ -49,6 +57,8 @@ export function useVoiceRecording(): UseVoiceRecording {
     analyserRef.current = null;
     mediaRecorderRef.current = null;
     chunksRef.current = [];
+    silenceStartRef.current = null;
+    autoStopTriggeredRef.current = false;
   }, []);
 
   useEffect(() => cleanup, [cleanup]);
@@ -66,10 +76,31 @@ export function useVoiceRecording(): UseVoiceRecording {
     for (let i = 0; i < data.length; i++) {
       sum += data[i];
     }
-    setAudioLevel(sum / (data.length * 255));
+    const level = sum / (data.length * 255);
+    setAudioLevel(level);
+
+    if (silenceDetection && !autoStopTriggeredRef.current) {
+      const elapsed = Date.now() - recordingStartRef.current;
+      if (elapsed > minRecordingMs) {
+        if (level < silenceThreshold) {
+          if (silenceStartRef.current === null) {
+            silenceStartRef.current = Date.now();
+          } else if (Date.now() - silenceStartRef.current >= silenceDurationMs) {
+            autoStopTriggeredRef.current = true;
+            const recorder = mediaRecorderRef.current;
+            if (recorder && recorder.state === 'recording') {
+              recorder.stop();
+            }
+            return;
+          }
+        } else {
+          silenceStartRef.current = null;
+        }
+      }
+    }
 
     rafRef.current = requestAnimationFrame(updateFrequencyData);
-  }, []);
+  }, [silenceDetection, silenceThreshold, silenceDurationMs, minRecordingMs]);
 
   const startRecording = useCallback(async () => {
     setError(null);
@@ -87,6 +118,9 @@ export function useVoiceRecording(): UseVoiceRecording {
       analyserRef.current = analyser;
 
       chunksRef.current = [];
+      silenceStartRef.current = null;
+      autoStopTriggeredRef.current = false;
+      recordingStartRef.current = Date.now();
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
         : 'audio/webm';

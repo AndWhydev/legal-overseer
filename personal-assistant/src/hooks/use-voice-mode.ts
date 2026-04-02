@@ -17,14 +17,19 @@ export interface UseVoiceMode {
   isActive: boolean;
   activate: () => Promise<void>;
   deactivate: () => void;
+  toggleRecording: () => Promise<void>;
   audioLevel: number;
   frequencyData: Uint8Array | null;
+  transcript: string | null;
+  lastResponse: string | null;
   error: string | null;
 }
 
 export function useVoiceMode(): UseVoiceMode {
   const [state, setState] = useState<VoiceModeState>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [lastResponse, setLastResponse] = useState<string | null>(null);
 
   const isActiveRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -36,7 +41,12 @@ export function useVoiceMode(): UseVoiceMode {
     startRecording,
     stopRecording,
     error: recordingError,
-  } = useVoiceRecording();
+  } = useVoiceRecording({
+    silenceDetection: true,
+    silenceThreshold: 0.01,
+    silenceDurationMs: 2000,
+    minRecordingMs: 800,
+  });
 
   const { speak, stop: stopPlayback, isSpeaking } = useVoicePlayback();
 
@@ -78,6 +88,9 @@ export function useVoiceMode(): UseVoiceMode {
         const data = (await res.json()) as VoiceAPIResponse;
 
         if (!isActiveRef.current) return;
+
+        setTranscript(data.transcript || null);
+        setLastResponse(data.response || null);
 
         if (data.error || !data.response) {
           setError(data.error ?? 'No response from AI');
@@ -145,6 +158,25 @@ export function useVoiceMode(): UseVoiceMode {
     }
   }, [startRecording]);
 
+  const toggleRecording = useCallback(async () => {
+    if (!isActiveRef.current) return;
+    if (state === 'listening' && isRecording) {
+      const blob = await stopRecording();
+      if (blob) {
+        await processAudio(blob);
+      } else if (isActiveRef.current) {
+        setState('listening');
+        await startRecording();
+      }
+    } else if (state === 'speaking') {
+      stopPlayback();
+      if (isActiveRef.current) {
+        setState('listening');
+        await startRecording();
+      }
+    }
+  }, [state, isRecording, stopRecording, processAudio, startRecording, stopPlayback]);
+
   const deactivate = useCallback(() => {
     isActiveRef.current = false;
 
@@ -202,8 +234,11 @@ export function useVoiceMode(): UseVoiceMode {
     isActive: isActiveRef.current,
     activate,
     deactivate,
+    toggleRecording,
     audioLevel,
     frequencyData,
+    transcript,
+    lastResponse,
     error,
   };
 }

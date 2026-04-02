@@ -4,8 +4,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { VoicePill } from './voice-pill';
 import type { PillMode } from './voice-pill';
-import { useVoiceRecording } from '../../hooks/use-voice-recording';
-import { useVoicePlayback } from '../../hooks/use-voice-playback';
+import { useVoiceRecording } from '@/hooks/use-voice-recording';
+import { useVoicePlayback } from '@/hooks/use-voice-playback';
+import { useVoiceMode } from '@/hooks/use-voice-mode';
+import { VoiceConversationOverlay } from './voice-conversation-overlay';
 
 interface BitBitOverlayProps {
   children: React.ReactNode;
@@ -62,7 +64,9 @@ export function BitBitOverlay({
   const isDocked = isChatTab && !forceFloating;
   const voice = useVoiceRecording();
   const playback = useVoicePlayback();
+  const voiceMode = useVoiceMode();
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
+  const [voiceConversationOpen, setVoiceConversationOpen] = useState(false);
 
   // Listen for chat response completions to speak via TTS
   useEffect(() => {
@@ -573,7 +577,17 @@ export function BitBitOverlay({
       onTextSubmit={handleTextSubmit}
       onDismiss={dismiss}
       voiceModeEnabled={voiceModeEnabled}
-      onVoiceModeToggle={() => setVoiceModeEnabled(prev => !prev)}
+      onVoiceModeToggle={() => {
+        const next = !voiceModeEnabled;
+        setVoiceModeEnabled(next);
+        if (next) {
+          setVoiceConversationOpen(true);
+          voiceMode.activate();
+        } else {
+          setVoiceConversationOpen(false);
+          voiceMode.deactivate();
+        }
+      }}
       isSpeaking={playback.isSpeaking}
     />
   );
@@ -588,6 +602,21 @@ export function BitBitOverlay({
     <>
       {children}
       {isDocked ? (dockTarget ? createPortal(pill, dockTarget) : null) : pill}
+      <VoiceConversationOverlay
+        isOpen={voiceConversationOpen}
+        state={voiceMode.state}
+        audioLevel={voiceMode.audioLevel}
+        frequencyData={voiceMode.frequencyData}
+        transcript={voiceMode.transcript}
+        lastResponse={voiceMode.lastResponse}
+        error={voiceMode.error}
+        onTap={() => voiceMode.toggleRecording()}
+        onClose={() => {
+          setVoiceConversationOpen(false);
+          setVoiceModeEnabled(false);
+          voiceMode.deactivate();
+        }}
+      />
     </>
   );
 }

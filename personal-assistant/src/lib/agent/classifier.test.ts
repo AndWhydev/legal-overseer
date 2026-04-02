@@ -11,19 +11,16 @@ vi.mock('@/lib/context/assembler', () => ({
   }),
 }))
 
-// Mock Anthropic SDK
-vi.mock('@anthropic-ai/sdk', () => {
-  const mockCreate = vi.fn()
-  function MockAnthropic() {
-    return { messages: { create: mockCreate } }
-  }
-  return {
-    default: MockAnthropic,
-    __mockCreate: mockCreate,
-  }
-})
+// Mock AI SDK generateObject
+const mockGenerateObject = vi.fn()
+vi.mock('ai', () => ({
+  generateObject: (...args: unknown[]) => mockGenerateObject(...args),
+}))
 
-import Anthropic from '@anthropic-ai/sdk'
+// Mock AI provider
+vi.mock('@/lib/ai', () => ({
+  models: { fast: 'mock-haiku', balanced: 'mock-sonnet', heavy: 'mock-opus' },
+}))
 import {
   classifyMessage,
   buildClassificationPrompt,
@@ -31,7 +28,7 @@ import {
   DEFAULT_RESULT,
 } from './classifier'
 
-const { __mockCreate } = await import('@anthropic-ai/sdk') as any
+// mockGenerateObject is defined at top level
 
 function makeMessage(overrides: Partial<ChannelMessage> = {}): ChannelMessage {
   return {
@@ -128,19 +125,16 @@ describe('classifyMessage', () => {
   })
 
   it('classifies message and stores result', async () => {
-    __mockCreate.mockResolvedValue({
-      content: [{
-        type: 'text',
-        text: JSON.stringify({
-          significance: 7,
-          timeSensitivity: 'today',
-          resolves: [],
-          unblocks: [],
-          recommendedActions: ['reply'],
-          reasoning: 'Client follow-up',
-          category: 'client',
-        }),
-      }],
+    mockGenerateObject.mockResolvedValue({
+      object: {
+        significance: 7,
+        timeSensitivity: 'today',
+        resolves: [],
+        unblocks: [],
+        recommendedActions: ['reply'],
+        reasoning: 'Client follow-up',
+        category: 'client',
+      },
     })
 
     const supabase = mockSupabase()
@@ -160,7 +154,7 @@ describe('classifyMessage', () => {
   })
 
   it('returns default result on LLM error', async () => {
-    __mockCreate.mockRejectedValue(new Error('API error'))
+    mockGenerateObject.mockRejectedValue(new Error('API error'))
 
     const supabase = mockSupabase()
     const result = await classifyMessage(supabase, makeMessage(), 'org-1')
