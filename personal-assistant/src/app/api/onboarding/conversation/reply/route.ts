@@ -1,11 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/core/logger'
 import { NextResponse } from 'next/server'
+import { getReplyQueue } from './queue'
 
 export const dynamic = 'force-dynamic'
-
-const WORKER_URL = process.env.WORKER_CALLBACK_URL || 'https://bitbit-workers.fly.dev'
-const WORKER_AUTH = process.env.WORKER_AUTH_TOKEN || ''
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -18,32 +16,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('org_id')
+    .eq('id', user.id)
+    .single<{ org_id: string }>()
+
+  if (!profile?.org_id) {
+    return NextResponse.json({ error: 'No org found' }, { status: 400 })
+  }
+
   const body = await request.json() as { message: string }
 
-  logger.info('[api/onboarding/conversation/reply] Forwarding reply to worker', {
+  if (!body.message || typeof body.message !== 'string') {
+    return NextResponse.json({ error: 'Missing message' }, { status: 400 })
+  }
+
+  logger.info('[api/onboarding/conversation/reply] Queuing user reply', {
     userId: user.id,
+    orgId: profile.org_id,
   })
 
-  try {
-    const workerRes = await fetch(`${WORKER_URL}/api/onboarding/conversation/reply`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${WORKER_AUTH}`,
-      },
-      body: JSON.stringify({ message: body.message }),
-    })
+  const queue = getReplyQueue(profile.org_id)
+  queue.push({ message: body.message, timestamp: Date.now() })
 
-    if (!workerRes.ok) {
-      const text = await workerRes.text()
-      logger.error('[api/onboarding/conversation/reply] Worker error', { status: workerRes.status, text })
-      return NextResponse.json({ error: 'Worker unavailable' }, { status: 502 })
-    }
-
-    return NextResponse.json({ ok: true })
-  } catch (err) {
-    const error = err instanceof Error ? err.message : String(err)
-    logger.error('[api/onboarding/conversation/reply] Proxy failed', { error })
-    return NextResponse.json({ error }, { status: 500 })
-  }
+  return NextResponse.json({ ok: true })
 }
