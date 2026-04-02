@@ -1,0 +1,28 @@
+{
+  "file_path": "personal-assistant/src/lib/context/__tests__/timeline-writer.test.ts",
+  "main_branch_history": [],
+  "task_views": {
+    "001-continue-bitbit-v1-0-implementation-phase-3": {
+      "task_id": "001-continue-bitbit-v1-0-implementation-phase-3",
+      "branch_point": {
+        "commit_hash": "28e0ff02d5fb926fcdad20e78bfa2a5e3c36f066",
+        "content": "",
+        "timestamp": "2026-02-21T17:40:08.399110"
+      },
+      "worktree_state": {
+        "content": "import { describe, it, expect, vi, beforeEach } from 'vitest'\n\n// Mock the supabase client\nconst mockInsert = vi.fn()\nconst mockFrom = vi.fn()\n\nconst mockSupabase = {\n  from: mockFrom,\n}\n\nvi.mock('@/lib/supabase/server', () => ({\n  createClient: vi.fn(() => Promise.resolve(mockSupabase)),\n}))\n\nimport { writeTimelineEvent, writeTaskEvent, writeMessageEvent } from '../timeline-writer'\nimport { createClient } from '@/lib/supabase/server'\n\nconst ORG_ID = 'org-123'\n\nfunction setupInsert(result: { error: { message: string } | null }) {\n  mockFrom.mockReturnValue({\n    insert: vi.fn().mockResolvedValue(result),\n  })\n}\n\nbeforeEach(() => {\n  vi.clearAllMocks()\n  setupInsert({ error: null })\n})\n\ndescribe('timeline-writer', () => {\n  it('writes task_created event with correct payload', async () => {\n    const eventData = { title: 'Buy groceries', priority: 'high' }\n\n    await writeTaskEvent(ORG_ID, 'task-1', 'task_created', eventData)\n\n    expect(mockFrom).toHaveBeenCalledWith('entity_timeline')\n    const insertArg = mockFrom.mock.results[0].value.insert.mock.calls[0][0]\n    expect(insertArg.org_id).toBe(ORG_ID)\n    expect(insertArg.entity_type).toBe('task')\n    expect(insertArg.entity_id).toBe('task-1')\n    expect(insertArg.event_type).toBe('task_created')\n    expect(insertArg.event_data).toEqual(eventData)\n  })\n\n  it('writes message_received event with channel_source', async () => {\n    await writeMessageEvent(\n      ORG_ID,\n      'msg-1',\n      'message_received',\n      { body: 'hello' },\n      'whatsapp'\n    )\n\n    const insertArg = mockFrom.mock.results[0].value.insert.mock.calls[0][0]\n    expect(insertArg.event_type).toBe('message_received')\n    expect(insertArg.channel_source).toBe('whatsapp')\n    expect(insertArg.entity_type).toBe('channel_message')\n  })\n\n  it('sanitizes event_data strings (null bytes, surrogate pairs removed)', async () => {\n    const dirtyData = {\n      title: 'Hello\\u0000World',\n      nested: { note: 'Bad\\uD800char' },\n      count: 42,\n    }\n\n    await writeTaskEvent(ORG_ID, 'task-2', 'task_created', dirtyData)\n\n    const insertArg = mockFrom.mock.results[0].value.insert.mock.calls[0][0]\n    expect(insertArg.event_data.title).toBe('HelloWorld')\n    expect(insertArg.event_data.nested.note).toBe('Badchar')\n    expect(insertArg.event_data.count).toBe(42)\n  })\n\n  it('returns gracefully when Supabase not configured (null client)', async () => {\n    vi.mocked(createClient).mockResolvedValueOnce(null as unknown as ReturnType<typeof createClient>)\n\n    // Should not throw\n    await expect(\n      writeTimelineEvent({\n        orgId: ORG_ID,\n        entityType: 'task',\n        entityId: 'task-3',\n        eventType: 'task_created',\n      })\n    ).resolves.toBeUndefined()\n\n    expect(mockFrom).not.toHaveBeenCalled()\n  })\n\n  it('logs error but never throws on DB failure', async () => {\n    setupInsert({ error: { message: 'connection refused' } })\n    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})\n\n    await expect(\n      writeTaskEvent(ORG_ID, 'task-4', 'task_created', { title: 'fail' })\n    ).resolves.toBeUndefined()\n\n    expect(consoleSpy).toHaveBeenCalledWith(\n      '[timeline-writer] Failed to write timeline event:',\n      'connection refused'\n    )\n    consoleSpy.mockRestore()\n  })\n\n  it('uses provided supabaseClient when passed (non-SSR path)', async () => {\n    const customClient = {\n      from: vi.fn().mockReturnValue({\n        insert: vi.fn().mockResolvedValue({ error: null }),\n      }),\n    }\n\n    await writeTaskEvent(ORG_ID, 'task-5', 'task_created', {}, customClient as never)\n\n    expect(customClient.from).toHaveBeenCalledWith('entity_timeline')\n    // Should NOT call createClient when custom client is provided\n    expect(createClient).not.toHaveBeenCalled()\n  })\n\n  it('falls back to SSR createClient when no client passed', async () => {\n    await writeTaskEvent(ORG_ID, 'task-6', 'task_created')\n\n    expect(createClient).toHaveBeenCalled()\n    expect(mockFrom).toHaveBeenCalledWith('entity_timeline')\n  })\n})\n",
+        "last_modified": "2026-02-21T17:40:08.438933"
+      },
+      "task_intent": {
+        "title": "001-continue-bitbit-v1-0-implementation-phase-3",
+        "description": "Complete the Semantic Context Engine by building timeline-writer.ts, context-assembler.ts, integrating into agent tools + synthesizer, and upgrading prompt-builder to use entity-aware context assembly.",
+        "from_plan": true
+      },
+      "commits_behind_main": 0,
+      "status": "active",
+      "merged_at": null
+    }
+  },
+  "created_at": "2026-02-21T16:37:05.870686",
+  "last_updated": "2026-02-21T17:40:08.406652"
+}

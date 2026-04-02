@@ -1,0 +1,41 @@
+{
+  "project_name": "bitbit",
+  "project_type": "web-app",
+  "tech_stack": {
+    "primary_language": "TypeScript",
+    "frameworks": ["Next.js", "React", "Tailwind CSS"],
+    "key_dependencies": ["@anthropic-ai/sdk", "@supabase/supabase-js", "@supabase/ssr", "better-sqlite3", "imapflow", "radix-ui"]
+  },
+  "target_audience": {
+    "primary_persona": "Small business operators and founders using AI assistants to automate daily operations",
+    "secondary_personas": ["Operations managers", "Sales/lead management teams", "Developers extending agent workflows"],
+    "pain_points": ["Too many repetitive operational tasks", "Fragmented tools across inbox, CRM, and task management", "Slow response times and manual follow-up in lead/customer workflows", "Difficulty orchestrating AI agents reliably in production"],
+    "goals": ["Automate business operations with autonomous agents", "Centralize workflows and operational visibility", "Improve execution speed and consistency", "Deploy customizable AI-driven assistants for specific business contexts"],
+    "usage_context": "Used as a browser-based operations dashboard and assistant workspace during day-to-day business operations, with deployment-specific configurations for different clients/environments."
+  },
+  "product_vision": {
+    "one_liner": "An agentic AI operations platform that helps businesses run and scale operations through autonomous assistants.",
+    "problem_statement": "Businesses struggle to coordinate repetitive operations across multiple systems, causing delays, inconsistency, and high manual overhead.",
+    "value_proposition": "Bitbit combines AI agent orchestration, workflow execution, and modern operational UI into a single customizable platform, reducing manual work while keeping teams in control.",
+    "success_metrics": ["Increase in automated task completion rate", "Reduction in manual operational handling time", "Higher lead/workflow throughput per user", "Deployment adoption across multiple business contexts", "Improved user retention and daily active usage in assistant surfaces"]
+  },
+  "current_state": {
+    "maturity": "growth",
+    "existing_features": ["Monorepo with multiple deployable Next.js applications", "Personal assistant frontend with Supabase and AI integrations", "Core package for shared logic and database migration/seeding", "Agent registry and role/action execution wiring", "UI components for kanban, tabs, skeleton states, and notification patterns", "Environment-specific deployment scripts"],
+    "known_gaps": ["High-level documentation is sparse/inconsistent at repo root", "Test structure is not clearly centralized at repository level", "Roadmap documentation not present in expected location", "Potentially unclear service boundaries across multiple apps/modules"],
+    "technical_debt": ["Rapid feature iteration implied by frequent refactors in recent commits", "Mixed dependency/install state across workspaces (core node_modules missing locally)", "TODO/FIXME visibility is noisy due to third-party/vendor files unless filtered", "Monorepo complexity may require stronger conventions and architectural docs"]
+  },
+  "competitive_context": {
+    "alternatives": ["Zapier", "Make (Integromat)", "HubSpot workflows", "Custom internal AI copilots", "Other AI agent orchestration platforms"],
+    "differentiators": ["Domain-specific business operations focus rather than generic automation", "Agentic workflow execution integrated with operational UI", "Multi-deployment architecture enabling tailored client contexts", "Combination of AI reasoning, notifications, and execution harness in one stack"],
+    "market_position": "Positioned as an emerging AI-native operations platform for SMBs and teams that need customizable autonomous workflows beyond simple no-code automations.",
+    "competitor_pain_points": [],
+    "competitor_analysis_available": false
+  },
+  "constraints": {
+    "technical": ["Requires modern Node.js runtime (>=20)", "Depends on external AI APIs (Anthropic) and data services (Supabase)", "Frontend-heavy architecture built on Next.js workspaces", "Some services rely on specific integrations (e.g., IMAP/email, Telegram, SQLite)"],
+    "resources": ["Likely small team with fast iteration cadence", "Product and engineering effort split across multiple apps/packages", "Ongoing UI/UX and architecture work suggests limited bandwidth for deep stabilization"],
+    "dependencies": ["Anthropic API availability and cost", "Supabase platform reliability and schema evolution", "Fly.io/Vercel-style deployment environments", "Third-party UI/component ecosystems (Radix/shadcn/diceui)"]
+  },
+  "created_at": "2026-03-29T00:00:00Z"
+}

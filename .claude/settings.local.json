@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -c core.hooksPath=/dev/null add personal-assistant/src/lib/roles/growth/__tests__/growth-role.test.ts)",
+      "Bash(git -c:*)",
+      "Bash(ls /home/claude/bitbit/.planning/phases/31*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
+  "outputStyle": "default"
+}
