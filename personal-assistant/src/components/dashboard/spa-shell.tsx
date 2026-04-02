@@ -234,6 +234,8 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
 
     const nextIndex = idx >= 0 ? idx : 0;
     setActiveNavIndex(nextIndex);
+    const tabId = TABS[nextIndex]?.id;
+    if (tabId) setVisitedTabs(prev => { if (prev.has(tabId)) return prev; const next = new Set(prev); next.add(tabId); return next; });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Navigate to a tab -- immediate switch with CSS slide animation

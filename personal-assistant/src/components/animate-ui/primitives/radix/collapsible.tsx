@@ -49,10 +49,14 @@ type CollapsibleContentProps = Omit<
   React.ComponentProps<typeof CollapsiblePrimitive.Content>,
   'asChild' | 'forceMount'
 > &
-  HTMLMotionProps<'div'>;
+  HTMLMotionProps<'div'> & {
+    /** Accepted for backward compat but ignored — animation handles composition internally */
+    asChild?: boolean;
+  };
 
 function CollapsibleContent({
   transition = { duration: 0.3, ease: 'easeInOut' },
+  asChild: _asChild,
   ...props
 }: CollapsibleContentProps) {
   const { isOpen } = useCollapsible();
