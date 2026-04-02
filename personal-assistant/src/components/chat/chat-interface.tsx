@@ -18,6 +18,25 @@ import { FollowUpChips } from './follow-up-chips'
 import type { Whisper } from '@/lib/whispers/types'
 import { Shimmer } from '@/components/ai-elements/shimmer'
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ai-elements/reasoning'
+import {
+  Plan,
+  PlanHeader,
+  PlanTitle,
+  PlanDescription,
+  PlanAction,
+  PlanContent,
+  PlanTrigger,
+} from '@/components/ai-elements/plan'
+import {
+  Confirmation,
+  ConfirmationTitle,
+  ConfirmationRequest,
+  ConfirmationAccepted,
+  ConfirmationRejected,
+  ConfirmationActions,
+  ConfirmationAction,
+} from '@/components/ai-elements/confirmation'
+import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
 import { InvoiceArtifact } from './invoice-artifact'
 import { ChatAttachmentList } from './chat-attachment'
 import { CHAT_ATTACHMENTS_EVENT, CHAT_COMMAND_EVENT } from '@/components/dashboard/voice-pill'
@@ -54,6 +73,19 @@ export interface Citation {
   url: string
   title: string
   description?: string
+}
+
+interface PlanStage {
+  id: string
+  title: string
+  description?: string
+  status: 'pending' | 'in_progress' | 'complete' | 'error'
+}
+
+interface PlanData {
+  title: string
+  description?: string
+  stages: PlanStage[]
 }
 
 interface PendingApproval {
@@ -562,6 +594,8 @@ export function ChatInterface() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   // Follow-up suggestions state
   const [followUps, setFollowUps] = useState<string[]>([])
+  // Execution plan state
+  const [planData, setPlanData] = useState<PlanData | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const currentAssistantIdRef = useRef<string | null>(null)
   // Tracks which assistant message the smooth stream content belongs to.
@@ -698,6 +732,7 @@ export function ChatInterface() {
     setActiveCitations([])
     setPendingApprovals([])
     setFollowUps([])
+    setPlanData(null)
     // Finalize previous message content if smooth stream was mid-drain.
     // This prevents content loss when the user sends before the typing
     // animation finishes, and stops stale content from leaking into the
@@ -823,10 +858,38 @@ export function ChatInterface() {
                 break
 
               case 'plan': {
+                const plan = event.data
+                if (plan && plan.title) {
+                  const stages: PlanStage[] = (plan.stages || []).map((s: Record<string, unknown>, i: number) => ({
+                    id: (s.id as string) || `stage-${i}`,
+                    title: (s.title as string) || `Step ${i + 1}`,
+                    description: (s.description as string) || undefined,
+                    status: (s.status as PlanStage['status']) || 'pending',
+                  }))
+                  setPlanData({
+                    title: plan.title,
+                    description: plan.description || undefined,
+                    stages,
+                  })
+                }
                 break
               }
 
               case 'plan_stage_update': {
+                const update = event.data
+                if (update && update.stageId) {
+                  setPlanData(prev => {
+                    if (!prev) return prev
+                    return {
+                      ...prev,
+                      stages: prev.stages.map(s =>
+                        s.id === update.stageId
+                          ? { ...s, status: update.status || s.status }
+                          : s
+                      ),
+                    }
+                  })
+                }
                 break
               }
 
@@ -1681,6 +1744,7 @@ export function ChatInterface() {
     setActiveCitations([])
     setPendingApprovals([])
     setInvoiceArtifacts([])
+    setPlanData(null)
     smoothStream.reset()
     currentAssistantIdRef.current = null
     setWhispersVisible(nextWhispersVisible)
@@ -1924,6 +1988,55 @@ export function ChatInterface() {
                   >
                     {/* BitBit header — above all assistant message blocks */}
                     {msg.role === 'assistant' && <BitBitHeader />}
+                    {/* Execution plan — shown above reasoning chain */}
+                    {isCurrentResponse && planData && (
+                      <motion.div
+                        key="plan"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
+                        style={{ marginBottom: 8, maxWidth: 480 }}
+                      >
+                        <Plan isStreaming={isLoading} defaultOpen>
+                          <PlanHeader>
+                            <div>
+                              <PlanTitle>{planData.title}</PlanTitle>
+                              {planData.description && (
+                                <PlanDescription>{planData.description}</PlanDescription>
+                              )}
+                            </div>
+                            <PlanAction>
+                              <PlanTrigger />
+                            </PlanAction>
+                          </PlanHeader>
+                          <PlanContent>
+                            <div className="flex flex-col gap-2">
+                              {planData.stages.map(stage => {
+                                const statusIcon =
+                                  stage.status === 'complete' ? '✓' :
+                                  stage.status === 'in_progress' ? '●' :
+                                  stage.status === 'error' ? '✗' : '○'
+                                const statusColor =
+                                  stage.status === 'complete' ? 'text-green-500' :
+                                  stage.status === 'in_progress' ? 'text-blue-500' :
+                                  stage.status === 'error' ? 'text-red-500' : 'text-muted-foreground'
+                                return (
+                                  <div key={stage.id} className="flex items-start gap-2 text-sm">
+                                    <span className={`shrink-0 font-mono ${statusColor}`}>{statusIcon}</span>
+                                    <div>
+                                      <div className="font-medium">{stage.title}</div>
+                                      {stage.description && (
+                                        <div className="text-muted-foreground text-xs">{stage.description}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </PlanContent>
+                        </Plan>
+                      </motion.div>
+                    )}
                     {/* Live reasoning chain — active steps or collapsed summary */}
                     <AnimatePresence mode="wait">
                       {isCurrentResponse && segmentedReasoningJSX && (
