@@ -956,12 +956,14 @@ export function ChatInterface() {
                   const r = event.data.result as Record<string, unknown>
                   const artifact = r.artifact as Record<string, unknown> | undefined
                   if (artifact?.content) {
+                    const projectId = r.project_id as string | undefined
                     addArtifact({
-                      id: `website-${(r.project_id as string) ?? Date.now()}`,
+                      id: `website-${projectId ?? Date.now()}`,
                       type: 'html',
                       title: (artifact.title as string) ?? 'Website Preview',
                       content: artifact.content as string,
                       messageId: assistantId,
+                      projectId,
                     })
                   }
                 }
@@ -1785,7 +1787,7 @@ export function ChatInterface() {
 
   return (
     <div
-      className={`bb-chat bg-background ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'}`}
+      className={`bb-chat bg-background ${chatStarted ? 'bb-chat--active' : 'bb-chat--pre-session'} ${activeArtifact ? 'bb-chat--artifact-open' : ''}`}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}

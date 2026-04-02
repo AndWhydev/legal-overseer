@@ -6668,6 +6668,18 @@ html.light .bb-pill__shimmer-dots span {
   position: relative;
 }
 
+/* When artifact panel is open, shrink the chat on desktop to avoid overlap */
+@media (min-width: 768px) {
+  .bb-chat--artifact-open {
+    padding-right: clamp(420px, 50vw, 720px);
+    transition: padding-right 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+.bb-chat {
+  transition: padding-right 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* Ambient aura glow removed */
 .bb-chat::before {
   display: none;

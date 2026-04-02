@@ -7,6 +7,7 @@ export interface Artifact {
   content: string
   language?: string
   messageId: string
+  projectId?: string
 }
 
 export function useArtifacts() {
@@ -15,8 +16,13 @@ export function useArtifacts() {
 
   const addArtifact = useCallback((artifact: Artifact) => {
     setArtifacts(prev => {
-      const exists = prev.find(a => a.id === artifact.id)
-      if (exists) return prev
+      const existsIdx = prev.findIndex(a => a.id === artifact.id)
+      if (existsIdx !== -1) {
+        // Update existing artifact (e.g. revise_website updating same project)
+        const updated = [...prev]
+        updated[existsIdx] = artifact
+        return updated
+      }
       return [...prev, artifact]
     })
     setActiveArtifactId(artifact.id)

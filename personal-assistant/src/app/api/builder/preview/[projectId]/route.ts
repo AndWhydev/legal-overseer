@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getServiceClient } from '@/lib/supabase/service-client'
 
 // ---------------------------------------------------------------------------
 // GET /api/builder/preview/[projectId]
@@ -15,18 +16,15 @@ export async function GET(
 ) {
   const { projectId } = await params
 
-  if (!projectId) {
+  if (!projectId || typeof projectId !== 'string' || projectId.length > 64) {
     return htmlError('Missing project ID', 400)
   }
 
-  const supabase = await createClient()
-  if (!supabase) {
-    return htmlError('Service unavailable', 503)
-  }
+  // Use service client for the initial lookup (bypasses RLS so we can check
+  // status before deciding whether auth is required)
+  const serviceClient = getServiceClient()
 
-  // Attempt to load the project using the service-level query
-  // We query without org filter first, then gate on auth below
-  const { data: project, error } = await supabase
+  const { data: project, error } = await serviceClient
     .from('website_projects')
     .select('id, org_id, name, status, html_content, css_content')
     .eq('id', projectId)
@@ -42,6 +40,11 @@ export async function GET(
 
   if (!isPublic) {
     // Require authenticated user who belongs to the project's org
+    const supabase = await createClient()
+    if (!supabase) {
+      return htmlError('Not authorized to view this project', 403)
+    }
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return htmlError('Not authorized to view this project', 403)
@@ -81,7 +84,7 @@ export async function GET(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || ''
   if (appUrl) {
     const previewUrl = `${appUrl}/api/builder/preview/${projectId}`
-    supabase
+    serviceClient
       .from('website_projects')
       .update({ preview_url: previewUrl })
       .eq('id', projectId)
@@ -93,7 +96,7 @@ export async function GET(
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'X-Frame-Options': 'SAMEORIGIN',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Cache-Control': 'public, max-age=60, s-maxage=300',
     },
   })
 }
