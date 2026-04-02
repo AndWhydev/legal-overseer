@@ -1,7 +1,13 @@
 'use client'
 
-import { IconBrain, IconFilter, IconAdjustments, IconPlug } from '@tabler/icons-react'
-import { Card, CardContent } from '@/components/ui/card'
+import {
+  IconBrain,
+  IconFilter,
+  IconAdjustments,
+  IconPlug,
+  IconFileInvoice,
+  IconTargetArrow,
+} from '@tabler/icons-react'
 import type { Icon as TablerIcon } from '@tabler/icons-react'
 
 interface Feature {
@@ -15,61 +21,67 @@ const FEATURES: Feature[] = [
     Icon: IconBrain,
     title: 'Contextual Memory',
     description:
-      'Remembers every conversation, relationship, and project detail. BitBit knows who Sezer is, what the work was, and whether it has been invoiced.',
+      'Remembers every conversation, relationship, and project detail. Knows who your clients are, what the scope was, and whether it\'s been invoiced.',
   },
   {
     Icon: IconFilter,
     title: 'Smart Triage',
     description:
-      'Automatically categorises and prioritises all incoming messages across email, WhatsApp, and Slack. Your important stuff floats to the top.',
+      'Automatically categorises and prioritises incoming messages across email, WhatsApp, and Slack. Important stuff floats to the top.',
   },
   {
     Icon: IconAdjustments,
     title: 'Graduated Autonomy',
     description:
-      'You control how much BitBit does. Observer mode watches and learns. Co-pilot drafts for your approval. Autopilot handles it end to end.',
+      'You control how much BitBit does. Observer mode watches. Co-pilot drafts for approval. Autopilot handles it end to end.',
+  },
+  {
+    Icon: IconFileInvoice,
+    title: 'Invoice & Payments',
+    description:
+      'Generate professional invoices, track payments, chase overdue accounts. Connected to Stripe, Xero, and your bank.',
+  },
+  {
+    Icon: IconTargetArrow,
+    title: 'Lead Capture',
+    description:
+      'Responds to inbound leads in under 2 minutes. Qualifies, books meetings, and pipes straight into your CRM.',
   },
   {
     Icon: IconPlug,
     title: '20+ Integrations',
     description:
-      'Gmail, Outlook, WhatsApp, Slack, Stripe, Calendar, and more. BitBit meets your team where they already work.',
+      'Gmail, Outlook, WhatsApp, Slack, Stripe, Calendar, Asana, and more. BitBit meets your team where they already work.',
   },
 ]
 
 export default function FeaturesSection() {
   return (
-    <section className="py-24 px-5 relative z-[5]">
-      <div className="max-w-[1100px] mx-auto">
-        {/* Section header */}
-        <div className="text-center mb-16">
-          <h2 className="text-[clamp(24px,4vw,36px)] font-medium mb-4 tracking-tight text-foreground">
-            Why BitBit?
+    <section className="relative z-[5] px-5 py-24" id="features">
+      <div className="mx-auto max-w-[1100px]">
+        {/* Header */}
+        <div className="mb-16 text-center">
+          <h2 className="mb-4 text-[clamp(24px,4vw,40px)] font-medium tracking-tight text-foreground">
+            Everything your business needs to run itself
           </h2>
-          <p className="text-base text-muted-foreground max-w-[600px] mx-auto leading-relaxed">
-            Built for businesses that need AI which understands context, respects boundaries, and actually gets things done.
+          <p className="mx-auto max-w-[560px] text-base leading-relaxed text-muted-foreground">
+            Not another chatbot. BitBit is a full operations layer that understands context and gets things done.
           </p>
         </div>
 
-        {/* Features grid - 2x2 */}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
+        {/* Grid */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(({ Icon, title, description }) => (
-            <Card
+            <div
               key={title}
-              className="py-8 px-6 transition-all duration-300 hover:bg-muted/50 hover:border-border/80 hover:-translate-y-1"
+              className="group rounded-2xl border border-border/40 bg-card/50 p-6 transition-all duration-300 hover:border-emerald-500/20 hover:bg-card/80"
             >
-              <CardContent className="p-0">
-                <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border flex items-center justify-center mb-4">
-                  <Icon size={22} className="text-muted-foreground" />
-                </div>
-                <h3 className="text-base font-medium mb-2 text-foreground">
-                  {title}
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {description}
-                </p>
-              </CardContent>
-            </Card>
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-muted/30 transition-colors group-hover:border-emerald-500/30 group-hover:bg-emerald-500/[0.06]">
+                <Icon size={20} className="text-muted-foreground transition-colors group-hover:text-emerald-400" />
+              </div>
+              <h3 className="mb-2 text-sm font-medium text-foreground">{title}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
+            </div>
           ))}
         </div>
       </div>
