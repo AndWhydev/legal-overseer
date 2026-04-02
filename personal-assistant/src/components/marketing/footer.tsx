@@ -39,7 +39,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="border-t border-border/30 bg-background px-5 pb-10 pt-[60px]">
+    <footer className="border-t border-border/30 bg-[#0a0a0f] px-5 pb-10 pt-[60px]">
       <div className="mx-auto max-w-[1200px]">
         {/* Main Footer Content */}
         <div className="mb-[60px] grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-12">

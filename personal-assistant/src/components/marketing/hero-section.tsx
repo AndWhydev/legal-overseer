@@ -1,66 +1,82 @@
 'use client'
 
 import Link from 'next/link'
+import { IconMail, IconBrandWhatsapp, IconCreditCard, IconCalendar, IconHash, IconWorld } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
+import type { Icon as TablerIcon } from '@tabler/icons-react'
 
-const CHANNELS = ['Gmail', 'WhatsApp', 'Slack', 'Outlook', 'Stripe', 'Calendar']
+const INTEGRATIONS: { name: string; Icon: TablerIcon }[] = [
+  { name: 'Gmail', Icon: IconMail },
+  { name: 'WhatsApp', Icon: IconBrandWhatsapp },
+  { name: 'Stripe', Icon: IconCreditCard },
+  { name: 'Calendar', Icon: IconCalendar },
+  { name: 'Slack', Icon: IconHash },
+  { name: 'Outlook', Icon: IconWorld },
+]
 
 export default function HeroSection() {
   return (
-    <section className="relative flex min-h-[92vh] items-center justify-center overflow-hidden px-5 py-20">
-      {/* Gradient orbs */}
-      <div className="pointer-events-none absolute -top-[30%] right-[10%] h-[500px] w-[500px] rounded-full bg-emerald-500/[0.07] blur-[100px]" />
-      <div className="pointer-events-none absolute -bottom-[20%] left-[5%] h-[400px] w-[400px] rounded-full bg-white/[0.03] blur-[100px]" />
+    <section className="relative min-h-screen flex items-center justify-center px-5 py-20 bg-background overflow-hidden">
+      {/* Background gradient orbs */}
+      <div
+        className="absolute -top-[40%] -right-[20%] w-[600px] h-[600px] rounded-full blur-[80px] opacity-[0.06] bg-foreground animate-[heroFloat_20s_ease-in-out_infinite]"
+      />
+      <div
+        className="absolute -bottom-[30%] -left-[10%] w-[500px] h-[500px] rounded-full blur-[80px] opacity-[0.04] bg-foreground animate-[heroFloat_25s_ease-in-out_infinite_reverse]"
+      />
 
-      <div className="relative z-10 mx-auto max-w-[860px] text-center">
-        {/* Badge */}
-        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-1.5 text-xs font-medium tracking-wide text-emerald-400">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          Now in public beta
-        </div>
-
-        {/* Headline */}
-        <h1 className="mb-6 text-[clamp(36px,7vw,68px)] font-medium leading-[1.08] tracking-tighter text-foreground">
-          Your business,{' '}
-          <span className="bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent">
-            on autopilot.
-          </span>
+      <div className="relative z-10 max-w-[900px] text-center">
+        {/* Main Headline */}
+        <h1 className="text-[clamp(32px,6vw,56px)] font-medium leading-[1.15] mb-6 tracking-tighter text-foreground">
+          Your business, on autopilot.
         </h1>
 
         {/* Subheadline */}
-        <p className="mx-auto mb-12 max-w-[620px] text-[clamp(15px,1.8vw,18px)] leading-relaxed text-muted-foreground">
-          BitBit reads your emails, manages invoices, follows up with clients,
-          and remembers everything. AI operations for agencies, trades, and
-          professional services.
+        <p className="text-base text-muted-foreground mb-12 leading-relaxed max-w-[680px] mx-auto">
+          BitBit reads your emails, manages invoices, follows up with clients, hunts tenders,
+          and remembers everything. It handles the admin so you can do the work you&apos;re good at.
         </p>
 
-        {/* CTAs */}
-        <div className="mb-16 flex flex-wrap justify-center gap-4">
-          <Button asChild size="lg" className="h-12 rounded-xl px-8 text-base bg-emerald-500 hover:bg-emerald-600 text-white">
-            <Link href="/onboard">Start Free Trial</Link>
+        {/* Dual CTA */}
+        <div className="flex gap-4 justify-center mb-14 flex-wrap">
+          <Button asChild size="lg" className="h-12 px-8 text-base">
+            <Link href="/onboard">
+              Start Free Trial
+            </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="h-12 rounded-xl px-8 text-base border-border/50 hover:border-border hover:bg-muted/30">
-            <Link href="/pricing">See Pricing</Link>
+          <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base">
+            <Link href="/pricing">
+              See Pricing
+            </Link>
           </Button>
         </div>
 
-        {/* Channel pills */}
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground/50">
-            Works with your stack
+        {/* Trust line + integration icons */}
+        <div className="flex flex-col items-center gap-5">
+          <p className="text-xs text-muted-foreground/60 uppercase tracking-widest">
+            Trusted by agencies across Australia
           </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {CHANNELS.map((ch) => (
-              <span
-                key={ch}
-                className="rounded-lg border border-border/40 bg-muted/20 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-emerald-500/30 hover:text-foreground"
+          <div className="flex gap-3 justify-center flex-wrap">
+            {INTEGRATIONS.map(({ name, Icon }) => (
+              <div
+                key={name}
+                className="flex items-center justify-center w-11 h-11 rounded-xl bg-muted/50 border border-border transition-colors hover:bg-muted hover:border-border/80"
+                title={name}
               >
-                {ch}
-              </span>
+                <Icon size={18} className="text-muted-foreground" />
+              </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* CSS animations */}
+      <style>{`
+        @keyframes heroFloat {
+          0%, 100% { transform: translate(0, 0); }
+          50% { transform: translate(30px, -30px); }
+        }
+      `}</style>
     </section>
   )
 }
