@@ -51,7 +51,7 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Frame-Options', 'DENY')
 
   // Restrict access to browser features (camera, microphone, geolocation)
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()')
 
   // Enable HTTP Strict Transport Security (HSTS) in production
   // Forces HTTPS for 1 year, including subdomains
