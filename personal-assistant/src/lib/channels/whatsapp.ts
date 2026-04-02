@@ -189,29 +189,51 @@ export function getWhatsAppConfig() {
 }
 
 /**
- * Check if WhatsApp is available — Meta Cloud API first, Baileys bridge fallback.
+ * Check if WhatsApp is available for a specific org.
+ *
+ * NOTE: Cloud API env vars (WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN)
+ * indicate the *platform* supports WhatsApp, NOT that a specific user has
+ * connected their WhatsApp account. User connection state lives in
+ * channel_connections and whatsapp_sessions.
  */
 export async function isAvailable(client?: SupabaseClient, orgId?: string): Promise<boolean> {
-  // Meta Cloud API is primary — check env vars first
-  const env = getEnv()
-  if (env.phoneNumberId && env.accessToken) return true
+  if (!client || !orgId) return false
 
-  // Baileys bridge is secondary — check for connected sessions
-  if (client && orgId) {
-    try {
-      const { count } = await client
-        .from('whatsapp_sessions')
-        .select('id', { count: 'exact', head: true })
-        .eq('org_id', orgId)
-        .eq('status', 'connected')
+  // Check channel_connections first (primary source of truth for user connection)
+  try {
+    const { data: connection } = await client
+      .from('channel_connections')
+      .select('status')
+      .eq('org_id', orgId)
+      .eq('channel_type', 'whatsapp')
+      .maybeSingle()
 
-      return (count ?? 0) > 0
-    } catch {
-      return false
-    }
+    if (connection?.status === 'connected') return true
+  } catch {
+    // Fall through to session check
   }
 
-  return false
+  // Baileys bridge fallback — check for active sessions
+  try {
+    const { count } = await client
+      .from('whatsapp_sessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', orgId)
+      .eq('status', 'connected')
+
+    return (count ?? 0) > 0
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Check if the platform has WhatsApp send capability configured (env vars).
+ * This does NOT mean any user has connected — use isAvailable() for that.
+ */
+export function isPlatformConfigured(): boolean {
+  const env = getEnv()
+  return Boolean(env.phoneNumberId && env.accessToken)
 }
 
 export const whatsappAdapter: import('./types').ChannelAdapter = {
@@ -226,12 +248,10 @@ export const whatsappAdapter: import('./types').ChannelAdapter = {
   },
 
   async isAvailable() {
-    // Meta Cloud API is primary
-    const env = getEnv()
-    if (env.phoneNumberId && env.accessToken) return true
-
-    // Baileys bridge is secondary — but we can't check sessions without a client
-    // The adapter interface doesn't pass supabase, so we can only check env here.
+    // The adapter interface doesn't pass supabase/orgId, so we can't check
+    // user-specific connection state here. Return false — the status endpoint
+    // checks channel_connections and org_integrations as the real source of truth.
+    // This prevents env vars from making WhatsApp falsely appear "connected".
     return false
   },
 }

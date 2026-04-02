@@ -150,6 +150,8 @@ function WhatsAppQRPanel({
   const [bridgeStatus, setBridgeStatus] = useState<'idle' | 'starting' | 'pairing' | 'connected' | 'error'>('idle')
   const [qrCode, setQrCode] = useState<string | null>(null)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Track the session ID from the POST so we only accept 'connected' from OUR session
+  const sessionIdRef = useRef<string | null>(null)
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -172,7 +174,12 @@ function WhatsAppQRPanel({
 
         const data = await res.json()
 
-        if (data.status === 'connected') {
+        // Only accept 'connected' if it matches the session we just started.
+        // This prevents stale sessions from auto-closing the modal.
+        const isOurSession = !sessionIdRef.current
+          || data.sessionId === sessionIdRef.current
+
+        if (data.status === 'connected' && isOurSession) {
           setBridgeStatus('connected')
           if (pollIntervalRef.current) {
             clearInterval(pollIntervalRef.current)
@@ -197,6 +204,9 @@ function WhatsAppQRPanel({
 
   async function handleInitiate() {
     setBridgeStatus('starting')
+    setQrCode(null)
+    sessionIdRef.current = null
+
     try {
       const bridgeRes = await fetch('/api/channels/whatsapp/bridge', {
         method: 'POST',
@@ -209,6 +219,10 @@ function WhatsAppQRPanel({
         onError(bridgeData.error || 'Failed to start WhatsApp bridge')
         return
       }
+
+      const bridgeData = await bridgeRes.json()
+      // Store the session ID so the poller only accepts this session's status
+      sessionIdRef.current = bridgeData.sessionId ?? null
 
       // Bridge started, begin polling for QR code
       setBridgeStatus('pairing')
