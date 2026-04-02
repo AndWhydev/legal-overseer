@@ -20,6 +20,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
 import { Summon } from './summon';
 import { TabSkeleton } from './tabs/tab-skeleton';
+import { TabTransition } from './tab-transition';
 import { Topbar } from './topbar';
 import { TOPBAR_CONFIGS } from './topbar-configs';
 import { NotificationCenter } from './notification-center';
@@ -432,22 +433,13 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                   if (!tab) return null;
                   const Comp = TabComponents[tab.id];
                   return (
-                    <div
-                      key={tab.id}
-                      className="bb-tab-panel h-full"
-                      role="tabpanel"
-                      id={`tabpanel-${tab.id}`}
-                      aria-labelledby={`tab-${tab.id}`}
-                      tabIndex={0}
-                      data-active={true}
-                      data-dir={transitionDir ?? undefined}
-                    >
+                    <TabTransition tabId={tab.id} direction={transitionDir}>
                       <ErrorBoundary>
                         <Suspense fallback={<TabSkeleton variant={TAB_SKELETON_VARIANTS[tab.id]} />}>
                           <Comp />
                         </Suspense>
                       </ErrorBoundary>
-                    </div>
+                    </TabTransition>
                   );
                 })()}
               </main>

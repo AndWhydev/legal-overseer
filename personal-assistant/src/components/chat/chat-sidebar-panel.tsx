@@ -96,7 +96,9 @@ export function ChatSidebarPanel() {
     void refreshThreads()
   }, [refreshThreads])
 
+  const initialFocusNonceRef = useRef(threadPanelFocusNonce)
   useEffect(() => {
+    if (threadPanelFocusNonce === initialFocusNonceRef.current) return
     panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [threadPanelFocusNonce])
 

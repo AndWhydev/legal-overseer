@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { BitBitAsciiAvatar } from '@/components/ui/bitbit-ascii-avatar';
 import {
@@ -94,6 +94,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ChatSidebarPanel } from '@/components/chat/chat-sidebar-panel';
+import { SidebarContextTransition } from './sidebar-context-transition';
 import { PixelWordmark } from '@/components/ui/pixel-heading-word';
 
 // ---- Icon map: tab/module ID -> Tabler icon ----
@@ -435,6 +436,14 @@ export function SidebarNav({
   }, [orgs]);
 
   // Track which category groups are open
+  const sidebarContentRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sidebarContentRef.current;
+    if (el && el.scrollTop !== 0) {
+      el.scrollTop = 0;
+    }
+  }, [activeTabId]);
+
   const activeCategory = getCategoryForTab(activeTabId) ?? 'home';
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set([activeCategory]));
 
@@ -552,7 +561,7 @@ export function SidebarNav({
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-hidden">
+      <SidebarContent ref={sidebarContentRef} className="overflow-hidden">
         <div className="min-h-0 flex-1 overflow-hidden">
           <SidebarGroup className="h-full min-h-0 pb-1">
             <div className="h-full overflow-y-auto pr-1">
@@ -592,17 +601,14 @@ export function SidebarNav({
         {/* Contextual panel — isolated scroll region independent from page navigation */}
         {(() => {
           const ctx = getContextConfig(activeTabId);
-          if (!ctx) return null;
           return (
-            <div className="min-h-[20rem] max-h-[48%] shrink-0 overflow-hidden px-2 pb-2">
-              <Separator className="mx-0 mb-3" />
-              <div className="h-full min-h-0 overflow-y-auto">
+            <SidebarContextTransition contextKey={ctx ? activeTabId : null}>
                 {activeTabId === 'chat' ? (
                   <ChatSidebarPanel />
                 ) : activeTabId === 'inbox' ? (
                   <SidebarGroup className="h-full min-h-0 p-0">
                     <SidebarMenu className="gap-1">
-                      {ctx.items.map((item, idx) => {
+                      {ctx?.items.map((item, idx) => {
                         const showCompactCta = idx === 0 && ctx.ctaCompact && ctx.cta;
 
                         return (
@@ -633,7 +639,7 @@ export function SidebarNav({
                       })}
                     </SidebarMenu>
                   </SidebarGroup>
-                ) : (
+                ) : ctx ? (
                   <SidebarGroup className="h-full min-h-0 p-0">
                     {ctx.cta && !ctx.ctaCompact && (
                       <SidebarMenu>
@@ -686,9 +692,8 @@ export function SidebarNav({
                       </React.Fragment>
                     ))}
                   </SidebarGroup>
-                )}
-              </div>
-            </div>
+                ) : null}
+            </SidebarContextTransition>
           );
         })()}
       </SidebarContent>
