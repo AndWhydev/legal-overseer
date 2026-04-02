@@ -1314,6 +1314,12 @@ export function ChatInterface() {
                   if (contentToAnalyze.includes('```')) suggestions.push('Can you modify this code?')
                   if (suggestions.length > 0) setFollowUps(suggestions.slice(0, 3))
                 }
+
+                // Dispatch event for voice mode TTS playback
+                if (contentToAnalyze) {
+                  window.dispatchEvent(new CustomEvent('bitbit-chat-response-done', { detail: contentToAnalyze }))
+                }
+
                 refreshThreads(false)
                 break
               }

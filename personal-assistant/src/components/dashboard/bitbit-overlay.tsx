@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { VoicePill } from './voice-pill';
 import type { PillMode } from './voice-pill';
 import { useVoiceRecording } from '../../hooks/use-voice-recording';
+import { useVoicePlayback } from '../../hooks/use-voice-playback';
 
 interface BitBitOverlayProps {
   children: React.ReactNode;
@@ -60,6 +61,35 @@ export function BitBitOverlay({
   const isChatTab = activeTabId === 'chat';
   const isDocked = isChatTab && !forceFloating;
   const voice = useVoiceRecording();
+  const playback = useVoicePlayback();
+  const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
+
+  // Listen for chat response completions to speak via TTS
+  useEffect(() => {
+    if (!voiceModeEnabled) return;
+
+    const handler = (e: Event) => {
+      const text = (e as CustomEvent<string>).detail;
+      if (text && typeof text === 'string') {
+        // Strip markdown/code blocks for cleaner speech
+        const cleaned = text
+          .replace(/```[\s\S]*?```/g, '')
+          .replace(/`([^`]+)`/g, '$1')
+          .replace(/\*\*([^*]+)\*\*/g, '$1')
+          .replace(/\*([^*]+)\*/g, '$1')
+          .replace(/#{1,6}\s+/g, '')
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+          .replace(/[-*+]\s+/g, '')
+          .trim();
+        if (cleaned) {
+          playback.speak(cleaned).catch(() => {});
+        }
+      }
+    };
+
+    window.addEventListener('bitbit-chat-response-done', handler);
+    return () => window.removeEventListener('bitbit-chat-response-done', handler);
+  }, [voiceModeEnabled, playback]);
 
   useEffect(() => {
     if (!isChatTab) {
@@ -294,6 +324,7 @@ export function BitBitOverlay({
     setError(null);
     isVoiceActiveRef.current = false;
     isHoldingRef.current = false;
+    playback.stop();
 
     if (isChatTab) {
       if (forceFloating) beginChatMorph('to-docked');
@@ -352,15 +383,20 @@ export function BitBitOverlay({
       const res = await fetch('/api/ai/voice', { method: 'POST', body: formData });
       if (!res.ok) throw new Error('Voice API error');
 
-      const data = await res.json() as { transcription: string; response: string };
-      setTranscription(data.transcription);
+      const data = await res.json() as { transcript: string; response: string };
+      setTranscription(data.transcript);
       setResponse(data.response);
       setPillMode('response');
+
+      // Speak the response via TTS if voice mode is enabled
+      if (voiceModeEnabled && data.response) {
+        playback.speak(data.response).catch(() => {});
+      }
     } catch {
       setError('Failed to process voice input');
       setPillMode('response');
     }
-  }, [voice]);
+  }, [voice, voiceModeEnabled, playback]);
 
   const cancelVoice = useCallback(() => {
     isVoiceActiveRef.current = false;
@@ -536,6 +572,9 @@ export function BitBitOverlay({
       error={error || voice.error}
       onTextSubmit={handleTextSubmit}
       onDismiss={dismiss}
+      voiceModeEnabled={voiceModeEnabled}
+      onVoiceModeToggle={() => setVoiceModeEnabled(prev => !prev)}
+      isSpeaking={playback.isSpeaking}
     />
   );
 
