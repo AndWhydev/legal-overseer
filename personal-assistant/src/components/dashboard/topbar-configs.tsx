@@ -34,12 +34,15 @@ import type { TopbarConfig } from './topbar';
 import FlipClock from '@/components/ui/flip-clock';
 
 function DashboardBreadcrumb() {
-  const dateStr = new Date().toLocaleDateString('en-AU', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const [dateStr, setDateStr] = React.useState('');
+  React.useEffect(() => {
+    setDateStr(new Date().toLocaleDateString('en-AU', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }));
+  }, []);
   return (
     <>
       <IconCalendarEvent size={14} />
