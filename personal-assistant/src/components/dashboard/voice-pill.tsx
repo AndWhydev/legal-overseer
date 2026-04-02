@@ -9,6 +9,8 @@ import {
   IconMicrophone,
   IconMicrophoneOff,
   IconPaperclip,
+  IconVolume,
+  IconVolumeOff,
   IconX,
 } from '@tabler/icons-react';
 import { MiniWaveform } from '../ui/mini-waveform';
@@ -43,6 +45,9 @@ interface VoicePillProps {
   onDismiss: () => void;
   threadId?: string | null;
   onCommandSelect?: (commandId: string) => void;
+  voiceModeEnabled?: boolean;
+  onVoiceModeToggle?: () => void;
+  isSpeaking?: boolean;
 }
 
 /** File input accept filter matching ALLOWED_MIME_TYPES */
@@ -64,6 +69,9 @@ export function VoicePill({
   onDismiss,
   threadId,
   onCommandSelect,
+  voiceModeEnabled = false,
+  onVoiceModeToggle,
+  isSpeaking = false,
 }: VoicePillProps) {
   const [textValue, setTextValue] = useState('');
   const [displayMode, setDisplayMode] = useState<PillMode>('hidden');
@@ -454,16 +462,36 @@ export function VoicePill({
                 'flex items-center justify-between',
                 compactDocked && !isDockedExpanded ? 'pt-1.5' : 'pt-2',
               )}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80"
-                  aria-label="Attach file"
-                  type="button"
-                  onClick={handlePaperclipClick}
-                >
-                  <IconPaperclip size={20} />
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                    aria-label="Attach file"
+                    type="button"
+                    onClick={handlePaperclipClick}
+                  >
+                    <IconPaperclip size={20} />
+                  </Button>
+                  {onVoiceModeToggle && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        'rounded-full',
+                        voiceModeEnabled
+                          ? 'text-foreground bg-foreground/10 hover:bg-foreground/15'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/80',
+                        isSpeaking && 'animate-pulse',
+                      )}
+                      onClick={onVoiceModeToggle}
+                      aria-label={voiceModeEnabled ? 'Disable voice responses' : 'Enable voice responses'}
+                      type="button"
+                    >
+                      {voiceModeEnabled ? <IconVolume size={20} /> : <IconVolumeOff size={20} />}
+                    </Button>
+                  )}
+                </div>
                 <div className="flex items-center gap-1.5">
                   {voice.isSupported && (
                     <Button
