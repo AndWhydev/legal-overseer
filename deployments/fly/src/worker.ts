@@ -12,6 +12,7 @@
 import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { healthCheck } from "./health.js";
 import { executeAgentTask } from "./agent-executor.js";
+import { handleOnboardingConversation, handleOnboardingReply } from "./onboarding-handler.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
@@ -180,6 +181,10 @@ const server = createServer(async (req, res) => {
       await handleHealthCheck(req, res);
     } else if (method === "POST" && url.pathname === "/api/agent/run") {
       await handleAgentRun(req, res);
+    } else if (method === "POST" && url.pathname === "/api/onboarding/conversation") {
+      await handleOnboardingConversation(req, res, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    } else if (method === "POST" && url.pathname === "/api/onboarding/conversation/reply") {
+      await handleOnboardingReply(req, res);
     } else {
       json(res, 404, { error: "Not found" });
     }
