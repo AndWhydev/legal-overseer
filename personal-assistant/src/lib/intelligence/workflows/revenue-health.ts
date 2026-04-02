@@ -152,13 +152,13 @@ async function queryMonetarySignals(
   return events.map((e: Record<string, unknown>) => {
     const data = (e.event_data ?? {}) as Record<string, unknown>
     return {
-      contactId: e.entity_id,
-      contactName: contactMap.get(e.entity_id) ?? 'Unknown',
-      eventType: e.event_type,
+      contactId: e.entity_id as string,
+      contactName: contactMap.get(e.entity_id as string) ?? 'Unknown',
+      eventType: e.event_type as string,
       amount: Number(data.amount ?? 0),
       status: String(data.status ?? e.event_type),
-      occurredAt: e.occurred_at,
-      channel: e.channel_source ?? 'unknown',
+      occurredAt: e.occurred_at as string,
+      channel: (e.channel_source as string) ?? 'unknown',
     }
   })
 }
@@ -194,7 +194,7 @@ async function queryInvoiceRecords(
   )
 
   return invoices.map((i: Record<string, unknown>) => ({
-    id: i.id,
+    id: i.id as string,
     contactId: i.client_contact_id as string,
     contactName: contactMap.get(i.client_contact_id as string) ?? 'Unknown',
     total: Number(i.total ?? 0),

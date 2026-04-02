@@ -179,7 +179,7 @@ async function writeEntityNodes(
 
   // Batch upsert all entity nodes
   for (const node of nodes) {
-    await safeUpsert(supabase, 'knowledge_entities', node, 'org_id,entity_type,entity_name')
+    await safeUpsert(supabase, 'knowledge_entities', node as unknown as Record<string, unknown>, 'org_id,entity_type,entity_name')
   }
 }
 
@@ -254,7 +254,7 @@ async function writeEntityMessageEdges(
 
   // Batch insert all edges
   for (const edge of edges) {
-    await safeInsert(supabase, 'knowledge_entity_messages', edge)
+    await safeInsert(supabase, 'knowledge_entity_messages', edge as unknown as Record<string, unknown>)
   }
 }
 
@@ -286,7 +286,7 @@ async function writeRelationshipSnapshot(
     recorded_at: new Date().toISOString(),
   }
 
-  await safeInsert(supabase, 'relationship_signals', snapshot)
+  await safeInsert(supabase, 'relationship_signals', snapshot as unknown as Record<string, unknown>)
 }
 
 // ─── Classification + Summary Storage ────────────────────────────────────

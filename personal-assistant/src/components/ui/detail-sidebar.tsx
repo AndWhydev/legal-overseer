@@ -107,7 +107,7 @@ function DetailSidebarContent({
     >
       <div
         className={cn(
-          "flex h-full w-full flex-col overflow-hidden rounded-xl border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-sm transition-opacity duration-300",
+          "flex h-full w-full flex-col overflow-hidden bg-sidebar text-sidebar-foreground transition-opacity duration-300",
           open ? "opacity-100" : "opacity-0"
         )}
       >
