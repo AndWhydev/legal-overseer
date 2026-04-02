@@ -168,24 +168,16 @@ export default function RootLayout({
         />
         <script dangerouslySetInnerHTML={{ __html: `
           try {
-            var isLanding = window.location.pathname === '/';
-            if (isLanding) {
-              document.documentElement.classList.remove('dark');
-              document.addEventListener('DOMContentLoaded', function() {
-                document.body.classList.remove('bitbit-dark');
-              });
-            } else {
-              var palette = localStorage.getItem('bb-theme') || '${DEFAULT_THEME_NAME}';
-              if (palette !== 'midnight' && palette !== 'aurora' && palette !== 'light') palette = '${DEFAULT_THEME_NAME}';
-              var cls = palette === 'midnight' ? 'dark' : 'light';
-              document.documentElement.className = cls;
-              document.documentElement.setAttribute('data-theme', palette);
-              document.documentElement.style.colorScheme = cls;
-              var meta = document.querySelector('meta[name="theme-color"]');
-              if (meta) {
-                var nextColor = palette === 'midnight' ? '#0a0f1a' : palette === 'aurora' ? '#f5efe7' : '#fafaf9';
-                meta.setAttribute('content', nextColor);
-              }
+            var palette = localStorage.getItem('bb-theme') || '${DEFAULT_THEME_NAME}';
+            if (palette !== 'midnight' && palette !== 'aurora' && palette !== 'light') palette = '${DEFAULT_THEME_NAME}';
+            var cls = palette === 'midnight' ? 'dark' : 'light';
+            document.documentElement.className = cls;
+            document.documentElement.setAttribute('data-theme', palette);
+            document.documentElement.style.colorScheme = cls;
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) {
+              var nextColor = palette === 'midnight' ? '#0a0f1a' : palette === 'aurora' ? '#f5efe7' : '#fafaf9';
+              meta.setAttribute('content', nextColor);
             }
           } catch(e) {}
         `}} />

@@ -9,10 +9,10 @@ const EFFECTIVE_DATE = '1 March 2026'
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-white text-gray-900">
+    <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="text-3xl font-semibold mb-2">Terms of Service</h1>
-        <p className="text-sm text-gray-500 mb-10">Effective: {EFFECTIVE_DATE}</p>
+        <p className="text-sm text-muted-foreground mb-10">Effective: {EFFECTIVE_DATE}</p>
 
         <Section title="1. Agreement">
           <p>
@@ -153,7 +153,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section className="mb-8">
       <h2 className="text-lg font-semibold mb-3">{title}</h2>
-      <div className="text-sm leading-relaxed text-gray-700 space-y-2">{children}</div>
+      <div className="text-sm leading-relaxed text-muted-foreground space-y-2">{children}</div>
     </section>
   )
 }

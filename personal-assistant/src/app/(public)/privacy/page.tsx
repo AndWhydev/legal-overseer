@@ -9,10 +9,10 @@ const EFFECTIVE_DATE = '1 March 2026'
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-white text-gray-900">
+    <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="text-3xl font-semibold mb-2">Privacy Policy</h1>
-        <p className="text-sm text-gray-500 mb-10">Effective: {EFFECTIVE_DATE}</p>
+        <p className="text-sm text-muted-foreground mb-10">Effective: {EFFECTIVE_DATE}</p>
 
         <Section title="1. Who We Are">
           <p>
@@ -133,7 +133,7 @@ export default function PrivacyPage() {
                 <th className="text-left py-2">Location</th>
               </tr>
             </thead>
-            <tbody className="text-gray-600">
+            <tbody className="text-muted-foreground">
               <tr className="border-b"><td className="py-2 pr-4">Supabase</td><td className="pr-4">Database, auth, storage</td><td>Sydney, AU</td></tr>
               <tr className="border-b"><td className="py-2 pr-4">Anthropic</td><td className="pr-4">AI model inference</td><td>US</td></tr>
               <tr className="border-b"><td className="py-2 pr-4">Stripe</td><td className="pr-4">Payment processing</td><td>US / Global</td></tr>
@@ -209,7 +209,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section className="mb-8">
       <h2 className="text-lg font-semibold mb-3">{title}</h2>
-      <div className="text-sm leading-relaxed text-gray-700 space-y-2">{children}</div>
+      <div className="text-sm leading-relaxed text-muted-foreground space-y-2">{children}</div>
     </section>
   )
 }

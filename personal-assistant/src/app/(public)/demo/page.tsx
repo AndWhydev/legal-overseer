@@ -76,7 +76,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export default function DemoPage() {
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
+    <main className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <div className="bg-blue-600 text-white py-3 text-center text-sm">
         This is a read-only demo with sample data.{' '}
@@ -90,7 +90,7 @@ export default function DemoPage() {
         <span className="text-xl font-bold tracking-tight">BitBit Demo</span>
         <Link
           href="/pricing"
-          className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition inline-flex items-center gap-1"
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm hover:bg-primary/90 transition inline-flex items-center gap-1"
         >
           Get Started <ArrowRight size={14} />
         </Link>
@@ -102,8 +102,8 @@ export default function DemoPage() {
           {SAMPLE_STATS.map((s) => {
             const Icon = s.icon
             return (
-              <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
-                <div className="flex items-center gap-2 text-gray-500 text-sm mb-2">
+              <div key={s.label} className="bg-card rounded-xl border border-border p-5">
+                <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
                   <Icon size={16} />
                   {s.label}
                 </div>
@@ -121,7 +121,7 @@ export default function DemoPage() {
           <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
             <MessageSquare size={18} /> Unified Inbox
           </h2>
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+          <div className="bg-card rounded-xl border border-border divide-y divide-border">
             {SAMPLE_MESSAGES.map((m) => (
               <div key={m.id} className="flex items-center justify-between px-5 py-4">
                 <div className="flex items-center gap-3 min-w-0">
@@ -134,12 +134,12 @@ export default function DemoPage() {
                     <div className="text-sm font-medium truncate">
                       [{m.channel}] {m.subject}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {m.sender} &middot; {m.time}
                     </div>
                   </div>
                 </div>
-                <span className="text-xs text-gray-500 shrink-0 flex items-center gap-1">
+                <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">
                   <CheckCircle2 size={12} className="text-green-500" />
                   {m.status}
                 </span>
@@ -155,11 +155,11 @@ export default function DemoPage() {
             {SAMPLE_AGENTS.map((a) => (
               <div
                 key={a.name}
-                className="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between"
+                className="bg-card rounded-xl border border-border p-5 flex items-center justify-between"
               >
                 <div>
                   <div className="font-medium text-sm">{a.name}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">
+                  <div className="text-xs text-muted-foreground mt-0.5">
                     Last run: {a.lastRun} &middot; {a.actions} actions
                   </div>
                 </div>
@@ -167,7 +167,7 @@ export default function DemoPage() {
                   className={`text-xs font-medium px-2 py-0.5 rounded ${
                     a.status === 'active'
                       ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-500'
+                      : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {a.status}
