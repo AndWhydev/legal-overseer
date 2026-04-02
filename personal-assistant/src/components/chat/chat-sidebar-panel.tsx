@@ -26,7 +26,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { cn } from '@/lib/utils'
 import { useChatThreads, type ChatSidebarFilter } from './chat-threads-context'
 
 const MAX_SUMMARY_LENGTH = 72
@@ -212,18 +211,6 @@ export function ChatSidebarPanel() {
                     >
                       <div className="flex min-w-0 items-center gap-2">
                         <span className="flex-1 truncate">{summary}</span>
-                        {thread.status === 'archived' && (
-                          <span
-                            className={cn(
-                              'hidden shrink-0 items-center rounded-full border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] group-focus-within/menu-item:inline-flex group-hover/menu-item:inline-flex',
-                              isActive
-                                ? 'border-sidebar-ring/45 bg-background/50 text-foreground/80'
-                                : 'border-sidebar-border/50 bg-transparent text-muted-foreground/75'
-                            )}
-                          >
-                            Saved
-                          </span>
-                        )}
                       </div>
                     </SidebarMenuButton>
 

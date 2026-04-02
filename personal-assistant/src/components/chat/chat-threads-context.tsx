@@ -125,7 +125,9 @@ export function ChatThreadsProvider({ children }: { children: React.ReactNode })
         }))
       )
     } catch {
-      setThreads([])
+      // Keep stale data on error — clearing threads causes a flash of
+      // "No saved chats yet" before the next successful fetch overwrites it.
+      if (showLoading) setThreads([])
     } finally {
       setThreadsLoading(false)
     }

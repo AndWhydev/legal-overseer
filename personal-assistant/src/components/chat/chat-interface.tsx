@@ -557,6 +557,8 @@ export function ChatInterface() {
   }>>([])
   // Whispers visible state (hides when typing or conversation starts)
   const [whispersVisible, setWhispersVisible] = useState(true)
+  // Loading state for thread history (shows spinner when switching conversations)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   // Follow-up suggestions state
   const [followUps, setFollowUps] = useState<string[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -1664,6 +1666,7 @@ export function ChatInterface() {
 
   const loadThreadHistory = useCallback(async (selectedThreadId: string) => {
     resetConversationState(false)
+    setIsLoadingHistory(true)
     try {
       const res = await fetch(`/api/agent/chat/history?threadId=${selectedThreadId}&limit=50`)
       if (res.ok) {
@@ -1672,11 +1675,17 @@ export function ChatInterface() {
         setMessages(restored.messages)
         if (restored.invoiceArtifacts.length > 0) setInvoiceArtifacts(restored.invoiceArtifacts)
         setWhispersVisible(restored.messages.length === 0)
+        // Scroll to latest messages after React renders
+        if (restored.messages.length > 0) {
+          setTimeout(() => smartScroll.scrollToBottom(), 100)
+        }
       }
     } catch {
       // Failed to load — user sees empty state
+    } finally {
+      setIsLoadingHistory(false)
     }
-  }, [resetConversationState])
+  }, [resetConversationState, smartScroll])
 
   const restoredInitialHistoryRef = useRef(false)
   useEffect(() => {
@@ -1811,7 +1820,21 @@ export function ChatInterface() {
         ref={scrollRef}
       >
         <AnimatePresence mode="wait">
-          {!hasMessages ? (
+          {isLoadingHistory ? (
+            <motion.div
+              key="loading-history"
+              className="bb-chat__empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, transition: { duration: 0 } }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="bb-chat__center-cluster">
+                <IconLoader2 className="size-6 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground mt-2">Loading conversation…</p>
+              </div>
+            </motion.div>
+          ) : !hasMessages ? (
             <motion.div
               key="empty"
               className="bb-chat__empty"
