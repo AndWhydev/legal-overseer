@@ -12,7 +12,7 @@ export type PipelineEvent =
   | { type: 'crawl_progress'; channel: string; messagesFound: number }
   | { type: 'contact_found'; name: string; messageCount: number; relationship: string }
   | { type: 'project_found'; name: string; people: string[] }
-  | { type: 'financial_found'; entity: string; amount: string; type: string }
+  | { type: 'financial_found'; entity: string; amount: string; financialType: string }
   | { type: 'synthesis_start'; totalMessages: number; channels: string[] }
   | { type: 'synthesis_progress'; detail: string }
   | { type: 'ingestion_start' }
@@ -73,7 +73,7 @@ ${context.userCorrections.length > 0 ? `User corrections so far: ${JSON.stringif
 }
 
 function getFallbackNarration(event: PipelineEvent): string {
-  switch (event.type) {
+  switch (event.financialType) {
     case 'crawl_start': return 'Connected. Reading through your history...'
     case 'crawl_progress': return `Scanning ${event.channel}... found ${event.messagesFound} messages.`
     case 'contact_found': return `Found ${event.name} — ${event.messageCount} messages.`

@@ -185,7 +185,7 @@ export async function POST() {
 
         for (const fin of worldModel.financials.slice(0, 3)) {
           await narrate(
-            { type: 'financial_found', entity: fin.entity, amount: fin.amount, type: fin.type },
+            { type: 'financial_found', entity: fin.entity, amount: fin.amount, financialType: fin.type },
             'synthesizing',
           )
           send({
