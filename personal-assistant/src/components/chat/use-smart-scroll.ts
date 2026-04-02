@@ -28,6 +28,9 @@ export function useSmartScroll(
   const userScrolledUpRef = useRef(false)
   const scrollLockUntilRef = useRef(0)
   const lastScrollTopRef = useRef(0)
+  // When true, the onScroll listener ignores events (prevents smooth
+  // scroll animation frames from being misinterpreted as user scroll-up).
+  const programmaticScrollRef = useRef(false)
 
   const computeNearBottom = useCallback(() => {
     const el = scrollRef.current
@@ -37,6 +40,9 @@ export function useSmartScroll(
   }, [scrollRef])
 
   const onScroll = useCallback(() => {
+    // Ignore scroll events caused by programmatic scrollToBottom
+    if (programmaticScrollRef.current) return
+
     const el = scrollRef.current
     if (!el) return
 
@@ -68,9 +74,17 @@ export function useSmartScroll(
     if (!el) return
     userScrolledUpRef.current = false
     scrollLockUntilRef.current = 0
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    programmaticScrollRef.current = true
+    // Use instant scroll for history loads; smooth scroll causes
+    // animation frames that fight with onContentUpdate.
+    el.scrollTop = el.scrollHeight
+    lastScrollTopRef.current = el.scrollTop
     isNearBottomRef.current = true
     setShouldShowScrollButton(false)
+    // Re-enable scroll detection on the next frame
+    requestAnimationFrame(() => {
+      programmaticScrollRef.current = false
+    })
   }, [scrollRef])
 
   // Called when new content arrives -- scrolls only if user is near bottom
@@ -84,6 +98,7 @@ export function useSmartScroll(
       const el = scrollRef.current
       if (el) {
         el.scrollTop = el.scrollHeight
+        lastScrollTopRef.current = el.scrollTop
       }
     }
   }, [scrollRef])

@@ -1372,7 +1372,7 @@ export function ChatInterface() {
   }, [])
 
   const hasMessages = messages.length > 0
-  const chatStarted = hasMessages || isLoading
+  const chatStarted = hasMessages || isLoading || isLoadingHistory
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent(CHAT_LAYOUT_EVENT, { detail: { started: chatStarted } }))
@@ -1665,23 +1665,29 @@ export function ChatInterface() {
   }, [smoothStream])
 
   const loadThreadHistory = useCallback(async (selectedThreadId: string) => {
-    resetConversationState(false)
+    // Clear messages immediately so the skeleton shows while fetching.
+    setMessages([])
+    setInvoiceArtifacts([])
+    setFollowUps([])
+    setWhispersVisible(false)
     setIsLoadingHistory(true)
     try {
       const res = await fetch(`/api/agent/chat/history?threadId=${selectedThreadId}&limit=50`)
       if (res.ok) {
         const data = await res.json()
         const restored = restoreHistory((data.messages || []) as HistoryRow[])
+        resetConversationState(restored.messages.length === 0)
         setMessages(restored.messages)
         if (restored.invoiceArtifacts.length > 0) setInvoiceArtifacts(restored.invoiceArtifacts)
-        setWhispersVisible(restored.messages.length === 0)
         // Scroll to latest messages after React renders
         if (restored.messages.length > 0) {
-          setTimeout(() => smartScroll.scrollToBottom(), 100)
+          setTimeout(() => smartScroll.scrollToBottom(), 50)
         }
+      } else {
+        resetConversationState(true)
       }
     } catch {
-      // Failed to load — user sees empty state
+      resetConversationState(true)
     } finally {
       setIsLoadingHistory(false)
     }
@@ -1820,21 +1826,46 @@ export function ChatInterface() {
         ref={scrollRef}
       >
         <AnimatePresence mode="wait">
-          {isLoadingHistory ? (
+          {isLoadingHistory && !hasMessages ? (
             <motion.div
               key="loading-history"
-              className="bb-chat__empty"
+              className="bb-chat__msg-list"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, transition: { duration: 0 } }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.12 }}
             >
-              <div className="bb-chat__center-cluster">
-                <IconLoader2 className="size-6 animate-spin text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mt-2">Loading conversation…</p>
-              </div>
+              {/* Skeleton: alternating user/assistant message shapes */}
+              {[
+                { role: 'user', w: '45%' },
+                { role: 'assistant', w: '72%', h: 56 },
+                { role: 'user', w: '38%' },
+                { role: 'assistant', w: '65%', h: 72 },
+                { role: 'user', w: '52%' },
+                { role: 'assistant', w: '60%', h: 48 },
+              ].map((s, i) => (
+                <div
+                  key={i}
+                  className={`flex ${s.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className="animate-pulse rounded-2xl"
+                    style={{
+                      width: s.w,
+                      height: s.h ?? 36,
+                      background: s.role === 'user'
+                        ? 'var(--secondary)'
+                        : 'var(--muted)',
+                      opacity: 0.5,
+                      borderRadius: s.role === 'user'
+                        ? '20px 20px 4px 20px'
+                        : '20px 20px 20px 4px',
+                    }}
+                  />
+                </div>
+              ))}
             </motion.div>
-          ) : !hasMessages ? (
+          ) : !hasMessages && !isLoadingHistory ? (
             <motion.div
               key="empty"
               className="bb-chat__empty"

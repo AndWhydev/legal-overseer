@@ -184,7 +184,7 @@ export async function loadRecentMessages(
   try {
     const { data, error } = await supabase
       .from('conversation_messages')
-      .select('*')
+      .select('id, thread_id, role, content, tool_data, metadata, created_at')
       .eq('thread_id', threadId)
       .order('created_at', { ascending: false })
       .limit(limit)
