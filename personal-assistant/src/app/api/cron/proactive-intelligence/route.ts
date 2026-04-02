@@ -8,7 +8,7 @@
  * Pattern matches existing cron routes: auth check via withCronGuard,
  * org iteration, structured error handling.
  *
- * Schedule: */15 * * * * (every 15 minutes)
+ * Schedule: every 15 minutes
  */
 
 import { withCronGuard } from '@/lib/cron/cron-guard'
