@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { streamText } from 'ai'
+import { models } from '@/lib/ai'
 import { createClient } from '@/lib/supabase/server'
 import { assembleContext } from '@/lib/context/assembler'
 import { getPack, resolveIndustry } from '@/lib/industry/registry'
-import { resolveModel } from '@/lib/agent/model-registry'
 import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { detectInjection, neutralizeInjection } from '@/lib/agent/injection-guard'
 import { logger } from '@/lib/core/logger';
@@ -50,8 +50,7 @@ export async function POST(request: Request) {
     ? (contextInjection.detected ? neutralizeInjection(extraContext) : extraContext)
     : undefined
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'AI service not configured' }, { status: 503 })
   }
 
@@ -87,30 +86,20 @@ export async function POST(request: Request) {
   }
 
   try {
-    const client = new Anthropic({ apiKey })
-    const response = await client.messages.create({
-      model: resolveModel('conversation'),
-      max_tokens: 1024,
+    const userMessage = processedContext
+      ? `${processedQuery}\n\nAdditional context:\n${processedContext}`
+      : processedQuery
+
+    const result = streamText({
+      model: models.balanced,
+      maxOutputTokens: 1024,
       system: systemParts.join('\n'),
-      messages: [{
-        role: 'user',
-        content: processedContext
-          ? `${processedQuery}\n\nAdditional context:\n${processedContext}`
-          : processedQuery,
-      }],
+      prompt: userMessage,
     })
 
-    const text = response.content
-      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-      .map((b) => b.text)
-      .join('')
-
-    return NextResponse.json({
-      response: text,
-      tokens: { input: response.usage.input_tokens, output: response.usage.output_tokens },
-    })
+    return result.toTextStreamResponse()
   } catch (err) {
-    logger.error('[ai/text] Anthropic API error:', err)
+    logger.error('[ai/text] AI SDK error:', err)
     return NextResponse.json({ error: 'Something went wrong. Try again in a moment.' }, { status: 502 })
   }
 }
