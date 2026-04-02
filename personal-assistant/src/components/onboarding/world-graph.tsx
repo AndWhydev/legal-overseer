@@ -25,7 +25,7 @@ function buildGraphData(model: RevealWorldModel): GraphData {
     sublabel: model.user.businessName || '',
     size: 32,
     color: NODE_COLORS.user,
-    data: model.user,
+    data: model.user as unknown as Record<string, unknown>,
   })
 
   // People
@@ -38,7 +38,7 @@ function buildGraphData(model: RevealWorldModel): GraphData {
       sublabel: `${person.messageCount} msgs`,
       size,
       color: NODE_COLORS.person,
-      data: person,
+      data: person as unknown as Record<string, unknown>,
     })
     if (person.frequency !== 'rare') {
       edges.push({
@@ -61,7 +61,7 @@ function buildGraphData(model: RevealWorldModel): GraphData {
       sublabel: project.status,
       size: 16,
       color: NODE_COLORS.project,
-      data: project,
+      data: project as unknown as Record<string, unknown>,
     })
     for (const personName of project.people) {
       const personNode = nodes.find(n => n.type === 'person' && n.label.toLowerCase() === personName.toLowerCase())
@@ -87,7 +87,7 @@ function buildGraphData(model: RevealWorldModel): GraphData {
       sublabel: fin.entity,
       size: 14,
       color: NODE_COLORS.financial,
-      data: fin,
+      data: fin as unknown as Record<string, unknown>,
     })
     const personNode = nodes.find(n =>
       n.type === 'person' &&
