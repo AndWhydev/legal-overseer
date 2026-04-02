@@ -422,26 +422,31 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                 );
               })()}
 
-              {/* SPA Content Area */}
+              {/* SPA Content Area — keep-alive: visited tabs stay mounted */}
               <main
                 id="main-content"
                 className="relative flex-1 overflow-hidden bg-background"
                 tabIndex={-1}
               >
-                {(() => {
-                  const tab = TABS[activeNavIndex];
-                  if (!tab) return null;
-                  const Comp = TabComponents[tab.id];
-                  return (
-                    <TabTransition tabId={tab.id} direction={transitionDir}>
-                      <ErrorBoundary>
-                        <Suspense fallback={<TabSkeleton variant={TAB_SKELETON_VARIANTS[tab.id]} />}>
-                          <Comp />
-                        </Suspense>
-                      </ErrorBoundary>
-                    </TabTransition>
-                  );
-                })()}
+                <KeepAliveTabPanel
+                  activeTabId={TABS[activeNavIndex]?.id ?? 'dashboard'}
+                  direction={transitionDir}
+                  tabs={TABS
+                    .filter(t => visitedTabs.has(t.id))
+                    .map(t => {
+                      const Comp = TabComponents[t.id];
+                      return {
+                        id: t.id,
+                        children: (
+                          <ErrorBoundary>
+                            <Suspense fallback={<TabSkeleton variant={TAB_SKELETON_VARIANTS[t.id]} />}>
+                              <Comp />
+                            </Suspense>
+                          </ErrorBoundary>
+                        ),
+                      };
+                    })}
+                />
               </main>
 
               {/* Mobile bottom nav */}
