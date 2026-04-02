@@ -20,7 +20,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ToastProvider } from '@/components/ui/toast';
 import { Summon } from './summon';
 import { TabSkeleton } from './tabs/tab-skeleton';
-import { TabTransition } from './tab-transition';
+import { KeepAliveTabPanel } from './tab-transition';
 import { Topbar } from './topbar';
 import { TOPBAR_CONFIGS } from './topbar-configs';
 import { NotificationCenter } from './notification-center';
