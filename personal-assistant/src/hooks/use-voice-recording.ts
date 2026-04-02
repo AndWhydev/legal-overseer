@@ -2,6 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+export interface UseVoiceRecordingOptions {
+  silenceDetection?: boolean;
+  silenceThreshold?: number;
+  silenceDurationMs?: number;
+  minRecordingMs?: number;
+}
+
 export interface UseVoiceRecording {
   isRecording: boolean;
   isProcessing: boolean;

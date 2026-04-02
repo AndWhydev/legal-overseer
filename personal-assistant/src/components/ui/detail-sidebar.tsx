@@ -103,9 +103,7 @@ function DetailSidebarContent({
       className={cn(
         "fixed inset-y-0 right-0 z-10 hidden h-svh p-2 pl-0 text-sidebar-foreground transition-[width] duration-300 ease-out md:flex",
         open ? desktopWidthClass : "w-0",
-        className,
       )}
-      {...props}
     >
       <div
         className={cn(

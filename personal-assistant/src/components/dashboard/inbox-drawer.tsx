@@ -490,7 +490,6 @@ export default function InboxDrawer({
     <DetailSidebar open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DetailSidebarContent
         side="right"
-        className="w-full md:w-auto"
         showCloseButton={false}
       >
         {/* Header: Actions + Close */}
