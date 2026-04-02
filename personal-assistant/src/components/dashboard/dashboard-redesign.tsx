@@ -1,7 +1,6 @@
 'use client';
 
 import React, { lazy, Suspense } from 'react';
-import { DailyBrief } from './daily-brief';
 import { SectionCards } from '@/components/section-cards';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChartData } from '@/hooks/use-chart-data';
@@ -22,7 +21,6 @@ export function DashboardRedesign() {
 
   return (
     <div className="@container/main flex flex-col gap-4">
-      <DailyBrief />
       <SectionCards />
       <Suspense fallback={<ChartSkeleton />}>
         <ChartAreaAgents data={data.agentActivity} loading={chartsLoading} />

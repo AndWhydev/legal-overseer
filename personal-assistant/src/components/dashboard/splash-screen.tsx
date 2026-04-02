@@ -51,7 +51,7 @@ function FloatingParticle({ index }: { index: number }) {
         height: size,
         marginLeft: -size / 2,
         marginTop: -size / 2,
-        borderRadius: '50%',
+        borderRadius: 0,
         background: 'var(--particle-color)',
       }}
       initial={{
@@ -113,10 +113,10 @@ function LoadingShimmer() {
         <motion.div
           key={i}
           style={{
-            width: 3,
-            height: 3,
-            borderRadius: '50%',
-            background: 'var(--text-primary)',
+            width: 4,
+            height: 4,
+            borderRadius: 0,
+            background: 'var(--foreground, #FAFAFA)',
           }}
           initial={{ opacity: 0.2, y: 0, scale: 0.8 }}
           animate={{
@@ -248,10 +248,27 @@ export function SplashScreen({
 
                   {/* Logo — blur-to-sharp reveal */}
                   <motion.img
-                    src="/bitbit-app-icon.png"
+                    src="/bitbit-icon-mark.png"
                     alt=""
                     width={64}
                     height={64}
+                    className="dark:block hidden"
+                    style={{
+                      position: 'relative',
+                      zIndex: 1,
+                      filter: 'var(--splash-logo-filter)',
+                    }}
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.05 }}
+                    draggable={false}
+                  />
+                  <motion.img
+                    src="/bitbit-icon-mark-light.png"
+                    alt=""
+                    width={64}
+                    height={64}
+                    className="dark:hidden"
                     style={{
                       position: 'relative',
                       zIndex: 1,
@@ -290,10 +307,10 @@ export function SplashScreen({
                         key={i}
                         style={{
                           fontFamily: 'var(--font-geist-pixel-square)',
-                          fontSize: 16,
-                          fontWeight: 500,
-                          letterSpacing: '0.02em',
-                          color: 'var(--text-primary)',
+                          fontSize: 32,
+                          fontWeight: 800,
+                          letterSpacing: '0.04em',
+                          color: 'var(--foreground, #FAFAFA)',
                           display: 'inline-block',
                         }}
                         initial={{ opacity: 0, y: 8 }}
