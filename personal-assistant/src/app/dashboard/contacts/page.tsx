@@ -17,32 +17,36 @@ export default async function ContactsPage({ searchParams }: ContactsPageProps) 
   const query = (Array.isArray(queryValue) ? queryValue[0] : queryValue ?? '').trim()
 
   if (isSupabaseConfigured()) {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase!.auth.getUser()
-    if (!user) redirect('/login')
+    try {
+      const supabase = await createClient()
+      const {
+        data: { user },
+      } = await supabase!.auth.getUser()
 
-    const profileLookup = await supabase!
-      .from('profiles')
-      .select('org_id')
-      .eq('id', user.id)
-      .single()
+      if (user) {
+        const profileLookup = await supabase!
+          .from('profiles')
+          .select('org_id')
+          .eq('id', user.id)
+          .single()
 
-    if (!profileLookup.data?.org_id) redirect('/login')
+        if (profileLookup.data?.org_id) {
+          let dbQuery = supabase!.from('contacts').select('*').eq('org_id', profileLookup.data.org_id)
 
-    let dbQuery = supabase!.from('contacts').select('*').eq('org_id', profileLookup.data.org_id)
+          if (query) {
+            const escapedQuery = query.replace(/[%_]/g, '')
+            dbQuery = dbQuery.or(
+              `name.ilike.%${escapedQuery}%,slug.ilike.%${escapedQuery}%,type.ilike.%${escapedQuery}%`
+            )
+          }
 
-    if (query) {
-      const escapedQuery = query.replace(/[%_]/g, '')
-      dbQuery = dbQuery.or(
-        `name.ilike.%${escapedQuery}%,slug.ilike.%${escapedQuery}%,type.ilike.%${escapedQuery}%`
-      )
+          const { data } = await dbQuery.order('name')
+          contacts = (data ?? []) as Contact[]
+        }
+      }
+    } catch {
+      // Supabase auth failed gracefully, show empty state
     }
-
-    const { data } = await dbQuery.order('name')
-
-    contacts = (data ?? []) as Contact[]
   }
 
   return (
