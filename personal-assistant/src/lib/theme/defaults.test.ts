@@ -8,16 +8,16 @@ import {
 } from './defaults'
 
 describe('theme defaults', () => {
-  it('defaults first run to light mode with the aurora theme', () => {
-    expect(DEFAULT_COLOR_MODE).toBe('light')
-    expect(DEFAULT_THEME_NAME).toBe('aurora')
+  it('defaults first run to dark mode with the midnight theme', () => {
+    expect(DEFAULT_COLOR_MODE).toBe('dark')
+    expect(DEFAULT_THEME_NAME).toBe('midnight')
   })
 
-  it('falls back to the premium light defaults when stored values are missing or invalid', () => {
-    expect(resolveStoredColorMode(null)).toBe('light')
-    expect(resolveStoredColorMode('dark-mode')).toBe('light')
-    expect(resolveStoredThemeName(null)).toBe('aurora')
-    expect(resolveStoredThemeName('midday')).toBe('aurora')
+  it('falls back to the dark midnight defaults when stored values are missing or invalid', () => {
+    expect(resolveStoredColorMode(null)).toBe('dark')
+    expect(resolveStoredColorMode('dark-mode')).toBe('dark')
+    expect(resolveStoredThemeName(null)).toBe('midnight')
+    expect(resolveStoredThemeName('midday')).toBe('midnight')
   })
 
   it('keeps valid persisted choices intact', () => {
