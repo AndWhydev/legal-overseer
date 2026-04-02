@@ -2129,21 +2129,56 @@ export function ChatInterface() {
               </AnimatePresence>
 
               {/* Inline approval cards */}
-              {pendingApprovals.map(approval => (
-                <motion.div
-                  key={approval.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                  style={{ marginTop: 8, maxWidth: 480 }}
-                >
-                  <InlineApprovalCard
-                    approval={approval}
-                    onApprove={(id) => handleApprovalDecision(id, 'approved')}
-                    onReject={(id) => handleApprovalDecision(id, 'rejected')}
-                  />
-                </motion.div>
-              ))}
+              {pendingApprovals.map(approval => {
+                const confirmationApproval = approval.status === 'approved'
+                  ? { id: approval.id, approved: true as const }
+                  : approval.status === 'rejected'
+                    ? { id: approval.id, approved: false as const }
+                    : { id: approval.id }
+                const confirmationState = approval.resolving
+                  ? 'approval-requested' as const
+                  : approval.status === 'approved'
+                    ? 'approval-responded' as const
+                    : approval.status === 'rejected'
+                      ? 'output-denied' as const
+                      : 'approval-requested' as const
+                return (
+                  <motion.div
+                    key={approval.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                    style={{ marginTop: 8, maxWidth: 480 }}
+                  >
+                    <Confirmation approval={confirmationApproval} state={confirmationState}>
+                      <ConfirmationTitle>{approval.actionSummary}</ConfirmationTitle>
+                      <ConfirmationRequest>
+                        <ConfirmationActions>
+                          <ConfirmationAction
+                            variant="outline"
+                            onClick={() => handleApprovalDecision(approval.id, 'rejected')}
+                            disabled={approval.resolving}
+                          >
+                            Reject
+                          </ConfirmationAction>
+                          <ConfirmationAction
+                            onClick={() => handleApprovalDecision(approval.id, 'approved')}
+                            disabled={approval.resolving}
+                          >
+                            {approval.resolving ? 'Resolving...' : 'Approve'}
+                          </ConfirmationAction>
+                        </ConfirmationActions>
+                      </ConfirmationRequest>
+                      <ConfirmationAccepted>
+                        <ConfirmationTitle>Approved — sending...</ConfirmationTitle>
+                      </ConfirmationAccepted>
+                      <ConfirmationRejected>
+                        <ConfirmationTitle>Rejected.</ConfirmationTitle>
+                      </ConfirmationRejected>
+                    </Confirmation>
+                  </motion.div>
+                )
+              })}
 
               {/* Follow-up suggestions */}
               {!isLoading && !smoothStream.isBuffering && followUps.length > 0 && messages.length > 0 && (
