@@ -500,11 +500,9 @@ export function SidebarNav({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                  <div className="relative flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-sidebar-primary text-sidebar-primary-foreground shadow-[0_2px_4px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]" style={{ filter: 'grayscale(1) brightness(1.9)' }}>
+                  <div className="relative flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-foreground shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
                     <img src="/bitbit-icon-mark-light.png" alt="BitBit" width={22} height={22} className="dark:hidden" style={{ filter: 'brightness(0.45)' }} />
                     <img src="/bitbit-icon-mark.png" alt="BitBit" width={22} height={22} className="hidden dark:block" style={{ filter: 'invert(1) brightness(0.55)' }} />
-                    <div className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-b from-white/20 via-transparent to-black/10" />
-                    <div className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-white/10" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <PixelWordmark className="truncate font-medium text-sm" style={{ WebkitTextStroke: '0.5px currentColor' }}>BitBit</PixelWordmark>
