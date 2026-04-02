@@ -107,16 +107,16 @@ export function buildSchemaFromFields(
  */
 export function createDynamicTool<TResult = unknown>(
   blueprint: DynamicToolBlueprint<TResult>,
-): Record<string, Tool<Record<string, unknown>, TResult>> {
+): Record<string, Tool> {
   const inputSchema = buildSchemaFromFields(blueprint.fields)
 
   return {
     [blueprint.name]: dynamicTool({
       description: blueprint.description,
       inputSchema,
-      execute: blueprint.execute,
+      execute: blueprint.execute as any,
     }),
-  } as Record<string, Tool<Record<string, unknown>, TResult>>
+  }
 }
 
 /**
@@ -132,8 +132,8 @@ export function createDynamicTool<TResult = unknown>(
  */
 export function createDynamicToolSet(
   blueprints: DynamicToolBlueprint[],
-): Record<string, Tool<Record<string, unknown>, unknown>> {
-  const tools: Record<string, Tool<Record<string, unknown>, unknown>> = {}
+): Record<string, Tool> {
+  const tools: Record<string, Tool> = {}
   for (const bp of blueprints) {
     Object.assign(tools, createDynamicTool(bp))
   }

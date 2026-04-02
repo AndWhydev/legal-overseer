@@ -96,7 +96,13 @@ export function ChatSidebarPanel() {
     void refreshThreads()
   }, [refreshThreads])
 
+  // Only scroll into view when explicitly requested (not on mount).
+  // Running scrollIntoView on mount contaminates the parent SidebarContent's
+  // scrollTop (which has overflow-hidden), causing the Separator divider
+  // above this panel to scroll out of view and persist across tab switches.
+  const initialFocusNonceRef = useRef(threadPanelFocusNonce)
   useEffect(() => {
+    if (threadPanelFocusNonce === initialFocusNonceRef.current) return
     panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [threadPanelFocusNonce])
 

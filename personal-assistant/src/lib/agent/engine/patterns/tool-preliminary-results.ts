@@ -112,14 +112,14 @@ export interface PreliminaryResultToolOptions<
 export function createPreliminaryResultTool<
   TSchema extends z.ZodObject<z.ZodRawShape>,
   TFinal,
->(opts: PreliminaryResultToolOptions<TSchema, TFinal>): Record<string, Tool<z.infer<TSchema>, ProgressReport | TFinal>> {
+>(opts: PreliminaryResultToolOptions<TSchema, TFinal>): Record<string, Tool> {
   return {
     [opts.name]: tool({
       description: opts.description,
-      inputSchema: opts.inputSchema,
-      async *execute(input: z.infer<TSchema>) {
+      inputSchema: opts.inputSchema as any,
+      async *execute(input: any) {
         yield* opts.execute(input)
       },
-    }),
-  } as Record<string, Tool<z.infer<TSchema>, ProgressReport | TFinal>>
+    } as any),
+  }
 }

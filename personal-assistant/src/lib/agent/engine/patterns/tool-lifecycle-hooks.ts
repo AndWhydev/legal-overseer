@@ -69,18 +69,18 @@ export interface ToolWithHooksOptions<
 export function createToolWithHooks<
   TSchema extends z.ZodObject<z.ZodRawShape>,
   TOutput,
->(opts: ToolWithHooksOptions<TSchema, TOutput>): Record<string, Tool<z.infer<TSchema>, TOutput>> {
+>(opts: ToolWithHooksOptions<TSchema, TOutput>): Record<string, Tool> {
   return {
     [opts.name]: tool({
       description: opts.description,
-      inputSchema: opts.inputSchema,
-      execute: opts.execute,
+      inputSchema: opts.inputSchema as any,
+      execute: opts.execute as any,
       // AI SDK lifecycle hooks — passed through directly
-      onInputStart: opts.hooks.onInputStart,
-      onInputDelta: opts.hooks.onInputDelta,
-      onInputAvailable: opts.hooks.onInputAvailable,
-    }),
-  } as Record<string, Tool<z.infer<TSchema>, TOutput>>
+      onInputStart: opts.hooks.onInputStart as any,
+      onInputDelta: opts.hooks.onInputDelta as any,
+      onInputAvailable: opts.hooks.onInputAvailable as any,
+    } as any),
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { BitBitAsciiAvatar } from '@/components/ui/bitbit-ascii-avatar';
 import {
@@ -431,6 +431,16 @@ export function SidebarNav({
     setActiveOrg(switched);
   }, [orgs]);
 
+  // Ref for SidebarContent — reset scrollTop on tab switch to prevent
+  // stale scroll position from scrollIntoView contamination (e.g. chat panel).
+  const sidebarContentRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sidebarContentRef.current;
+    if (el && el.scrollTop !== 0) {
+      el.scrollTop = 0;
+    }
+  }, [activeTabId]);
+
   // Track which category groups are open
   const activeCategory = getCategoryForTab(activeTabId) ?? 'home';
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set([activeCategory]));
@@ -547,7 +557,7 @@ export function SidebarNav({
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-hidden">
+      <SidebarContent ref={sidebarContentRef} className="overflow-hidden">
         <div className="min-h-0 flex-1 overflow-hidden">
           <SidebarGroup className="h-full min-h-0 pb-1">
             <div className="h-full overflow-y-auto pr-1">

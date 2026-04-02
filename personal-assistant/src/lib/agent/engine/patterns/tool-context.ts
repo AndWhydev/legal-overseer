@@ -100,20 +100,17 @@ export interface ContextAwareToolOptions<TInput extends z.ZodObject<z.ZodRawShap
  */
 export function createContextAwareTool<TInput extends z.ZodObject<z.ZodRawShape>, TOutput>(
   opts: ContextAwareToolOptions<TInput, TOutput>,
-): Record<string, Tool<z.infer<TInput>, TOutput & { _contextUsage: ContextUsageReport }>> {
+): Record<string, Tool> {
   return {
     [opts.name]: tool({
       description: opts.description,
       inputSchema: opts.inputSchema,
-      execute: async (
-        input: z.infer<TInput>,
-        { experimental_context: rawContext }: { experimental_context: unknown },
-      ): Promise<TOutput & { _contextUsage: ContextUsageReport }> => {
+      execute: async (input: any, { experimental_context: rawContext }: any) => {
         const ctx = extractContext(rawContext)
         const result = await opts.execute(input, ctx)
         const usage = reportContextUsage(ctx)
         return { ...result, _contextUsage: usage } as TOutput & { _contextUsage: ContextUsageReport }
       },
-    }),
-  } as Record<string, Tool<z.infer<TInput>, TOutput & { _contextUsage: ContextUsageReport }>>
+    } as any),
+  }
 }
