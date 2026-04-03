@@ -92,7 +92,7 @@ export function EmailComposer({
             className="text-sidebar-foreground/25"
             onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}
           >
-            <IconPaperclip className="size-3.5" />
+            <IconPaperclip className="size-4" />
           </Button>
           <Button
             variant="ghost"
@@ -100,14 +100,14 @@ export function EmailComposer({
             className="bg-primary/10 text-sidebar-foreground/25"
             disabled
           >
-            <IconSend className="size-3.5" />
+            <IconSend className="size-4" />
           </Button>
         </div>
       ) : (
         /* Expanded state */
         <div className="flex flex-col gap-1.5">
           {/* To / CC / BCC row */}
-          <div className="flex items-center gap-2 text-[11px] text-sidebar-foreground/35 px-1">
+          <div className="flex items-center gap-2 text-xs text-sidebar-foreground/35 px-1">
             <span>To: {recipientEmail || recipientName}</span>
             <span className="ml-auto flex gap-2">
               {!showCc && <button onClick={() => setShowCc(true)} className="hover:text-sidebar-foreground/60">CC</button>}
@@ -117,7 +117,7 @@ export function EmailComposer({
 
           {showCc && (
             <input
-              className="rounded-lg bg-sidebar-foreground/[0.03] px-2.5 py-1.5 text-[11px] text-sidebar-foreground/60 outline-none placeholder:text-sidebar-foreground/25"
+              className="rounded-lg bg-sidebar-foreground/[0.03] px-2.5 py-1.5 text-xs text-sidebar-foreground/60 outline-none placeholder:text-sidebar-foreground/25"
               placeholder="CC: email addresses..."
               value={ccRecipients.join(', ')}
               onChange={e => onCcChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
@@ -126,7 +126,7 @@ export function EmailComposer({
 
           {showBcc && (
             <input
-              className="rounded-lg bg-sidebar-foreground/[0.03] px-2.5 py-1.5 text-[11px] text-sidebar-foreground/60 outline-none placeholder:text-sidebar-foreground/25"
+              className="rounded-lg bg-sidebar-foreground/[0.03] px-2.5 py-1.5 text-xs text-sidebar-foreground/60 outline-none placeholder:text-sidebar-foreground/25"
               placeholder="BCC: email addresses..."
               value={bccRecipients.join(', ')}
               onChange={e => onBccChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
@@ -146,14 +146,14 @@ export function EmailComposer({
                 className="rounded p-1 text-sidebar-foreground/25 hover:text-sidebar-foreground/50 hover:bg-sidebar-foreground/[0.04]"
                 title={label}
               >
-                <Icon className="size-3.5" />
+                <Icon className="size-4" />
               </button>
             ))}
             <button
               className="ml-auto rounded p-1 text-sidebar-foreground/25 hover:text-sidebar-foreground/50"
               onClick={() => fileInputRef.current?.click()}
             >
-              <IconPaperclip className="size-3.5" />
+              <IconPaperclip className="size-4" />
             </button>
           </div>
 
@@ -172,7 +172,7 @@ export function EmailComposer({
           {attachments.length > 0 && (
             <div className="flex gap-1.5 flex-wrap">
               {attachments.map((file, i) => (
-                <div key={i} className="flex items-center gap-1 rounded-lg bg-sidebar-foreground/[0.04] px-2 py-1 text-[10px] text-sidebar-foreground/45">
+                <div key={i} className="flex items-center gap-1 rounded-lg bg-sidebar-foreground/[0.04] px-2 py-1 text-xs text-sidebar-foreground/45">
                   📎 {file.name}
                   <button onClick={() => onRemoveAttachment(i)} className="text-sidebar-foreground/25 hover:text-sidebar-foreground/60">
                     <IconX className="size-2.5" />
@@ -191,7 +191,7 @@ export function EmailComposer({
               onClick={onSend}
               disabled={!draftText.trim()}
             >
-              <IconSend className="size-3" />
+              <IconSend className="size-4" />
               Send
             </Button>
           </div>

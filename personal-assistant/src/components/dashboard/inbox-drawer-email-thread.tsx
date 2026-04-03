@@ -27,9 +27,9 @@ const ATTACHMENT_ICONS: Record<AttachmentItem['type'], string> = {
 function AttachmentChip({ attachment }: { attachment: AttachmentItem }) {
   return (
     <div className="flex items-center gap-1.5 rounded-lg bg-sidebar-foreground/[0.03] px-2.5 py-1.5">
-      <span className="text-sm">{ATTACHMENT_ICONS[attachment.type]}</span>
-      <span className="text-[11px] text-sidebar-foreground/45">{attachment.name}</span>
-      <span className="text-[9px] text-sidebar-foreground/20">{attachment.size}</span>
+      <span>{ATTACHMENT_ICONS[attachment.type]}</span>
+      <span className="text-xs text-sidebar-foreground/45">{attachment.name}</span>
+      <span className="text-xs text-sidebar-foreground/20">{attachment.size}</span>
     </div>
   )
 }
@@ -57,7 +57,7 @@ export function EmailThreadView({ messages }: EmailThreadProps) {
   return (
     <div className="flex flex-col gap-1 px-5 py-3">
       {messages.length > 1 && (
-        <span className="text-[10px] uppercase tracking-widest text-sidebar-foreground/25 mb-1">
+        <span className="text-xs uppercase tracking-widest text-sidebar-foreground/25 mb-1">
           {messages.length} messages
         </span>
       )}
@@ -78,28 +78,28 @@ export function EmailThreadView({ messages }: EmailThreadProps) {
               onClick={() => !isLatest && toggle(msg.id)}
             >
               <Avatar size="sm">
-                <AvatarFallback className={msg.isSelf ? 'bg-primary/20 text-primary text-[9px]' : 'text-[9px]'}>
+                <AvatarFallback className={msg.isSelf ? 'bg-primary/20 text-primary text-xs' : 'text-xs'}>
                   {name[0]?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
 
-              <span className="text-[11px] font-medium text-sidebar-foreground/60 shrink-0">
+              <span className="text-xs font-medium text-sidebar-foreground/60 shrink-0">
                 {name}
               </span>
 
               {!isOpen && (
-                <span className="text-[10px] text-sidebar-foreground/25 flex-1 truncate">
+                <span className="text-xs text-sidebar-foreground/25 flex-1 truncate">
                   {msg.bodyPreview.slice(0, 70)}
                 </span>
               )}
 
-              <span className="text-[9px] text-sidebar-foreground/20 shrink-0 ml-auto">
+              <span className="text-xs text-sidebar-foreground/20 shrink-0 ml-auto">
                 {formatTimeAgo(msg.receivedAt)}
               </span>
 
               {!isLatest && (
                 <span className="text-sidebar-foreground/20 shrink-0">
-                  {isOpen ? <IconChevronDown className="size-3" /> : <IconChevronRight className="size-3" />}
+                  {isOpen ? <IconChevronDown className="size-4" /> : <IconChevronRight className="size-4" />}
                 </span>
               )}
             </div>
@@ -107,7 +107,7 @@ export function EmailThreadView({ messages }: EmailThreadProps) {
             {/* Body — expanded */}
             {isOpen && (
               <div className="px-2.5 pb-3 pl-9">
-                <div className="text-[12px] text-sidebar-foreground/50 leading-relaxed whitespace-pre-wrap break-words">
+                <div className="text-xs text-sidebar-foreground/50 leading-relaxed whitespace-pre-wrap break-words">
                   {msg.bodyPreview}
                 </div>
 

@@ -872,7 +872,7 @@ function InboxTab() {
               />
             </div>
 
-            <div className="flex items-center gap-1 rounded-[20px] border border-border bg-card p-1.5 shadow-sm">
+            <div className="flex items-center gap-1 rounded-[20px] border border-border bg-card px-3 py-1.5 shadow-sm">
               <Checkbox
                 checked={keyboard.selectedIds.size > 0 && keyboard.selectedIds.size === displayed.length}
                 onCheckedChange={(checked) => {
@@ -880,7 +880,6 @@ function InboxTab() {
                   else keyboard.setSelectedIds(new Set());
                 }}
                 aria-label="Select all"
-                className="ml-1"
               />
               <Separator orientation="vertical" className="mx-1 h-4" />
               <TooltipProvider>
@@ -1199,7 +1198,7 @@ function GroupRow({
 
       <div className="min-w-0 flex-1 truncate text-sm">
         <span className="text-foreground">{item.label}</span>
-        <span className="ml-2 inline-flex rounded-full border border-border px-1.5 py-0 text-[10px] text-muted-foreground tabular-nums align-middle">
+        <span className="ml-2 inline-flex rounded-full border border-border px-1.5 py-0 text-xs text-muted-foreground tabular-nums align-middle">
           {item.messages.length}
         </span>
         <span className="mx-2 text-muted-foreground/50">&middot;</span>

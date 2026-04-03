@@ -86,7 +86,7 @@ export function InboxDrawerIdentity({ message, channelFamily, onClose }: Identit
 
       {/* Name + subtitle */}
       <div className="flex-1 min-w-0">
-        <div className="font-medium text-sm truncate text-sidebar-foreground">
+        <div className="font-medium text-base truncate text-sidebar-foreground">
           {senderDisplay}
         </div>
         {subtitle && (

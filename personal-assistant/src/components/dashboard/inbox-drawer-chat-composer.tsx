@@ -43,7 +43,7 @@ export function ChatComposer({
         className="rounded-full bg-sidebar-foreground/[0.04] p-2 text-sidebar-foreground/30 hover:text-sidebar-foreground/50 shrink-0"
         onClick={() => fileInputRef.current?.click()}
       >
-        <IconPaperclip className="size-3.5" />
+        <IconPaperclip className="size-4" />
       </button>
 
       <div className="flex-1 min-h-9 rounded-2xl bg-sidebar-foreground/[0.04] px-3.5 py-2 flex items-center">
@@ -73,7 +73,7 @@ export function ChatComposer({
         onClick={onSend}
         disabled={!draftText.trim()}
       >
-        <IconArrowUp className="size-3.5" />
+        <IconArrowUp className="size-4" />
       </button>
 
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} />
