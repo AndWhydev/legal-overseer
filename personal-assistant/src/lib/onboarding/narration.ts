@@ -73,16 +73,17 @@ ${context.userCorrections.length > 0 ? `User corrections so far: ${JSON.stringif
 }
 
 function getFallbackNarration(event: PipelineEvent): string {
-  switch (event.financialType) {
+  switch (event.type) {
     case 'crawl_start': return 'Connected. Reading through your history...'
     case 'crawl_progress': return `Scanning ${event.channel}... found ${event.messagesFound} messages.`
     case 'contact_found': return `Found ${event.name} — ${event.messageCount} messages.`
     case 'project_found': return `Spotted a project: ${event.name}.`
-    case 'financial_found': return `${event.entity}: ${event.amount} (${event.type}).`
+    case 'financial_found': return `${event.entity}: ${event.amount} (${event.financialType}).`
     case 'synthesis_start': return `Starting to piece things together from ${event.totalMessages} messages...`
     case 'synthesis_progress': return event.detail
     case 'ingestion_start': return 'Populating your world...'
     case 'reveal': return `Here's your world as I see it. ${event.peopleCount} people, ${event.projectCount} projects, ${event.financialTotal} outstanding.`
     case 'agents_activated': return `Set up ${event.agents.join(', ')} based on what I see. Adjust anytime.`
+    default: return 'Still reading...'
   }
 }
