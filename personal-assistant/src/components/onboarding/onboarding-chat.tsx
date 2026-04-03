@@ -85,6 +85,11 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
 
   const smartScroll = useSmartScroll(scrollAreaRef)
 
+  // Auto-scroll when content changes
+  useEffect(() => {
+    smartScroll.onContentUpdate()
+  }, [messages, worldModel, activatedAgents, phase, smartScroll])
+
   /** Verify a channel is actually connected in the DB */
   const verifyConnection = useCallback(async (channelId: string): Promise<boolean> => {
     try {
@@ -156,16 +161,18 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
     }
   }, [verifyConnection])
 
-  // After "connected" state, auto-transition to crawling
+  // When connected, show extras immediately (no auto-transition to crawling)
   useEffect(() => {
     if (connState === 'connected') {
-      const timer = setTimeout(() => {
-        setConnState('crawling')
-        setShowExtras(true)
-      }, 1500)
-      return () => clearTimeout(timer)
+      setShowExtras(true)
     }
   }, [connState])
+
+  // User manually starts scanning
+  const handleStartScanning = useCallback(() => {
+    setConnState('crawling')
+    setShowExtras(false)
+  }, [])
 
   // Start stream once in crawling state
   useEffect(() => {
@@ -198,8 +205,8 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
   const greetingText = connState === 'connected' && connectedProvider
     ? `${connectedProvider.charAt(0).toUpperCase() + connectedProvider.slice(1)} connected. Give me a moment to read through everything\u2026`
     : connState === 'crawling'
-      ? null // No static greeting once crawling — stream messages take over
-      : "Hey \u2014 I'm BitBit. Connect your email and I'll learn your world."
+      ? null // No static greeting once crawling, stream messages take over
+      : "Hey, I'm BitBit. Connect an email and I'll learn our world."
 
   return (
     <div className="bb-chat flex flex-col h-full">
@@ -270,78 +277,106 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
               </motion.div>
             )}
 
-            {/* Connected state — checkmark with provider name */}
+            {/* Connected state — checkmark + extras + start button */}
             {connState === 'connected' && connectedProvider && (
               <motion.div
                 key="connected"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="mt-3 flex items-center gap-3"
+                className="mt-3 flex flex-col gap-4"
               >
-                <AppIcon id={connectedProvider} size={36} />
-                <div className="flex items-center gap-2">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 25, delay: 0.1 }}
-                  >
-                    <IconCheck size={18} className="text-green-500" />
-                  </motion.div>
-                  <span className="text-sm font-medium">Connected</span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Stream messages */}
-          {messages.map((msg, i) => {
-            const prev = messages[i - 1]
-            const showHeader = msg.role === 'assistant' && (!prev || prev.role !== 'assistant')
-            const isLatestAssistant = i === lastAssistantIdx && msg.role === 'assistant'
-            return (
-              <div key={msg.id} className={prev && prev.role !== msg.role ? 'bb-chat__msg-group-gap' : ''}>
-                {showHeader && <BitBitHeader />}
-                <MessageBubble
-                  message={adaptMessage(msg)}
-                  isStreaming={isLatestAssistant && isActive}
-                />
-              </div>
-            )
-          })}
-
-          {/* Phase 2: Optional extras while crawl runs */}
-          <AnimatePresence>
-            {showExtras && isActive && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.3, delay: 0.6 }}
-                className="mt-4"
-              >
-                <p className="text-xs text-muted-foreground mb-2">Connect more while I read?</p>
-                <div className="flex gap-2 flex-wrap">
-                  {EXTRA_PROVIDERS.map(provider => (
-                    <button
-                      key={provider.id}
-                      type="button"
-                      disabled={connectingId !== null || connectedExtras.has(provider.id)}
-                      onClick={() => handleConnect(provider.id, true)}
-                      className="flex items-center gap-2 rounded-lg border border-border/50 bg-card px-3 py-2 text-sm transition-colors hover:bg-accent/50 disabled:opacity-50"
+                <div className="flex items-center gap-3">
+                  <AppIcon id={connectedProvider} size={36} />
+                  <div className="flex items-center gap-2">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 25, delay: 0.1 }}
                     >
-                      <AppIcon id={provider.id} size={24} />
-                      <span>{provider.label}</span>
-                      {connectedExtras.has(provider.id) && <IconCheck size={14} className="text-green-500" />}
-                      {connectingId === provider.id && (
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-                      )}
-                    </button>
-                  ))}
+                      <IconCheck size={18} className="text-green-500" />
+                    </motion.div>
+                    <span className="text-sm font-medium">Connected</span>
+                  </div>
                 </div>
+
+                {/* Additional connections */}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-xs text-muted-foreground mb-2">Connect more sources?</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {EXTRA_PROVIDERS.map(provider => (
+                      <button
+                        key={provider.id}
+                        type="button"
+                        disabled={connectingId !== null || connectedExtras.has(provider.id)}
+                        onClick={() => handleConnect(provider.id, true)}
+                        className="flex items-center gap-2 rounded-lg border border-border/50 bg-card px-3 py-2 text-sm transition-colors hover:bg-accent/50 disabled:opacity-50"
+                      >
+                        <AppIcon id={provider.id} size={24} />
+                        <span>{provider.label}</span>
+                        {connectedExtras.has(provider.id) && <IconCheck size={14} className="text-green-500" />}
+                        {connectingId === provider.id && (
+                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Start scanning button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Button size="lg" onClick={handleStartScanning} className="px-8">
+                    {connectedExtras.size > 0 ? "That's everything, let's go" : 'Start scanning'}
+                  </Button>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Stream messages — group consecutive assistant narrations */}
+          {(() => {
+            const groups: Array<{ role: 'assistant' | 'user'; msgs: ChatMessage[]; isFirst: boolean }> = []
+            for (const msg of messages) {
+              const last = groups[groups.length - 1]
+              if (last && last.role === msg.role && msg.role === 'assistant') {
+                last.msgs.push(msg)
+              } else {
+                const prevGroup = groups[groups.length - 1]
+                groups.push({ role: msg.role, msgs: [msg], isFirst: !prevGroup || prevGroup.role !== msg.role })
+              }
+            }
+
+            return groups.map((group, gi) => {
+              if (group.role === 'user') {
+                return group.msgs.map(msg => (
+                  <div key={msg.id} className="bb-chat__msg-group-gap">
+                    <MessageBubble message={adaptMessage(msg)} />
+                  </div>
+                ))
+              }
+              // Assistant group — combine into one message
+              const combined = group.msgs.map(m => m.content).join('\n\n')
+              const lastMsg = group.msgs[group.msgs.length - 1]
+              const isLatest = lastMsg === messages[lastAssistantIdx]
+              return (
+                <div key={group.msgs[0].id} className={group.isFirst ? 'bb-chat__msg-group-gap' : ''}>
+                  {group.isFirst && <BitBitHeader />}
+                  <MessageBubble
+                    message={{ id: group.msgs[0].id, role: 'assistant', content: combined, timestamp: new Date(lastMsg.timestamp) }}
+                    isStreaming={isLatest && isActive}
+                  />
+                </div>
+              )
+            })
+          })()}
 
           {/* Loading shimmer */}
           {isActive && (
@@ -349,7 +384,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
               {messages.length === 0 || messages[messages.length - 1].role !== 'assistant' ? <BitBitHeader /> : null}
               <div className="bb-chat__bubble--assistant bb-chat__markdown">
                 <Shimmer duration={1.2} as="span">
-                  {phase === 'crawling' ? 'Reading through your messages...' : phase === 'synthesizing' ? 'Putting it all together...' : 'Setting things up...'}
+                  {phase === 'crawling' ? 'Reading through the messages...' : phase === 'synthesizing' ? 'Putting it all together...' : 'Setting things up...'}
                 </Shimmer>
               </div>
             </div>
@@ -357,7 +392,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
 
           {/* Knowledge graph reveal */}
           <AnimatePresence>
-            {worldModel && stats && (
+            {worldModel && stats && (stats.peopleFound > 0 || stats.projectsFound > 0 || stats.financialsFound > 0) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -370,7 +405,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
           </AnimatePresence>
 
           {/* Agent activation */}
-          {activatedAgents && (
+          {activatedAgents && activatedAgents.activated.length > 0 && (
             <div className="bb-chat__msg-group-gap">
               <BitBitHeader />
               <MessageBubble

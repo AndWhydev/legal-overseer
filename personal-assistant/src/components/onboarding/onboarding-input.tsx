@@ -58,10 +58,11 @@ export function OnboardingInput({
         className={cn(
           'flex flex-col items-stretch',
           'w-full max-w-[860px] mx-auto',
-          'rounded-[22px] border border-chat-surface-border bg-chat-surface',
+          'rounded-[22px] border',
           'shadow-sm',
           'min-h-[120px] px-5 pt-3.5 pb-3',
         )}
+        style={{ borderColor: 'var(--chat-surface-border)', backgroundColor: 'var(--chat-surface-bg)' }}
       >
         {/* Textarea */}
         <textarea
