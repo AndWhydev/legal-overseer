@@ -14,15 +14,7 @@ import {
   IconChecklist,
   IconSend,
 } from '@tabler/icons-react';
-import {
-  DetailSidebar,
-  DetailSidebarBody,
-  DetailSidebarContent,
-  DetailSidebarDescription,
-  DetailSidebarFooter,
-  DetailSidebarHeader,
-  DetailSidebarTitle,
-} from '@/components/ui/detail-sidebar';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -66,7 +58,6 @@ export interface ThreadMessageItem {
 
 export interface InboxDrawerProps {
   message: InboxMessage | null;
-  open: boolean;
   onClose: () => void;
   onArchive: (id: string) => void;
   onDone: (id: string) => void;
@@ -412,7 +403,6 @@ function ThreadView({
 
 export default function InboxDrawer({
   message,
-  open,
   onClose,
   onArchive,
   onDone,
@@ -437,7 +427,7 @@ export default function InboxDrawer({
 
   // Keyboard shortcuts
   useEffect(() => {
-    if (!open || !message) return;
+    if (!message) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -462,7 +452,7 @@ export default function InboxDrawer({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, message, onClose, onNavigate, onArchive, onDone, handleSendReply]);
+  }, [message, onClose, onNavigate, onArchive, onDone, handleSendReply]);
 
   // Avatar resolution
   const sender = message ? (message.contactName || message.senderName || message.senderEmail || 'Unknown') : '';
@@ -487,11 +477,7 @@ export default function InboxDrawer({
   const threadCount = threadMessages?.length ?? message.threadCount;
 
   return (
-    <DetailSidebar open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DetailSidebarContent
-        side="right"
-        showCloseButton={false}
-      >
+    <>
         {/* Header: Actions + Close */}
         <div className="flex items-center justify-between gap-3 border-b border-sidebar-border/70 px-5 py-3 shrink-0">
           <div className="flex gap-2 flex-wrap">
@@ -531,7 +517,7 @@ export default function InboxDrawer({
         </div>
 
         {/* Meta: Sender, Subject, Badges */}
-        <DetailSidebarHeader className="border-b border-sidebar-border/70 px-6 py-5">
+        <div className="shrink-0 border-b border-sidebar-border/70 px-6 py-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="relative size-9 shrink-0">
               <Avatar size="lg">
@@ -544,13 +530,13 @@ export default function InboxDrawer({
             </div>
 
             <div className="flex-1 min-w-0">
-              <DetailSidebarTitle className="truncate text-base">
+              <h2 className="font-heading text-base font-medium truncate">
               {String(sender || '')}
-            </DetailSidebarTitle>
+            </h2>
               {message.senderEmail && (
-                <DetailSidebarDescription className="mt-0.5 text-xs">
+                <p className="text-sm text-muted-foreground mt-0.5 text-xs">
                   {String(message.senderEmail || '')}
-                </DetailSidebarDescription>
+                </p>
               )}
             </div>
 
@@ -580,10 +566,10 @@ export default function InboxDrawer({
               </Badge>
             )}
           </div>
-        </DetailSidebarHeader>
+        </div>
 
         {/* Body Content */}
-        <DetailSidebarBody className="flex flex-col gap-4 text-sm leading-relaxed text-sidebar-foreground">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain flex flex-col gap-4 text-sm leading-relaxed text-sidebar-foreground">
           {showSummary && (
             <AiSummaryPanel
               message={message}
@@ -604,10 +590,10 @@ export default function InboxDrawer({
               {String(message.bodyPreview || '(No message body)')}
             </div>
           )}
-        </DetailSidebarBody>
+        </div>
 
         {/* Reply Composer */}
-        <DetailSidebarFooter className="border-t border-sidebar-border/70 pt-4">
+        <div className="shrink-0 border-t border-sidebar-border/70 pt-4">
           <div className="flex items-end gap-2 rounded-xl border border-sidebar-border/70 bg-sidebar-accent/35 px-3 py-2">
             <textarea
               ref={textareaRef}
@@ -641,8 +627,7 @@ export default function InboxDrawer({
               <kbd className="rounded border border-sidebar-border/70 bg-sidebar-accent px-1 py-0.5 text-[10px] font-mono">Cmd+Enter</kbd> to send
             </div>
           )}
-        </DetailSidebarFooter>
-      </DetailSidebarContent>
-    </DetailSidebar>
+        </div>
+    </>
   );
 }
