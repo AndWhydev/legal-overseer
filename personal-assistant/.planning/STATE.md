@@ -5,44 +5,45 @@
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Proactive omniscient intelligence that deeply understands the user's world
-**Current focus:** Phase 36 — Graph-Aware Retrieval (Plan 02 next)
+**Current focus:** Phase 37 — Contextual Retrieval at Ingestion
 
 ## Current Position
 
-Phase: 36 of 40 (Graph-Aware Retrieval)
-Plan: 1 of 2 complete, Plan 02 next
-Status: In progress
-Last activity: 2026-04-04 — Plan 36-01 TDD complete (proactive recall rewrite)
+Phase: 37 of 40 (Contextual Retrieval at Ingestion)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-04-04 — Phase 36 complete (graph-aware retrieval)
 
-Progress: █████████████████░░░░░░░░░░░░░ ~62%
+Progress: ██████████████████░░░░░░░░░░░░ ~65%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 11 min
-- Total execution time: 0.8 hours
+- Total plans completed: 5
+- Average duration: 10 min
+- Total execution time: 0.9 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 35 | 3/3 | 40min | 13min |
-| 36 | 1/2 | 7min | 7min |
+| 36 | 2/2 | 11min | 6min |
 
 ## Accumulated Context
 
 ### Decisions
 
-- pgvector + organizations FK, match_entity_nodes RPC
-- Haiku + Zod for extraction, Google key pending
-- graphAwareRecall as primary, legacyProactiveRecall as fallback
-- Context assembler resolves via getEntityByAlias (graph) not contacts table
-- Token budget 500 → 1500, blended scoring (0.4r+0.3c+0.2rec+0.1ew)
+- pgvector, organizations FK, match_entity_nodes RPC
+- Haiku + Zod extraction, Google key pending
+- graphAwareRecall primary, legacyProactiveRecall fallback
+- 1500 token budget, blended scoring
+- Graph search as 5th source in search_memory (runs first)
+- Entity resolution via getEntityByAlias in context assembler
 
 ### Deferred Issues
 
-- GOOGLE_API_KEY needed for 768d embeddings (non-blocking)
+- GOOGLE_API_KEY needed for 768d embeddings
 
 ### Blockers/Concerns
 
@@ -51,5 +52,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Plan 36-01 complete, ready for 36-02
+Stopped at: Phase 36 complete, ready for Phase 37
 Resume file: None
