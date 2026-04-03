@@ -290,7 +290,7 @@ export default function MonitoringTab() {
             <CardContent className="flex flex-col gap-1">
               <div className="text-sm text-muted-foreground">Cron Success Rate</div>
               <div className={cn(
-                'text-3xl font-semibold tabular-nums',
+                'text-3xl font-medium tabular-nums',
                 cronSuccessRate >= 90 ? 'text-emerald-500' : cronSuccessRate >= 70 ? 'text-amber-500' : 'text-destructive'
               )}>
                 {loading ? '--' : `${cronSuccessRate}%`}
@@ -302,7 +302,7 @@ export default function MonitoringTab() {
           <Card className="py-4">
             <CardContent className="flex flex-col gap-1">
               <div className="text-sm text-muted-foreground">Agent p95 Latency</div>
-              <div className="text-3xl font-semibold tabular-nums text-foreground">
+              <div className="text-3xl font-medium tabular-nums text-foreground">
                 {loading ? '--' : `${(data?.agent_latency.p95_ms ?? 0).toLocaleString()}ms`}
               </div>
               <div className="text-sm text-muted-foreground">{data?.agent_latency.total_runs ?? 0} runs (24h)</div>
@@ -313,7 +313,7 @@ export default function MonitoringTab() {
             <CardContent className="flex flex-col gap-1">
               <div className="text-sm text-muted-foreground">Active Channels</div>
               <div className={cn(
-                'text-3xl font-semibold tabular-nums',
+                'text-3xl font-medium tabular-nums',
                 activeChannels > 0 ? 'text-emerald-500' : 'text-foreground'
               )}>
                 {loading ? '--' : activeChannels}
@@ -326,7 +326,7 @@ export default function MonitoringTab() {
             <CardContent className="flex flex-col gap-1">
               <div className="text-sm text-muted-foreground">DLQ Items</div>
               <div className={cn(
-                'text-3xl font-semibold tabular-nums',
+                'text-3xl font-medium tabular-nums',
                 dlqCount > 0 ? 'text-destructive' : 'text-emerald-500'
               )}>
                 {loading ? '--' : dlqCount}
@@ -377,7 +377,7 @@ export default function MonitoringTab() {
                         </TableCell>
                         <TableCell className={cn(
                           'text-right tabular-nums',
-                          cron.error_count_24h > 0 ? 'font-semibold text-destructive' : 'text-muted-foreground'
+                          cron.error_count_24h > 0 ? 'font-medium text-destructive' : 'text-muted-foreground'
                         )}>
                           {cron.error_count_24h}
                         </TableCell>
@@ -497,7 +497,7 @@ export default function MonitoringTab() {
             <CardTitle className="text-base">Error Log (DLQ)</CardTitle>
             <span className={cn(
               'text-sm',
-              dlqCount > 0 ? 'font-semibold text-destructive' : 'text-muted-foreground'
+              dlqCount > 0 ? 'font-medium text-destructive' : 'text-muted-foreground'
             )}>
               {dlqCount} unresolved
             </span>

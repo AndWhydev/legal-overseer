@@ -535,7 +535,7 @@ export function SidebarNav({
                     onClick={() => switchOrg(org.id)}
                     className="gap-2 p-2"
                   >
-                    <div className="flex size-6 items-center justify-center rounded-md border bg-background">
+                    <div className="flex size-6 items-center justify-center rounded-lg border bg-background">
                       <IconBuilding className="size-4 shrink-0" />
                     </div>
                     <span className="truncate">{org.name}</span>
@@ -546,7 +546,7 @@ export function SidebarNav({
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2 p-2">
-                  <div className="flex size-6 items-center justify-center rounded-md border bg-background">
+                  <div className="flex size-6 items-center justify-center rounded-lg border bg-background">
                     <IconPlus className="size-4 shrink-0" />
                   </div>
                   Add team
@@ -679,7 +679,7 @@ export function SidebarNav({
                     <AvatarFallback className="rounded-lg">{avatarFallback}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">
+                    <span className="truncate font-medium">
                       {displayName || 'User'}
                     </span>
                     <span className="truncate text-xs text-muted-foreground">
@@ -702,7 +702,7 @@ export function SidebarNav({
                       <AvatarFallback className="rounded-lg">{avatarFallback}</AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">
+                      <span className="truncate font-medium">
                         {displayName || 'User'}
                       </span>
                       <span className="truncate text-xs text-muted-foreground">

@@ -95,7 +95,7 @@ export default function CaseStudyContent() {
           </span>
         </Card>
 
-        <h1 className="text-xl font-semibold text-foreground tracking-tight mb-2 leading-snug">
+        <h1 className="text-xl font-medium text-foreground tracking-tight mb-2 leading-snug">
           All Webbed Up
         </h1>
 

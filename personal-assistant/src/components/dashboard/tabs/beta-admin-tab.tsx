@@ -294,7 +294,7 @@ export default function BetaAdminTab() {
                     <span className="text-xs">{stat.label}</span>
                   </div>
                   <div className={cn(
-                    'text-2xl font-bold tabular-nums',
+                    'text-2xl font-medium tabular-nums',
                     stat.error ? 'text-destructive' : 'text-foreground'
                   )}>
                     {stat.value}

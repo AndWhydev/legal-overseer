@@ -38,7 +38,7 @@ export default function ZoomableImage({
 
   if (hasError) {
     return (
-      <div className="aspect-square w-full h-24 flex items-center justify-center rounded-md">
+      <div className="aspect-square w-full h-24 flex items-center justify-center rounded-lg">
         <div className="flex flex-col items-center gap-2 text-muted-foreground">
           <ImageOff strokeWidth={1} className="w-8 h-8" />
         </div>

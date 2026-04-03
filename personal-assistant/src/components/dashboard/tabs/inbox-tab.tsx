@@ -1116,7 +1116,7 @@ function SnoozePickerContent({ onSnooze }: { onSnooze: (time: string) => void })
         <button
           key={opt.value}
           onClick={() => onSnooze(opt.value)}
-          className="flex items-center justify-between gap-4 rounded-md px-3 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+          className="flex items-center justify-between gap-4 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
         >
           <span className="flex items-center gap-2">
             <IconClock size={13} className="text-muted-foreground shrink-0" />

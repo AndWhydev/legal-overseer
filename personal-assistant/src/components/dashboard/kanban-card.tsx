@@ -174,7 +174,7 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
         </div>
 
         <div className="space-y-1.5">
-          <h4 className="line-clamp-2 text-sm font-semibold leading-5 text-foreground">
+          <h4 className="line-clamp-2 text-sm font-medium leading-5 text-foreground">
             {task.title}
           </h4>
 

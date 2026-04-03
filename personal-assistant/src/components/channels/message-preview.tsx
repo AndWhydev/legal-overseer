@@ -40,7 +40,7 @@ export function MessagePreview({ message, classification }: MessagePreviewProps)
   return (
     <div className="glass-card rounded-lg p-3 transition-all duration-150 hover:border-primary/20">
       <div className="flex items-start gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
           <Icon className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">

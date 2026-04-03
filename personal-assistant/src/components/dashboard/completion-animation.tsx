@@ -66,7 +66,7 @@ function ConfettiAnimation() {
       {CONFETTI_PARTICLES.map((p, i) => (
         <div
           key={i}
-          className="absolute left-1/2 top-1/2 rounded-sm animate-confetti"
+          className="absolute left-1/2 top-1/2 rounded-lg animate-confetti"
           style={{
             width: i % 2 === 0 ? '4px' : '3px',
             height: i % 2 === 0 ? '4px' : '6px',

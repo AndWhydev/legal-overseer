@@ -163,7 +163,7 @@ export function StatsWidget({ className }: StatsWidgetProps) {
         <div key={item.label} className="flex items-center gap-2">
           <item.icon className="h-3.5 w-3.5" style={{ color: item.color }} />
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-foreground leading-none">
+            <span className="text-sm font-medium text-foreground leading-none">
               {isLoading ? '–' : <CountUp target={item.value} />}
             </span>
             <span className="text-[10px] text-muted-foreground">{item.label}</span>

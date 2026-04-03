@@ -151,7 +151,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">Generated Reports</h3>
+        <h3 className="text-sm font-medium text-foreground">Generated Reports</h3>
         <button
           type="button"
           onClick={handleRefresh}
@@ -193,7 +193,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
                     <button
                       type="button"
                       onClick={() => void handleDownload(report.id)}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-sky-500/40 px-2 py-1 text-xs font-medium text-sky-300 hover:bg-sky-500/20"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500/40 px-2 py-1 text-xs font-medium text-sky-300 hover:bg-sky-500/20"
                     >
                       <IconDownload className="h-3 w-3" />
                       Download

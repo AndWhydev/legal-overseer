@@ -69,7 +69,7 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
       {/* Header */}
       <div className="flex items-center justify-between px-3.5 py-2.5 bg-muted/50 border-b border-border min-h-[40px]">
         {/* Language badge (left) */}
-        <Badge variant="outline" className="text-[11px] uppercase tracking-wider font-semibold">
+        <Badge variant="outline" className="text-[11px] uppercase tracking-wider font-medium">
           {language || 'code'}
         </Badge>
 

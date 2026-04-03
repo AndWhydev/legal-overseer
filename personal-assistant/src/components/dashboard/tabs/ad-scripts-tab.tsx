@@ -133,7 +133,7 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
       <CollapsibleContent>
         <div className="mt-3 flex flex-col gap-2">
           {shots.map((shot) => (
-            <div key={shot.shotNumber} className="rounded-md border bg-muted/50 p-3">
+            <div key={shot.shotNumber} className="rounded-lg border bg-muted/50 p-3">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Shot {shot.shotNumber}</span>
                 <span className="text-xs text-muted-foreground">{shot.startTime}s - {shot.endTime}s ({shot.duration}s)</span>
@@ -458,7 +458,7 @@ function AdScriptsTab() {
 
           {currentResult && (
             <div className="flex flex-col gap-4">
-              <h2 className="text-lg font-semibold">Scripts for {currentResult.offerName}</h2>
+              <h2 className="text-lg font-medium">Scripts for {currentResult.offerName}</h2>
               <div className="grid gap-4 lg:grid-cols-2">
                 {currentResult.scripts.map((script, i) => (
                   <ScriptCard key={`${script.platform}-${script.hookType}-${i}`} script={script} />

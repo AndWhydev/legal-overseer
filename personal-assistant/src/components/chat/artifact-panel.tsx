@@ -151,7 +151,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
             <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-3 py-2 min-h-[48px]">
               {/* Title */}
               <div className="flex-1 min-w-0 mr-2">
-                <h2 className="truncate text-sm font-semibold text-foreground leading-tight">
+                <h2 className="truncate text-sm font-medium text-foreground leading-tight">
                   {artifact.title}
                 </h2>
                 {artifact.type !== 'html' && artifact.language && (
@@ -163,7 +163,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
 
               {/* View mode toggle */}
               {showModeToggle && (
-                <div className="flex items-center rounded-md border border-border bg-muted/50 p-0.5">
+                <div className="flex items-center rounded-lg border border-border bg-muted/50 p-0.5">
                   <button
                     type="button"
                     onClick={() => setViewMode('preview')}

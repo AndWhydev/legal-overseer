@@ -490,7 +490,7 @@ export function InvoiceTemplateEditor() {
               <div className="space-y-2">
                 <Label>Primary</Label>
                 <div className="flex items-center gap-2">
-                  <div className="size-8 shrink-0 overflow-hidden rounded-md border border-border">
+                  <div className="size-8 shrink-0 overflow-hidden rounded-lg border border-border">
                     <input
                       type="color"
                       value={template.primary_color ?? '#334155'}
@@ -509,7 +509,7 @@ export function InvoiceTemplateEditor() {
               <div className="space-y-2">
                 <Label>Accent</Label>
                 <div className="flex items-center gap-2">
-                  <div className="size-8 shrink-0 overflow-hidden rounded-md border border-border">
+                  <div className="size-8 shrink-0 overflow-hidden rounded-lg border border-border">
                     <input
                       type="color"
                       value={template.accent_color ?? '#1E293B'}

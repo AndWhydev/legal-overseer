@@ -149,9 +149,9 @@ export function RelationshipTimeline({ entityId, entityName }: RelationshipTimel
                   {/* Confidence indicator */}
                   {event.confidence < 1 && (
                     <div className="mt-1 flex items-center gap-2">
-                      <div className="h-1 w-10 overflow-hidden rounded-sm bg-secondary">
+                      <div className="h-1 w-10 overflow-hidden rounded-lg bg-secondary">
                         <div
-                          className="h-full rounded-sm"
+                          className="h-full rounded-lg"
                           style={{
                             width: `${event.confidence * 100}%`,
                             background: event.confidence > 0.7 ? '#22C55E' :

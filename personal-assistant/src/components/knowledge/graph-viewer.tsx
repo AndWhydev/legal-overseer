@@ -471,7 +471,7 @@ const GraphViewer: React.FC<Props> = ({ nodes, edges, onNodeClick, height = 420 
                   textAnchor="middle"
                   fill="#cbd5e1"
                   fontSize="14"
-                  fontFamily="var(--font-dm-sans), system-ui, sans-serif"
+                  
                   opacity={0.85}
                   style={{ pointerEvents: 'none', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
                 >

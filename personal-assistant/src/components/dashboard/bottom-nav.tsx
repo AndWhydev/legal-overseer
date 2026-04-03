@@ -98,7 +98,7 @@ export function BottomNav({
             <span
               className={cn(
                 'text-xs leading-none truncate max-w-full',
-                active ? 'font-semibold' : 'font-medium',
+                active ? 'font-medium' : 'font-medium',
               )}
             >
               {label}

@@ -72,7 +72,7 @@ export function ActivityFeed({ activities }: { activities: ActivityEntry[] }) {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === tab
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -86,7 +86,7 @@ export function ActivityFeed({ activities }: { activities: ActivityEntry[] }) {
       <div className="flex flex-col gap-4">
         {grouped.map(group => (
           <div key={group.label}>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {group.label}
             </h3>
             <div className="flex flex-col gap-1">

@@ -95,7 +95,7 @@ export function ReportGenerator({ onGenerateStart, onGenerateComplete }: ReportG
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-xl border border-border bg-card p-4">
-        <h3 className="mb-4 text-sm font-semibold text-foreground">Generate New Report</h3>
+        <h3 className="mb-4 text-sm font-medium text-foreground">Generate New Report</h3>
 
         <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
           {/* Report Type Selector */}

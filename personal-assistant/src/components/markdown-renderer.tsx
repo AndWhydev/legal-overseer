@@ -79,12 +79,12 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
         remarkPlugins={[[remarkGfm, { singleTilde: false }]]}
         components={{
           // Block elements
-          h1: ({ children }) => <h1 className={cn(textSize.h1, 'font-bold my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h1>,
-          h2: ({ children }) => <h2 className={cn(textSize.h2, 'font-bold my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h2>,
-          h3: ({ children }) => <h3 className={cn(textSize.h3, 'font-bold my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h3>,
-          h4: ({ children }) => <h4 className={cn(textSize.h4, 'font-bold my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h4>,
-          h5: ({ children }) => <h5 className={cn(textSize.h5, 'font-bold my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h5>,
-          h6: ({ children }) => <h6 className={cn(textSize.h6, 'font-bold my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h6>,
+          h1: ({ children }) => <h1 className={cn(textSize.h1, 'font-medium my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h1>,
+          h2: ({ children }) => <h2 className={cn(textSize.h2, 'font-medium my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h2>,
+          h3: ({ children }) => <h3 className={cn(textSize.h3, 'font-medium my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h3>,
+          h4: ({ children }) => <h4 className={cn(textSize.h4, 'font-medium my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h4>,
+          h5: ({ children }) => <h5 className={cn(textSize.h5, 'font-medium my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h5>,
+          h6: ({ children }) => <h6 className={cn(textSize.h6, 'font-medium my-0 [&:first-child]:mt-0 mt-8 py-0', fontClass)}>{children}</h6>,
 
           p: ({ children }) => {
             // Detect if paragraph contains block-level elements that can't be inside <p>
@@ -118,7 +118,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
           li: ({ children }) => <li className={cn(textSize.li, 'my-0 mt-2 py-0 pl-1', fontClass)}>{children}</li>,
 
           // Inline elements
-          strong: ({ children }) => <strong className={cn('font-bold', fontClass)}>{children}</strong>,
+          strong: ({ children }) => <strong className={cn('font-medium', fontClass)}>{children}</strong>,
           em: ({ children }) => <em className={cn('italic', fontClass)}>{children}</em>,
 
           code(props) {
@@ -194,7 +194,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
 
           // Table elements
           table: ({ children }) => (
-            <div className={cn('min-w-0 overflow-x-auto my-2 border border-border rounded-md', fontClass)}>
+            <div className={cn('min-w-0 overflow-x-auto my-2 border border-border rounded-lg', fontClass)}>
               <table className="">{children}</table>
             </div>
           ),

@@ -422,7 +422,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                   <div
                     key={wi}
                     title={pct !== null ? `${pct}%` : 'N/A'}
-                    className="flex h-8 items-center justify-center rounded-md font-mono text-xs font-medium"
+                    className="flex h-8 items-center justify-center rounded-lg font-mono text-xs font-medium"
                     style={{
                       backgroundColor: pct !== null ? retentionColor(pct) : undefined,
                       color: pct !== null && pct >= 40 ? 'hsl(var(--foreground))' : undefined,

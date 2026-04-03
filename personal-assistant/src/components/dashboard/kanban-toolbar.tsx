@@ -81,7 +81,7 @@ export function KanbanToolbar({
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+            <h2 className="text-lg font-medium tracking-tight text-foreground">
               Task board
             </h2>
             <Badge variant="outline" className="bg-background/80 font-mono">

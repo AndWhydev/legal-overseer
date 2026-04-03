@@ -199,7 +199,7 @@ function CompaniesTab() {
 function StatPill({ value, label, active }: { value: number | string; label: string; active?: boolean }) {
   return (
     <span className="inline-flex items-baseline gap-1">
-      <span className={`text-sm font-semibold tabular-nums ${active ? 'text-foreground' : 'text-muted-foreground'}`}>
+      <span className={`text-sm font-medium tabular-nums ${active ? 'text-foreground' : 'text-muted-foreground'}`}>
         {value}
       </span>
       <span className="text-xs text-muted-foreground">{label}</span>

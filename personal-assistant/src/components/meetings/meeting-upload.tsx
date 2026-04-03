@@ -90,7 +90,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
           </h2>
           <button
             onClick={onCancel}
-            className="rounded-md bg-transparent p-1 text-muted-foreground hover:text-foreground"
+            className="rounded-lg bg-transparent p-1 text-muted-foreground hover:text-foreground"
           >
             <IconX className="h-[18px] w-[18px]" />
           </button>
@@ -172,7 +172,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
 
         {/* Error */}
         {error && (
-          <div className="mb-3 rounded-md bg-destructive/10 p-2 text-sm text-destructive">
+          <div className="mb-3 rounded-lg bg-destructive/10 p-2 text-sm text-destructive">
             {error}
           </div>
         )}

@@ -79,7 +79,7 @@ export function SyncResults({ results, onDismiss, autoDismissMs = 10000 }: SyncR
           ) : (
             <IconCircleCheck className="h-4 w-4 text-[#4ADE80]" />
           )}
-          <h3 className="text-sm font-semibold text-foreground">
+          <h3 className="text-sm font-medium text-foreground">
             Sync Complete
           </h3>
           <span className="text-xs text-muted-foreground">
@@ -88,7 +88,7 @@ export function SyncResults({ results, onDismiss, autoDismissMs = 10000 }: SyncR
         </div>
         <button
           onClick={handleDismiss}
-          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
           <IconX className="h-3.5 w-3.5" />
         </button>
@@ -97,15 +97,15 @@ export function SyncResults({ results, onDismiss, autoDismissMs = 10000 }: SyncR
       {/* Summary totals */}
       <div className="mt-3 grid grid-cols-3 gap-3 rounded-lg bg-secondary/50 p-3">
         <div className="text-center">
-          <p className="text-2xl font-bold text-foreground">{totals.messagesFound}</p>
+          <p className="text-2xl font-medium text-foreground">{totals.messagesFound}</p>
           <p className="text-xs text-muted-foreground">Messages Found</p>
         </div>
         <div className="text-center">
-          <p className="text-2xl font-bold text-[#4ADE80]">{totals.tasksCreated}</p>
+          <p className="text-2xl font-medium text-[#4ADE80]">{totals.tasksCreated}</p>
           <p className="text-xs text-muted-foreground">Tasks Created</p>
         </div>
         <div className="text-center">
-          <p className="text-2xl font-bold text-foreground">{totals.tasksUpdated}</p>
+          <p className="text-2xl font-medium text-foreground">{totals.tasksUpdated}</p>
           <p className="text-xs text-muted-foreground">Tasks Updated</p>
         </div>
       </div>

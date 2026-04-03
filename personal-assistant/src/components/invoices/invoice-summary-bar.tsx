@@ -50,7 +50,7 @@ export function InvoiceSummaryBar({
             <span className="text-xs font-medium tracking-wide text-muted-foreground">
               {m.label}
             </span>
-            <span className={`text-lg font-semibold tabular-nums leading-tight ${m.accent || 'text-foreground'}`}>
+            <span className={`text-lg font-medium tabular-nums leading-tight ${m.accent || 'text-foreground'}`}>
               {m.value}
             </span>
             {m.sub && (

@@ -201,11 +201,11 @@ function DayHeader({ date, isToday }: { date: Date; isToday: boolean }) {
         {dayLabel}
       </span>
       {isToday ? (
-        <span className="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+        <span className="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
           {dateNum}
         </span>
       ) : (
-        <span className="flex size-8 items-center justify-center text-sm font-semibold text-foreground">
+        <span className="flex size-8 items-center justify-center text-sm font-medium text-foreground">
           {dateNum}
         </span>
       )}
@@ -223,7 +223,7 @@ function EventBlock({ event }: { event: PositionedEvent }) {
 
   return (
     <div
-      className={`absolute overflow-hidden rounded-md px-2 py-1 ${colorClasses} cursor-pointer transition-opacity hover:opacity-80`}
+      className={`absolute overflow-hidden rounded-lg px-2 py-1 ${colorClasses} cursor-pointer transition-opacity hover:opacity-80`}
       style={{
         top: `${event.top}px`,
         height: `${event.height}px`,
@@ -328,20 +328,20 @@ function MeetingsTabCalendar() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setWeekOffset((w) => w - 1)}
-              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-md border-none bg-transparent text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border-none bg-transparent text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label="Previous week"
             >
               <IconChevronLeft size={16} />
             </button>
             <button
               onClick={() => setWeekOffset(0)}
-              className="cursor-pointer rounded-md border-none bg-transparent px-3 py-1 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              className="cursor-pointer rounded-lg border-none bg-transparent px-3 py-1 text-sm font-medium text-foreground transition-colors hover:bg-muted"
             >
               Today
             </button>
             <button
               onClick={() => setWeekOffset((w) => w + 1)}
-              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-md border-none bg-transparent text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border-none bg-transparent text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label="Next week"
             >
               <IconChevronRight size={16} />

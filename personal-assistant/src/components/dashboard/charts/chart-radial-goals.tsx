@@ -38,7 +38,7 @@ function RadialGoal({ label, value, fill, description }: { label: string; value:
               if (viewBox && "cx" in viewBox && "cy" in viewBox) {
                 return (
                   <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                    <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-lg font-bold">{value}%</tspan>
+                    <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-lg font-medium">{value}%</tspan>
                   </text>
                 )
               }

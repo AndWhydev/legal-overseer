@@ -60,7 +60,7 @@ export function AlertBanner({
         <button
           type="button"
           onClick={onDismiss}
-          className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] -m-1 flex items-center justify-center"
+          className="shrink-0 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] -m-1 flex items-center justify-center"
           aria-label="Dismiss alert"
         >
           <X className="h-4 w-4" />

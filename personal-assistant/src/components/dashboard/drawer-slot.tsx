@@ -62,7 +62,7 @@ export function DrawerSlot() {
       >
         <div
           className={cn(
-            'bg-sidebar flex h-full w-full flex-col overflow-hidden rounded-lg border border-sidebar-border shadow-sm transition-opacity duration-300',
+            'bg-sidebar flex h-full w-full flex-col overflow-hidden rounded-lg shadow-sm transition-opacity duration-300',
             isOpen ? 'opacity-100' : 'opacity-0',
           )}
         >

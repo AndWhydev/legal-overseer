@@ -27,7 +27,7 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">
             BitBit in motion
           </p>
           <p className="text-sm text-muted-foreground">

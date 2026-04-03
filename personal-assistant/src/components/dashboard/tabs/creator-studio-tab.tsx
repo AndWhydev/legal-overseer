@@ -236,7 +236,7 @@ function CalendarView({
                   <button
                     key={item.id}
                     title={`${TEMPLATE_LABELS[item.template_type]}: ${item.inputs.product_name}`}
-                    className="cursor-pointer truncate rounded-md px-1.5 py-0.5 text-xs transition-colors"
+                    className="cursor-pointer truncate rounded-lg px-1.5 py-0.5 text-xs transition-colors"
                     onClick={() => {
                       const next: ContentStatus =
                         item.status === 'scheduled' ? 'published' : item.status === 'draft' ? 'scheduled' : 'draft'
@@ -532,7 +532,7 @@ export default function CreatorStudioTab() {
 
           {/* Header */}
           <div className="mb-7">
-            <h1 className="text-lg font-semibold text-foreground">Creator Studio</h1>
+            <h1 className="text-lg font-medium text-foreground">Creator Studio</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Generate marketing content using AI — ad scripts, social posts, emails, and blogs.
             </p>

@@ -90,7 +90,7 @@ function getInitials(name: string): string {
 function ProjectDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project</h3>
+      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Project</h3>
       {meta.name ? <div className="text-lg font-medium">{String(meta.name)}</div> : null}
       {meta.status ? (
         <Badge variant="secondary" className="capitalize">
@@ -105,7 +105,7 @@ function ProjectDetail({ meta }: { meta: Record<string, unknown> }) {
 function InvoiceDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Invoice</h3>
+      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Invoice</h3>
       {meta.invoice_number ? <div className="text-lg font-medium">{String(meta.invoice_number)}</div> : null}
       <div className="flex items-center gap-3">
         {meta.status ? (
@@ -130,7 +130,7 @@ function InvoiceDetail({ meta }: { meta: Record<string, unknown> }) {
 function TaskDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Task</h3>
+      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Task</h3>
       {meta.title ? <div className="text-lg font-medium">{String(meta.title)}</div> : null}
       <div className="flex items-center gap-3">
         {meta.status ? (
@@ -196,7 +196,7 @@ function RelatedEntitiesStack({
                 style={{ zIndex: related.length - i }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex size-7 items-center justify-center rounded-md bg-muted text-foreground shrink-0">
+                  <div className="flex size-7 items-center justify-center rounded-lg bg-muted text-foreground shrink-0">
                     <RelIcon className="size-3.5" />
                   </div>
                   <div className="min-w-0 flex-1">

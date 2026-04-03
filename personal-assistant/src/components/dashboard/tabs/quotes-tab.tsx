@@ -94,7 +94,7 @@ function QuotesTab() {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold">
+                  <h3 className="text-lg font-medium">
                     {selected.contact?.name ?? 'Unknown Customer'}
                   </h3>
                   {selected.lead?.title && (
@@ -133,7 +133,7 @@ function QuotesTab() {
                 <p>Labour: <span className="font-medium">${Number(selected.labor_total).toLocaleString('en-AU')}</span></p>
                 <p>Materials: <span className="font-medium">${Number(selected.materials_total).toLocaleString('en-AU')}</span></p>
                 <p>GST: <span className="font-medium">${Number(selected.gst_total).toLocaleString('en-AU')}</span></p>
-                <p className="text-base font-semibold mt-1">
+                <p className="text-base font-medium mt-1">
                   Total: ${Number(selected.grand_total).toLocaleString('en-AU')}
                 </p>
               </div>

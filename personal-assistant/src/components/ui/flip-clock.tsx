@@ -12,7 +12,7 @@ import {
 } from "react";
 
 const flipUnitVariants = cva(
-  "relative subpixel-antialiased perspective-[1000px] rounded-md overflow-hidden",
+  "relative subpixel-antialiased perspective-[1000px] rounded-lg overflow-hidden",
   {
     variants: {
       size: {

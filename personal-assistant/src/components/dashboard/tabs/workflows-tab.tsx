@@ -404,7 +404,7 @@ function WorkflowsTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Workflow Rules</h2>
+          <h2 className="text-lg font-medium">Workflow Rules</h2>
           <p className="text-sm text-muted-foreground">
             Automate actions with natural language rules
           </p>

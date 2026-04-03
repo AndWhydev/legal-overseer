@@ -27,7 +27,6 @@ const titleStyle: React.CSSProperties = {
   fontSize: 16,
   fontWeight: 500,
   color: 'var(--text-primary)',
-  fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
   letterSpacing: '-0.02em',
 }
 

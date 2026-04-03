@@ -463,7 +463,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
                       <div className="border-b border-border/60 px-4 pb-4 pt-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
-                            <h3 id={columnHeadingId} className="text-sm font-semibold text-foreground">
+                            <h3 id={columnHeadingId} className="text-sm font-medium text-foreground">
                               {column.title}
                             </h3>
                             <p className="text-xs text-muted-foreground">

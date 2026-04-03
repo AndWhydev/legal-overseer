@@ -131,7 +131,7 @@ export function ChannelCard({
               <Icon className="size-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">{name}</h3>
+              <h3 className="font-medium text-foreground">{name}</h3>
               <p className="text-xs text-muted-foreground">{description}</p>
             </div>
           </div>

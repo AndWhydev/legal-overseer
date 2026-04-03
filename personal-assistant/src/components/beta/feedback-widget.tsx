@@ -159,7 +159,7 @@ export function FeedbackWidget() {
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
-              <span className="text-base font-semibold text-foreground">
+              <span className="text-base font-medium text-foreground">
                 Send Feedback
               </span>
               <Button variant="ghost" size="icon-xs" onClick={handleClose}>

@@ -227,7 +227,7 @@ export function ChatSidebarPanel() {
                           onClick={(event) => event.stopPropagation()}
                           aria-label="Thread actions"
                           disabled={isBusy}
-                          className="rounded-md"
+                          className="rounded-lg"
                         >
                           <IconDots className="size-3.5" />
                         </SidebarMenuAction>

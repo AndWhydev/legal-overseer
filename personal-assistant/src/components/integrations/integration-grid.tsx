@@ -89,7 +89,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
             <DropdownMenuItem
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={cn(activeCategory === cat && 'font-semibold')}
+              className={cn(activeCategory === cat && 'font-medium')}
             >
               {CATEGORY_LABELS[cat]}
             </DropdownMenuItem>

@@ -34,7 +34,7 @@ export function RevenueWeekWidget() {
       icon={<IconTrendingUp size={20} className="text-emerald-400" />}
     >
       <div className="flex items-center justify-center py-6">
-        <p className="text-3xl font-bold">${total.toLocaleString()}</p>
+        <p className="text-3xl font-medium">${total.toLocaleString()}</p>
       </div>
     </WidgetCard>
   );

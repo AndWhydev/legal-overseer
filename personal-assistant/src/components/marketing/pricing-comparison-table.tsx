@@ -108,7 +108,7 @@ export default function PricingComparisonTable() {
                   key={plan}
                   className={cn(
                     'min-w-[90px] border-b border-border/30 px-4 py-3.5 text-center text-sm',
-                    plan === 'Growth' ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground',
+                    plan === 'Growth' ? 'font-medium text-foreground' : 'font-medium text-muted-foreground',
                     i === 0 && 'border-l border-border/30',
                   )}
                 >

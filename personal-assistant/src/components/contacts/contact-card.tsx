@@ -17,7 +17,7 @@ export function ContactCard({ contact }: { contact: Contact }) {
       <Card className="border-border/50 transition-colors hover:border-border hover:bg-card/80">
         <CardContent className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
               {contact.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">

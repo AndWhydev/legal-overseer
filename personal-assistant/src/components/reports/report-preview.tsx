@@ -41,7 +41,7 @@ export function ReportPreview({ html, isLoading = false, onClose, onDownload }: 
       <div className="flex h-[90vh] w-[90vw] max-w-6xl flex-col rounded-xl border border-border bg-card shadow-lg">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
-          <h2 className="text-lg font-semibold text-foreground">Report Preview</h2>
+          <h2 className="text-lg font-medium text-foreground">Report Preview</h2>
           <div className="flex items-center gap-2">
             {onDownload && (
               <button

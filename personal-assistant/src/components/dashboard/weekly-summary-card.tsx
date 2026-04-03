@@ -44,7 +44,7 @@ export function WeeklySummaryCard() {
     <Card className="@container/card">
       <CardHeader>
         <CardDescription>Weekly Operations</CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+        <CardTitle className="text-2xl font-medium tabular-nums @[250px]/card:text-3xl">
           {a.autonomyRate}%
         </CardTitle>
         <CardAction>

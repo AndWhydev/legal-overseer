@@ -412,7 +412,7 @@ export function WatchManager() {
                       Every {watch.interval_seconds}s, escalate after {watch.escalation_minutes}m, last checked{' '}
                       {toLocalDate(watch.last_checked_at)}
                     </p>
-                    <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs text-muted-foreground">
+                    <pre className="overflow-x-auto rounded-lg bg-muted p-3 font-mono text-xs text-muted-foreground">
                       {JSON.stringify(watch.conditions, null, 2)}
                     </pre>
                     <div className="flex gap-2">

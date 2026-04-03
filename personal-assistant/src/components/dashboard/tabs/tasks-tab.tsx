@@ -90,17 +90,17 @@ function TasksTab() {
         <div className="border-b border-border/70 bg-linear-to-br from-background via-background to-primary/5 px-6 py-6">
           <a
             href="#tasks-board"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-4 focus:z-10 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:text-foreground focus:shadow-md"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-4 focus:z-10 focus:rounded-lg focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:text-foreground focus:shadow-md"
           >
             Skip to task board
           </a>
 
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-2xl space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
                 Tasks
               </p>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              <h1 className="text-3xl font-medium tracking-tight text-foreground">
                 Shape the day around the work that matters.
               </h1>
               <p className="max-w-xl text-sm leading-6 text-muted-foreground">

@@ -61,7 +61,7 @@ export function ProjectProgressCards() {
           <Card className="@container/card">
             <CardHeader>
               <CardDescription className="truncate">{project.name}</CardDescription>
-              <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+              <CardTitle className="text-2xl font-medium tabular-nums @[250px]/card:text-3xl">
                 {completedCount}/{totalCount}
               </CardTitle>
               <CardAction>
