@@ -95,7 +95,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               pointerEvents: 'auto',
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
+              gap: 12,
               borderRadius: 16,
               border: 'none',
               background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.95))',
@@ -113,7 +113,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => dismiss(t.id)}
-              className="ml-2 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+              className="ml-2 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
               aria-label="Dismiss notification"
             >
               <X className="h-3.5 w-3.5" />
@@ -134,7 +134,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               pointerEvents: 'auto',
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
+              gap: 12,
               borderRadius: 16,
               border: 'none',
               background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.95))',
@@ -152,7 +152,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => dismiss(t.id)}
-              className="ml-2 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+              className="ml-2 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
               aria-label="Dismiss error"
             >
               <X className="h-3.5 w-3.5" />
