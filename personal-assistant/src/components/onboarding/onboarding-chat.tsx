@@ -1,19 +1,31 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
-import { ChatBubble } from './chat-bubble'
-import { ChatInput } from './chat-input'
+import { MessageBubble } from '@/components/chat/message-bubble'
+import { ChatInput } from '@/components/chat/chat-input'
+import { BitBitHeader } from '@/components/chat/bitbit-header'
 import { ConnectionCard } from './connection-card'
 import { WorldGraph } from './world-graph'
-import { useOnboardingStream } from './use-onboarding-stream'
+import { useOnboardingStream, type ChatMessage } from './use-onboarding-stream'
 import { motion, AnimatePresence } from 'motion/react'
-import { Loader2 } from 'lucide-react'
+import { Shimmer } from '@/components/ai-elements/shimmer'
+import { useSmartScroll } from '@/components/chat/use-smart-scroll'
+import { IconChevronDown } from '@tabler/icons-react'
 
 interface OnboardingChatProps {
   hasConnection: boolean
   onComplete: (threadId: string) => void
+}
+
+/** Adapt onboarding ChatMessage to the Message shape MessageBubble expects */
+function adaptMessage(msg: ChatMessage) {
+  return {
+    id: msg.id,
+    role: msg.role,
+    content: msg.content,
+    timestamp: new Date(msg.timestamp),
+  }
 }
 
 export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProps) {
@@ -29,16 +41,11 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
     sendReply,
   } = useOnboardingStream()
 
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [showConnectionCard, setShowConnectionCard] = useState(!hasConnection)
   const [streamStarted, setStreamStarted] = useState(false)
 
-  // Auto-scroll on new messages
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [messages, worldModel])
+  const smartScroll = useSmartScroll(scrollAreaRef)
 
   // Start stream once connected
   useEffect(() => {
@@ -58,46 +65,43 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
   }, [phase, threadId, onComplete])
 
   const isInputEnabled = phase === 'crawling' || phase === 'synthesizing' || phase === 'reveal'
+  const isActive = phase === 'crawling' || phase === 'synthesizing' || phase === 'ingesting'
+
+  // Group consecutive assistant messages to only show BitBitHeader once per group
+  const messageGroups: { showHeader: boolean; msg: ChatMessage }[] = messages.map((msg, i) => ({
+    showHeader: msg.role === 'assistant' && (i === 0 || messages[i - 1].role !== 'assistant'),
+    msg,
+  }))
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Chat messages */}
-      <ScrollArea className="flex-1 px-6 py-4" ref={scrollRef}>
-        <div className="max-w-2xl mx-auto flex flex-col gap-3">
+    <div className="bb-chat flex flex-col h-full">
+      {/* Messages */}
+      <div className="bb-chat__messages flex-1 overflow-y-auto" ref={scrollAreaRef}>
+        <div className="bb-chat__msg-list">
           {/* Initial greeting (before stream starts) */}
           {!streamStarted && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-start"
-            >
-              <div className="bg-muted rounded-2xl px-4 py-3 text-sm leading-relaxed max-w-[80%]">
-                Hey — I'm BitBit. Give me access to your email and I'll figure out the rest.
+            <div className="bb-chat__msg bb-chat__msg--assistant">
+              <BitBitHeader />
+              <div className="bb-chat__bubble--assistant bb-chat__markdown">
+                <p>Hey &#8212; I&#8217;m BitBit. Give me access to your email and I&#8217;ll figure out the rest.</p>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Stream messages */}
-          {messages.map(msg => (
-            <ChatBubble key={msg.id} message={msg} />
+          {messageGroups.map(({ showHeader, msg }) => (
+            <div key={msg.id} className={msg.role === 'user' ? 'bb-chat__msg bb-chat__msg--user group' : 'bb-chat__msg bb-chat__msg--assistant'}>
+              {showHeader && <BitBitHeader />}
+              <MessageBubble message={adaptMessage(msg)} />
+            </div>
           ))}
 
-          {/* Loading indicator during active phases */}
-          {(phase === 'crawling' || phase === 'synthesizing' || phase === 'ingesting') && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-start"
-            >
-              <div className="bg-muted rounded-2xl px-4 py-3 flex items-center gap-2">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {phase === 'crawling' && 'Reading...'}
-                  {phase === 'synthesizing' && 'Putting it together...'}
-                  {phase === 'ingesting' && 'Setting things up...'}
-                </span>
-              </div>
-            </motion.div>
+          {/* Loading shimmer during active phases */}
+          {isActive && (
+            <div className="bb-chat__msg bb-chat__msg--assistant">
+              {messages.length === 0 || messages[messages.length - 1].role !== 'assistant' ? <BitBitHeader /> : null}
+              <Shimmer duration={1.2} as="span">Reading through your world...</Shimmer>
+            </div>
           )}
 
           {/* Knowledge graph reveal */}
@@ -107,28 +111,26 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                className="my-4"
+                className="my-6"
               >
-                <WorldGraph
-                  worldModel={worldModel}
-                  stats={stats}
-                />
+                <WorldGraph worldModel={worldModel} stats={stats} />
               </motion.div>
             )}
           </AnimatePresence>
 
           {/* Agent activation message */}
           {activatedAgents && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="flex justify-start"
-            >
-              <div className="bg-muted rounded-2xl px-4 py-3 text-sm leading-relaxed max-w-[80%]">
-                Set up {activatedAgents.activated.join(', ')} based on what I see. Adjust anytime.
-              </div>
-            </motion.div>
+            <div className="bb-chat__msg bb-chat__msg--assistant">
+              <BitBitHeader />
+              <MessageBubble
+                message={{
+                  id: 'agents-activated',
+                  role: 'assistant',
+                  content: `Set up ${activatedAgents.activated.join(', ')} based on what I see. Adjust anytime.`,
+                  timestamp: new Date(),
+                }}
+              />
+            </div>
           )}
 
           {/* "Let's go" button */}
@@ -137,31 +139,28 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              className="flex justify-center my-6"
+              className="flex justify-center my-8"
             >
               <Button
                 size="lg"
                 onClick={() => threadId && onComplete(threadId)}
                 className="px-8"
               >
-                Let's go
+                Let&#8217;s go
               </Button>
             </motion.div>
           )}
 
           {/* Error state */}
           {error && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-start"
-            >
-              <div className="bg-destructive/10 text-destructive rounded-2xl px-4 py-3 text-sm max-w-[80%]">
-                {error}
+            <div className="bb-chat__msg bb-chat__msg--assistant">
+              <BitBitHeader />
+              <div className="bb-chat__bubble--assistant text-destructive">
+                <p>{error}</p>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-2 block"
+                  className="mt-2"
                   onClick={() => {
                     setStreamStarted(false)
                     void startStream()
@@ -170,19 +169,37 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
                   Try again
                 </Button>
               </div>
-            </motion.div>
+            </div>
           )}
-        </div>
-      </ScrollArea>
 
-      {/* Chat input */}
+        </div>
+      </div>
+
+      {/* Scroll-to-bottom button */}
+      <AnimatePresence>
+        {smartScroll.shouldShowScrollButton && (
+          <motion.button
+            className="bb-chat__scroll-btn"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            onClick={smartScroll.scrollToBottom}
+            aria-label="Scroll to bottom"
+          >
+            <IconChevronDown size={18} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Chat input — same pill as dashboard chat */}
       <ChatInput
         onSend={sendReply}
         disabled={!isInputEnabled}
         placeholder={
-          phase === 'reveal' ? 'Tap a node to explore, or type to correct anything...'
-            : isInputEnabled ? 'Type a reply...'
-            : undefined
+          phase === 'reveal'
+            ? 'Tap a node to explore, or type to correct anything...'
+            : 'Message BitBit...'
         }
       />
 

@@ -49,7 +49,7 @@ import { SmoothText } from './smooth-text'
 import { useUserProfile } from '@/lib/user/user-profile-context'
 import { getPersonalisedGreeting } from '@/lib/chat/personalised-greeting'
 import { ToolCallsSection } from '@/components/ui/tool-calls-section'
-import { PixelWordmark } from '@/components/ui/pixel-heading-word'
+import { BitBitHeader } from './bitbit-header'
 import {
   extractToolDetail,
   formatToolName,
@@ -149,19 +149,6 @@ type PersistedToolTrace = {
 
 const streamdownPlugins = { cjk, code, math, mermaid }
 
-function BitBitHeader() {
-  return (
-    <div className="inline-flex items-center gap-2 mb-2 select-none">
-      <span className="shrink-0">
-        <img src="/bitbit-icon-mark-light.png" alt="" width={20} height={20} className="dark:hidden" aria-hidden />
-        <img src="/bitbit-icon-mark.png" alt="" width={20} height={20} className="hidden dark:block" aria-hidden />
-      </span>
-      <PixelWordmark className="text-[20px] font-bold text-foreground" style={{ WebkitTextStroke: '0.6px currentColor' }}>
-        BitBit
-      </PixelWordmark>
-    </div>
-  )
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -526,8 +513,7 @@ function InlineApprovalCard({
 
       {isResolving && (
         <div className="mt-3 inline-flex items-center gap-1 rounded-lg bg-muted px-3 py-1 text-sm font-medium text-muted-foreground">
-          <IconLoader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />
-          Resolving...
+          <Shimmer duration={1.2} as="span">Resolving...</Shimmer>
         </div>
       )}
 
