@@ -290,8 +290,8 @@ html.light {
   --text-dim: #9a9a9a;
 
   /* Chat Surface Tokens (Lighter than background in Dark Mode) */
-  --chat-surface-bg: color-mix(in srgb, var(--card), transparent 30%);
-  --chat-surface-border: color-mix(in srgb, var(--border), transparent 30%);
+  --chat-surface-bg: var(--card);
+  --chat-surface-border: var(--border);
 
   /* Background colors (dark) */
   --bg-primary: #0A0F1A;

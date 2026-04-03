@@ -20,8 +20,8 @@
   --bb-surface-active: rgba(63, 63, 70, 0.98);
 
   /* ── Special Chat Surface Tokens ── */
-  --chat-surface-bg: color-mix(in srgb, var(--card), transparent 30%);
-  --chat-surface-border: color-mix(in srgb, var(--border), transparent 30%);
+  --chat-surface-bg: var(--card);
+  --chat-surface-border: var(--border);
 
   /* ── Text ── */
   --text-primary: var(--bb-white);

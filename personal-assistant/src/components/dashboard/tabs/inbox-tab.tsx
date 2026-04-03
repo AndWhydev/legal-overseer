@@ -868,11 +868,11 @@ function InboxTab() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search inbox..."
-                className="h-11 rounded-full border-border/70 bg-card/70 pl-9 shadow-sm"
+                className="h-11 rounded-full border-border bg-card pl-9 shadow-sm"
               />
             </div>
 
-            <div className="flex items-center gap-1 rounded-[20px] border border-border/70 bg-card/70 p-1.5 shadow-sm">
+            <div className="flex items-center gap-1 rounded-[20px] border border-border bg-card p-1.5 shadow-sm">
               <Checkbox
                 checked={keyboard.selectedIds.size > 0 && keyboard.selectedIds.size === displayed.length}
                 onCheckedChange={(checked) => {
@@ -921,7 +921,7 @@ function InboxTab() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 rounded-[24px] border border-border/70 bg-card/50 shadow-sm overflow-hidden">
+          <div className="min-h-0 flex-1 rounded-[24px] border border-border bg-card shadow-sm overflow-hidden">
             <div className="h-full overflow-y-auto overflow-x-hidden overscroll-contain p-2">
               <div className="flex flex-col gap-1 min-w-0">
                   {displayItems.length === 0 ? (
@@ -1199,7 +1199,7 @@ function GroupRow({
 
       <div className="min-w-0 flex-1 truncate text-sm">
         <span className="text-foreground">{item.label}</span>
-        <span className="ml-2 inline-flex rounded-full border border-border/70 px-1.5 py-0 text-[10px] text-muted-foreground tabular-nums align-middle">
+        <span className="ml-2 inline-flex rounded-full border border-border px-1.5 py-0 text-[10px] text-muted-foreground tabular-nums align-middle">
           {item.messages.length}
         </span>
         <span className="mx-2 text-muted-foreground/50">&middot;</span>
