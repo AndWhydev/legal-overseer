@@ -20,6 +20,8 @@ import { notifyApproval } from './approval-notifier'
 import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
 import { shouldAutoExecute, type OrgAutonomyOverrides } from '@/lib/intelligence/autonomy-levels'
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
+import { graphSearch } from '@/lib/memory-palace/memory-search'
+import { getEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
 import {
   createTask,
   updateTask,
@@ -692,6 +694,38 @@ const handlers: Record<string, AgentToolHandler> = {
   async search_memory(input, orgId, supabase) {
     const query = input.query as string
     const results: { source: string; entries: unknown[] }[] = []
+
+    // 0. Graph search (knowledge graph entities + relationships + events)
+    const graphResults = await (async () => {
+      try {
+        // Extract potential entity names from query
+        const keywords = query.split(/\s+/).filter(w => w.length > 2 && w[0] === w[0].toUpperCase())
+        const entityIds: string[] = []
+        for (const kw of keywords.slice(0, 3)) {
+          const node = await getEntityByAlias(supabase, orgId, kw)
+          if (node) entityIds.push(node.id)
+        }
+
+        return graphSearch(supabase, orgId, query, {
+          entityIds: entityIds.length > 0 ? entityIds : undefined,
+          limit: 10,
+        })
+      } catch {
+        return []
+      }
+    })()
+
+    if (graphResults.length > 0) {
+      results.push({
+        source: 'knowledge_graph',
+        entries: graphResults.map(r => ({
+          content: r.content,
+          score: r.score,
+          source: r.source,
+          ...r.metadata,
+        })),
+      })
+    }
 
     // Run dense (Pinecone) and sparse (Supabase full-text) search in parallel
     const [denseResult, sparseResult] = await Promise.allSettled([
