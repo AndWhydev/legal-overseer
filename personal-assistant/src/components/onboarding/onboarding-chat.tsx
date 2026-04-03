@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { ChatInput } from '@/components/chat/chat-input'
 import { BitBitHeader } from '@/components/chat/bitbit-header'
-import { ConnectionCard } from './connection-card'
 import { WorldGraph } from './world-graph'
 import { useOnboardingStream, type ChatMessage } from './use-onboarding-stream'
 import { motion, AnimatePresence } from 'motion/react'
 import { Shimmer } from '@/components/ai-elements/shimmer'
 import { useSmartScroll } from '@/components/chat/use-smart-scroll'
 import { IconChevronDown } from '@tabler/icons-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Mail, Calendar } from 'lucide-react'
 
 interface OnboardingChatProps {
   hasConnection: boolean
@@ -26,6 +27,19 @@ function adaptMessage(msg: ChatMessage) {
     content: msg.content,
     timestamp: new Date(msg.timestamp),
   }
+}
+
+const PROVIDERS = [
+  { id: 'gmail', label: 'Gmail', icon: Mail, oauthPath: '/api/channels/oauth/gmail' },
+  { id: 'outlook', label: 'Outlook', icon: Mail, oauthPath: '/api/channels/oauth/outlook' },
+  { id: 'google-calendar', label: 'Calendar', icon: Calendar, oauthPath: '/api/channels/oauth/google-calendar' },
+]
+
+function handleOAuthConnect(providerId: string) {
+  const provider = PROVIDERS.find(p => p.id === providerId)
+  if (!provider) return
+  document.cookie = 'bb-onboarding-active=1; path=/; max-age=3600; SameSite=Lax'
+  window.location.href = `${provider.oauthPath}?return=/onboard`
 }
 
 export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProps) {
@@ -67,40 +81,76 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
   const isInputEnabled = phase === 'crawling' || phase === 'synthesizing' || phase === 'reveal'
   const isActive = phase === 'crawling' || phase === 'synthesizing' || phase === 'ingesting'
 
-  // Group consecutive assistant messages to only show BitBitHeader once per group
-  const messageGroups: { showHeader: boolean; msg: ChatMessage }[] = messages.map((msg, i) => ({
-    showHeader: msg.role === 'assistant' && (i === 0 || messages[i - 1].role !== 'assistant'),
-    msg,
-  }))
-
   return (
     <div className="bb-chat flex flex-col h-full">
       {/* Messages */}
       <div className="bb-chat__messages flex-1 overflow-y-auto" ref={scrollAreaRef}>
         <div className="bb-chat__msg-list">
-          {/* Initial greeting (before stream starts) */}
+          {/* Initial greeting + connection card (before stream starts) */}
           {!streamStarted && (
-            <div className="bb-chat__msg bb-chat__msg--assistant">
-              <BitBitHeader />
-              <div className="bb-chat__bubble--assistant bb-chat__markdown">
-                <p>Hey &#8212; I&#8217;m BitBit. Give me access to your email and I&#8217;ll figure out the rest.</p>
+            <>
+              <div>
+                <BitBitHeader />
+                <MessageBubble
+                  message={{
+                    id: 'greeting',
+                    role: 'assistant',
+                    content: "Hey \u2014 I'm BitBit. Give me access to your email and I'll figure out the rest.",
+                    timestamp: new Date(),
+                  }}
+                />
               </div>
-            </div>
+
+              {/* Inline connection card — below the greeting, in the message lane */}
+              {showConnectionCard && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.4, ease: 'easeOut' }}
+                  className="mt-4"
+                >
+                  <Card className="w-full max-w-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium">Connect an account</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-2">
+                      {PROVIDERS.map(provider => (
+                        <Button
+                          key={provider.id}
+                          variant="outline"
+                          className="justify-start gap-3 h-11"
+                          onClick={() => handleOAuthConnect(provider.id)}
+                        >
+                          <provider.icon className="h-4 w-4" />
+                          {provider.label}
+                        </Button>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            </>
           )}
 
           {/* Stream messages */}
-          {messageGroups.map(({ showHeader, msg }) => (
-            <div key={msg.id} className={msg.role === 'user' ? 'bb-chat__msg bb-chat__msg--user group' : 'bb-chat__msg bb-chat__msg--assistant'}>
-              {showHeader && <BitBitHeader />}
-              <MessageBubble message={adaptMessage(msg)} />
-            </div>
-          ))}
+          {messages.map((msg, i) => {
+            const prev = messages[i - 1]
+            const showHeader = msg.role === 'assistant' && (!prev || prev.role !== 'assistant')
+            return (
+              <div key={msg.id} className={prev && prev.role !== msg.role ? 'bb-chat__msg-group-gap' : ''}>
+                {showHeader && <BitBitHeader />}
+                <MessageBubble message={adaptMessage(msg)} />
+              </div>
+            )
+          })}
 
           {/* Loading shimmer during active phases */}
           {isActive && (
-            <div className="bb-chat__msg bb-chat__msg--assistant">
+            <div>
               {messages.length === 0 || messages[messages.length - 1].role !== 'assistant' ? <BitBitHeader /> : null}
-              <Shimmer duration={1.2} as="span">Reading through your world...</Shimmer>
+              <div className="bb-chat__bubble--assistant bb-chat__markdown">
+                <Shimmer duration={1.2} as="span">Reading through your world...</Shimmer>
+              </div>
             </div>
           )}
 
@@ -120,7 +170,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
 
           {/* Agent activation message */}
           {activatedAgents && (
-            <div className="bb-chat__msg bb-chat__msg--assistant">
+            <div className="bb-chat__msg-group-gap">
               <BitBitHeader />
               <MessageBubble
                 message={{
@@ -153,7 +203,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
 
           {/* Error state */}
           {error && (
-            <div className="bb-chat__msg bb-chat__msg--assistant">
+            <div>
               <BitBitHeader />
               <div className="bb-chat__bubble--assistant text-destructive">
                 <p>{error}</p>
@@ -171,43 +221,38 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
               </div>
             </div>
           )}
-
         </div>
       </div>
 
-      {/* Scroll-to-bottom button */}
-      <AnimatePresence>
-        {smartScroll.shouldShowScrollButton && (
-          <motion.button
-            className="bb-chat__scroll-btn"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.2 }}
-            onClick={smartScroll.scrollToBottom}
-            aria-label="Scroll to bottom"
-          >
-            <IconChevronDown size={18} />
-          </motion.button>
-        )}
-      </AnimatePresence>
-
-      {/* Chat input — same pill as dashboard chat */}
-      <ChatInput
-        onSend={sendReply}
-        disabled={!isInputEnabled}
-        placeholder={
-          phase === 'reveal'
-            ? 'Tap a node to explore, or type to correct anything...'
-            : 'Message BitBit...'
-        }
-      />
-
-      {/* Floating connection card */}
-      <ConnectionCard
-        visible={showConnectionCard}
-        onConnect={() => {}}
-      />
+      {/* Scroll-to-bottom + Input area */}
+      <div className="bb-chat__input-area bb-chat__input-area--bottom">
+        <AnimatePresence>
+          {smartScroll.shouldShowScrollButton && (
+            <motion.button
+              className="bb-chat__scroll-btn"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              onClick={smartScroll.scrollToBottom}
+              aria-label="Scroll to bottom"
+            >
+              <IconChevronDown size={18} />
+            </motion.button>
+          )}
+        </AnimatePresence>
+        <div id="onboarding-input" className="w-full pointer-events-auto">
+          <ChatInput
+            onSend={sendReply}
+            disabled={!isInputEnabled}
+            placeholder={
+              phase === 'reveal'
+                ? 'Tap a node to explore, or type to correct anything...'
+                : 'Message BitBit...'
+            }
+          />
+        </div>
+      </div>
     </div>
   )
 }
