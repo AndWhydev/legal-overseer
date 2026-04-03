@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "DEV_BYPASS_AUTH=false next dev",
     "dev:noauth": "next dev",
-    "build": "next build --webpack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
@@ -20,6 +20,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@floating-ui/react": "^0.27.19",
+    "@google/generative-ai": "^0.24.1",
     "@kuzu/kuzu-wasm": "^0.7.0",
     "@pinecone-database/pinecone": "^7.1.0",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
