@@ -31,7 +31,10 @@ export default function OnboardPage() {
 
       const { data: profile } = await loadOnboardingProfile(supabase as never, user.id)
 
-      if (hasCompletedFirstRunOnboarding(profile)) {
+      const params = new URLSearchParams(window.location.search)
+      const forceOnboarding = params.get("force") === "true"
+
+      if (hasCompletedFirstRunOnboarding(profile) && !forceOnboarding) {
         router.replace('/dashboard')
         return
       }
@@ -52,7 +55,7 @@ export default function OnboardPage() {
       }
 
       // Detect OAuth return
-      const params = new URLSearchParams(window.location.search)
+      
       const justConnected = params.get('connected')
       if (justConnected) {
         setHasConnection(true)
