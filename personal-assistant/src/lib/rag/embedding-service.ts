@@ -6,6 +6,7 @@
  */
 
 import { logger } from '@/lib/core/logger'
+import { contextualizeChunks, CONTEXTUALIZE_ENABLED } from './contextualizer'
 import { chunkText } from './chunker'
 import { embedDocuments } from './voyage-client'
 import { upsertVectors, deletePineconeVectorsByFilter } from './pinecone-client'
@@ -94,6 +95,23 @@ export async function embedAndUpsert(
       ...docs.flatMap(doc => chunkText(doc.content, doc.metadata)),
       ...attachmentChunks,
     ]
+
+    // Phase 1b: Contextual enrichment (Anthropic technique -- prepend context to chunks)
+    if (CONTEXTUALIZE_ENABLED && allChunks.length > 0) {
+      try {
+        const fullText = docs.map(d => d.content).join("\n\n")
+        const firstMeta = docs[0]?.metadata ?? {}
+        const enriched = await contextualizeChunks(allChunks, fullText, {
+          sender: firstMeta.sender as string,
+          channel: firstMeta.channel as string,
+          subject: firstMeta.subject as string,
+        })
+        allChunks.splice(0, allChunks.length, ...enriched)
+      } catch (err) {
+        logger.warn("[embedding-service] Contextual enrichment failed:", err)
+      }
+    }
+
 
     if (allChunks.length === 0) {
       result.failed = docs.length
