@@ -133,8 +133,14 @@ export function selectRelevantTools(
   for (const tool of allTools) {
     const group = TOOL_GROUP_MAP[tool.name]
 
-    // Core tools + memory search are always included — essential for every conversation
-    if (group === 'core' || tool.name === 'search_memory' || tool.name === 'find_messages' || tool.name === 'spawn_agent') {
+    // Core tools + essential channel tools are always included
+    const alwaysInclude = group === 'core'
+      || tool.name === 'search_memory'
+      || tool.name === 'find_messages'
+      || tool.name === 'read_message'
+      || tool.name === 'draft_reply'
+      || tool.name === 'summarize_inbox'
+    if (alwaysInclude) {
       coreTools.push(tool)
       scores[tool.name] = Infinity
       continue
