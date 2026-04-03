@@ -2,8 +2,8 @@
 
 import { ClawdLoginFace } from '@/components/ui/clawd-login-face'
 
-const FACE_W = 448
-const FACE_H = 518
+const FACE_W = 200
+const FACE_H = 232
 
 export function ChatBitBitFace() {
   return (

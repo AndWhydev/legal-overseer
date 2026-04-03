@@ -6575,7 +6575,7 @@ html.light .bb-pill__shimmer-dots span {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-bottom: -6px;
+  margin-bottom: 0;
   isolation: isolate;
 }
 
@@ -6591,7 +6591,7 @@ html.light .bb-pill__shimmer-dots span {
 }
 
 .bb-chat__greeting {
-  font-size: 38px !important;
+  font-size: 16px;
   font-weight: 500;
   margin-top: 8px;
   color: var(--text-primary);
@@ -6600,18 +6600,18 @@ html.light .bb-pill__shimmer-dots span {
 }
 
 .bb-chat__tagline {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--text-secondary);
   margin: 0;
 }
 
 .bb-chat__chip {
-  background: var(--glass-pill-bg);
-  box-shadow: var(--glass-pill-inset);
+  background: var(--secondary);
+  box-shadow: none;
   border: none;
   border-radius: var(--radius-xl);
-  padding: 6px 14px;
-  font-size: 12px;
+  padding: 8px 16px;
+  font-size: 14px;
   color: var(--text-secondary);
   cursor: pointer;
   transition: transform 0.15s ease, color 0.15s ease;

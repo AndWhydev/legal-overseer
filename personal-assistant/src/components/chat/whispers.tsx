@@ -78,7 +78,7 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
             <motion.button
               key={`${whisper.source}-${index}`}
               onClick={() => handleTap(whisper)}
-              className="relative rounded-lg border border-border bg-muted/50 px-7 pl-3 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors text-center whitespace-nowrap cursor-pointer"
+              className="relative rounded-lg border border-border bg-secondary px-7 pl-3 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-elevated transition-colors text-center whitespace-nowrap cursor-pointer"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}

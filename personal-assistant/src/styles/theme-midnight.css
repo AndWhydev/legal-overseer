@@ -37,8 +37,6 @@
   --glass-card-bg-light: rgba(49, 49, 49, 0.88);
   --glass-card-border: rgba(255, 255, 255, 0.03);
   --glass-card-blur: blur(10px);
-  --glass-pill-bg: rgba(255, 255, 255, 0.05);
-  --glass-pill-inset: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   --glass-hover-bg: rgba(255, 255, 255, 0.08);
   --glass-divider: rgba(255, 255, 255, 0.04);
   --glass-interactive-bg: rgba(255, 255, 255, 0.04);
@@ -501,7 +499,6 @@
   --bg-card: #313131;
   --bg-card-solid: #313131;
   --glass-card-blur: none;
-  --glass-pill-bg: rgba(255, 255, 255, 0.05);
   --border-subtle: rgba(255, 255, 255, 0.08);
 }
 
