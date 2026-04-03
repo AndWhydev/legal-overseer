@@ -861,7 +861,7 @@ function InboxTab() {
   return (
     <TabShell scrollable={false} variant="fixed">
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-w-0 flex-1 flex flex-col gap-6 overflow-hidden">
+        <div className="min-w-0 flex-1 flex flex-col overflow-hidden">
           <div className="z-10 shrink-0 space-y-3 pb-3">
             <div className="relative">
               <IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -922,7 +922,7 @@ function InboxTab() {
             </div>
           </div>
 
-          <ScrollArea className="min-h-0 flex-1">
+          <ScrollArea className="min-h-0 flex-1 overflow-hidden">
             <div className="pb-4 pr-2">
               <div className="rounded-[24px] border border-border/70 bg-card/50 p-2 shadow-sm">
                 <div className="flex flex-col gap-1">
