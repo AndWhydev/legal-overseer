@@ -1,19 +1,60 @@
 # Project State
 
-**Project:** BitBit
-**Milestone:** v1.0
-**Last activity:** 2026-03-29 - Completed quick task 2: UI Polish - Loading Skeletons & Empty States
+## Project Reference
 
-### Key Decisions
-- Dashboard uses glassmorphic design system with inline React styles
-- Force-directed graph for entity visualization
+See: .planning/PROJECT.md (updated 2026-04-04)
+
+**Core value:** Proactive omniscient intelligence that deeply understands the user's world
+**Current focus:** Phase 35 — Entity Graph Foundation (Cognitive Memory OS)
+
+## Current Position
+
+Phase: 35 of 40 (Entity Graph Foundation)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-04-04 — Cognitive Memory OS spec approved, roadmap phases 35-40 added
+
+Progress: ████████████████░░░░░░░░░░░░░░ ~56% (phases 1-34 prior work)
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0 (Cognitive Memory OS milestone)
+- Average duration: —
+- Total execution time: 0 hours
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| — | — | — | — |
+
+**Recent Trend:**
+- Last 5 plans: —
+- Trend: —
+
+## Accumulated Context
+
+### Decisions
+
+- Approach C (Cognitive Memory OS) selected over surgical retrieval fix or partial graph
+- pgvector chosen over Pinecone for entity graph (co-located graph+vector queries)
+- Google multimodal embedding (768d) as primary, Voyage-3.5 (1024d) as secondary
+- TDD approach for all layers
+- GSD workflow for tracking
+
+### Deferred Issues
+
+None yet.
 
 ### Blockers/Concerns
-(none)
 
-### Quick Tasks Completed
+- pgvector extension may need enabling on Supabase (check plan tier)
+- Google multimodal embedding API access needs verification
+- Existing Pinecone pipeline continues for channel_messages (no migration yet)
 
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 1 | Build Obsidian-style entity knowledge graph visualization | 2026-03-18 | pending | [1-build-obsidian-style-entity-knowledge-gr](./quick/1-build-obsidian-style-entity-knowledge-gr/) |
-| 2 | UI Polish - Loading Skeletons & Empty States | 2026-03-29 | fdd2c1e2 | [2-ui-polish-loading-skeletons-empty-states](./quick/2-ui-polish-loading-skeletons-empty-states/) |
+## Session Continuity
+
+Last session: 2026-04-04
+Stopped at: Roadmap created, ready to plan Phase 35
+Resume file: None
