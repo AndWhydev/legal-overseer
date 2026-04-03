@@ -5,43 +5,41 @@
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Proactive omniscient intelligence that deeply understands the user's world
-**Current focus:** Phase 35 — Entity Graph Foundation (Cognitive Memory OS)
+**Current focus:** Phase 35 — Entity Graph Foundation (Plan 02 next)
 
 ## Current Position
 
 Phase: 35 of 40 (Entity Graph Foundation)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-04-04 — Cognitive Memory OS spec approved, roadmap phases 35-40 added
+Plan: 1 of 3 complete, Plan 02 next
+Status: In progress
+Last activity: 2026-04-04 — Plan 35-01 complete (schema + queries + tests)
 
-Progress: ████████████████░░░░░░░░░░░░░░ ~56% (phases 1-34 prior work)
+Progress: ████████████████░░░░░░░░░░░░░░ ~57%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0 (Cognitive Memory OS milestone)
-- Average duration: —
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 17 min
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| — | — | — | — |
-
-**Recent Trend:**
-- Last 5 plans: —
-- Trend: —
+| 35 | 1/3 | 17min | 17min |
 
 ## Accumulated Context
 
 ### Decisions
 
-- Approach C (Cognitive Memory OS) selected over surgical retrieval fix or partial graph
-- pgvector chosen over Pinecone for entity graph (co-located graph+vector queries)
-- Google multimodal embedding (768d) as primary, Voyage-3.5 (1024d) as secondary
+- Approach C (Cognitive Memory OS) selected
+- pgvector chosen over Pinecone for entity graph
+- Google multimodal embedding (768d) primary, Voyage (1024d) secondary
 - TDD approach for all layers
-- GSD workflow for tracking
+- organizations (American spelling) for FK references
+- match_entity_nodes RPC for vector similarity search
+- Migration applied via Management API (MCP permissions issue)
 
 ### Deferred Issues
 
@@ -49,12 +47,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- pgvector extension may need enabling on Supabase (check plan tier)
-- Google multimodal embedding API access needs verification
-- Existing Pinecone pipeline continues for channel_messages (no migration yet)
+- Supabase MCP apply_migration has permissions issue — use Management API
+- Google embedding API key not yet configured in .env.local
 
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Roadmap created, ready to plan Phase 35
+Stopped at: Plan 35-01 complete, ready for 35-02
 Resume file: None
