@@ -315,7 +315,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
           background: 'none',
           border: 'none',
           padding: 4,
-          color: 'var(--text-muted, rgba(255,255,255,0.35))',
+          color: 'var(--text-dim)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
@@ -376,10 +376,10 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
               maxWidth: 'calc(100vw - 32px)',
               maxHeight: 480,
               zIndex: 1000,
-              background: 'var(--bg-card, rgba(15, 20, 30, 0.95))',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--popover)',
+              border: '1px solid var(--border)',
               borderRadius: 10,
-              boxShadow: '0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04) inset',
+              boxShadow: 'var(--card-shadow, 0 4px 16px rgba(0,0,0,0.2))',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
@@ -389,7 +389,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
             <div
               style={{
                 padding: '10px 16px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                borderBottom: '1px solid var(--border)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -399,7 +399,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                 style={{
                   fontSize: 14,
                   fontWeight: 500,
-                  color: 'var(--text-primary, rgba(255,255,255,0.92))',
+                  color: 'var(--foreground)',
                   letterSpacing: '-0.01em',
                 }}
               >
@@ -418,19 +418,19 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: 'var(--text-muted, rgba(255,255,255,0.35))',
+                      color: 'var(--text-dim)',
                       cursor: 'pointer',
                       fontSize: 14,
                       fontWeight: 400,
-                      padding: '2px 6px',
+                      padding: '4px 8px',
                       borderRadius: 8,
                       transition: 'color 0.15s',
                     }}
                     onMouseEnter={e => {
-                      (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary, rgba(255,255,255,0.6))';
+                      (e.currentTarget as HTMLButtonElement).style.color = 'var(--muted-foreground)';
                     }}
                     onMouseLeave={e => {
-                      (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted, rgba(255,255,255,0.35))';
+                      (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-dim)';
                     }}
                   >
                     Mark all read
@@ -452,7 +452,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                   style={{
                     padding: '28px 16px',
                     textAlign: 'center',
-                    color: 'var(--text-muted, rgba(255,255,255,0.35))',
+                    color: 'var(--text-dim)',
                     fontSize: 14,
                   }}
                 >
@@ -542,10 +542,10 @@ function NotificationItemRow({
         width: '100%',
         padding: '8px 16px',
         border: 'none',
-        background: hovered ? 'rgba(255,255,255,0.04)' : 'transparent',
+        background: hovered ? 'var(--secondary)' : 'transparent',
         textAlign: 'left',
         cursor: 'pointer',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid var(--border)',
         display: 'flex',
         gap: 12,
         alignItems: 'flex-start',
@@ -557,7 +557,7 @@ function NotificationItemRow({
           style={{
             fontSize: 14,
             fontWeight: 500,
-            color: 'var(--text-primary, rgba(255,255,255,0.92))',
+            color: 'var(--foreground)',
             lineHeight: 1.3,
           }}
         >
@@ -566,7 +566,7 @@ function NotificationItemRow({
         <div
           style={{
             fontSize: 14,
-            color: 'var(--text-secondary, rgba(255,255,255,0.55))',
+            color: 'var(--muted-foreground)',
             marginTop: 4,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -578,7 +578,7 @@ function NotificationItemRow({
         <div
           style={{
             fontSize: 14,
-            color: 'var(--text-muted, rgba(255,255,255,0.3))',
+            color: 'var(--text-dim)',
             marginTop: 4,
           }}
         >
@@ -590,7 +590,7 @@ function NotificationItemRow({
           width: 5,
           height: 5,
           borderRadius: '50%',
-          backgroundColor: 'var(--bb-accent, rgba(99,140,255,0.6))',
+          backgroundColor: 'var(--foreground)',
           flexShrink: 0,
           marginTop: 8,
         }}

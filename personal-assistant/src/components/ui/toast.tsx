@@ -27,9 +27,9 @@ export function useToast() {
 }
 
 const ICONS: Record<ToastType, React.ReactNode> = {
-  success: <CheckCircle2 className="h-4 w-4 text-[var(--bb-green)]" aria-hidden="true" />,
-  error: <AlertCircle className="h-4 w-4 text-[var(--bb-red)]" aria-hidden="true" />,
-  info: <Info className="h-4 w-4 text-[var(--bb-blue)]" aria-hidden="true" />,
+  success: <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />,
+  error: <AlertCircle className="h-4 w-4 text-destructive" aria-hidden="true" />,
+  info: <Info className="h-4 w-4 text-muted-foreground" aria-hidden="true" />,
 };
 
 // Toast uses inline glass styling — no border classes needed
@@ -98,11 +98,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               gap: 12,
               borderRadius: 16,
               border: 'none',
-              background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.95))',
-              boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
+              background: 'var(--popover)',
+              boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.15))',
               padding: '12px 16px',
               fontSize: 14,
-              color: 'var(--text-primary, #F1F5F9)',
+              color: 'var(--foreground)',
               animation: 'bb-fade-up 200ms cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
@@ -111,7 +111,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => dismiss(t.id)}
-              className="ml-2 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+              className="ml-2 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
               aria-label="Dismiss notification"
             >
               <X className="h-3.5 w-3.5" />
@@ -135,11 +135,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               gap: 12,
               borderRadius: 16,
               border: 'none',
-              background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.95))',
-              boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
+              background: 'var(--popover)',
+              boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.15))',
               padding: '12px 16px',
               fontSize: 14,
-              color: 'var(--text-primary, #F1F5F9)',
+              color: 'var(--foreground)',
               animation: 'bb-fade-up 200ms cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
@@ -148,7 +148,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => dismiss(t.id)}
-              className="ml-2 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-white/10 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+              className="ml-2 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
               aria-label="Dismiss error"
             >
               <X className="h-3.5 w-3.5" />
