@@ -921,10 +921,9 @@ function InboxTab() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
-            <div className="pb-4 pr-2 min-w-0">
-              <div className="rounded-[24px] border border-border/70 bg-card/50 p-2 shadow-sm min-w-0 overflow-hidden">
-                <div className="flex flex-col gap-1 min-w-0">
+          <div className="min-h-0 flex-1 rounded-[24px] border border-border/70 bg-card/50 shadow-sm overflow-hidden">
+            <div className="h-full overflow-y-auto overflow-x-hidden overscroll-contain p-2">
+              <div className="flex flex-col gap-1 min-w-0">
                   {displayItems.length === 0 ? (
                     <Empty>
                       <EmptyTitle>All caught up</EmptyTitle>
@@ -1028,7 +1027,6 @@ function InboxTab() {
                       )}
                     </>
                   )}
-                </div>
               </div>
             </div>
           </div>
