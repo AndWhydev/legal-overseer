@@ -58,12 +58,30 @@
   --text-sm--line-height: calc(1.5 / 1);
   --text-base: 1rem;
   --text-base--line-height: calc(1.5 / 1);
+  --text-xs: 0.875rem;
+  --text-xs--line-height: calc(1.45 / 0.875);
+  --text-lg: 1rem;
+  --text-lg--line-height: calc(1.5 / 1);
+  --text-xl: 1rem;
+  --text-xl--line-height: calc(1.5 / 1);
+  --text-2xl: 1rem;
+  --text-2xl--line-height: calc(1.5 / 1);
+  --text-3xl: 1rem;
+  --text-3xl--line-height: calc(1.5 / 1);
+  --text-4xl: 1rem;
+  --text-4xl--line-height: calc(1.5 / 1);
+  --text-5xl: 1rem;
+  --text-5xl--line-height: calc(1.5 / 1);
   --radius-sm: var(--radius-base-sm);
   --radius-md: var(--radius-base-md);
   --radius-lg: var(--radius);
   --radius-xl: var(--radius);
   --radius-2xl: var(--radius);
 
+  --font-weight-semibold: 500;
+  --font-weight-bold: 500;
+  --font-weight-extrabold: 500;
+  --font-weight-black: 500;
   --spacing-sidebar: 64px;
   --spacing-topbar: 56px;
   --font-heading: var(--font-stack-ui);
@@ -120,14 +138,13 @@ button, [role="button"], [type="button"], [type="submit"], [type="reset"] {
 :root {
   color-scheme: light;
   --font-stack-ui: -apple-system,BlinkMacSystemFont,Segoe UI Variable Display,Segoe UI,Helvetica,Apple Color Emoji,Arial,sans-serif,Segoe UI Emoji,Segoe UI Symbol;
-  --font-dm-sans: var(--font-stack-ui);
   --bb-white: #dadada;
   
   /* ── Radius Tokens ── */
   --radius: 10px;           /* Global Standard */
   --radius-base-sm: 4px;    /* Component Internal (Checkbox, Tooltip Arrow) */
   --radius-base-md: 8px;    /* Secondary Components (Small Buttons) */
-  --radius-base-xl: 22px;   /* Large Interactive (Chat Input, Large Cards) */
+  --radius-base-xl: 24px;   /* Large Interactive (Chat Input, Large Cards) */
 
   /* Light Theme Defaults (Inherited by everything unless .dark) */
   --background: #FAFAF9;
@@ -166,8 +183,8 @@ button, [role="button"], [type="button"], [type="submit"], [type="reset"] {
   --text-dim: #78736A;
 
   /* Chat Surface Tokens (Darker than background in Light Mode) */
-  --chat-surface-bg: #F0F0EE;
-  --chat-surface-border: #E4E2DD;
+  --chat-surface-bg: var(--card);
+  --chat-surface-border: var(--border);
 
   /* Background colors (light) */
   --bg-primary: #FAFAF9;
@@ -273,8 +290,8 @@ html.light {
   --text-dim: #9a9a9a;
 
   /* Chat Surface Tokens (Lighter than background in Dark Mode) */
-  --chat-surface-bg: oklch(0.26 0 0);
-  --chat-surface-border: oklch(1 0 0 / 10%);
+  --chat-surface-bg: var(--card);
+  --chat-surface-border: var(--border);
 
   /* Background colors (dark) */
   --bg-primary: #0A0F1A;
