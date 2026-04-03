@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ExpandableProjectCard } from './project-timeline-panel'
 import type { WeeklyOperationsSummary } from '@/lib/intelligence/weekly-operations-summary'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
@@ -34,13 +35,8 @@ export function ProjectProgressCards() {
       <>
         {[0, 1].map(i => (
           <Card key={i} className="@container/card">
-            <CardHeader>
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-8 w-20 mt-1" />
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1.5">
-              <Skeleton className="h-4 w-40" />
-            </CardFooter>
+            <CardHeader><Skeleton className="h-4 w-32" /><Skeleton className="h-8 w-20 mt-1" /></CardHeader>
+            <CardFooter className="flex-col items-start gap-1.5"><Skeleton className="h-4 w-40" /></CardFooter>
           </Card>
         ))}
       </>
@@ -55,13 +51,14 @@ export function ProjectProgressCards() {
         const allPhases = [
           ...project.phasesCompleted.map(p => ({ title: p, status: 'complete' })),
           ...project.phasesStarted.map(p => ({ title: p, status: 'active' })),
-          ...project.blockers.map((b, i) => ({ title: b, status: 'blocked' })),
+          ...project.blockers.map((b) => ({ title: b, status: 'blocked' })),
         ]
         const completedCount = project.phasesCompleted.length
         const totalCount = allPhases.length || 1
+        const projectId = (project as unknown as { id?: string }).id
 
-        return (
-          <Card key={project.name} className="@container/card">
+        const cardContent = (
+          <Card className="@container/card">
             <CardHeader>
               <CardDescription className="truncate">{project.name}</CardDescription>
               <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
@@ -75,27 +72,29 @@ export function ProjectProgressCards() {
               {allPhases.length > 0 && (
                 <div className="flex gap-1 w-full">
                   {allPhases.map((phase, i) => (
-                    <div
-                      key={i}
-                      title={phase.title}
-                      className={`h-1.5 flex-1 rounded-full bg-foreground ${PHASE_OPACITY[phase.status] || 'opacity-10'}`}
-                    />
+                    <div key={i} title={phase.title} className={`h-1.5 flex-1 rounded-full bg-foreground ${PHASE_OPACITY[phase.status] || 'opacity-10'}`} />
                   ))}
                 </div>
               )}
               {project.nextAction && (
-                <div className="line-clamp-1 flex gap-2 font-medium">
-                  {project.nextAction}
-                </div>
+                <div className="line-clamp-1 flex gap-2 font-medium">{project.nextAction}</div>
               )}
               {project.blockers.length > 0 && (
-                <div className="text-muted-foreground line-clamp-1">
-                  Blocked: {project.blockers[0]}
-                </div>
+                <div className="text-muted-foreground line-clamp-1">Blocked: {project.blockers[0]}</div>
               )}
             </CardFooter>
           </Card>
         )
+
+        if (projectId) {
+          return (
+            <ExpandableProjectCard key={project.name} projectId={projectId}>
+              {cardContent}
+            </ExpandableProjectCard>
+          )
+        }
+
+        return <React.Fragment key={project.name}>{cardContent}</React.Fragment>
       })}
     </>
   )

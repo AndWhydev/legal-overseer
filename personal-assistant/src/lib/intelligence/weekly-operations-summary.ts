@@ -28,6 +28,7 @@ export interface WeeklyOperationsSummary {
     outcomesRecorded: number
   }
   projects: Array<{
+    id: string
     name: string
     status: string
     phasesCompleted: string[]
@@ -158,13 +159,14 @@ async function fetchActionOutcomes(supabase: SupabaseClient, orgId: string, sinc
 async function fetchProjects(supabase: SupabaseClient, orgId: string) {
   const { data } = await supabase
     .from('projects')
-    .select('name, status, metadata')
+    .select('id, name, status, metadata')
     .eq('org_id', orgId)
     .in('status', ['active', 'blocked', 'completed'])
   return (data ?? []).map(p => {
     const meta = (p.metadata ?? {}) as Record<string, unknown>
     const phases = Array.isArray(meta.phases) ? meta.phases as Record<string, unknown>[] : []
     return {
+      id: p.id,
       name: p.name,
       status: p.status,
       phasesCompleted: phases.filter(ph => ph.status === 'complete').map(ph => ph.title as string),
