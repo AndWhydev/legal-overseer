@@ -24,7 +24,8 @@ import { getPendingApprovals, type ApprovalRecord } from '@/lib/agent/approval-q
 import { loadRecentMessages, loadThreadSummaries } from '@/lib/conversation/thread-resolver'
 import { scanForEntityMentions } from '@/lib/context/entity-mention-scanner'
 import { TokenBudgetManager, type TierInput } from './token-budget-manager'
-import { proactiveRecall as recallForContext } from '@/lib/memory-palace'
+import { proactiveRecall as recallForContext, formatProactiveRecall } from '@/lib/memory-palace'
+import { getEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
 import { logger } from '@/lib/core/logger'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -635,22 +636,20 @@ export class ContextAssembler {
 
     // Append Memory Palace proactive recall (institutional knowledge)
     try {
-      // Extract entity IDs from entity mentions for targeted recall
-      let recallEntityIds: string[] = []
-      if (entityMentions.length > 0) {
-        const { data: mentionedContacts } = await supabase
-          .from('contacts')
-          .select('id')
-          .eq('org_id', orgId)
-          .in('name', entityMentions)
-          .limit(3)
-        recallEntityIds = (mentionedContacts ?? []).map((c: Record<string, unknown>) => c.id as string)
+      // Resolve entity mentions to entity_node IDs via knowledge graph
+      const entityNodeIds: string[] = []
+      for (const mention of entityMentions.slice(0, 3)) {
+        try {
+          const node = await getEntityByAlias(supabase, orgId, mention)
+          if (node) entityNodeIds.push(node.id)
+        } catch {
+          // Skip unresolvable mentions
+        }
       }
 
-      const recallResults = await recallForContext(supabase, orgId, recallEntityIds)
+      const recallResults = await recallForContext(supabase, orgId, entityNodeIds)
 
       if (recallResults.length > 0) {
-        const { formatProactiveRecall } = await import('@/lib/memory-palace')
         const formattedContext = formatProactiveRecall(recallResults)
         if (formattedContext) {
           finalSystemPrompt = `${finalSystemPrompt}\n\n${formattedContext}`

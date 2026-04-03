@@ -25,8 +25,8 @@ export { MemoryWriter }
 export { MemorySearch }
 export { ConsolidationPipeline } from './consolidation-pipeline'
 export type { ConsolidationReport } from './consolidation-pipeline'
-export { proactiveRecall, formatProactiveRecall } from './proactive-recall'
-export type { ProactiveRecallResult } from './proactive-recall'
+export { proactiveRecall, graphAwareRecall, legacyProactiveRecall, formatProactiveRecall } from './proactive-recall'
+export type { ProactiveRecallResult, GraphAwareRecallResult, ScoredItem } from './proactive-recall'
 export { PricingIntelligence }
 export { ArchaeologyEngine }
 export { PatternDetector } from './pattern-detector'
