@@ -388,6 +388,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
           <SidebarProvider
             defaultOpen={true}
             data-focus-mode={focusMode || undefined}
+            className="!h-svh !max-h-svh !min-h-0 overflow-hidden"
             style={{
               '--sidebar-width': 'calc(var(--spacing) * 72)',
               '--header-height': 'calc(var(--spacing) * 12)',
@@ -433,7 +434,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
               {/* SPA Content Area — keep-alive: visited tabs stay mounted */}
               <main
                 id="main-content"
-                className="relative flex-1 overflow-y-auto bg-background"
+                className="relative flex-1 overflow-y-auto overscroll-contain bg-background"
                 tabIndex={-1}
               >
                 <KeepAliveTabPanel
