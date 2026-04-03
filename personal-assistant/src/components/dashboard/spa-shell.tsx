@@ -37,6 +37,8 @@ import { Separator } from '@/components/ui/separator';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ChatThreadsProvider } from '@/components/chat/chat-threads-context';
 import { UserProfileProvider } from '@/lib/user/user-profile-context';
+import { DrawerProvider } from './drawer-context';
+import { DrawerSlot } from './drawer-slot';
 
 // ---- Tab definitions ----
 
@@ -304,6 +306,8 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
 
   // Keep the viewport locked
   useEffect(() => {
+    const main = document.getElementById('main-content');
+    if (main) main.scrollTop = 0;
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [activeNavIndex]);
 
@@ -424,32 +428,38 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                 );
               })()}
 
-              {/* SPA Content Area — keep-alive: visited tabs stay mounted */}
-              <main
-                id="main-content"
-                className="relative flex-1 overflow-hidden bg-background"
-                tabIndex={-1}
-              >
-                <KeepAliveTabPanel
-                  activeTabId={TABS[activeNavIndex]?.id ?? 'dashboard'}
-                  direction={transitionDir}
-                  tabs={TABS
-                    .filter(t => visitedTabs.has(t.id))
-                    .map(t => {
-                      const Comp = TabComponents[t.id];
-                      return {
-                        id: t.id,
-                        children: (
-                          <ErrorBoundary>
-                            <Suspense fallback={<TabSkeleton variant={TAB_SKELETON_VARIANTS[t.id]} />}>
-                              <Comp />
-                            </Suspense>
-                          </ErrorBoundary>
-                        ),
-                      };
-                    })}
-                />
-              </main>
+              {/* Content row: scrollable tabs + drawer slot */}
+              <DrawerProvider activeTab={TABS[activeNavIndex]?.id ?? 'dashboard'}>
+                <div className="flex flex-1 overflow-hidden">
+                  {/* SPA Content Area — keep-alive: visited tabs stay mounted */}
+                  <main
+                    id="main-content"
+                    className="relative flex-1 overflow-y-auto bg-background"
+                    tabIndex={-1}
+                  >
+                    <KeepAliveTabPanel
+                      activeTabId={TABS[activeNavIndex]?.id ?? 'dashboard'}
+                      direction={transitionDir}
+                      tabs={TABS
+                        .filter(t => visitedTabs.has(t.id))
+                        .map(t => {
+                          const Comp = TabComponents[t.id];
+                          return {
+                            id: t.id,
+                            children: (
+                              <ErrorBoundary>
+                                <Suspense fallback={<TabSkeleton variant={TAB_SKELETON_VARIANTS[t.id]} />}>
+                                  <Comp />
+                                </Suspense>
+                              </ErrorBoundary>
+                            ),
+                          };
+                        })}
+                    />
+                  </main>
+                  <DrawerSlot />
+                </div>
+              </DrawerProvider>
 
               {/* Mobile bottom nav */}
               <div className="md:hidden">
