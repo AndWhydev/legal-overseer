@@ -407,7 +407,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
             {/* DrawerProvider wraps both SidebarInset and DrawerSlot */}
             <DrawerProvider activeTab={TABS[activeNavIndex]?.id ?? 'dashboard'}>
             {/* Main content area */}
-            <SidebarInset className="flex flex-col h-full overflow-hidden">
+            <SidebarInset className="flex flex-col max-h-[calc(100svh-1rem)] overflow-hidden">
               {/* Topbar */}
               {(() => {
                 const topbarConfig = TOPBAR_CONFIGS[TABS[activeNavIndex]?.id];
