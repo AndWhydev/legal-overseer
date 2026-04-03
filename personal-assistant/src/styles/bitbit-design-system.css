@@ -117,7 +117,6 @@
   --border-subtle-alpha: rgba(255, 255, 255, 0.03);
   --border-active: rgba(255, 255, 255, 0.2);
   --border-focus-ring: rgba(255, 255, 255, 0.2);
-  --glass-border: rgba(255, 255, 255, 0.03);
 
   /* ── AI Gradient (monochrome shimmer) ── */
   --ai-gradient: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.08), rgba(255,255,255,0.03));
@@ -179,7 +178,6 @@ html.light {
   --border-subtle-alpha: rgba(0, 0, 0, 0.04);
   --border-active: rgba(0, 0, 0, 0.08);
   --border-focus-ring: rgba(0, 0, 0, 0.1);
-  --glass-border: rgba(0, 0, 0, 0.04);
 
   /* ── Hover overlays (light) ── */
   --hover-bg: rgba(0, 0, 0, 0.04);
@@ -1940,7 +1938,7 @@ html.light .bb-sidebar__logo-img {
 .bb-overlay__card {
   width: 640px;
   max-width: calc(100vw - 48px);
-  background: var(--glass-bg-heavy);
+  background: var(--popover);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-xl);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
@@ -2348,7 +2346,7 @@ html.light .bb-chip--accent {
   gap: 8px;
   padding: 12px 16px;
   border-radius: var(--radius-lg);
-  background: var(--glass-bg);
+  background: var(--card);
 }
 
 /* ── Select: minimal, no visible border ── */
@@ -3416,7 +3414,7 @@ html.light .bb-inbox-row[data-selected] .bb-inbox-row__icon {
   width: 100%;
   max-width: 480px;
   border-radius: var(--radius-xl);
-  background: var(--glass-bg);
+  background: var(--card);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
   overflow: hidden;
 }
