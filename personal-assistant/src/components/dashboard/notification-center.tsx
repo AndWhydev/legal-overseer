@@ -390,7 +390,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
             {/* Header */}
             <div
               style={{
-                padding: '10px 14px',
+                padding: '10px 16px',
                 borderBottom: '1px solid rgba(255,255,255,0.06)',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -452,7 +452,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
               {isLoading && (
                 <div
                   style={{
-                    padding: '28px 14px',
+                    padding: '28px 16px',
                     textAlign: 'center',
                     color: 'var(--text-muted, rgba(255,255,255,0.35))',
                     fontSize: 14,
@@ -542,7 +542,7 @@ function NotificationItemRow({
       onMouseLeave={() => setHovered(false)}
       style={{
         width: '100%',
-        padding: '8px 14px',
+        padding: '8px 16px',
         border: 'none',
         background: hovered ? 'rgba(255,255,255,0.04)' : 'transparent',
         textAlign: 'left',
