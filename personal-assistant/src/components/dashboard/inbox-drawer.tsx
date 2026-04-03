@@ -91,13 +91,12 @@ export default function InboxDrawer({
       {/* Zone 2: AI Triage */}
       <InboxDrawerTriage
         summary={state.triageSummary}
-        sentiment={state.sentimentDot}
         triageState={state.triageState}
         delegationActions={state.delegationActions}
         compact={state.channelFamily === 'chat'}
         onDelegate={state.delegateToBitBit}
         onUndoDelegate={state.undoDelegation}
-        onReplyManually={() => state.setReplyMode('reply')}
+
       />
 
       {/* Zone 3: Thread (scrollable) */}
@@ -145,7 +144,6 @@ export default function InboxDrawer({
       {!isNotification && (
         <InboxDrawerActions
           channelFamily={state.channelFamily}
-          onDone={state.markDone}
           onArchive={state.archive}
           onForward={() => state.setReplyMode('forward')}
           onSpam={state.markSpam}

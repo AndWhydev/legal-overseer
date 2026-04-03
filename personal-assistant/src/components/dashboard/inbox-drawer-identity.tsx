@@ -1,7 +1,7 @@
 // src/components/dashboard/inbox-drawer-identity.tsx
 'use client'
 
-import { IconX } from '@tabler/icons-react'
+import { IconLayoutSidebarRight } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { resolveAvatarSync, resolveAvatar, type AvatarResult } from '@/lib/avatar/resolver'
@@ -108,7 +108,7 @@ export function InboxDrawerIdentity({ message, channelFamily, onClose }: Identit
           aria-label="Close drawer"
           className="text-sidebar-foreground/35 hover:text-sidebar-foreground/70"
         >
-          <IconX className="size-4" />
+          <IconLayoutSidebarRight className="size-4" />
         </Button>
       </div>
     </div>

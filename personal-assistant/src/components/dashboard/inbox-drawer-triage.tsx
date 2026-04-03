@@ -3,39 +3,28 @@
 
 import { IconSparkles, IconRobot } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
-import type { TriageState, SentimentDot, DelegationAction } from './use-drawer-state'
+import type { TriageState, DelegationAction } from './use-drawer-state'
 
-const SENTIMENT_COLORS: Record<SentimentDot, string> = {
-  positive: 'bg-sidebar-foreground/40',
-  neutral: 'bg-sidebar-foreground/20',
-  negative: 'bg-destructive',
-  urgent: 'bg-sidebar-foreground/60',
-}
 
 interface TriagePanelProps {
   summary: string
-  sentiment: SentimentDot
   triageState: TriageState
   delegationActions: DelegationAction[]
   compact?: boolean // true for chat channels
   onDelegate: () => void
   onUndoDelegate: () => void
-  onReplyManually: () => void
 }
 
 function ReadyState({
   summary,
-  sentiment,
   compact,
   onDelegate,
-  onReplyManually,
-}: Pick<TriagePanelProps, 'summary' | 'sentiment' | 'compact' | 'onDelegate' | 'onReplyManually'>) {
+}: Pick<TriagePanelProps, 'summary' | 'compact' | 'onDelegate'>) {
   if (compact) {
     return (
       <div className="mx-3.5 mb-2 flex items-center gap-2 rounded-lg bg-sidebar-accent px-3 py-2 shrink-0">
         <IconSparkles className="size-4 text-sidebar-foreground/60 shrink-0" />
         <span className="flex-1 text-xs text-sidebar-foreground/45 truncate">{summary}</span>
-        <span className={`size-1.5 rounded-full shrink-0 ${SENTIMENT_COLORS[sentiment]}`} />
         <button
           onClick={onDelegate}
           className="shrink-0 rounded-lg bg-primary/10 px-2 py-0.5 text-xs text-sidebar-foreground/70 hover:bg-primary/20 transition-colors"
@@ -53,7 +42,6 @@ function ReadyState({
         <p className="flex-1 text-xs text-sidebar-foreground/50 leading-relaxed [&_strong]:text-sidebar-foreground/70">
           {summary}
         </p>
-        <span className={`size-2 rounded-full shrink-0 mt-1 ${SENTIMENT_COLORS[sentiment]}`} />
       </div>
       <div className="flex items-center gap-2">
         <Button
@@ -63,16 +51,7 @@ function ReadyState({
           onClick={onDelegate}
         >
           <IconRobot className="size-4" />
-          Let BitBit Handle
-        </Button>
-        <span className="text-xs text-sidebar-foreground/20">or</span>
-        <Button
-          variant="ghost"
-          size="xs"
-          className="text-sidebar-foreground/40 hover:text-sidebar-foreground/60"
-          onClick={onReplyManually}
-        >
-          I&apos;ll reply
+          Handle with BitBit
         </Button>
       </div>
     </div>

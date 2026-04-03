@@ -604,9 +604,15 @@ function InboxTab() {
       closeDrawerTimeoutRef.current = null;
     }
 
+    // Toggle: if clicking the same message, close the drawer
+    if (message && selectedMessage?.id === message.id) {
+      closeDrawer();
+      return;
+    }
+
     setSelectedMessage(message);
     setDrawerMessage(message);
-  }, []);
+  }, [selectedMessage, closeDrawer]);
 
   const closeDrawer = useCallback(() => {
     setSelectedMessage(null);
@@ -1181,17 +1187,6 @@ function GroupRow({
         aria-label="Select group"
       />
 
-      <button
-        className={cn(
-          'shrink-0 transition-colors',
-          starred ? 'text-amber-500' : 'text-muted-foreground/40 hover:text-muted-foreground',
-        )}
-        onClick={(e) => { e.stopPropagation(); onToggleStar(); }}
-        aria-label={starred ? 'Unflag group' : 'Flag group'}
-      >
-        <IconFlag size={14} />
-      </button>
-
       <span className={cn('shrink-0 text-muted-foreground', CHANNEL_COLOR)}>
         <ChannelIcon size={14} />
       </span>
@@ -1263,18 +1258,6 @@ function MessageRow({
         className="shrink-0"
         aria-label="Select message"
       />
-
-      {/* Flag */}
-      <button
-        className={cn(
-          'shrink-0 transition-colors',
-          starred ? 'text-amber-500' : 'text-muted-foreground/40 hover:text-muted-foreground',
-        )}
-        onClick={(e) => { e.stopPropagation(); onStar?.(message.id); }}
-        aria-label={starred ? 'Unflag' : 'Flag'}
-      >
-        <IconFlag size={14} />
-      </button>
 
       <span className={cn('shrink-0 text-muted-foreground', CHANNEL_COLOR)}>
         <ChannelIcon size={14} />
