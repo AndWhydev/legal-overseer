@@ -9,15 +9,6 @@ import type { WeeklyOperationsSummary } from '@/lib/intelligence/weekly-operatio
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
-function ProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
-  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
-  return (
-    <div className="h-1.5 w-full rounded-full bg-muted">
-      <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
-    </div>
-  )
-}
-
 export function WeeklySummaryCard() {
   const { data, isLoading } = useSWR<WeeklyOperationsSummary>('/api/dashboard/weekly-summary', fetcher, {
     refreshInterval: 300_000,
@@ -40,9 +31,7 @@ export function WeeklySummaryCard() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">Weekly Operations</CardTitle>
-          <Badge variant={a.autonomyRate >= 80 ? 'default' : a.autonomyRate >= 50 ? 'secondary' : 'destructive'} className="text-xs">
-            {a.autonomyRate}% Autonomy
-          </Badge>
+          <Badge variant="outline" className="text-xs font-mono">{a.autonomyRate}% Autonomy</Badge>
         </div>
         <CardDescription className="text-xs">
           {new Date(data.period.start).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })} — {new Date(data.period.end).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}
@@ -55,11 +44,16 @@ export function WeeklySummaryCard() {
             <span>{a.totalRuns} runs</span>
             <span>avg confidence {a.avgConfidence}</span>
           </div>
-          <ProgressBar value={a.actDecisions} max={a.totalRuns} color="var(--chart-1)" />
-          <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-            <span className="text-emerald-500">{a.actDecisions} auto</span>
-            <span className="text-amber-500">{a.askDecisions} ask</span>
-            <span className="text-red-400">{a.escalateDecisions} escalate</span>
+          <div className="h-1.5 w-full rounded-full bg-muted">
+            <div
+              className="h-1.5 rounded-full bg-foreground/60 transition-all"
+              style={{ width: `${a.autonomyRate}%` }}
+            />
+          </div>
+          <div className="flex gap-3 mt-1.5 text-xs text-muted-foreground">
+            <span>{a.actDecisions} auto</span>
+            <span className="opacity-60">{a.askDecisions} ask</span>
+            <span className="opacity-40">{a.escalateDecisions} escalate</span>
           </div>
         </div>
 
@@ -67,8 +61,8 @@ export function WeeklySummaryCard() {
         {data.highlights.length > 0 && (
           <div className="space-y-1">
             {data.highlights.map((h, i) => (
-              <div key={i} className="text-xs text-emerald-500 flex items-start gap-1.5">
-                <span className="mt-0.5">+</span> {h}
+              <div key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                <span className="mt-0.5 opacity-60">+</span> <span>{h}</span>
               </div>
             ))}
           </div>
@@ -78,8 +72,8 @@ export function WeeklySummaryCard() {
         {data.concerns.length > 0 && (
           <div className="space-y-1">
             {data.concerns.map((c, i) => (
-              <div key={i} className="text-xs text-amber-500 flex items-start gap-1.5">
-                <span className="mt-0.5">!</span> {c}
+              <div key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                <span className="mt-0.5">!</span> <span>{c}</span>
               </div>
             ))}
           </div>
@@ -87,7 +81,7 @@ export function WeeklySummaryCard() {
 
         {/* Financial one-liner */}
         {data.financial.totalInvoiced > 0 && (
-          <div className="text-xs text-muted-foreground border-t pt-2">
+          <div className="text-xs text-muted-foreground border-t border-border/50 pt-2">
             Invoiced ${data.financial.totalInvoiced.toLocaleString()} · Received ${data.financial.totalReceived.toLocaleString()} · {data.financial.overdue} overdue
           </div>
         )}
