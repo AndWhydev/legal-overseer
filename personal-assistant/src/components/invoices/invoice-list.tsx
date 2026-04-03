@@ -565,7 +565,7 @@ function InvoiceDetailPanel({
               <div style={{
                 height: 3,
                 width: '100%',
-                borderRadius: 99,
+                borderRadius: 9999,
                 background: i <= progressIdx
                   ? invoice.status === 'cancelled' ? '#71717a' : '#22C55E'
                   : 'var(--glass-hover-bg)',

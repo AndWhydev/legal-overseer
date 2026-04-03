@@ -425,7 +425,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                       fontSize: 14,
                       fontWeight: 400,
                       padding: '2px 6px',
-                      borderRadius: 4,
+                      borderRadius: 8,
                       transition: 'color 0.15s',
                     }}
                     onMouseEnter={e => {
@@ -549,7 +549,7 @@ function NotificationItemRow({
         cursor: 'pointer',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
         display: 'flex',
-        gap: 10,
+        gap: 12,
         alignItems: 'flex-start',
         transition: 'background 0.15s',
       }}
@@ -569,7 +569,7 @@ function NotificationItemRow({
           style={{
             fontSize: 14,
             color: 'var(--text-secondary, rgba(255,255,255,0.55))',
-            marginTop: 2,
+            marginTop: 4,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -581,7 +581,7 @@ function NotificationItemRow({
           style={{
             fontSize: 14,
             color: 'var(--text-muted, rgba(255,255,255,0.3))',
-            marginTop: 2,
+            marginTop: 4,
           }}
         >
           {formatTimeAgo(notification.timestamp)}
@@ -594,7 +594,7 @@ function NotificationItemRow({
           borderRadius: '50%',
           backgroundColor: 'var(--bb-accent, rgba(99,140,255,0.6))',
           flexShrink: 0,
-          marginTop: 6,
+          marginTop: 8,
         }}
       />
     </motion.button>

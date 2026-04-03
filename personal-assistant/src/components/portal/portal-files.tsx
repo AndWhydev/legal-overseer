@@ -218,7 +218,7 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
                       style={{
                         fontSize: 14,
                         padding: '2px 8px',
-                        borderRadius: 4,
+                        borderRadius: 8,
                         background: file.uploaded_by_role === 'client' ? '#EFF6FF' : '#F0FDF4',
                         color: file.uploaded_by_role === 'client' ? '#2563EB' : '#059669',
                         fontWeight: 500,

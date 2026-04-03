@@ -252,11 +252,11 @@ function ProjectCard({
             <span style={{ fontSize: 14, color: '#6B7280' }}>Progress</span>
             <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>{project.progress}%</span>
           </div>
-          <div style={{ height: 6, borderRadius: 3, background: '#F3F4F6', overflow: 'hidden' }}>
+          <div style={{ height: 6, borderRadius: 8, background: '#F3F4F6', overflow: 'hidden' }}>
             <div
               style={{
                 height: '100%',
-                borderRadius: 3,
+                borderRadius: 8,
                 background: primaryColor,
                 width: `${project.progress}%`,
                 transition: 'width 500ms ease',
