@@ -141,7 +141,7 @@ export function SplashScreen({
   ready: readyProp,
   codeReady,
   dataReady,
-  minDisplayMs = 1200,
+  minDisplayMs = 600,
   children,
 }: SplashScreenProps) {
   const ready = readyProp ?? ((codeReady ?? false) && (dataReady ?? false));
@@ -307,8 +307,8 @@ export function SplashScreen({
                         key={i}
                         style={{
                           fontFamily: 'var(--font-geist-pixel-square)',
-                          fontSize: 32,
-                          fontWeight: 800,
+                          fontSize: 16,
+                          fontWeight: 500,
                           letterSpacing: '0.04em',
                           color: 'var(--foreground, #FAFAFA)',
                           display: 'inline-block',
@@ -345,9 +345,9 @@ export function SplashScreen({
           </motion.div>
         )}
       </AnimatePresence>
-      <div style={{ visibility: visible && !exiting ? 'hidden' : 'visible' }}>
+      <>
         {children}
-      </div>
+      </>
     </>
   );
 }

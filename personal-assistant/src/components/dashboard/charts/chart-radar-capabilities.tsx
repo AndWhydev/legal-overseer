@@ -54,7 +54,7 @@ export function ChartRadarCapabilities({ data, loading }: Props) {
         <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[300px] [&_.recharts-surface]:overflow-visible">
           <RadarChart data={chartData} outerRadius="65%" margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
             <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-            <PolarAngleAxis dataKey="metric" tick={{ fontSize: 12 }} />
+            <PolarAngleAxis dataKey="metric" tick={{ fontSize: 14 }} />
             <PolarGrid />
             <Radar dataKey="value" fill="var(--color-value)" fillOpacity={0.25} stroke="var(--color-value)" strokeWidth={2} />
           </RadarChart>

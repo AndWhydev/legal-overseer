@@ -399,7 +399,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
             >
               <span
                 style={{
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: 500,
                   color: 'var(--text-primary, rgba(255,255,255,0.92))',
                   letterSpacing: '-0.01em',
@@ -422,7 +422,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                       border: 'none',
                       color: 'var(--text-muted, rgba(255,255,255,0.35))',
                       cursor: 'pointer',
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: 400,
                       padding: '2px 6px',
                       borderRadius: 4,
@@ -455,7 +455,7 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
                     padding: '28px 14px',
                     textAlign: 'center',
                     color: 'var(--text-muted, rgba(255,255,255,0.35))',
-                    fontSize: 12,
+                    fontSize: 14,
                   }}
                 >
                   Loading...
@@ -557,7 +557,7 @@ function NotificationItemRow({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: 500,
             color: 'var(--text-primary, rgba(255,255,255,0.92))',
             lineHeight: 1.3,
@@ -567,7 +567,7 @@ function NotificationItemRow({
         </div>
         <div
           style={{
-            fontSize: 12,
+            fontSize: 14,
             color: 'var(--text-secondary, rgba(255,255,255,0.55))',
             marginTop: 2,
             overflow: 'hidden',
@@ -579,7 +579,7 @@ function NotificationItemRow({
         </div>
         <div
           style={{
-            fontSize: 11,
+            fontSize: 14,
             color: 'var(--text-muted, rgba(255,255,255,0.3))',
             marginTop: 2,
           }}
