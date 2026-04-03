@@ -52,7 +52,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 36-01: Rewrite proactive-recall.ts with graph walk + vector similarity + relevance scoring
+- [x] 36-01: Rewrite proactive-recall.ts with graph walk + vector similarity + relevance scoring
 - [ ] 36-02: Add graphSearch() to memory-search.ts, integrate into search_memory tool
 
 ### Phase 37: Contextual Retrieval at Ingestion
@@ -100,7 +100,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
 | 35. Entity Graph Foundation | 3/3 | Complete | 2026-04-04 |
-| 36. Graph-Aware Retrieval | 0/2 | Not started | - |
+| 36. Graph-Aware Retrieval | 1/2 | In progress | - |
 | 37. Contextual Retrieval | 0/2 | Not started | - |
 | 38. Sleep Consolidation | 0/2 | Not started | - |
 | 39. Adaptive Query Routing | 0/1 | Not started | - |
