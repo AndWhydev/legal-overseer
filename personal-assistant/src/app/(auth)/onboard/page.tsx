@@ -23,6 +23,15 @@ export default function OnboardPage() {
     )
 
     async function bootstrap() {
+      const params = new URLSearchParams(window.location.search)
+      const forceOnboarding = params.get("force") === "true"
+
+      // Dev bypass: skip auth, go straight to onboarding UI
+      if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+        setState('onboarding')
+        return
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.replace('/login')
@@ -30,9 +39,6 @@ export default function OnboardPage() {
       }
 
       const { data: profile } = await loadOnboardingProfile(supabase as never, user.id)
-
-      const params = new URLSearchParams(window.location.search)
-      const forceOnboarding = params.get("force") === "true"
 
       if (hasCompletedFirstRunOnboarding(profile) && !forceOnboarding) {
         router.replace('/dashboard')
