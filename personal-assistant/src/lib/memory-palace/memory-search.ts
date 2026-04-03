@@ -372,3 +372,145 @@ export class MemorySearch {
     return events
   }
 }
+
+// ─── Graph Search ─────────────────────────────────────────────────────────────
+
+import {
+  getEntityByAlias,
+  getNeighborhood,
+  getEntityEvents,
+} from "@/lib/knowledge-graph/graph-queries"
+
+/**
+ * Search the knowledge graph for entity relationships and events.
+ * Resolves entity aliases from query keywords, then fetches neighborhood
+ * edges and event tuples, returning scored results.
+ */
+export async function graphSearch(
+  supabase: SupabaseClient,
+  orgId: string,
+  query: string,
+  options?: {
+    entityIds?: string[]
+    timeRange?: { from?: string; to?: string }
+    limit?: number
+  }
+): Promise<Array<{ content: string; score: number; source: string; metadata: Record<string, unknown> }>> {
+  try {
+    const limit = options?.limit ?? 20
+    const results: Array<{ content: string; score: number; source: string; metadata: Record<string, unknown> }> = []
+
+    // Resolve entity IDs — use provided ones or extract from query keywords
+    let entityIds = options?.entityIds ?? []
+    if (entityIds.length === 0) {
+      const keywords = query
+        .split(/\s+/)
+        .filter((w) => w.length > 2 && w[0] === w[0].toUpperCase())
+        .slice(0, 5)
+
+      for (const kw of keywords) {
+        const node = await getEntityByAlias(supabase, orgId, kw)
+        if (node) entityIds.push(node.id)
+      }
+    }
+
+    if (entityIds.length === 0) return []
+
+    // De-duplicate
+    entityIds = [...new Set(entityIds)]
+
+    for (const entityId of entityIds) {
+      // 1. Neighborhood edges (direct relationships)
+      const neighborhood = await getNeighborhood(supabase, orgId, entityId)
+      if (neighborhood) {
+        const nodeNameMap = new Map<string, string>()
+        nodeNameMap.set(neighborhood.node.id, neighborhood.node.name)
+        for (const n of neighborhood.neighbors) {
+          nodeNameMap.set(n.id, n.name)
+        }
+
+        for (const edge of neighborhood.edges) {
+          const sourceName = nodeNameMap.get(edge.source_id) ?? edge.source_id
+          const targetName = nodeNameMap.get(edge.target_id) ?? edge.target_id
+          const since = edge.valid_from ? ` (since ${edge.valid_from.slice(0, 10)})` : ""
+          const content = `${sourceName} ${edge.relation_type} ${targetName}${since}`
+
+          results.push({
+            content,
+            score: 0.9,
+            source: "knowledge_graph_edge",
+            metadata: {
+              edge_id: edge.id,
+              relation_type: edge.relation_type,
+              source_entity: sourceName,
+              target_entity: targetName,
+              valid_from: edge.valid_from,
+              valid_until: edge.valid_until,
+              confidence: edge.confidence,
+            },
+          })
+        }
+
+        // 2-hop neighbors (lower score)
+        for (const neighbor of neighborhood.neighbors) {
+          const hop2 = await getNeighborhood(supabase, orgId, neighbor.id, { limit: 5 })
+          if (hop2) {
+            for (const e2 of hop2.edges) {
+              // Skip edges we already have (back to root)
+              if (e2.source_id === entityId || e2.target_id === entityId) continue
+              const s2 = nodeNameMap.get(e2.source_id) ?? hop2.neighbors.find((n) => n.id === e2.source_id)?.name ?? e2.source_id
+              const t2 = nodeNameMap.get(e2.target_id) ?? hop2.neighbors.find((n) => n.id === e2.target_id)?.name ?? e2.target_id
+              results.push({
+                content: `${s2} ${e2.relation_type} ${t2}`,
+                score: 0.6,
+                source: "knowledge_graph_2hop",
+                metadata: {
+                  edge_id: e2.id,
+                  relation_type: e2.relation_type,
+                  source_entity: s2,
+                  target_entity: t2,
+                },
+              })
+            }
+          }
+        }
+      }
+
+      // 2. Event tuples
+      const timeRange = options?.timeRange
+        ? { from: options.timeRange.from, to: options.timeRange.to }
+        : undefined
+      const events = await getEntityEvents(supabase, orgId, entityId, timeRange)
+
+      for (const evt of events) {
+        const objectPart = evt.object_text ? ` ${evt.object_text}` : ""
+        const datePart = evt.occurred_at ? ` (${evt.occurred_at.slice(0, 10)})` : ""
+        // We don not have the subject name directly on the tuple, use a placeholder
+        const content = `[entity] ${evt.verb}${objectPart}${datePart}`
+
+        results.push({
+          content,
+          score: 0.8,
+          source: "knowledge_graph_event",
+          metadata: {
+            event_id: evt.id,
+            verb: evt.verb,
+            object_text: evt.object_text,
+            occurred_at: evt.occurred_at,
+            subject_id: evt.subject_id,
+          },
+        })
+      }
+    }
+
+    // Sort by score descending, then limit
+    results.sort((a, b) => b.score - a.score)
+    return results.slice(0, limit)
+  } catch (err) {
+    logger.error("[graphSearch] Unexpected error", {
+      error: err instanceof Error ? err.message : String(err),
+      query,
+    })
+    return []
+  }
+}
