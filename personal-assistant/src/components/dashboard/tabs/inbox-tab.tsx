@@ -23,7 +23,6 @@ import {
 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { TabSkeleton } from '@/components/dashboard/tabs/tab-skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -922,7 +921,7 @@ function InboxTab() {
             </div>
           </div>
 
-          <ScrollArea className="min-h-0 flex-1 overflow-hidden [&>[data-slot=scroll-area-viewport]]:!overflow-x-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
             <div className="pb-4 pr-2 min-w-0">
               <div className="rounded-[24px] border border-border/70 bg-card/50 p-2 shadow-sm min-w-0 overflow-hidden">
                 <div className="flex flex-col gap-1 min-w-0">
@@ -1032,7 +1031,7 @@ function InboxTab() {
                 </div>
               </div>
             </div>
-          </ScrollArea>
+          </div>
         </div>
 
       </div>
