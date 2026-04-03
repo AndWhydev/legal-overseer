@@ -298,6 +298,13 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     return () => window.removeEventListener('bb-dev-tools-open', handler)
   }, [])
 
+  // Listen for bb-feedback-open events (dispatched by sidebar Feedback menu item)
+  useEffect(() => {
+    const handler = () => setFeedbackOpen(true)
+    window.addEventListener('bb-feedback-open', handler)
+    return () => window.removeEventListener('bb-feedback-open', handler)
+  }, [])
+
   // Spacebar -> navigate home (dashboard) when not typing in an input
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -330,6 +337,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
   // Power-user hotkeys
   const [focusMode, setFocusMode] = useState(false);
   const [devToolsOpen, setDevToolsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
 
   useHotkeys({
@@ -497,8 +505,17 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
         {/* Onboarding tour for returning users */}
         <OnboardingTour onNavigate={handleTabChange} tourVariant={composition.tourVariant} />
 
-        {/* Beta feedback widget */}
-        <FeedbackWidget />
+        {/* Beta feedback widget — Sheet triggered from sidebar menu */}
+        <Sheet open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+          <SheetContent side="right" className="w-[380px] overflow-y-auto p-0">
+            <SheetHeader className="px-5 py-4 border-b border-sidebar-border">
+              <SheetTitle className="text-base font-medium">Send Feedback</SheetTitle>
+            </SheetHeader>
+            <div className="p-5">
+              <FeedbackWidget onClose={() => setFeedbackOpen(false)} />
+            </div>
+          </SheetContent>
+        </Sheet>
 
         {/* Dev toolbar -- lazy-loaded, never bundled in production */}
         {process.env.NODE_ENV === 'development' && (

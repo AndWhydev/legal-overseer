@@ -50,6 +50,7 @@ import {
   IconCalendarEvent,
   IconTrash,
   IconFileText as IconDraft,
+  IconMessagePlus,
 } from '@tabler/icons-react';
 import type { TabDef } from './spa-shell';
 import type { SidebarCategory } from '@/lib/modules/registry';
@@ -728,6 +729,12 @@ export function SidebarNav({
                 <DropdownMenuItem>
                   <IconBell className="size-4" />
                   Notifications
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => window.dispatchEvent(new Event('bb-feedback-open'))}
+                >
+                  <IconMessagePlus className="size-4" />
+                  Feedback
                 </DropdownMenuItem>
                 {process.env.NODE_ENV === 'development' && (
                   <>
