@@ -31,6 +31,9 @@ const APP_ICONS: Record<string, string> = {
   outlook: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/07/35/55/07355553-d782-158a-12f2-daa122973b2b/AppIcon-outlook.prod-0-0-1x_U007epad-0-1-0-0-85-220.png/120x120bb.jpg',
   'google-calendar': 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/fd/3b/8a/fd3b8acf-96ad-ada9-87b8-0f40ae53ff94/calendar_2020q4-0-1x_U007epad-0-0-0-1-0-0-0-0-85-220-0.png/120x120bb.jpg',
   slack: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/43/1b/06/431b06ff-3c7a-6506-26c2-ef44089c9339/slack_icon_prod-0-0-1x_U007epad-0-1-sRGB-85-220.png/120x120bb.jpg',
+  whatsapp: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/88/f4/0d/88f40df9-9a8c-235f-dc2c-48c3bd5b4345/AppIcon-0-0-1x_U007epad-0-0-0-1-0-0-sRGB-0-85-220.png/120x120bb.jpg',
+  xero: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/a3/87/98/a3879862-1b54-a12b-5acc-f7184579d615/AppIcon-0-0-1x_U007epad-0-0-0-1-0-0-85-220.png/120x120bb.jpg',
+  stripe: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/b8/56/ec/b856eca9-4ed0-513b-0fd3-8f48958db087/AppIcon-0-0-1x_U007ephone-0-1-0-85-220-0.png/120x120bb.jpg',
 }
 
 function AppIcon({ id, size = 36 }: { id: string; size?: number }) {
@@ -52,12 +55,27 @@ function AppIcon({ id, size = 36 }: { id: string; size?: number }) {
 
 const EMAIL_PROVIDERS = [
   { id: 'gmail', label: 'Gmail', sublabel: 'Google Workspace or personal' },
-  { id: 'outlook', label: 'Outlook', sublabel: 'Microsoft 365 or personal' },
+  { id: 'outlook', label: 'Outlook', sublabel: 'Microsoft 365 or Hotmail' },
 ]
 
-const EXTRA_PROVIDERS = [
-  { id: 'google-calendar', label: 'Google Calendar', sublabel: 'Meetings and events' },
-  { id: 'slack', label: 'Slack', sublabel: 'Team messages' },
+const CALENDAR_PROVIDERS = [
+  { id: 'google-calendar', label: 'Google Calendar', sublabel: 'Syncs with Gmail' },
+]
+
+const MESSAGING_PROVIDERS = [
+  { id: 'slack', label: 'Slack', sublabel: 'Team channels and DMs' },
+  { id: 'whatsapp', label: 'WhatsApp', sublabel: 'Business or personal' },
+]
+
+const FINANCE_PROVIDERS = [
+  { id: 'xero', label: 'Xero', sublabel: 'Invoicing and accounting' },
+  { id: 'stripe', label: 'Stripe', sublabel: 'Payments and billing' },
+]
+
+const EXTRA_CATEGORIES = [
+  { heading: 'Calendars', providers: CALENDAR_PROVIDERS },
+  { heading: 'Messaging', providers: MESSAGING_PROVIDERS },
+  { heading: 'Finance', providers: FINANCE_PROVIDERS },
 ]
 
 type ConnectionState = 'pick-email' | 'connecting' | 'connected' | 'crawling'
@@ -81,7 +99,6 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
   const [connectedProvider, setConnectedProvider] = useState<string | null>(null)
   const [connectedExtras, setConnectedExtras] = useState<Set<string>>(new Set())
   const [streamStarted, setStreamStarted] = useState(false)
-  const [showExtras, setShowExtras] = useState(false)
 
   const smartScroll = useSmartScroll(scrollAreaRef)
 
@@ -101,6 +118,34 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
       return false
     }
   }, [])
+
+  // Listen for OAuth popup completion via postMessage
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return
+      if (event.data?.type === 'bitbit-oauth-done') {
+        // Popup completed OAuth — verify and update state
+        if (connectingId) {
+          verifyConnection(connectingId).then(verified => {
+            if (verified) {
+              if (connectedProvider) {
+                // Already have primary — this is an extra
+                setConnectedExtras(prev => new Set(prev).add(connectingId))
+              } else {
+                setConnectedProvider(connectingId)
+                setConnState('connected')
+              }
+            } else if (connState === 'connecting') {
+              setConnState('pick-email')
+            }
+            setConnectingId(null)
+          })
+        }
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [connectingId, connState, connectedProvider, verifyConnection])
 
   /** OAuth via popup, with verification after close */
   const handleConnect = useCallback(async (id: string, isExtra = false) => {
@@ -135,12 +180,13 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
       }
 
       // Poll for popup close, then verify connection
+      // (postMessage handler may have already updated state)
       const timer = window.setInterval(async () => {
         if (!popup.closed) return
         window.clearInterval(timer)
-        setConnectingId(null)
 
-        // Verify the connection actually succeeded
+        // If postMessage already handled it, connectingId will be null
+        // Still verify as a fallback
         const verified = await verifyConnection(id)
 
         if (verified) {
@@ -151,9 +197,12 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
             setConnState('connected')
           }
         } else {
-          // OAuth was cancelled or failed
-          if (!isExtra) setConnState('pick-email')
+          // OAuth was cancelled or failed — only reset if still in connecting state
+          if (!isExtra) {
+            setConnState(prev => prev === 'connecting' ? 'pick-email' : prev)
+          }
         }
+        setConnectingId(prev => prev === id ? null : prev)
       }, 500)
     } catch {
       setConnectingId(null)
@@ -161,17 +210,9 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
     }
   }, [verifyConnection])
 
-  // When connected, show extras immediately (no auto-transition to crawling)
-  useEffect(() => {
-    if (connState === 'connected') {
-      setShowExtras(true)
-    }
-  }, [connState])
-
   // User manually starts scanning
   const handleStartScanning = useCallback(() => {
     setConnState('crawling')
-    setShowExtras(false)
   }, [])
 
   // Start stream once in crawling state
@@ -181,13 +222,6 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
       void startStream()
     }
   }, [connState, streamStarted, startStream])
-
-  // Hide extras once synthesis starts
-  useEffect(() => {
-    if (phase === 'synthesizing' || phase === 'reveal' || phase === 'complete') {
-      setShowExtras(false)
-    }
-  }, [phase])
 
   // Notify parent on completion
   useEffect(() => {
@@ -277,7 +311,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
               </motion.div>
             )}
 
-            {/* Connected state — checkmark + extras + start button */}
+            {/* Connected state — checkmark + categorised extras + start button */}
             {connState === 'connected' && connectedProvider && (
               <motion.div
                 key="connected"
@@ -286,6 +320,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
                 exit={{ opacity: 0 }}
                 className="mt-3 flex flex-col gap-4"
               >
+                {/* Primary connection confirmation */}
                 <div className="flex items-center gap-3">
                   <AppIcon id={connectedProvider} size={36} />
                   <div className="flex items-center gap-2">
@@ -300,31 +335,38 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
                   </div>
                 </div>
 
-                {/* Additional connections */}
+                {/* Additional connections grouped by category */}
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
+                  className="flex flex-col gap-3"
                 >
-                  <p className="text-xs text-muted-foreground mb-2">Connect more sources?</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {EXTRA_PROVIDERS.map(provider => (
-                      <button
-                        key={provider.id}
-                        type="button"
-                        disabled={connectingId !== null || connectedExtras.has(provider.id)}
-                        onClick={() => handleConnect(provider.id, true)}
-                        className="flex items-center gap-2 rounded-lg border border-border/50 bg-card px-3 py-2 text-sm transition-colors hover:bg-accent/50 disabled:opacity-50"
-                      >
-                        <AppIcon id={provider.id} size={24} />
-                        <span>{provider.label}</span>
-                        {connectedExtras.has(provider.id) && <IconCheck size={14} className="text-green-500" />}
-                        {connectingId === provider.id && (
-                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                  <p className="text-xs text-muted-foreground">Connect more sources?</p>
+
+                  {EXTRA_CATEGORIES.map(category => (
+                    <div key={category.heading}>
+                      <p className="text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1.5">{category.heading}</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {category.providers.map(provider => (
+                          <button
+                            key={provider.id}
+                            type="button"
+                            disabled={connectingId !== null || connectedExtras.has(provider.id)}
+                            onClick={() => handleConnect(provider.id, true)}
+                            className="flex items-center gap-2 rounded-lg border border-border/50 bg-card px-3 py-2 text-sm transition-colors hover:bg-accent/50 disabled:opacity-50"
+                          >
+                            <AppIcon id={provider.id} size={24} />
+                            <span>{provider.label}</span>
+                            {connectedExtras.has(provider.id) && <IconCheck size={14} className="text-green-500" />}
+                            {connectingId === provider.id && (
+                              <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </motion.div>
 
                 {/* Start scanning button */}
@@ -332,6 +374,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
+                  className="flex justify-center mt-2"
                 >
                   <Button size="lg" onClick={handleStartScanning} className="px-8">
                     {connectedExtras.size > 0 ? "That's everything, let's go" : 'Start scanning'}
