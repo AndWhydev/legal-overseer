@@ -42,7 +42,7 @@ Overhaul BitBit's memory retrieval pipeline with entity graph, temporal knowledg
 
 Plans:
 - [x] 35-01: Enable pgvector, create tables + indexes + RLS
-- [ ] 35-02: Entity extraction pipeline (Haiku-based SVO extraction from messages/memories)
+- [x] 35-02: Entity extraction pipeline (Haiku-based SVO extraction from messages/memories)
 - [ ] 35-03: Backfill entity_nodes from contacts, edges from projects.metadata
 
 ### Phase 36: Graph-Aware Retrieval
@@ -99,7 +99,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
-| 35. Entity Graph Foundation | 1/3 | In progress | - |
+| 35. Entity Graph Foundation | 2/3 | In progress | - |
 | 36. Graph-Aware Retrieval | 0/2 | Not started | - |
 | 37. Contextual Retrieval | 0/2 | Not started | - |
 | 38. Sleep Consolidation | 0/2 | Not started | - |

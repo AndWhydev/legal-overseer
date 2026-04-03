@@ -5,41 +5,38 @@
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Proactive omniscient intelligence that deeply understands the user's world
-**Current focus:** Phase 35 — Entity Graph Foundation (Plan 02 next)
+**Current focus:** Phase 35 — Entity Graph Foundation (Plan 03 next)
 
 ## Current Position
 
 Phase: 35 of 40 (Entity Graph Foundation)
-Plan: 1 of 3 complete, Plan 02 next
+Plan: 2 of 3 complete, Plan 03 next
 Status: In progress
-Last activity: 2026-04-04 — Plan 35-01 complete (schema + queries + tests)
+Last activity: 2026-04-04 — Plan 35-02 TDD complete (entity extraction pipeline)
 
-Progress: ████████████████░░░░░░░░░░░░░░ ~57%
+Progress: ████████████████░░░░░░░░░░░░░░ ~58%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 17 min
-- Total execution time: 0.3 hours
+- Total plans completed: 2
+- Average duration: 12 min
+- Total execution time: 0.4 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 35 | 1/3 | 17min | 17min |
+| 35 | 2/3 | 23min | 12min |
 
 ## Accumulated Context
 
 ### Decisions
 
-- Approach C (Cognitive Memory OS) selected
-- pgvector chosen over Pinecone for entity graph
-- Google multimodal embedding (768d) primary, Voyage (1024d) secondary
-- TDD approach for all layers
-- organizations (American spelling) for FK references
-- match_entity_nodes RPC for vector similarity search
-- Migration applied via Management API (MCP permissions issue)
+- pgvector chosen, organizations (American spelling) for FK
+- match_entity_nodes RPC for vector similarity
+- AI SDK generateObject + Zod for structured Haiku extraction
+- MIN_TEXT_LENGTH=10 skips trivial messages
 
 ### Deferred Issues
 
@@ -47,11 +44,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- Supabase MCP apply_migration has permissions issue — use Management API
-- Google embedding API key not yet configured in .env.local
+- Google embedding API key not yet configured (needed for Plan 35-03)
+- Supabase MCP apply_migration permissions — use Management API
 
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Plan 35-01 complete, ready for 35-02
+Stopped at: Plan 35-02 complete, ready for 35-03
 Resume file: None
