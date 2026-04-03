@@ -20,6 +20,13 @@ export interface ExtractionResult {
   events: number
 }
 
+// ─── Constants ───────────────────────────────────────────────────────────
+
+const EMPTY_RESULT: ExtractionResult = Object.freeze({ entities: 0, edges: 0, events: 0 })
+
+/** Minimum text length to attempt extraction (skip "ok", "hi", etc.) */
+const MIN_TEXT_LENGTH = 3
+
 // ─── Schema for structured LLM output ────────────────────────────────────
 
 const ENTITY_TYPES = ['person', 'project', 'company', 'invoice', 'channel'] as const
@@ -48,6 +55,8 @@ const ExtractionSchema = z.object({
   ),
 })
 
+type Extraction = z.infer<typeof ExtractionSchema>
+
 // ─── Prompt ──────────────────────────────────────────────────────────────
 
 const EXTRACTION_PROMPT = `You are a knowledge graph extraction engine. Given a message, extract structured data.
@@ -70,6 +79,68 @@ Examples of trivial messages that should return empty arrays:
 
 Message to extract from:`
 
+// ─── Helpers ─────────────────────────────────────────────────────────────
+
+/** Resolve all extracted entities to DB nodes, returning a name->node map. */
+async function resolveEntities(
+  supabase: SupabaseClient,
+  orgId: string,
+  entities: Extraction['entities']
+): Promise<{ map: Map<string, EntityNode>; count: number }> {
+  const map = new Map<string, EntityNode>()
+  let count = 0
+
+  for (const entity of entities) {
+    const node = await findOrCreateEntity(supabase, orgId, entity.name, entity.type, entity.aliases)
+    if (node) {
+      map.set(entity.name.toLowerCase(), node)
+      count++
+    }
+  }
+
+  return { map, count }
+}
+
+/** Create edges for extracted relationships, looking up nodes from the entity map. */
+async function persistEdges(
+  supabase: SupabaseClient,
+  orgId: string,
+  relationships: Extraction['relationships'],
+  entityMap: Map<string, EntityNode>
+): Promise<number> {
+  let count = 0
+  for (const rel of relationships) {
+    const source = entityMap.get(rel.source_name.toLowerCase())
+    const target = entityMap.get(rel.target_name.toLowerCase())
+    if (source && target) {
+      const edge = await createEdge(supabase, orgId, source.id, target.id, rel.relation_type)
+      if (edge) count++
+    }
+  }
+  return count
+}
+
+/** Create event tuples for extracted events. */
+async function persistEvents(
+  supabase: SupabaseClient,
+  orgId: string,
+  events: Extraction['events'],
+  entityMap: Map<string, EntityNode>,
+  occurredAt: string
+): Promise<number> {
+  let count = 0
+  for (const event of events) {
+    const subject = entityMap.get(event.subject_name.toLowerCase())
+    if (subject) {
+      const tuple = await createEventTuple(
+        supabase, orgId, subject.id, event.verb, event.object_text, occurredAt
+      )
+      if (tuple) count++
+    }
+  }
+  return count
+}
+
 // ─── Main function ───────────────────────────────────────────────────────
 
 /**
@@ -82,12 +153,10 @@ export async function extractAndPopulateGraph(
   text: string,
   metadata: ExtractionMetadata
 ): Promise<ExtractionResult> {
-  const result: ExtractionResult = { entities: 0, edges: 0, events: 0 }
-
   try {
     // Guard: invalid or trivial input
-    if (!text || typeof text !== 'string' || text.trim().length < 3) {
-      return result
+    if (!text || typeof text !== 'string' || text.trim().length < MIN_TEXT_LENGTH) {
+      return { ...EMPTY_RESULT }
     }
 
     // Step 1: Call Haiku to extract structured data
@@ -97,69 +166,34 @@ export async function extractAndPopulateGraph(
       prompt: `${EXTRACTION_PROMPT}\n\n"${text}"`,
     })
 
-    // If nothing was extracted, return zeros
+    // If nothing was extracted, return early
     if (
       extraction.entities.length === 0 &&
       extraction.relationships.length === 0 &&
       extraction.events.length === 0
     ) {
-      return result
+      return { ...EMPTY_RESULT }
     }
 
-    // Step 2: Resolve entities via findOrCreateEntity
-    const entityMap = new Map<string, EntityNode>()
+    // Step 2: Resolve entities
+    const { map: entityMap, count: entityCount } = await resolveEntities(
+      supabase, orgId, extraction.entities
+    )
 
-    for (const entity of extraction.entities) {
-      const node = await findOrCreateEntity(
-        supabase,
-        orgId,
-        entity.name,
-        entity.type,
-        entity.aliases
-      )
-      if (node) {
-        entityMap.set(entity.name.toLowerCase(), node)
-        result.entities++
-      }
-    }
+    // Step 3: Persist edges
+    const edgeCount = await persistEdges(
+      supabase, orgId, extraction.relationships, entityMap
+    )
 
-    // Step 3: Create edges for relationships
-    for (const rel of extraction.relationships) {
-      const source = entityMap.get(rel.source_name.toLowerCase())
-      const target = entityMap.get(rel.target_name.toLowerCase())
-      if (source && target) {
-        const edge = await createEdge(
-          supabase,
-          orgId,
-          source.id,
-          target.id,
-          rel.relation_type
-        )
-        if (edge) result.edges++
-      }
-    }
-
-    // Step 4: Create event tuples
+    // Step 4: Persist events
     const occurredAt = metadata.timestamp || new Date().toISOString()
+    const eventCount = await persistEvents(
+      supabase, orgId, extraction.events, entityMap, occurredAt
+    )
 
-    for (const event of extraction.events) {
-      const subject = entityMap.get(event.subject_name.toLowerCase())
-      if (subject) {
-        const tuple = await createEventTuple(
-          supabase,
-          orgId,
-          subject.id,
-          event.verb,
-          event.object_text,
-          occurredAt
-        )
-        if (tuple) result.events++
-      }
-    }
-
-    return result
+    return { entities: entityCount, edges: edgeCount, events: eventCount }
   } catch (err) {
     logger.error('extractAndPopulateGraph: unexpected error', { err, text: text?.slice(0, 100) })
-    return result
+    return { ...EMPTY_RESULT }
   }
 }
