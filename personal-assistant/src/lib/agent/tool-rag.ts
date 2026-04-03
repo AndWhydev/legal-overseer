@@ -134,7 +134,7 @@ export function selectRelevantTools(
     const group = TOOL_GROUP_MAP[tool.name]
 
     // Core tools + memory search are always included — essential for every conversation
-    if (group === 'core' || tool.name === 'search_memory' || tool.name === 'find_messages') {
+    if (group === 'core' || tool.name === 'search_memory' || tool.name === 'find_messages' || tool.name === 'spawn_agent') {
       coreTools.push(tool)
       scores[tool.name] = Infinity
       continue

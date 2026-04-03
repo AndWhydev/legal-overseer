@@ -38,9 +38,7 @@ const decisionSchema = z.object({
     .describe('What type of proactive action to take'),
   confidence: z
     .number()
-    .min(0)
-    .max(1)
-    .describe('Confidence score 0-1 that this action is appropriate'),
+    .describe('Confidence score between 0 and 1 that this action is appropriate'),
   reasoning: z
     .string()
     .describe('Brief explanation of why this action was chosen'),

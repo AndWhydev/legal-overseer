@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import type Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { loadAllAgents } from '@/lib/agent/registry-loader'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, isDevBypass } from '@/lib/supabase/server'
 import { getServiceClient } from '@/lib/supabase/service-client'
 import { UnifiedConversationPipeline } from '@/lib/conversation/unified-pipeline'
 import { detectInjection, neutralizeInjection } from '@/lib/agent/injection-guard'
@@ -47,56 +47,61 @@ export async function POST(request: NextRequest) {
   let orgId: string
   let displayName: string | undefined
 
-  // Try Bearer token auth first (mobile clients), then fall back to cookie auth (web)
-  let bearerAuth: Awaited<ReturnType<typeof authenticateBearer>> = null
-  try {
-    bearerAuth = await authenticateBearer(request)
-  } catch (err) {
-    // Bearer token was present but invalid -- return the error immediately
-    if (err instanceof Response) return err
-    return new Response('Unauthorized', { status: 401 })
-  }
-
-  if (bearerAuth) {
-    // Authenticated via Bearer token (mobile) -- use service client for DB operations
+  if (isDevBypass()) {
     supabase = getServiceClient()
-    userId = bearerAuth.user.id
-    userEmail = bearerAuth.user.email
-    orgId = bearerAuth.orgId
-    displayName = bearerAuth.displayName
-    logger.info('[chat] Authenticated via Bearer token', { userId })
+    userId = '02ce2616-c01b-45a5-a2ad-16ebe936a6b2'
+    orgId = '7abcbfb1-67e5-4a3b-aa08-a17cfd2867e9'
+    userEmail = 'hi@torkay.com'
+    displayName = 'Tor'
+    logger.warn('[chat] Using dev bypass auth')
   } else {
-    // Fall back to cookie-based auth (web)
-    const client = await createClient()
-    if (!client) {
-      return new Response('Supabase not configured', { status: 503 })
-    }
-
-    const { data: { user } } = await client.auth.getUser()
-    if (!user) {
+    // Try Bearer token auth first (mobile clients), then fall back to cookie auth (web)
+    let bearerAuth: Awaited<ReturnType<typeof authenticateBearer>> = null
+    try {
+      bearerAuth = await authenticateBearer(request)
+    } catch (err) {
+      if (err instanceof Response) return err
       return new Response('Unauthorized', { status: 401 })
     }
 
-    const { data: profile } = await client
-      .from('profiles')
-      .select('org_id, display_name')
-      .eq('id', user.id)
-      .single()
+    if (bearerAuth) {
+      supabase = getServiceClient()
+      userId = bearerAuth.user.id
+      userEmail = bearerAuth.user.email
+      orgId = bearerAuth.orgId
+      displayName = bearerAuth.displayName
+      logger.info('[chat] Authenticated via Bearer token', { userId })
+    } else {
+      const client = await createClient()
+      if (!client) {
+        return new Response('Supabase not configured', { status: 503 })
+      }
 
-    if (!profile) {
-      return new Response('No profile found', { status: 400 })
+      const { data: { user } } = await client.auth.getUser()
+      if (!user) {
+        return new Response('Unauthorized', { status: 401 })
+      }
+
+      const { data: profile } = await client
+        .from('profiles')
+        .select('org_id, display_name')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile) {
+        return new Response('No profile found', { status: 400 })
+      }
+
+      supabase = client
+      userId = user.id
+      userEmail = user.email ?? undefined
+      orgId = profile.org_id
+      displayName = profile.display_name
+        || user.user_metadata?.display_name
+        || user.email?.split('@')[0]
+        || undefined
     }
-
-    supabase = client
-    userId = user.id
-    userEmail = user.email ?? undefined
-    orgId = profile.org_id
-    displayName = profile.display_name
-      || user.user_metadata?.display_name
-      || user.email?.split('@')[0]
-      || undefined
   }
-
   // Per-user rate limit
   const rateLimited = checkUserEndpointLimit(userId, '/api/agent/chat')
   if (rateLimited) return rateLimited

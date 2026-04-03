@@ -42,6 +42,14 @@ export const TOOL_AUTONOMY_MAP: Record<string, AutonomyLevel> = {
   web_search: 'L4_silent',
   fetch_url: 'L4_silent',
   browse_website: 'L4_silent',
+  // Project management tools
+  list_projects: 'L4_silent',
+  update_project: 'L3_notify',
+  create_project: 'L3_notify',
+  // Standing order tools
+  list_standing_orders: 'L4_silent',
+  create_standing_order: 'L3_notify',
+  update_standing_order: 'L3_notify',
   get_upcoming: 'L4_silent',
   summarize_inbox: 'L4_silent',
   read_message: 'L4_silent',

@@ -35,6 +35,10 @@ export interface RunLogPayload {
   model_purpose?: ModelPurpose
   /** Growth role name for per-role budget tracking (e.g. 'ads', 'seo'). */
   role?: string
+  /** Confidence score (0-1) based on tool autonomy levels used in this run. */
+  confidence_score?: number
+  /** Routing decision derived from confidence vs thresholds. */
+  routing_decision?: "act" | "ask" | "escalate"
 }
 
 /**
@@ -62,7 +66,9 @@ export async function logAgentRun(
         tool_calls: run.tool_calls,
         iterations: run.iterations,
         error_message: run.error_message ?? null,
-        model_used: run.model_purpose ?? 'conversation',
+        model_used: run.model_purpose ?? "conversation",
+        confidence_score: run.confidence_score ?? 0,
+        routing_decision: run.routing_decision ?? "escalate",
       })
       .select('id')
       .single()

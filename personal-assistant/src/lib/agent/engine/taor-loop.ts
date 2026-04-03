@@ -28,10 +28,38 @@ import { writeToDeadLetterQueue } from '@/lib/agent/dlq'
 import { detectLeak, scrubLeaks, guardAndHumanize } from '@/lib/agent/response-guard'
 import { logger } from '@/lib/core/logger'
 import { detectTopicShift } from '@/lib/agent/citation-extractor'
+import { getAutonomyLevel, type AutonomyLevel } from '@/lib/intelligence/autonomy-levels'
+import { routeByConfidence } from '@/lib/agent/confidence-router'
+import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
 
 import type { EngineConfig, AgentEvent } from './types'
 import { preFlightChecks } from './pre-flight'
 import { executeToolBatchStreaming, type ToolExecutionResult } from './tool-executor'
+
+// ---------------------------------------------------------------------------
+// Autonomy scoring
+// ---------------------------------------------------------------------------
+
+/** Weight per autonomy level — reflects how much trust the system exercised. */
+const AUTONOMY_WEIGHTS: Record<AutonomyLevel, number> = {
+  L4_silent: 1.0,
+  L3_notify: 0.85,
+  L2_propose: 0.65,
+  L1_approve: 0.45,
+}
+
+/**
+ * Compute a run-level confidence score from the tools that were called.
+ * Returns 1.0 for pure-conversation runs (no tools = no risk).
+ */
+function computeRunConfidence(toolNames: string[]): number {
+  if (toolNames.length === 0) return 1.0
+  const weights = toolNames.map(name => {
+    const level = getAutonomyLevel(name)
+    return AUTONOMY_WEIGHTS[level]
+  })
+  return weights.reduce((sum, w) => sum + w, 0) / weights.length
+}
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -58,6 +86,7 @@ export async function* runTAORLoop(
   let lastCheckpointAtMessageCount = 0
   let executionTokens = 0
   let activeRole: string | undefined
+  const toolNamesUsed: string[] = [] // Tracks all tool names for confidence scoring
 
   // ── 1. Pre-flight checks ───────────────────────────────────────────
   const preflight = await preFlightChecks(config, message)
@@ -363,6 +392,8 @@ export async function* runTAORLoop(
             tool_calls: toolCallCount,
             iterations: iterationCount,
             error_message: `Circuit breaker open: ${err.circuitKey}`,
+            confidence_score: 0,
+            routing_decision: 'escalate',
           })
         }
         yield { type: 'done', data: {} }
@@ -397,6 +428,8 @@ export async function* runTAORLoop(
           tool_calls: toolCallCount,
           iterations: iterationCount,
           error_message: errorMsg,
+          confidence_score: 0,
+          routing_decision: 'escalate',
         })
       }
       yield { type: 'done', data: {} }
@@ -452,7 +485,9 @@ export async function* runTAORLoop(
         }
       }
 
-      // Log successful run
+      // Log successful run with confidence scoring
+      const runConfidence = computeRunConfidence(toolNamesUsed)
+      const routing = routeByConfidence(runConfidence)
       if (config.agentConfigId) {
         await logAgentRun(config.supabase, {
           org_id: config.orgId,
@@ -467,6 +502,9 @@ export async function* runTAORLoop(
           duration_ms: Date.now() - startTime,
           tool_calls: toolCallCount,
           iterations: iterationCount,
+          confidence_score: runConfidence,
+
+          routing_decision: routing.decision,
         })
       } else {
         logger.debug('[taor] Run logging skipped — no agentConfigId', { orgId: config.orgId })
@@ -503,6 +541,7 @@ export async function* runTAORLoop(
 
       yield { type: 'stage', data: { stage: 'tool_execution', status: 'start', meta: { toolName: tool.name, iteration: iterationCount } } }
       yield { type: 'tool_call', data: { callId: tool.id, name: tool.name, input: tool.input } }
+      toolNamesUsed.push(tool.name)
       toolMeta.push({ tool, matchedStage })
     }
 
@@ -518,29 +557,77 @@ export async function* runTAORLoop(
     // Consume generator: yields events as each tool completes
     const toolOutcomes = new Map<string, boolean>() // callId → success
     let batchResult!: ToolExecutionResult
-    while (true) {
-      const { value, done } = await batchGen.next()
-      if (done) {
-        batchResult = value
-        break
+    try {
+      while (true) {
+        const { value, done } = await batchGen.next()
+        if (done) {
+          batchResult = value
+          break
+        }
+        // Track tool outcomes for plan stage updates
+        if (value.type === 'tool_result') {
+          const data = value.data as { callId?: string; success: boolean }
+          if (data.callId) toolOutcomes.set(data.callId, data.success)
+        }
+        yield value
       }
-      // Track tool outcomes for plan stage updates
-      if (value.type === 'tool_result') {
-        const data = value.data as { callId?: string; success: boolean }
-        if (data.callId) toolOutcomes.set(data.callId, data.success)
+    } catch (batchErr) {
+      logger.error('[taor] Tool batch execution failed', {
+        error: batchErr instanceof Error ? batchErr.message : String(batchErr),
+        iteration: iterationCount,
+        tools: toolBlocks.map(t => t.name),
+      })
+      // Synthesize a minimal result so the loop can continue
+      batchResult = {
+        toolResults: toolBlocks.map(tool => ({
+          type: 'tool_result' as const,
+          tool_use_id: tool.id,
+          content: `Tool execution failed: ${batchErr instanceof Error ? batchErr.message : String(batchErr)}`,
+          is_error: true,
+        })),
+        events: [],
+        activeRole: undefined,
+        executionCapHit: false,
       }
-      yield value
+      yield { type: 'error', data: `Tool execution error: ${batchErr instanceof Error ? batchErr.message : 'unknown error'}` }
     }
     activeRole = batchResult.activeRole
 
     // Dynamic tool loading: if resolve_tool was called, add resolved tools to the active set
     for (const tool of toolBlocks) {
       if (tool.name === 'resolve_tool') {
-        const toolName = (tool.input as Record<string, unknown>).tool_name as string | undefined
+        const toolInput = tool.input as Record<string, unknown>
+        const toolName = toolInput.tool_name as string | undefined
+        const query = toolInput.query as string | undefined
+
         if (toolName) {
+          // Direct name resolution
           const resolved = resolveToolSchema(toolName)
           if (resolved && !tools.some(t => t.name === resolved.name)) {
             tools = [...tools, resolved]
+          }
+        } else if (query) {
+          // Query-based resolution: find the tool result and extract resolved names
+          const toolResult = batchResult.toolResults.find(
+            r => r.tool_use_id === tool.id && !r.is_error
+          )
+          if (toolResult && typeof toolResult.content === 'string') {
+            try {
+              const parsed = JSON.parse(toolResult.content)
+              // resolve_tool with query returns an array of {name, description}
+              const results = Array.isArray(parsed) ? parsed : parsed?.data ? (Array.isArray(parsed.data) ? parsed.data : [parsed.data]) : []
+              for (const item of results) {
+                if (item?.name) {
+                  const resolved = resolveToolSchema(item.name)
+                  if (resolved && !tools.some(t => t.name === resolved.name)) {
+                    tools = [...tools, resolved]
+                  }
+                }
+              }
+            } catch {
+              // Non-critical: tool result parsing failed
+              logger.debug('[taor] Failed to parse resolve_tool query result', { toolId: tool.id })
+            }
           }
         }
       }
@@ -559,6 +646,24 @@ export async function* runTAORLoop(
           yield { type: 'plan_stage_update', data: { stageId: reactiveMatch.id, status: success ? 'done' : 'error' } }
         }
       }
+    }
+
+    // ── Record per-tool action outcomes (feeds confidence calibrator) ──
+    for (const { tool } of toolMeta) {
+      const success = toolOutcomes.get(tool.id) ?? false
+      const level = getAutonomyLevel(tool.name)
+      const toolConfidence = AUTONOMY_WEIGHTS[level]
+      // Fire-and-forget: never block the loop on outcome recording
+      recordActionOutcome(
+        config.supabase,
+        config.orgId,
+        config.agentType || 'chat',
+        tool.name,
+        toolConfidence,
+        true, // user-initiated chat = implicit approval
+        success, // was_correct = tool succeeded
+        'autonomy_level',
+      ).catch(() => {}) // swallow — logging must not break execution
     }
 
     // ── OBSERVE: append results to conversation ─────────────────────
@@ -629,6 +734,8 @@ export async function* runTAORLoop(
       duration_ms: Date.now() - startTime,
       tool_calls: toolCallCount,
       iterations: iterationCount,
+      confidence_score: 0,
+      routing_decision: 'escalate',
     })
   }
 

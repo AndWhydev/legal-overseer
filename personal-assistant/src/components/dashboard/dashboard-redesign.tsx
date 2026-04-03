@@ -4,6 +4,8 @@ import React, { lazy, Suspense } from 'react';
 import { SectionCards } from '@/components/section-cards';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChartData } from '@/hooks/use-chart-data';
+import { WeeklySummaryCard } from './weekly-summary-card';
+import { ProjectProgressCards } from './project-progress-cards';
 
 const ChartAreaAgents = lazy(() => import('./charts/chart-area-agents').then(m => ({ default: m.ChartAreaAgents })));
 const ChartBarTasks = lazy(() => import('./charts/chart-bar-tasks').then(m => ({ default: m.ChartBarTasks })));
@@ -22,6 +24,14 @@ export function DashboardRedesign() {
   return (
     <div className="@container/main flex flex-col gap-4">
       <SectionCards />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <WeeklySummaryCard />
+        </div>
+        <div className="lg:col-span-2">
+          <ProjectProgressCards />
+        </div>
+      </div>
       <Suspense fallback={<ChartSkeleton />}>
         <ChartAreaAgents data={data.agentActivity} loading={chartsLoading} />
       </Suspense>

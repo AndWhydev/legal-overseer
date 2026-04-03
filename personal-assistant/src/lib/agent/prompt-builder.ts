@@ -82,11 +82,26 @@ When to spawn:
 - Multiple independent sub-tasks (fix photos AND send invoice AND draft reply)
 - Deep research that would consume too much context
 - Tasks that benefit from focused tool access
+- A client has multiple active project phases — spawn one agent per phase
 
 When NOT to spawn:
 - Simple single-step operations (just call the tool directly)
 - Tasks that need context from earlier in this conversation
 - Quick lookups or trivial answers
+
+### Project-Aware Decomposition
+
+When the user asks to "handle" or "sort out" a client/project, decompose based on the Active Projects section:
+
+1. Check the project's active phases, blockers, and next actions
+2. Spawn one sub-agent per independent action chain. Example for "sort out Steve":
+   - Agent 1: "Check Steve's recent emails and draft replies to anything pending" (comms)
+   - Agent 2: "Update the video embed phase — deploy the video to his website" (ops)
+   - Agent 3: "Check if Steve has any outstanding invoices or payments due" (finance)
+3. Each sub-agent gets: the project name, contact details, phase context, and specific task
+4. Synthesize all results into one coherent status update
+
+When spawning multiple agents, call spawn_agent multiple times in the SAME response so they execute in parallel. Do NOT call them across multiple turns.
 
 Always synthesize sub-agent results into one coherent response. Never mention sub-agents, delegation, or parallel processing to the user.
 
@@ -722,21 +737,69 @@ function formatSnapshotContext(
  * Scans the user message for contact name/email/phone matches, then loads
  * pre-computed baseplate snapshots for each match. No extra LLM calls.
  */
+/**
+ * Load active/blocked projects for the org. Lightweight — used in prompt assembly.
+ */
+async function loadActiveProjects(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<string> {
+  try {
+    const { data: projects } = await supabase
+      .from('projects')
+      .select('name, status, contact_id, metadata')
+      .eq('org_id', orgId)
+      .in('status', ['active', 'blocked'])
+      .order('updated_at', { ascending: false })
+      .limit(10)
+
+    if (!projects || projects.length === 0) return ''
+
+    const lines = projects.map(p => {
+      const meta = (p.metadata ?? {}) as Record<string, unknown>
+      const priority = meta.priority || 'medium'
+      const currentPhase = meta.current_phase || '—'
+      const nextAction = meta.next_action || '—'
+      const blockers = Array.isArray(meta.blockers) && meta.blockers.length > 0
+        ? meta.blockers.map((b: Record<string, unknown>) => b.description).join('; ')
+        : null
+      const phases = Array.isArray(meta.phases)
+        ? meta.phases.map((ph: Record<string, unknown>) => `${ph.status === 'complete' ? '✓' : ph.status === 'active' ? '►' : ph.status === 'blocked' ? '✗' : '○'} ${ph.title}`).join(', ')
+        : ''
+
+      let line = `**${p.name}** [${p.status}] priority:${priority}`
+      if (phases) line += `\n  Phases: ${phases}`
+      if (currentPhase !== '—') line += `\n  Current: ${currentPhase}`
+      if (nextAction !== '—') line += `\n  Next action: ${nextAction}`
+      if (blockers) line += `\n  ⚠ Blocked: ${blockers}`
+      return line
+    })
+
+    return lines.join('\n\n')
+  } catch {
+    return '' // Non-critical
+  }
+}
+
 export async function buildEntityAwarePrompt(
   supabase: SupabaseClient,
   orgId: string,
   userMessage: string,
   userProfile?: UserProfile
 ): Promise<string> {
-  const [basePrompt, scanContacts] = await Promise.all([
+  const [basePrompt, scanContacts, projectsSection] = await Promise.all([
     buildSystemPrompt(supabase, orgId, undefined, userProfile),
     supabase ? loadContactsForScanning(supabase, orgId) : Promise.resolve([]),
+    supabase ? loadActiveProjects(supabase, orgId) : Promise.resolve(''),
   ])
 
   // Fast string-match scan — no DB calls
   const mentions = scanForEntityMentions(userMessage, scanContacts, 5)
 
   if (mentions.length === 0) {
+    if (projectsSection) {
+      return `${basePrompt}\n## Active Projects\n\nThese are our active and blocked projects. Reference this when discussing work status, priorities, or next steps.\n\n${projectsSection}\n`
+    }
     return basePrompt
   }
 
@@ -763,6 +826,9 @@ export async function buildEntityAwarePrompt(
   }
 
   if (contextLines.length === 0) {
+    if (projectsSection) {
+      return `${basePrompt}\n## Active Projects\n\nThese are our active and blocked projects. Reference this when discussing work status, priorities, or next steps.\n\n${projectsSection}\n`
+    }
     return basePrompt
   }
 
@@ -783,8 +849,12 @@ export async function buildEntityAwarePrompt(
     // Non-critical: strategies enhance behavior but aren't required
   }
 
+  const projectBlock = projectsSection
+    ? `\n## Active Projects\n\nThese are our active and blocked projects. Reference this when discussing work status, priorities, or next steps.\n\n${projectsSection}\n`
+    : ''
+
   return `${basePrompt}
-${strategiesSection}
+${strategiesSection}${projectBlock}
 ## Entity Context
 
 The following contacts were mentioned in the user's message. Use this pre-compiled context to inform your response. You can use tools to get more detail if needed.

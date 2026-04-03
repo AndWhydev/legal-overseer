@@ -9,6 +9,8 @@ import { seoToolDefinitions, seoToolHandlers } from './tools/seo-tools'
 import { tenderToolDefinitions, tenderToolHandlers } from './tools/tender-tools'
 import { contentToolDefinitions, contentToolHandlers } from './tools/content-tools'
 import { builderToolDefinitions, builderToolHandlers } from './tools/builder-tools'
+import { projectToolDefinitions, projectToolHandlers } from './tools/project-tools'
+import { standingOrderToolDefinitions, standingOrderToolHandlers } from './tools/standing-order-tools'
 import { spawnAgentToolDefinition, handleSpawnAgent, type SpawnContext } from './tools/spawn-agent'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
@@ -47,7 +49,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'core',
     label: 'Core Operations',
     description: 'Task management, contacts, activity logging, and creator tools',
-    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice', 'resolve_tool'],
+    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice', 'resolve_tool', 'list_projects', 'update_project', 'create_project', 'list_standing_orders', 'create_standing_order', 'update_standing_order'],
   },
   memory: {
     id: 'memory',
@@ -875,13 +877,15 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...tenderToolHandlers,
   ...contentToolHandlers,
   ...builderToolHandlers,
+  ...projectToolHandlers,
+  ...standingOrderToolHandlers,
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])

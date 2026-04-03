@@ -181,14 +181,16 @@ async function gatherSignals(
     hotLeads,
     staleConversations,
     upcomingDeadlines,
+    projectDeadlines,
   ] = await Promise.all([
     gatherOverdueInvoiceSignals(supabase, orgId, now),
     gatherHotLeadSignals(supabase, orgId, now),
     gatherStaleConversationSignals(supabase, orgId, now),
     gatherUpcomingDeadlineSignals(supabase, orgId, now),
+    gatherProjectDeadlineSignals(supabase, orgId, now),
   ])
 
-  signals.push(...overdueInvoices, ...hotLeads, ...staleConversations, ...upcomingDeadlines)
+  signals.push(...overdueInvoices, ...hotLeads, ...staleConversations, ...upcomingDeadlines, ...projectDeadlines)
 
   return signals
 }
@@ -352,6 +354,82 @@ async function gatherUpcomingDeadlineSignals(
     }))
   } catch (err) {
     logger.warn('[proactive] Failed to gather upcoming deadline signals', {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return []
+  }
+}
+
+async function gatherProjectDeadlineSignals(
+  supabase: SupabaseClient,
+  orgId: string,
+  now: string,
+): Promise<ProactiveSignal[]> {
+  try {
+    const { data } = await supabase
+      .from('projects')
+      .select('id, name, status, contact_id, metadata')
+      .eq('org_id', orgId)
+      .in('status', ['active', 'blocked'])
+      .limit(20)
+
+    if (!data?.length) return []
+
+    const signals: ProactiveSignal[] = []
+
+    for (const project of data) {
+      const meta = (project.metadata ?? {}) as Record<string, unknown>
+      const nextAction = meta.next_action as string | undefined
+      const nextActionDue = meta.next_action_due as string | undefined
+      const blockers = Array.isArray(meta.blockers) ? meta.blockers : []
+      const priority = meta.priority as string || 'medium'
+
+      // Signal 1: overdue next_action_due
+      if (nextActionDue && new Date(nextActionDue) < new Date(now)) {
+        signals.push({
+          type: 'project_action_overdue',
+          source: 'projects',
+          severity: (priority === 'high' || priority === 'critical' ? 'high' : 'medium') as ProactiveSignal['severity'],
+          data: {
+            project_id: project.id,
+            project_name: project.name,
+            next_action: nextAction,
+            next_action_due: nextActionDue,
+            contact_id: project.contact_id,
+            priority,
+          },
+          timestamp: now,
+        })
+      }
+
+      // Signal 2: blocked project with stale blockers (>7 days)
+      for (const blocker of blockers) {
+        const b = blocker as Record<string, unknown>
+        const since = b.since as string | undefined
+        if (since) {
+          const daysSinceBlocked = Math.floor((Date.now() - new Date(since).getTime()) / 86400000)
+          if (daysSinceBlocked > 7) {
+            signals.push({
+              type: 'project_blocked_stale',
+              source: 'projects',
+              severity: 'high' as ProactiveSignal['severity'],
+              data: {
+                project_id: project.id,
+                project_name: project.name,
+                blocker_description: b.description,
+                days_blocked: daysSinceBlocked,
+                contact_id: project.contact_id,
+              },
+              timestamp: now,
+            })
+          }
+        }
+      }
+    }
+
+    return signals
+  } catch (err) {
+    logger.warn('[proactive] Failed to gather project deadline signals', {
       error: err instanceof Error ? err.message : String(err),
     })
     return []
