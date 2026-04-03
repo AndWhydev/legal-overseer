@@ -922,10 +922,10 @@ function InboxTab() {
             </div>
           </div>
 
-          <ScrollArea className="min-h-0 flex-1 overflow-hidden">
-            <div className="pb-4 pr-2">
-              <div className="rounded-[24px] border border-border/70 bg-card/50 p-2 shadow-sm">
-                <div className="flex flex-col gap-1">
+          <ScrollArea className="min-h-0 flex-1 overflow-hidden [&>[data-slot=scroll-area-viewport]]:!overflow-x-hidden">
+            <div className="pb-4 pr-2 min-w-0">
+              <div className="rounded-[24px] border border-border/70 bg-card/50 p-2 shadow-sm min-w-0 overflow-hidden">
+                <div className="flex flex-col gap-1 min-w-0">
                   {displayItems.length === 0 ? (
                     <Empty>
                       <EmptyTitle>All caught up</EmptyTitle>
