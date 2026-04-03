@@ -60,7 +60,7 @@ const rangeStyle: React.CSSProperties = {
 const confidenceStyle: React.CSSProperties = {
   fontSize: 14,
   color: 'var(--text-secondary)',
-  marginTop: 2,
+  marginTop: 4,
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
