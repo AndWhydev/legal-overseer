@@ -103,8 +103,12 @@ export async function runProactiveAnalysis(
       return []
     }
 
-    // 5. Classify signals into decisions
-    const decisions = await classifySignals(aggregated, orgConfig)
+    // 5. Apply hardcoded rules for obvious high-severity signals
+    const { hardcodedDecisions, remainingSignals } = applyHardcodedRules(aggregated)
+
+    // 6. Classify remaining signals via LLM
+    const llmDecisions = await classifySignals(remainingSignals, orgConfig)
+    const decisions = [...hardcodedDecisions, ...llmDecisions]
 
     logger.info('[proactive] Classification complete', {
       orgId,
@@ -113,7 +117,7 @@ export async function runProactiveAnalysis(
       actCount: decisions.filter((d) => d.shouldAct).length,
     })
 
-    // 6. Execute each decision
+    // 7. Execute each decision
     const executionConfig: ExecutionConfig = {
       orgId,
       agentConfigId,
@@ -152,6 +156,93 @@ export async function runProactiveAnalysis(
     })
     return []
   }
+}
+
+
+// ---------------------------------------------------------------------------
+// Hardcoded Signal Rules (bypass LLM for obvious high-severity signals)
+// ---------------------------------------------------------------------------
+
+/**
+ * Apply deterministic rules for signals that should ALWAYS produce a decision.
+ * These bypass the LLM classifier to avoid false negatives on critical signals.
+ *
+ * Returns decisions for matched signals and the remaining unmatched signals
+ * that still need LLM classification.
+ */
+function applyHardcodedRules(signals: ProactiveSignal[]): {
+  hardcodedDecisions: import('./types').ProactiveDecision[]
+  remainingSignals: ProactiveSignal[]
+} {
+  const hardcodedDecisions: import('./types').ProactiveDecision[] = []
+  const remainingSignals: ProactiveSignal[] = []
+
+  for (const signal of signals) {
+    const decision = matchHardcodedRule(signal)
+    if (decision) {
+      hardcodedDecisions.push(decision)
+      logger.info('[proactive] Hardcoded rule matched', {
+        signalType: signal.type,
+        action: decision.action,
+        urgency: decision.urgency,
+      })
+    } else {
+      remainingSignals.push(signal)
+    }
+  }
+
+  return { hardcodedDecisions, remainingSignals }
+}
+
+function matchHardcodedRule(signal: ProactiveSignal): import('./types').ProactiveDecision | null {
+  const data = signal.data as Record<string, unknown>
+
+  // Rule 1: Blocked project stale > 30 days → always alert
+  if (signal.type === 'project_blocked_stale') {
+    const daysBlocked = (data.days_blocked as number) ?? 0
+    if (daysBlocked > 30) {
+      return {
+        shouldAct: true,
+        action: 'alert_user',
+        confidence: 0.95,
+        reasoning: `Project "${String(data.project_name)}" has been blocked for ${String(data.days_blocked)} days: ${String(data.blocker_description ?? "unknown blocker")}. Requires attention.`,
+        urgency: 'today',
+        channel: 'chat_whisper',
+        autonomyLevel: 3,
+      }
+    }
+  }
+
+  // Rule 2: Project action overdue → always create task
+  if (signal.type === 'project_action_overdue') {
+    return {
+      shouldAct: true,
+      action: 'create_task',
+      confidence: 0.9,
+      reasoning: `Project "${String(data.project_name)}" has overdue action: ${String(data.next_action ?? "unspecified")}. Was due ${String(data.next_action_due)}.`,
+      urgency: 'today',
+      channel: 'chat_whisper',
+      autonomyLevel: 3,
+    }
+  }
+
+  // Rule 3: Invoice overdue with total > 500 → always alert
+  if (signal.type === 'invoice_overdue') {
+    const total = (data.total as number) ?? 0
+    if (total > 500) {
+      return {
+        shouldAct: true,
+        action: 'alert_user',
+        confidence: 0.95,
+        reasoning: `Invoice ${String(data.invoice_number)} for ${String(data.contact_name)} is overdue. Amount: $${String(total)}.`,
+        urgency: 'immediate',
+        channel: 'chat_whisper',
+        autonomyLevel: 2,
+      }
+    }
+  }
+
+  return null
 }
 
 // ---------------------------------------------------------------------------
