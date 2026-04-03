@@ -97,7 +97,7 @@ export function EmailComposer({
           <Button
             variant="ghost"
             size="icon-sm"
-            className="bg-indigo-500/15 text-indigo-400/50"
+            className="bg-primary/10 text-sidebar-foreground/25"
             disabled
           >
             <IconSend className="size-3.5" />
@@ -187,7 +187,7 @@ export function EmailComposer({
             <Button
               variant="ghost"
               size="xs"
-              className="bg-indigo-500/15 text-indigo-400/80 hover:bg-indigo-500/25"
+              className="bg-primary/10 text-sidebar-foreground/70 hover:bg-primary/20"
               onClick={onSend}
               disabled={!draftText.trim()}
             >

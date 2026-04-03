@@ -7,20 +7,12 @@ function formatTime(dateStr: string): string {
   return new Date(dateStr).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
 }
 
-const BUBBLE_COLORS: Record<string, string> = {
-  imessage: 'bg-blue-500/25',
-  whatsapp: 'bg-indigo-500/20',
-  default: 'bg-indigo-500/20',
-}
-
 interface ChatThreadProps {
   messages: ThreadMessageItem[]
   channelType: string
 }
 
 export function ChatThreadView({ messages, channelType }: ChatThreadProps) {
-  const selfBubble = BUBBLE_COLORS[channelType] || BUBBLE_COLORS.default
-
   if (!messages.length) {
     return <p className="text-sm text-sidebar-foreground/30 italic px-5">No messages</p>
   }
@@ -43,7 +35,7 @@ export function ChatThreadView({ messages, channelType }: ChatThreadProps) {
                   key={i}
                   className={`mb-1 rounded-xl overflow-hidden ${isSelf ? 'rounded-br-sm' : 'rounded-bl-sm'} bg-sidebar-foreground/[0.05]`}
                 >
-                  <div className="w-44 h-24 bg-gradient-to-br from-indigo-500/15 to-purple-500/10 flex items-center justify-center text-lg">
+                  <div className="w-44 h-24 bg-sidebar-foreground/[0.06] flex items-center justify-center text-lg">
                     🖼
                   </div>
                   <div className="px-2.5 py-1.5 text-[10px] text-sidebar-foreground/40">
@@ -57,7 +49,7 @@ export function ChatThreadView({ messages, channelType }: ChatThreadProps) {
                 <div
                   className={`px-3 py-2 text-xs leading-relaxed ${
                     isSelf
-                      ? `${selfBubble} text-sidebar-foreground/80 rounded-xl rounded-br-sm`
+                      ? `bg-primary/10 text-sidebar-foreground/80 rounded-xl rounded-br-sm`
                       : 'bg-sidebar-foreground/[0.06] text-sidebar-foreground/65 rounded-xl rounded-bl-sm'
                   }`}
                 >

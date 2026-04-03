@@ -67,7 +67,7 @@ export function ChatComposer({
       <button
         className={`rounded-full p-2 shrink-0 transition-colors ${
           draftText.trim()
-            ? 'bg-indigo-500/20 text-indigo-400/80 hover:bg-indigo-500/30'
+            ? 'bg-primary/10 text-sidebar-foreground/70 hover:bg-primary/20'
             : 'bg-sidebar-foreground/[0.04] text-sidebar-foreground/20'
         }`}
         onClick={onSend}
