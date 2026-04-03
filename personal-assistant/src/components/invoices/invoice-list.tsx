@@ -1090,7 +1090,7 @@ function DragGhost({ invoice }: { invoice: InvoiceRow }) {
       gap: 12,
       padding: '12px 16px',
       borderRadius: 12,
-      background: 'var(--glass-bg-heavy)',
+      background: 'var(--popover)',
       boxShadow: 'var(--card-shadow-hover), 0 0 0 1px var(--glass-card-border)',
       transform: 'rotate(1.5deg) scale(1.02)',
       maxWidth: 320,

@@ -251,7 +251,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
                 width: 244,
                 height: 244,
                 borderRadius: 16,
-                background: 'var(--glass-interactive-bg)',
+                background: 'var(--secondary)',
                 border: 'none',
                 display: 'flex',
                 alignItems: 'center',
@@ -275,7 +275,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
             width: 244,
             height: 244,
             borderRadius: 16,
-            background: 'var(--glass-interactive-bg)',
+            background: 'var(--secondary)',
             border: 'none',
             display: 'flex',
             alignItems: 'center',
@@ -411,8 +411,8 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
                 gap: 8,
                 padding: '8px 20px',
                 borderRadius: 20,
-                border: '1px solid var(--glass-interactive-border)',
-                background: 'var(--glass-interactive-bg)',
+                border: '1px solid var(--border)',
+                background: 'var(--secondary)',
                 color: 'var(--text-primary)',
                 fontSize: 14,
                 fontWeight: 500,
@@ -424,8 +424,8 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
                 e.currentTarget.style.borderColor = 'var(--border-hover)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'var(--glass-interactive-bg)';
-                e.currentTarget.style.borderColor = 'var(--glass-interactive-border)';
+                e.currentTarget.style.background = 'var(--secondary)';
+                e.currentTarget.style.borderColor = 'var(--border)';
               }}
             >
               <RotateCcw size={14} />

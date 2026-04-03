@@ -138,7 +138,7 @@ export function RevenueRadar() {
             background: 'var(--bg-card)',
             padding: '4px 12px',
             borderRadius: 'var(--radius-full)',
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid var(--border)',
           }}>
             {formatCents(recoverable)} recoverable
           </span>

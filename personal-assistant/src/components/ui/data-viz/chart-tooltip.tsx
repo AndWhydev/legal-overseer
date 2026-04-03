@@ -30,7 +30,7 @@ export function ChartTooltip({ visible, x, y, label, value, color }: ChartToolti
             padding: '4px 8px',
             borderRadius: 8,
             background: 'var(--bg-elevated, rgba(30, 30, 30, 0.95))',
-            border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.08))',
+            border: '1px solid var(--border)',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
             whiteSpace: 'nowrap',
             display: 'flex',

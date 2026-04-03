@@ -59,7 +59,7 @@ export function ChatComposer({
           onFocus={() => onFocusChange(true)}
           onBlur={() => onFocusChange(false)}
           placeholder={`Message ${recipientName}...`}
-          className="w-full min-h-5 max-h-[120px] resize-none border-none bg-transparent text-xs leading-normal text-sidebar-foreground/70 outline-none placeholder:text-sidebar-foreground/30"
+          className="w-full min-h-5 max-h-[120px] resize-none border-none bg-transparent text-base leading-normal text-sidebar-foreground/70 outline-none placeholder:text-sidebar-foreground/30"
           rows={1}
         />
       </div>

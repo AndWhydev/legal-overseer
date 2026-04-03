@@ -83,7 +83,7 @@ export function EmailComposer({
           className="flex items-center gap-2 cursor-text"
           onClick={() => { onFocusChange(true); textareaRef.current?.focus() }}
         >
-          <div className="flex-1 rounded-xl bg-sidebar-foreground/[0.04] px-3.5 py-2.5 text-xs text-sidebar-foreground/30">
+          <div className="flex-1 rounded-xl bg-sidebar-foreground/[0.04] px-3.5 py-2.5 text-base text-sidebar-foreground/30">
             Reply to {recipientName}...
           </div>
           <Button
@@ -165,7 +165,7 @@ export function EmailComposer({
             onKeyDown={handleKeyDown}
             onFocus={() => onFocusChange(true)}
             placeholder={`Reply to ${recipientName}...`}
-            className="min-h-16 max-h-[300px] w-full resize-none rounded-lg bg-sidebar-foreground/[0.04] px-3 py-2.5 text-xs leading-relaxed text-sidebar-foreground/70 outline-none placeholder:text-sidebar-foreground/25"
+            className="min-h-16 max-h-[300px] w-full resize-none rounded-lg bg-sidebar-foreground/[0.04] px-3 py-2.5 text-base leading-relaxed text-sidebar-foreground/70 outline-none placeholder:text-sidebar-foreground/25"
           />
 
           {/* Attachment chips */}

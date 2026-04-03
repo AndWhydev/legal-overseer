@@ -24,7 +24,7 @@ const cardStyle: React.CSSProperties = {
   borderRadius: 'var(--radius-xl)',
   background: 'var(--bg-card)',
   border: 'none',
-  boxShadow: 'var(--card-shadow), var(--card-inset)',
+  boxShadow: 'var(--card-shadow)',
   display: 'flex',
   flexDirection: 'column',
   gap: 12,
