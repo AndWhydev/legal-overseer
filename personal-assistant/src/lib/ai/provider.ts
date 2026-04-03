@@ -13,7 +13,7 @@ export const anthropic = createAnthropic({})
  * - heavy: synthesis, deep analysis (Opus)
  */
 export const models = {
-  fast: anthropic('claude-haiku-4-5-20250414'),
+  fast: anthropic('claude-haiku-4-5-20251001'),
   balanced: anthropic('claude-sonnet-4-5-20250514'),
   heavy: anthropic('claude-opus-4-20250514'),
 } as const
