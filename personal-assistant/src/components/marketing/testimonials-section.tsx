@@ -48,7 +48,7 @@ export default function TestimonialsSection() {
     <section
       style={{
         padding: '100px 20px',
-        background: 'rgba(5, 5, 10, 0.5)',
+        background: 'var(--background)',
         position: 'relative',
       }}
     >
@@ -61,7 +61,7 @@ export default function TestimonialsSection() {
               fontWeight: 500,
               marginBottom: '16px',
               letterSpacing: '-0.02em',
-              color: '#F1F5F9',
+              color: 'var(--foreground)',
             }}
           >
             Loved by operations teams
@@ -69,7 +69,7 @@ export default function TestimonialsSection() {
           <p
             style={{
               fontSize: '16px',
-              color: '#94A3B8',
+              color: 'var(--muted-foreground)',
               maxWidth: '600px',
               margin: '0 auto',
             }}
@@ -93,22 +93,22 @@ export default function TestimonialsSection() {
               style={{
                 padding: '32px 24px',
                 borderRadius: '16px',
-                background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-                border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-                boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+                boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3))',
                 transition: 'all 300ms',
                 cursor: 'pointer',
                 display: 'flex',
                 flexDirection: 'column',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--bb-surface-hover, rgba(15, 20, 30, 0.8))'
-                e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.2)'
+                e.currentTarget.style.background = 'var(--elevated)'
+                e.currentTarget.style.borderColor = 'var(--success)'
                 e.currentTarget.style.transform = 'translateY(-4px)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))'
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.03)'
+                e.currentTarget.style.background = 'var(--card)'
+                e.currentTarget.style.borderColor = 'var(--border)'
                 e.currentTarget.style.transform = 'translateY(0)'
               }}
             >
@@ -119,7 +119,7 @@ export default function TestimonialsSection() {
               <p
                 style={{
                   fontSize: '16px',
-                  color: '#F1F5F9',
+                  color: 'var(--foreground)',
                   lineHeight: 1.6,
                   marginBottom: '24px',
                   fontStyle: 'italic',
@@ -136,12 +136,12 @@ export default function TestimonialsSection() {
                     width: '44px',
                     height: '44px',
                     borderRadius: '50%',
-                    background: 'rgba(16, 185, 129, 0.1)',
+                    background: 'var(--secondary)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '16px',
-                    border: '1px solid rgba(16, 185, 129, 0.2)',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   {testimonial.avatar}
@@ -151,7 +151,7 @@ export default function TestimonialsSection() {
                     style={{
                       fontSize: '14px',
                       fontWeight: 500,
-                      color: '#F1F5F9',
+                      color: 'var(--foreground)',
                       margin: '0 0 2px 0',
                     }}
                   >
@@ -160,7 +160,7 @@ export default function TestimonialsSection() {
                   <p
                     style={{
                       fontSize: '14px',
-                      color: '#94A3B8',
+                      color: 'var(--muted-foreground)',
                       margin: 0,
                     }}
                   >
@@ -177,8 +177,8 @@ export default function TestimonialsSection() {
           style={{
             padding: '40px 32px',
             borderRadius: '20px',
-            background: 'var(--bb-surface, rgba(10, 14, 23, 0.5))',
-            border: '1px solid rgba(16, 185, 129, 0.1)',
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
             marginBottom: '80px',
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -192,7 +192,7 @@ export default function TestimonialsSection() {
                 style={{
                   fontSize: '16px',
                   fontWeight: 500,
-                  color: '#10b981',
+                  color: 'var(--success)',
                   marginBottom: '8px',
                 }}
               >
@@ -201,7 +201,7 @@ export default function TestimonialsSection() {
               <div
                 style={{
                   fontSize: '14px',
-                  color: '#94A3B8',
+                  color: 'var(--muted-foreground)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                 }}
@@ -217,7 +217,7 @@ export default function TestimonialsSection() {
           <p
             style={{
               fontSize: '14px',
-              color: '#94A3B8',
+              color: 'var(--muted-foreground)',
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
               marginBottom: '24px',
@@ -243,18 +243,18 @@ export default function TestimonialsSection() {
                   gap: '8px',
                   padding: '8px 16px',
                   borderRadius: '12px',
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.05))',
+                  background: 'var(--secondary)',
+                  border: '1px solid var(--border)',
                   transition: 'all 200ms',
                   cursor: 'pointer',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)'
-                  e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.2)'
+                  e.currentTarget.style.background = 'var(--elevated)'
+                  e.currentTarget.style.borderColor = 'var(--success)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'
+                  e.currentTarget.style.background = 'var(--secondary)'
+                  e.currentTarget.style.borderColor = 'var(--border)'
                 }}
               >
                 <span style={{ fontSize: '16px' }}>{partner.icon}</span>
@@ -262,7 +262,7 @@ export default function TestimonialsSection() {
                   style={{
                     fontSize: '14px',
                     fontWeight: 500,
-                    color: '#F1F5F9',
+                    color: 'var(--foreground)',
                   }}
                 >
                   {partner.name}

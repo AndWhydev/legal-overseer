@@ -288,7 +288,7 @@ function ConnectionCard({
   }
 
   return (
-    <article className="flex flex-col gap-3 rounded-[10px] border border-[var(--glass-interactive-border)] bg-[var(--glass-card-bg)] p-4 shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition duration-300 hover:translate-y-[-1px] hover:shadow-[0_16px_44px_rgba(15,23,42,0.08)]">
+    <article className="flex flex-col gap-3 rounded-[10px] border border-[var(--border)] bg-[var(--card)] p-4 shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition duration-300 hover:translate-y-[-1px] hover:shadow-[0_16px_44px_rgba(15,23,42,0.08)]">
       <div className="flex items-center gap-3">
         <AppIcon id={connection.id} size={40} />
         <div className="min-w-0">

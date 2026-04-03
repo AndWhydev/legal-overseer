@@ -89,7 +89,7 @@ function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgN
           background: '#ffffff',
           borderRadius: 8,
           overflow: 'hidden',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+          boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.15))',
           fontSize: 14,
           color: '#1e293b',
           display: 'flex',
@@ -107,7 +107,7 @@ function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgN
               <span style={{ fontWeight: 500, fontSize: 16, color: '#fff' }}>{orgName}</span>
             )}
           </div>
-          <div style={{ textAlign: 'right', color: 'rgba(255,255,255,0.85)' }}>
+          <div style={{ textAlign: 'right', color: 'var(--foreground)' }}>
             <div style={{ fontWeight: 500, fontSize: 16, color: '#fff' }}>INVOICE</div>
             <div style={{ fontSize: 14, marginTop: 2 }}>#INV-0042</div>
           </div>

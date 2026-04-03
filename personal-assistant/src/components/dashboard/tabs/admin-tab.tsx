@@ -40,9 +40,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const glassCard: React.CSSProperties = {
-  background: 'var(--bg-card-solid, rgba(15, 20, 30, 0.6))',
-  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3)), var(--card-inset, inset 0 1px 0 rgba(255,255,255,0.06))',
+  background: 'var(--card)',
+  border: '1px solid var(--border)',
+  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3))',
   borderRadius: 16,
 };
 

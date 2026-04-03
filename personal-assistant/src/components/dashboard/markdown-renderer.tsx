@@ -23,7 +23,7 @@ function renderInline(text: string): string {
   // Italic (avoid matching underscores in_words)
   r = r.replace(/\*(.*?)\*/g, '<em>$1</em>')
   // Inline code
-  r = r.replace(/`(.*?)`/g, '<code style="background:rgba(255,255,255,0.06);padding:4px 4px;border-radius:4px;font-size:0.9em">$1</code>')
+  r = r.replace(/`(.*?)`/g, '<code style="background:var(--muted);padding:4px 4px;border-radius:4px;font-size:0.9em">$1</code>')
   return r
 }
 

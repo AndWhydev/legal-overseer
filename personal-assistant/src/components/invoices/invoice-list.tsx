@@ -84,8 +84,7 @@ const PROGRESS_STEPS = ['Draft', 'Sent', 'Paid'] as const
 
 const glassCard: React.CSSProperties = {
   borderRadius: 12,
-  background: 'var(--glass-card-bg-light)',
-  boxShadow: 'var(--glass-card-inset)',
+  background: 'var(--card)',
   overflow: 'hidden',
 }
 
@@ -286,11 +285,11 @@ function escapeHtml(value: string): string {
 // ─── Avatar Colors ──────────────────────────────────────────────────────────
 
 const AVATAR_PAIRS = [
-  ['#64748B', '#94A3B8'],
-  ['#94A3B8', '#CBD5E1'],
-  ['#475569', '#64748B'],
-  ['#334155', '#475569'],
-  ['#CBD5E1', 'rgba(255, 255, 255, 0.08)'],
+  ['var(--muted-foreground)', 'var(--muted-foreground)'],
+  ['var(--muted-foreground)', 'var(--muted-foreground)'],
+  ['var(--muted-foreground)', 'var(--muted-foreground)'],
+  ['var(--muted-foreground)', 'var(--muted-foreground)'],
+  ['var(--muted-foreground)', 'var(--muted-foreground)'],
 ]
 
 const STATUS_COLORS: Record<InvoiceStatus, { dot: string; bg: string; label: string; badgeVariant: 'secondary' | 'default' | 'destructive' | 'outline' }> = {
@@ -427,7 +426,6 @@ function InvoiceAvatar({ name, email, size = 36 }: { name: string; email?: strin
           fontSize: size * 0.36,
           fontWeight: 500,
           letterSpacing: '0.02em',
-          textShadow: '0 1px 2px rgba(0,0,0,0.3)',
         }}>
           {getInitials(name)}
         </div>
@@ -566,7 +564,7 @@ function InvoiceDetailPanel({
                 borderRadius: 9999,
                 background: i <= progressIdx
                   ? invoice.status === 'cancelled' ? '#71717a' : '#22C55E'
-                  : 'var(--glass-hover-bg)',
+                  : 'var(--muted)',
                 transition: `background 200ms ${SNAP}`,
               }} />
               <span style={{
@@ -670,8 +668,8 @@ function InvoiceDetailPanel({
 
       {/* Actions row */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {canSend(invoice.status) && actionBtn('Send', <IconSend size={14} />, 'sent', 'rgba(56, 189, 248, 0.1)', '#7dd3fc')}
-        {canMarkPaid(invoice.status) && actionBtn('Mark Paid', <IconCircleCheck size={14} />, 'paid', 'rgba(34, 197, 94, 0.1)', '#86efac')}
+        {canSend(invoice.status) && actionBtn('Send', <IconSend size={14} />, 'sent', 'var(--secondary)', 'var(--muted-foreground)')}
+        {canMarkPaid(invoice.status) && actionBtn('Mark Paid', <IconCircleCheck size={14} />, 'paid', 'var(--secondary)', 'var(--muted-foreground)')}
         {canCancel(invoice.status) && (
           <button
             onClick={(e) => { e.stopPropagation(); onAction(invoice.id, 'cancelled') }}
@@ -679,7 +677,7 @@ function InvoiceDetailPanel({
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '12px 16px', borderRadius: 12, cursor: busy ? 'not-allowed' : 'pointer',
-              background: 'transparent', border: '1px solid var(--glass-interactive-border)',
+              background: 'transparent', border: '1px solid var(--border)',
               color: 'var(--text-dim)', fontSize: 14, fontWeight: 500,
               opacity: busy ? 0.5 : 1, transition: `all 100ms ${SNAP}`,
             }}
@@ -692,8 +690,8 @@ function InvoiceDetailPanel({
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
-            background: showPdf ? 'rgba(255, 255, 255, 0.08)' : 'var(--glass-interactive-bg)',
-            border: showPdf ? '1px solid rgba(255, 255, 255, 0.03)' : 'none',
+            background: showPdf ? 'var(--elevated)' : 'var(--secondary)',
+            border: showPdf ? '1px solid var(--border)' : 'none',
             color: showPdf ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim)', fontSize: 14, fontWeight: 500,
             transition: `all 100ms ${SNAP}`,
           }}
@@ -778,7 +776,7 @@ function InvoiceRowContent({
           cursor: expanded ? 'pointer' : 'default',
           transition: `background 60ms ${SNAP}`,
           background: expanded
-            ? 'var(--glass-interactive-bg)'
+            ? 'var(--secondary)'
             : hovered
               ? sc.bg
               : 'transparent',
@@ -831,7 +829,7 @@ function InvoiceRowContent({
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 28, height: 28, borderRadius: 8, cursor: busy ? 'not-allowed' : 'pointer',
-                  background: 'rgba(56, 189, 248, 0.1)', border: 'none',
+                  background: 'var(--secondary)', border: 'none',
                   color: 'var(--bb-cyan)', opacity: busy ? 0.4 : 1,
                   transition: `all 80ms ${SNAP}`,
                 }}
@@ -847,7 +845,7 @@ function InvoiceRowContent({
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 28, height: 28, borderRadius: 8, cursor: busy ? 'not-allowed' : 'pointer',
-                  background: 'rgba(34, 197, 94, 0.1)', border: 'none',
+                  background: 'var(--secondary)', border: 'none',
                   color: 'var(--bb-green)', opacity: busy ? 0.4 : 1,
                   transition: `all 80ms ${SNAP}`,
                 }}
@@ -1121,7 +1119,7 @@ function DragGhost({ invoice }: { invoice: InvoiceRow }) {
 
 function InvoiceSkeleton() {
   const shimmer: React.CSSProperties = {
-    background: 'var(--glass-interactive-bg)',
+    background: 'var(--muted)',
     borderRadius: 8,
     animation: `bb-inv-pulse 1.8s ease-in-out infinite`,
   }
@@ -1454,7 +1452,7 @@ export function InvoiceList() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 36, height: 36, borderRadius: 12, cursor: 'pointer',
               border: 'none',
-              background: groupMode === 'client' ? 'rgba(255, 255, 255, 0.08)' : 'var(--glass-interactive-bg)',
+              background: groupMode === 'client' ? 'var(--elevated)' : 'var(--secondary)',
               color: groupMode === 'client' ? 'var(--text-primary, #F1F5F9)' : 'var(--text-dim)',
               transition: `all 80ms ${SNAP}`,
             }}
@@ -1468,16 +1466,16 @@ export function InvoiceList() {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 36, height: 36, borderRadius: 12, cursor: 'pointer',
-              border: 'none', background: 'var(--glass-interactive-bg)',
+              border: 'none', background: 'var(--secondary)',
               color: 'var(--text-dim)', transition: `all 80ms ${SNAP}`,
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--glass-hover-bg)'
-              e.currentTarget.style.color = 'var(--text-secondary)'
+              e.currentTarget.style.background = 'var(--elevated)'
+              e.currentTarget.style.color = 'var(--foreground)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--glass-interactive-bg)'
-              e.currentTarget.style.color = 'var(--text-dim)'
+              e.currentTarget.style.background = 'var(--secondary)'
+              e.currentTarget.style.color = 'var(--muted-foreground)'
             }}
           >
             <IconDownload size={16} />
