@@ -6,6 +6,7 @@ import { useDevOverrides } from '@/lib/dev/dev-overrides';
 import { useInboxKeyboard } from '@/hooks/use-inbox-keyboard';
 import { InboxShortcutsOverlay } from '@/components/dashboard/inbox-shortcuts-overlay';
 import InboxDrawer, { type ThreadMessageItem } from '@/components/dashboard/inbox-drawer';
+import { useDrawer } from '@/components/dashboard/drawer-context';
 import { TabShell } from '@/components/ui/tab-shell';
 import { Empty, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 import { logger } from '@/lib/core/logger';
@@ -454,6 +455,7 @@ function InboxTab() {
   const [snoozedIds, setSnoozedIds] = useState<Set<string>>(new Set());
   const lastClickedIndexRef = useRef<number>(-1);
   const closeDrawerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { setDrawer: setDrawerSlot, closeDrawer: closeDrawerSlot } = useDrawer();
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
 
@@ -570,6 +572,25 @@ function InboxTab() {
       }
     };
   }, []);
+
+  // Push inbox drawer content into the layout drawer slot
+  useEffect(() => {
+    if (selectedMessage && drawerMessage) {
+      setDrawerSlot(
+        <InboxDrawer
+          message={drawerMessage}
+          onClose={() => { closeDrawer(); closeDrawerSlot(); }}
+          onArchive={handleArchive}
+          onDone={handleDone}
+          onReply={handleReply}
+          onNavigate={handleNavigate}
+          threadMessages={SEED_THREAD_MESSAGES[drawerMessage.id]}
+        />
+      )
+    } else {
+      closeDrawerSlot()
+    }
+  }, [selectedMessage, drawerMessage])
 
   // ── Toast system ──
   const addToast = useCallback((message: string, undo: () => void) => {
@@ -1014,16 +1035,6 @@ function InboxTab() {
           </ScrollArea>
         </div>
 
-        <InboxDrawer
-          message={drawerMessage}
-          open={Boolean(selectedMessage)}
-          onClose={closeDrawer}
-          onArchive={handleArchive}
-          onDone={handleDone}
-          onReply={handleReply}
-          onNavigate={handleNavigate}
-          threadMessages={drawerMessage ? SEED_THREAD_MESSAGES[drawerMessage.id] : undefined}
-        />
       </div>
 
       {/* ── Snooze Picker Popover (for individual messages) ── */}
