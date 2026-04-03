@@ -33,14 +33,9 @@
   --foreground: #FAFAFA;
 
   /* ── Glassmorphism ── */
-  --glass-bg: rgba(36, 36, 36, 0.92);
-  --glass-bg-heavy: rgba(36, 36, 36, 0.96);
-  --glass-blur: blur(10px);
-  --glass-blur-heavy: blur(12px);
   --glass-card-bg: rgba(43, 43, 43, 0.92);
   --glass-card-bg-light: rgba(49, 49, 49, 0.88);
   --glass-card-border: rgba(255, 255, 255, 0.03);
-  --glass-card-inset: 0 10px 24px rgba(0, 0, 0, 0.22);
   --glass-card-blur: blur(10px);
   --glass-pill-bg: rgba(255, 255, 255, 0.05);
   --glass-pill-inset: inset 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -53,14 +48,11 @@
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-subtle-alpha: rgba(255, 255, 255, 0.12);
   --border-active: var(--bb-white);
-  --glass-border: rgba(255, 255, 255, 0.03);
   --border-focus-ring: rgba(218, 218, 218, 0.22);
 
   /* ── Card Shadows ── */
   --card-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
-  --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   --card-shadow-hover: 0 18px 38px rgba(0, 0, 0, 0.28);
-  --card-inset-hover: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
   /* ── Hover States ── */
   --hover-bg: rgba(255, 255, 255, 0.08);

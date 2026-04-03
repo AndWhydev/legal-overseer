@@ -31,23 +31,16 @@
   --text-on-accent: var(--bb-white);
 
   /* ── Glassmorphism ── */
-  --glass-bg: rgba(255, 255, 255, 0.28);
-  --glass-bg-heavy: rgba(255, 255, 255, 0.55);
-  --glass-blur: blur(20px) saturate(1.4);
-  --glass-blur-heavy: blur(24px) saturate(1.5);
 
   /* ── Borders (nearly invisible) ── */
   --border-subtle: rgba(255, 255, 255, 0.03);
   --border-subtle-alpha: rgba(255, 255, 255, 0.03);
   --border-active: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.03);
   --border-focus-ring: rgba(255, 255, 255, 0.15);
 
   /* ── Card Shadows ── */
   --card-shadow: 0 8px 32px rgba(100, 120, 160, 0.1);
-  --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
   --card-shadow-hover: 0 12px 40px rgba(100, 120, 160, 0.14);
-  --card-inset-hover: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 
   /* ── Hover States ── */
   --hover-bg: rgba(255, 255, 255, 0.18);
