@@ -35,10 +35,10 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
 
   const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
     planning: { bg: '#EFF6FF', text: '#2563EB', label: 'Planning' },
-    active: { bg: '#ECFDF5', text: '#059669', label: 'Active' },
-    on_hold: { bg: '#FEF3C7', text: '#D97706', label: 'On Hold' },
-    completed: { bg: '#F3F4F6', text: '#6B7280', label: 'Completed' },
-    cancelled: { bg: '#FEF2F2', text: '#DC2626', label: 'Cancelled' },
+    active: { bg: '#ECFDF5', text: 'var(--success)', label: 'Active' },
+    on_hold: { bg: '#FEF3C7', text: 'var(--warning)', label: 'On Hold' },
+    completed: { bg: 'var(--muted)', text: 'var(--muted-foreground)', label: 'Completed' },
+    cancelled: { bg: '#FEF2F2', text: 'var(--destructive)', label: 'Cancelled' },
   }
 
   return (
@@ -49,7 +49,7 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
 
       {projects.length === 0 ? (
         <div style={cardStyle} className="p-16 text-center">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke='var(--border)' strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4">
             <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7-6H4a2 2 0 0 0-2 2z" />
             <path d="M14 2v6h6" />
           </svg>
@@ -72,7 +72,7 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                     width: '100%',
                     textAlign: 'left',
                     cursor: 'pointer',
-                    border: isSelected ? `2px solid ${primaryColor}` : '1px solid #E5E7EB',
+                    border: isSelected ? `2px solid ${primaryColor}` : '1px solid var(--border)',
                     transition: 'all 200ms ease',
                   }}
                 >
@@ -95,24 +95,24 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                   </div>
 
                   {project.description && (
-                    <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 16px', lineHeight: 1.5 }}>
+                    <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 16px', lineHeight: 1.5 }}>
                       {project.description}
                     </p>
                   )}
 
                   {project.current_phase && (
-                    <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 12px' }}>
-                      Current phase: <span style={{ fontWeight: 500, color: '#374151' }}>{project.current_phase}</span>
+                    <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 12px' }}>
+                      Current phase: <span style={{ fontWeight: 500, color: 'var(--foreground)' }}>{project.current_phase}</span>
                     </p>
                   )}
 
                   {/* Progress Bar */}
                   <div>
                     <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-                      <span style={{ fontSize: 14, color: '#6B7280' }}>Progress</span>
-                      <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>{project.progress}%</span>
+                      <span style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>Progress</span>
+                      <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)' }}>{project.progress}%</span>
                     </div>
-                    <div style={{ height: 8, borderRadius: 8, background: '#F3F4F6', overflow: 'hidden' }}>
+                    <div style={{ height: 8, borderRadius: 8, background: 'var(--muted)', overflow: 'hidden' }}>
                       <div
                         style={{
                           height: '100%',
@@ -127,12 +127,12 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
 
                   <div className="flex items-center gap-4" style={{ marginTop: 16 }}>
                     {project.start_date && (
-                      <span style={{ fontSize: 14, color: '#9CA3AF' }}>
+                      <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>
                         Started: {new Date(project.start_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
                     {project.target_date && (
-                      <span style={{ fontSize: 14, color: '#9CA3AF' }}>
+                      <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>
                         Target: {new Date(project.target_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
@@ -142,15 +142,15 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                 {/* Task List (expanded) */}
                 {isSelected && (
                   <div style={{ ...cardStyle, marginTop: 8, overflow: 'hidden' }}>
-                    <div style={{ padding: '12px 20px', borderBottom: '1px solid #F3F4F6', fontWeight: 500, fontSize: 14, color: '#111827' }}>
+                    <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--muted)', fontWeight: 500, fontSize: 14, color: 'var(--foreground)' }}>
                       Project Milestones & Tasks
                     </div>
                     {loadingTasks ? (
-                      <div style={{ padding: '24px', textAlign: 'center', color: '#9CA3AF', fontSize: 14 }}>
+                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 14 }}>
                         Loading...
                       </div>
                     ) : tasks.length === 0 ? (
-                      <div style={{ padding: '24px', textAlign: 'center', color: '#9CA3AF', fontSize: 14 }}>
+                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 14 }}>
                         No tasks linked to this project yet.
                       </div>
                     ) : (
@@ -160,7 +160,7 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                           className="flex items-center gap-3"
                           style={{
                             padding: '12px 20px',
-                            borderBottom: i < tasks.length - 1 ? '1px solid #F9FAFB' : 'none',
+                            borderBottom: i < tasks.length - 1 ? '1px solid var(--muted)' : 'none',
                           }}
                         >
                           <div
@@ -169,9 +169,9 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                               height: 20,
                               borderRadius: task.is_milestone ? 4 : '50%',
                               border: task.task_status === 'completed'
-                                ? `2px solid #059669`
-                                : '2px solid #D1D5DB',
-                              background: task.task_status === 'completed' ? '#059669' : 'transparent',
+                                ? `2px solid 'var(--success)'`
+                                : '2px solid var(--border)',
+                              background: task.task_status === 'completed' ? 'var(--success)' : 'transparent',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -179,7 +179,7 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                             }}
                           >
                             {task.task_status === 'completed' && (
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke='var(--card)' strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                 <polyline points="20 6 9 17 4 12" />
                               </svg>
                             )}
@@ -188,7 +188,7 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                             <span
                               style={{
                                 fontSize: 14,
-                                color: task.task_status === 'completed' ? '#9CA3AF' : '#111827',
+                                color: task.task_status === 'completed' ? 'var(--text-dim)' : 'var(--foreground)',
                                 textDecoration: task.task_status === 'completed' ? 'line-through' : 'none',
                                 fontWeight: task.is_milestone ? 500 : 400,
                               }}
@@ -214,7 +214,7 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
 }
 
 const cardStyle: React.CSSProperties = {
-  background: '#FFFFFF',
+  background: 'var(--card)',
   borderRadius: 12,
-  border: '1px solid #E5E7EB',
+  border: '1px solid var(--border)',
 }

@@ -112,7 +112,7 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
                   {n.body && (
                     <p className="mt-1 text-sm text-gray-500">{n.body}</p>
                   )}
-                  <p style={{ fontSize: 14, color: '#9CA3AF', margin: '8px 0 0' }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: '8px 0 0' }}>
                     {formatRelative(n.created_at)}
                   </p>
                 </div>

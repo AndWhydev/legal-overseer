@@ -123,16 +123,16 @@ export function PortalDashboard({
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        background: item.read ? '#D1D5DB' : primaryColor,
+                        background: item.read ? 'var(--border)' : primaryColor,
                         marginTop: 8,
                         flexShrink: 0,
                       }}
                     />
                     <div>
-                      <p style={{ fontSize: 14, color: '#111827', margin: 0, fontWeight: item.read ? 400 : 500 }}>
+                      <p style={{ fontSize: 14, color: 'var(--foreground)', margin: 0, fontWeight: item.read ? 400 : 500 }}>
                         {item.title}
                       </p>
-                      <p style={{ fontSize: 14, color: '#9CA3AF', margin: '4px 0 0' }}>
+                      <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: '4px 0 0' }}>
                         {formatRelative(item.created_at)}
                       </p>
                     </div>
@@ -150,9 +150,9 @@ export function PortalDashboard({
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 const cardStyle: React.CSSProperties = {
-  background: '#FFFFFF',
+  background: 'var(--card)',
   borderRadius: 12,
-  border: '1px solid #E5E7EB',
+  border: '1px solid var(--border)',
   overflow: 'hidden',
 }
 
@@ -188,10 +188,10 @@ function StatCard({
           {icon}
         </div>
       </div>
-      <p style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0, letterSpacing: '-0.02em' }}>
+      <p style={{ fontSize: 16, fontWeight: 500, color: 'var(--foreground)', margin: 0, letterSpacing: '-0.02em' }}>
         {value}
       </p>
-      <p style={{ fontSize: 14, color: '#6B7280', margin: '4px 0 0' }}>{label}</p>
+      <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '4px 0 0' }}>{label}</p>
       {subtext && <p style={{ fontSize: 14, color: primaryColor, margin: '4px 0 0', fontWeight: 500 }}>{subtext}</p>}
     </div>
   )
@@ -212,11 +212,11 @@ function ProjectCard({
   basePath: string
 }) {
   const statusColors: Record<string, { bg: string; text: string }> = {
-    active: { bg: '#ECFDF5', text: '#059669' },
+    active: { bg: '#ECFDF5', text: 'var(--success)' },
     planning: { bg: '#EFF6FF', text: '#2563EB' },
-    on_hold: { bg: '#FEF3C7', text: '#D97706' },
-    completed: { bg: '#F3F4F6', text: '#6B7280' },
-    cancelled: { bg: '#FEF2F2', text: '#DC2626' },
+    on_hold: { bg: '#FEF3C7', text: 'var(--warning)' },
+    completed: { bg: 'var(--muted)', text: 'var(--muted-foreground)' },
+    cancelled: { bg: '#FEF2F2', text: 'var(--destructive)' },
   }
   const sc = statusColors[project.status] ?? statusColors.active
 
@@ -224,7 +224,7 @@ function ProjectCard({
     <Link href={`${basePath}/projects`} style={{ textDecoration: 'none' }}>
       <div style={{ ...cardStyle, padding: '20px', transition: 'box-shadow 150ms' }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>{project.title}</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--foreground)', margin: 0 }}>{project.title}</h3>
           <span
             style={{
               fontSize: 14,
@@ -241,7 +241,7 @@ function ProjectCard({
         </div>
 
         {project.current_phase && (
-          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 12px' }}>
+          <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 12px' }}>
             Phase: {project.current_phase}
           </p>
         )}
@@ -249,10 +249,10 @@ function ProjectCard({
         {/* Progress Bar */}
         <div style={{ marginTop: 8 }}>
           <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-            <span style={{ fontSize: 14, color: '#6B7280' }}>Progress</span>
-            <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>{project.progress}%</span>
+            <span style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>Progress</span>
+            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)' }}>{project.progress}%</span>
           </div>
-          <div style={{ height: 6, borderRadius: 8, background: '#F3F4F6', overflow: 'hidden' }}>
+          <div style={{ height: 6, borderRadius: 8, background: 'var(--muted)', overflow: 'hidden' }}>
             <div
               style={{
                 height: '100%',
@@ -266,7 +266,7 @@ function ProjectCard({
         </div>
 
         {project.target_date && (
-          <p style={{ fontSize: 14, color: '#9CA3AF', margin: '12px 0 0' }}>
+          <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: '12px 0 0' }}>
             Target: {new Date(project.target_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
         )}

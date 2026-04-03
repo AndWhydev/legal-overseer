@@ -107,7 +107,7 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
               fontSize: 14,
               fontWeight: filter === 'all' ? 500 : 400,
               background: filter === 'all' ? `${primaryColor}0D` : 'transparent',
-              color: filter === 'all' ? primaryColor : '#6B7280',
+              color: filter === 'all' ? primaryColor : 'var(--muted-foreground)',
               border: 'none',
               cursor: 'pointer',
             }}
@@ -124,7 +124,7 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
                 fontSize: 14,
                 fontWeight: filter === cat ? 500 : 400,
                 background: filter === cat ? `${primaryColor}0D` : 'transparent',
-                color: filter === cat ? primaryColor : '#6B7280',
+                color: filter === cat ? primaryColor : 'var(--muted-foreground)',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -146,8 +146,8 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
         }}
         style={{
           ...cardStyle,
-          border: dragOver ? `2px dashed ${primaryColor}` : '2px dashed #E5E7EB',
-          background: dragOver ? `${primaryColor}05` : '#FAFAFA',
+          border: dragOver ? `2px dashed ${primaryColor}` : '2px dashed var(--border)',
+          background: dragOver ? `${primaryColor}05` : 'var(--background)',
           padding: '32px 24px',
           textAlign: 'center',
           marginBottom: 24,
@@ -155,24 +155,24 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
           borderRadius: 12,
         }}
       >
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={dragOver ? primaryColor : '#D1D5DB'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px' }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={dragOver ? primaryColor : 'var(--border)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px' }}>
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="17 8 12 3 7 8" />
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
-        <p style={{ fontSize: 14, color: dragOver ? primaryColor : '#6B7280', margin: 0 }}>
+        <p style={{ fontSize: 14, color: dragOver ? primaryColor : 'var(--muted-foreground)', margin: 0 }}>
           Drag files here or <button onClick={() => fileInputRef.current?.click()} style={{ color: primaryColor, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontSize: 14 }}>browse</button>
         </p>
-        <p style={{ fontSize: 14, color: '#9CA3AF', marginTop: 4 }}>Max 50MB per file</p>
+        <p style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 4 }}>Max 50MB per file</p>
       </div>
 
       {/* File List */}
       {filtered.length === 0 ? (
-        <div style={{ ...cardStyle, padding: 48, textAlign: 'center', border: '1px solid #E5E7EB' }}>
-          <p style={{ fontSize: 16, color: '#9CA3AF' }}>No files uploaded yet</p>
+        <div style={{ ...cardStyle, padding: 48, textAlign: 'center', border: '1px solid var(--border)' }}>
+          <p style={{ fontSize: 16, color: 'var(--text-dim)' }}>No files uploaded yet</p>
         </div>
       ) : (
-        <div style={{ ...cardStyle, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+        <div style={{ ...cardStyle, border: '1px solid var(--border)', overflow: 'hidden' }}>
           {filtered.map((file, i) => {
             const ext = FILE_ICONS[file.file_type ?? ''] ?? file.file_name.split('.').pop()?.toUpperCase() ?? 'FILE'
 
@@ -182,7 +182,7 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
                 className="flex items-center gap-4"
                 style={{
                   padding: '12px 20px',
-                  borderBottom: i < filtered.length - 1 ? '1px solid #F3F4F6' : 'none',
+                  borderBottom: i < filtered.length - 1 ? '1px solid var(--muted)' : 'none',
                 }}
               >
                 {/* File Icon */}
@@ -206,12 +206,12 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
 
                 {/* File Info */}
                 <div className="flex-1" style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 500, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {file.file_name}
                   </p>
                   <div className="flex items-center gap-3" style={{ marginTop: 2 }}>
-                    <span style={{ fontSize: 14, color: '#9CA3AF' }}>{formatSize(file.file_size)}</span>
-                    <span style={{ fontSize: 14, color: '#9CA3AF' }}>
+                    <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>{formatSize(file.file_size)}</span>
+                    <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>
                       {new Date(file.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                     <span
@@ -220,7 +220,7 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
                         padding: '2px 8px',
                         borderRadius: 8,
                         background: file.uploaded_by_role === 'client' ? '#EFF6FF' : '#F0FDF4',
-                        color: file.uploaded_by_role === 'client' ? '#2563EB' : '#059669',
+                        color: file.uploaded_by_role === 'client' ? '#2563EB' : 'var(--success)',
                         fontWeight: 500,
                       }}
                     >
@@ -236,8 +236,8 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
                     padding: '8px 16px',
                     borderRadius: 8,
                     background: 'transparent',
-                    border: '1px solid #E5E7EB',
-                    color: '#374151',
+                    border: '1px solid var(--border)',
+                    color: 'var(--foreground)',
                     fontSize: 14,
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -257,6 +257,6 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
 }
 
 const cardStyle: React.CSSProperties = {
-  background: '#FFFFFF',
+  background: 'var(--card)',
   borderRadius: 12,
 }

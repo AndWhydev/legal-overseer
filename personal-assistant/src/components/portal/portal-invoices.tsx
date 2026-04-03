@@ -12,9 +12,9 @@ type StatusFilter = 'all' | 'sent' | 'viewed' | 'overdue' | 'paid'
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
   sent: { bg: '#EFF6FF', text: '#2563EB', label: 'Sent' },
-  viewed: { bg: '#F0FDF4', text: '#16A34A', label: 'Viewed' },
-  overdue: { bg: '#FEF2F2', text: '#DC2626', label: 'Overdue' },
-  paid: { bg: '#F3F4F6', text: '#059669', label: 'Paid' },
+  viewed: { bg: '#F0FDF4', text: 'var(--success)', label: 'Viewed' },
+  overdue: { bg: '#FEF2F2', text: 'var(--destructive)', label: 'Overdue' },
+  paid: { bg: 'var(--muted)', text: 'var(--success)', label: 'Paid' },
 }
 
 export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesViewProps) {
@@ -69,7 +69,7 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
               fontSize: 14,
               fontWeight: filter === f ? 500 : 400,
               background: filter === f ? `${primaryColor}0D` : 'transparent',
-              color: filter === f ? primaryColor : '#6B7280',
+              color: filter === f ? primaryColor : 'var(--muted-foreground)',
               border: filter === f ? `1px solid ${primaryColor}30` : '1px solid transparent',
               cursor: 'pointer',
               transition: 'all 150ms',
@@ -113,8 +113,8 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                     display: 'grid',
                     gridTemplateColumns: '1fr',
                     padding: '16px 20px',
-                    borderBottom: i < filtered.length - 1 ? '1px solid #F3F4F6' : 'none',
-                    background: isExpanded ? '#FAFAFA' : 'transparent',
+                    borderBottom: i < filtered.length - 1 ? '1px solid var(--muted)' : 'none',
+                    background: isExpanded ? 'var(--background)' : 'transparent',
                     cursor: 'pointer',
                     border: 'none',
                     textAlign: 'left',
@@ -128,11 +128,11 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                   >
                     <div className="md:grid md:items-center" style={{ gridTemplateColumns: '1fr 100px 120px 120px 100px' }}>
                       <div>
-                        <span style={{ fontSize: 16, fontWeight: 500, color: '#111827' }}>
+                        <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--foreground)' }}>
                           {inv.invoice_number}
                         </span>
                         {inv.issued_date && (
-                          <span className="md:hidden" style={{ fontSize: 14, color: '#9CA3AF', marginLeft: 8 }}>
+                          <span className="md:hidden" style={{ fontSize: 14, color: 'var(--text-dim)', marginLeft: 8 }}>
                             {new Date(inv.issued_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
                           </span>
                         )}
@@ -152,12 +152,12 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                         </span>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: 16, fontWeight: 500, color: '#111827' }}>
+                        <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--foreground)' }}>
                           ${inv.total.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
                         </span>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: 14, color: '#6B7280' }}>
+                        <span style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>
                           {inv.due_date
                             ? new Date(inv.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
                             : '-'}
@@ -187,7 +187,7 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                       height="16"
                       viewBox="0 0 24 24"
                       fill="none"
-                      stroke="#9CA3AF"
+                      stroke='var(--text-dim)'
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -204,33 +204,33 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
 
                 {/* Expanded detail */}
                 {isExpanded && (
-                  <div style={{ padding: '0 20px 20px', background: '#FAFAFA' }}>
-                    <div style={{ ...cardStyle, padding: 16, background: '#FFFFFF' }}>
+                  <div style={{ padding: '0 20px 20px', background: 'var(--background)' }}>
+                    <div style={{ ...cardStyle, padding: 16, background: 'var(--card)' }}>
                       <div className="grid grid-cols-2 gap-4" style={{ marginBottom: 16 }}>
                         <div>
-                          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 2px' }}>Invoice Number</p>
-                          <p style={{ fontSize: 14, fontWeight: 500, color: '#111827', margin: 0 }}>{inv.invoice_number}</p>
+                          <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 2px' }}>Invoice Number</p>
+                          <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)', margin: 0 }}>{inv.invoice_number}</p>
                         </div>
                         <div>
-                          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 2px' }}>Currency</p>
-                          <p style={{ fontSize: 14, fontWeight: 500, color: '#111827', margin: 0 }}>{inv.currency}</p>
+                          <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 2px' }}>Currency</p>
+                          <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)', margin: 0 }}>{inv.currency}</p>
                         </div>
                         <div>
-                          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 2px' }}>Issued</p>
-                          <p style={{ fontSize: 14, color: '#111827', margin: 0 }}>
+                          <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 2px' }}>Issued</p>
+                          <p style={{ fontSize: 14, color: 'var(--foreground)', margin: 0 }}>
                             {inv.issued_date ? new Date(inv.issued_date).toLocaleDateString('en-AU') : '-'}
                           </p>
                         </div>
                         <div>
-                          <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 2px' }}>Due</p>
-                          <p style={{ fontSize: 14, color: '#111827', margin: 0 }}>
+                          <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 2px' }}>Due</p>
+                          <p style={{ fontSize: 14, color: 'var(--foreground)', margin: 0 }}>
                             {inv.due_date ? new Date(inv.due_date).toLocaleDateString('en-AU') : '-'}
                           </p>
                         </div>
                         {inv.paid_date && (
                           <div>
-                            <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 2px' }}>Paid</p>
-                            <p style={{ fontSize: 14, color: '#059669', margin: 0 }}>
+                            <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 2px' }}>Paid</p>
+                            <p style={{ fontSize: 14, color: 'var(--success)', margin: 0 }}>
                               {new Date(inv.paid_date).toLocaleDateString('en-AU')}
                             </p>
                           </div>
@@ -239,33 +239,33 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
 
                       {/* Line Items */}
                       {Array.isArray(inv.items) && inv.items.length > 0 && (
-                        <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: 16 }}>
-                          <p style={{ fontSize: 14, fontWeight: 500, color: '#6B7280', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                          <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted-foreground)', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             Line Items
                           </p>
                           {(inv.items as { description: string; quantity: number; unit_price: number; total: number }[]).map((item, idx) => (
-                            <div key={idx} className="flex justify-between" style={{ padding: '8px 0', borderBottom: '1px solid #F9FAFB' }}>
-                              <span style={{ fontSize: 14, color: '#374151' }}>
-                                {item.description} <span style={{ color: '#9CA3AF' }}>x{item.quantity}</span>
+                            <div key={idx} className="flex justify-between" style={{ padding: '8px 0', borderBottom: '1px solid var(--muted)' }}>
+                              <span style={{ fontSize: 14, color: 'var(--foreground)' }}>
+                                {item.description} <span style={{ color: 'var(--text-dim)' }}>x{item.quantity}</span>
                               </span>
-                              <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>
+                              <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)' }}>
                                 ${(item.total ?? item.quantity * item.unit_price).toLocaleString('en-AU', { minimumFractionDigits: 2 })}
                               </span>
                             </div>
                           ))}
 
-                          <div style={{ borderTop: '1px solid #E5E7EB', marginTop: 8, paddingTop: 8 }}>
+                          <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 8 }}>
                             <div className="flex justify-between" style={{ marginBottom: 4 }}>
-                              <span style={{ fontSize: 14, color: '#6B7280' }}>Subtotal</span>
-                              <span style={{ fontSize: 14, color: '#374151' }}>${inv.subtotal.toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
+                              <span style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>Subtotal</span>
+                              <span style={{ fontSize: 14, color: 'var(--foreground)' }}>${inv.subtotal.toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between" style={{ marginBottom: 4 }}>
-                              <span style={{ fontSize: 14, color: '#6B7280' }}>Tax (GST)</span>
-                              <span style={{ fontSize: 14, color: '#374151' }}>${inv.tax.toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
+                              <span style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>Tax (GST)</span>
+                              <span style={{ fontSize: 14, color: 'var(--foreground)' }}>${inv.tax.toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between" style={{ marginTop: 8 }}>
-                              <span style={{ fontSize: 16, fontWeight: 500, color: '#111827' }}>Total</span>
-                              <span style={{ fontSize: 16, fontWeight: 500, color: '#111827' }}>
+                              <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--foreground)' }}>Total</span>
+                              <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--foreground)' }}>
                                 ${inv.total.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
                               </span>
                             </div>
@@ -284,7 +284,7 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
                               padding: '12px 20px',
                               borderRadius: 8,
                               background: primaryColor,
-                              color: '#FFFFFF',
+                              color: 'var(--card)',
                               fontSize: 14,
                               fontWeight: 500,
                               textDecoration: 'none',
@@ -313,8 +313,8 @@ export function PortalInvoicesView({ invoices, primaryColor }: PortalInvoicesVie
 }
 
 const cardStyle: React.CSSProperties = {
-  background: '#FFFFFF',
+  background: 'var(--card)',
   borderRadius: 12,
-  border: '1px solid #E5E7EB',
+  border: '1px solid var(--border)',
   overflow: 'hidden',
 }

@@ -29,7 +29,7 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
 
   const primaryColor = branding?.primary_color ?? '#2563EB'
   const accentColor = branding?.accent_color ?? '#3B82F6'
-  const bgColor = branding?.background_color ?? '#FAFAFA'
+  const bgColor = branding?.background_color ?? 'var(--background)'
   const companyName = branding?.company_name ?? orgName
   const basePath = `/portal/${orgSlug}`
 
@@ -60,7 +60,7 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#FFFFFF',
+                  color: 'var(--card)',
                   fontSize: 14,
                   fontWeight: 500,
                 }}
@@ -91,13 +91,13 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                     borderRadius: 8,
                     fontSize: 14,
                     fontWeight: isActive ? 500 : 400,
-                    color: isActive ? primaryColor : '#6B7280',
+                    color: isActive ? primaryColor : 'var(--muted-foreground)',
                     background: isActive ? `${primaryColor}0D` : 'transparent',
                     textDecoration: 'none',
                     transition: 'all 150ms ease',
                   }}
                 >
-                  <item.icon color={isActive ? primaryColor : '#9CA3AF'} size={18} />
+                  <item.icon color={isActive ? primaryColor : 'var(--text-dim)'} size={18} />
                   {item.label}
                 </Link>
               )
@@ -133,7 +133,7 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: '#6B7280',
+                color: 'var(--muted-foreground)',
               }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -156,7 +156,7 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <nav className="md:hidden" style={{ borderTop: '1px solid #E5E7EB', padding: '8px 24px 16px' }}>
+          <nav className="md:hidden" style={{ borderTop: '1px solid var(--border)', padding: '8px 24px 16px' }}>
             {NAV_ITEMS.map(item => {
               const itemPath = `${basePath}${item.path}`
               const isActive = item.path === ''
@@ -173,12 +173,12 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                     padding: '12px 0',
                     fontSize: 16,
                     fontWeight: isActive ? 500 : 400,
-                    color: isActive ? primaryColor : '#374151',
+                    color: isActive ? primaryColor : 'var(--foreground)',
                     textDecoration: 'none',
-                    borderBottom: '1px solid #F3F4F6',
+                    borderBottom: '1px solid var(--muted)',
                   }}
                 >
-                  <item.icon color={isActive ? primaryColor : '#9CA3AF'} size={20} />
+                  <item.icon color={isActive ? primaryColor : 'var(--text-dim)'} size={20} />
                   {item.label}
                 </Link>
               )

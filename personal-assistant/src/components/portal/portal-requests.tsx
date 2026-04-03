@@ -88,8 +88,8 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
           onClick={() => setShowForm(!showForm)}
           className="px-5 py-3 rounded-lg text-sm font-medium border-none transition-all"
           style={{
-            background: showForm ? '#F3F4F6' : primaryColor,
-            color: showForm ? '#374151' : '#FFFFFF',
+            background: showForm ? 'var(--muted)' : primaryColor,
+            color: showForm ? 'var(--foreground)' : 'var(--card)',
           }}
         >
           {showForm ? 'Cancel' : 'New Request'}
@@ -165,7 +165,7 @@ export function PortalRequestsView({ initialRequests, primaryColor }: PortalRequ
       {/* Requests List */}
       {requests.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white px-16 py-16 text-center">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke='var(--border)' strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
