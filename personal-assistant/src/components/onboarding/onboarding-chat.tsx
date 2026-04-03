@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { MessageBubble } from '@/components/chat/message-bubble'
-import { ChatInput } from '@/components/chat/chat-input'
+import { OnboardingInput } from './onboarding-input'
 import { BitBitHeader } from '@/components/chat/bitbit-header'
 import { WorldGraph } from './world-graph'
 import { useOnboardingStream, type ChatMessage } from './use-onboarding-stream'
@@ -242,7 +242,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
           )}
         </AnimatePresence>
         <div id="onboarding-input" className="w-full pointer-events-auto">
-          <ChatInput
+          <OnboardingInput
             onSend={sendReply}
             disabled={!isInputEnabled}
             placeholder={
