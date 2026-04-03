@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createClient, isDevBypass } from '@/lib/supabase/server'
-import { getServiceClient } from '@/lib/supabase/service-client'
+import { createClient } from '@/lib/supabase/server'
 import { loadRecentMessages, listUserThreads, archiveThread, deleteThread } from '@/lib/conversation/thread-resolver'
 import type { Channel } from '@/lib/conversation/types'
 
@@ -9,14 +8,6 @@ const MAX_LIMIT = 100
 const DEFAULT_LIMIT = 50
 
 async function resolveAuth(): Promise<{ supabase: SupabaseClient; userId: string; orgId: string } | null> {
-  if (isDevBypass()) {
-    return {
-      supabase: getServiceClient(),
-      userId: '02ce2616-c01b-45a5-a2ad-16ebe936a6b2',
-      orgId: '7abcbfb1-67e5-4a3b-aa08-a17cfd2867e9',
-    }
-  }
-
   const client = await createClient()
   if (!client) return null
 

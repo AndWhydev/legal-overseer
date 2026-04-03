@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, isDevBypass } from '@/lib/supabase/server'
-import { getServiceClient } from '@/lib/supabase/service-client'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   const { messageId, feedback } = await request.json()
@@ -8,17 +7,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  let supabase
-  if (isDevBypass()) {
-    supabase = getServiceClient()
-  } else {
-    const client = await createClient()
-    if (!client) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
+  const supabase = await createClient()
+  if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
 
-    const { data: { user } } = await client.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    supabase = client
-  }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Store feedback — fire and forget, non-critical
   try {
