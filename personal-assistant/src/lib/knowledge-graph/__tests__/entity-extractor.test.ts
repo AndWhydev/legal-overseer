@@ -176,29 +176,38 @@ describe('extractAndPopulateGraph', () => {
   }, 10_000)
 
   it('deduplicates entities across calls', async () => {
-    const before = new Date().toISOString()
+    // Use a unique name to avoid collisions with other tests
+    const uniqueName = `Bartholomew-${Date.now()}`
 
     // First call
-    await extractAndPopulateGraph(
+    const r1 = await extractAndPopulateGraph(
       supabase,
       testOrgId,
-      'Steve sent an email about the project',
+      `${uniqueName} signed the contract for the new deal`,
+      { sender: 'test', channel: 'test', timestamp: new Date().toISOString() }
+    )
+    expect(r1.entities).toBeGreaterThanOrEqual(1)
+
+    // Second call with same entity name
+    const r2 = await extractAndPopulateGraph(
+      supabase,
+      testOrgId,
+      `${uniqueName} followed up on the contract status`,
       { sender: 'test', channel: 'test', timestamp: new Date().toISOString() }
     )
 
-    // Second call with same entity
-    await extractAndPopulateGraph(
-      supabase,
-      testOrgId,
-      'Steve sent another email about updates',
-      { sender: 'test', channel: 'test', timestamp: new Date().toISOString() }
-    )
+    // Query ALL entities in this org matching the unique name
+    const { data: allMatching } = await supabase
+      .from('entity_nodes')
+      .select('id, name')
+      .eq('org_id', testOrgId)
+      .ilike('name', `%${uniqueName}%`)
 
-    const records = await collectCreatedRecords(before)
-    // Filter for "Steve" entities - should only have one
-    const steveEntities = records.entities.filter((e) =>
-      e.name.toLowerCase().includes('steve')
-    )
-    expect(steveEntities.length).toBe(1)
+    // Track for cleanup
+    for (const e of allMatching || []) createdEntityIds.push(e.id)
+
+    // Should have exactly one entity, not two
+    expect(allMatching).toBeTruthy()
+    expect(allMatching!.length).toBe(1)
   }, 60_000)
 })
