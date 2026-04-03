@@ -403,6 +403,8 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
               tabs={visibleTabs}
             />
 
+            {/* DrawerProvider wraps both SidebarInset and DrawerSlot */}
+            <DrawerProvider activeTab={TABS[activeNavIndex]?.id ?? 'dashboard'}>
             {/* Main content area */}
             <SidebarInset className="flex flex-col min-h-svh overflow-hidden">
               {/* Topbar */}
@@ -428,38 +430,32 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                 );
               })()}
 
-              {/* Content row: scrollable tabs + drawer slot */}
-              <DrawerProvider activeTab={TABS[activeNavIndex]?.id ?? 'dashboard'}>
-                <div className="flex flex-1 overflow-hidden">
-                  {/* SPA Content Area — keep-alive: visited tabs stay mounted */}
-                  <main
-                    id="main-content"
-                    className="relative flex-1 overflow-y-auto bg-background"
-                    tabIndex={-1}
-                  >
-                    <KeepAliveTabPanel
-                      activeTabId={TABS[activeNavIndex]?.id ?? 'dashboard'}
-                      direction={transitionDir}
-                      tabs={TABS
-                        .filter(t => visitedTabs.has(t.id))
-                        .map(t => {
-                          const Comp = TabComponents[t.id];
-                          return {
-                            id: t.id,
-                            children: (
-                              <ErrorBoundary>
-                                <Suspense fallback={<TabSkeleton variant={TAB_SKELETON_VARIANTS[t.id]} />}>
-                                  <Comp />
-                                </Suspense>
-                              </ErrorBoundary>
-                            ),
-                          };
-                        })}
-                    />
-                  </main>
-                  <DrawerSlot />
-                </div>
-              </DrawerProvider>
+              {/* SPA Content Area — keep-alive: visited tabs stay mounted */}
+              <main
+                id="main-content"
+                className="relative flex-1 overflow-y-auto bg-background"
+                tabIndex={-1}
+              >
+                <KeepAliveTabPanel
+                  activeTabId={TABS[activeNavIndex]?.id ?? 'dashboard'}
+                  direction={transitionDir}
+                  tabs={TABS
+                    .filter(t => visitedTabs.has(t.id))
+                    .map(t => {
+                      const Comp = TabComponents[t.id];
+                      return {
+                        id: t.id,
+                        children: (
+                          <ErrorBoundary>
+                            <Suspense fallback={<TabSkeleton variant={TAB_SKELETON_VARIANTS[t.id]} />}>
+                              <Comp />
+                            </Suspense>
+                          </ErrorBoundary>
+                        ),
+                      };
+                    })}
+                />
+              </main>
 
               {/* Mobile bottom nav */}
               <div className="md:hidden">
@@ -473,6 +469,10 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                 />
               </div>
             </SidebarInset>
+
+            {/* Right drawer — sibling of SidebarInset, same pattern as left sidebar */}
+            <DrawerSlot />
+            </DrawerProvider>
           </SidebarProvider>
           </ChatThreadsProvider>
         </TooltipProvider>
