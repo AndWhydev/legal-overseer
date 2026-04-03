@@ -1080,8 +1080,8 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
 
     const { data, error } = await supabase
       .from('channel_messages')
-      .select('id, channel, sender, subject, body, body_full, metadata, created_at')
-      .eq('id', messageId)
+      .select('id, external_id, channel, sender, subject, body, body_full, metadata, created_at')
+      .eq('external_id', messageId)
       .eq('org_id', orgId)
       .single()
 
@@ -1115,8 +1115,8 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     // Fetch original message
     const { data: original, error: fetchError } = await supabase
       .from('channel_messages')
-      .select('id, channel, sender, subject, metadata')
-      .eq('id', messageId)
+      .select('id, external_id, channel, sender, subject, metadata')
+      .eq('external_id', messageId)
       .eq('org_id', orgId)
       .single()
 
@@ -1142,7 +1142,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
           draft_status: 'pending',
         },
       })
-      .eq('id', messageId)
+      .eq('external_id', messageId)
       .select()
       .single()
 
