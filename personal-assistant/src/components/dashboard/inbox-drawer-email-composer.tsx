@@ -117,7 +117,7 @@ export function EmailComposer({
 
           {showCc && (
             <input
-              className="rounded-md bg-sidebar-foreground/[0.03] px-2.5 py-1.5 text-[11px] text-sidebar-foreground/60 outline-none placeholder:text-sidebar-foreground/25"
+              className="rounded-lg bg-sidebar-foreground/[0.03] px-2.5 py-1.5 text-[11px] text-sidebar-foreground/60 outline-none placeholder:text-sidebar-foreground/25"
               placeholder="CC: email addresses..."
               value={ccRecipients.join(', ')}
               onChange={e => onCcChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
@@ -126,7 +126,7 @@ export function EmailComposer({
 
           {showBcc && (
             <input
-              className="rounded-md bg-sidebar-foreground/[0.03] px-2.5 py-1.5 text-[11px] text-sidebar-foreground/60 outline-none placeholder:text-sidebar-foreground/25"
+              className="rounded-lg bg-sidebar-foreground/[0.03] px-2.5 py-1.5 text-[11px] text-sidebar-foreground/60 outline-none placeholder:text-sidebar-foreground/25"
               placeholder="BCC: email addresses..."
               value={bccRecipients.join(', ')}
               onChange={e => onBccChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
@@ -172,7 +172,7 @@ export function EmailComposer({
           {attachments.length > 0 && (
             <div className="flex gap-1.5 flex-wrap">
               {attachments.map((file, i) => (
-                <div key={i} className="flex items-center gap-1 rounded-md bg-sidebar-foreground/[0.04] px-2 py-1 text-[10px] text-sidebar-foreground/45">
+                <div key={i} className="flex items-center gap-1 rounded-lg bg-sidebar-foreground/[0.04] px-2 py-1 text-[10px] text-sidebar-foreground/45">
                   📎 {file.name}
                   <button onClick={() => onRemoveAttachment(i)} className="text-sidebar-foreground/25 hover:text-sidebar-foreground/60">
                     <IconX className="size-2.5" />
