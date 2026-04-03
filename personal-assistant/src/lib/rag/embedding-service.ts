@@ -13,6 +13,7 @@ import { encodeSparseVector } from './sparse-encoder'
 import { processAttachment } from './attachment-processor'
 import { extractEntities } from './entity-extractor'
 import { populateGraphFromExtraction } from './graph-populator'
+import { extractAndPopulateGraph } from '@/lib/knowledge-graph/entity-extractor'
 import { computeContentHash, checkExistingHashesBatch } from './content-hasher'
 import { invalidateOrg } from '@/lib/cache/search-cache'
 import type { VectorDocument, EmbedUpsertResult, PineconeMetadata } from './types'
@@ -223,7 +224,7 @@ export async function embedAndUpsert(
         logger.debug('[embedding-service] Invalidated search cache', { orgId })
       }
 
-      // Fire-and-forget entity extraction + graph population
+      // Fire-and-forget entity extraction + graph population (legacy RAG extractors)
       if (supabase && result.embedded > 0) {
         for (const doc of docs.filter((d) => d.orgId === orgId)) {
           extractEntities(doc.content, orgId, supabase)
@@ -245,6 +246,17 @@ export async function embedAndUpsert(
               })
             )
         }
+      }
+    }
+
+    // Knowledge graph entity extraction (Plan 35 -- fire-and-forget)
+    if (supabase) {
+      for (const doc of docs) {
+        extractAndPopulateGraph(supabase, doc.orgId, doc.content, {
+          sender: doc.metadata.sender,
+          channel: doc.metadata.channel ?? 'unknown',
+          timestamp: doc.metadata.received_at,
+        }).catch(() => {}) // fire-and-forget
       }
     }
 

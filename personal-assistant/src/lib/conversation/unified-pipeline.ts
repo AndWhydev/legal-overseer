@@ -19,6 +19,7 @@ import { logger } from '@/lib/core/logger'
 import { MemoryConsolidator } from '@/lib/memory/memory-consolidator'
 import { getMemoryExtractor } from '@/lib/memory-palace'
 import { enqueueEmbedding } from '@/lib/rag/embedding-queue'
+import { extractAndPopulateGraph } from '@/lib/knowledge-graph/entity-extractor'
 import type {
   Channel,
   InboundMessage,
@@ -517,6 +518,15 @@ export class UnifiedConversationPipeline {
         chunk_index: 0,
         total_chunks: 1,
         is_full_body: true,
+      }).catch(() => {}) // fire-and-forget
+    }
+
+    // ── Knowledge graph entity extraction (fire-and-forget) ───────────
+    if (userMessage && userMessage.length > 10) {
+      extractAndPopulateGraph(this.supabase, orgId, userMessage, {
+        sender: userId,
+        channel: channel,
+        timestamp: new Date().toISOString(),
       }).catch(() => {}) // fire-and-forget
     }
   }

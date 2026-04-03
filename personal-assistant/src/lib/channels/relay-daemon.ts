@@ -29,6 +29,7 @@ import { isDuplicate, computeContentHash } from './dedup'
 import { getOrgCredential, storeOrgCredential, storeChannelCredential, encryptCredential } from '@/lib/integrations/credentials'
 import { resolveChannelIdentity } from '@/lib/conversation/identity-resolver'
 import { logger } from '@/lib/core/logger';
+import { extractAndPopulateGraph } from '@/lib/knowledge-graph/entity-extractor'
 
 /**
  * Resolve which org a message should be routed to based on the sender.
@@ -520,6 +521,18 @@ export async function pollChannel(
         }
       })()
       void embeddingPromise
+
+      // Phase: Knowledge graph entity extraction (fire-and-forget)
+      for (const { msg: m } of messagesToInsert) {
+        if (!m.body || m.body.length < 10) continue
+        const msgOrgId = resolvedOrgs.get(m.externalId) ?? orgId
+        const content = (m as unknown as { bodyFull?: string }).bodyFull ?? m.body
+        extractAndPopulateGraph(supabase, msgOrgId, content, {
+          sender: m.sender,
+          channel: m.channel,
+          timestamp: m.receivedAt.toISOString(),
+        }).catch(() => {}) // fire-and-forget
+      }
     }
 
     // Phase: Avatar fetch (all channels, fire-and-forget)
