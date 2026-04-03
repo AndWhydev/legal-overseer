@@ -39,6 +39,7 @@ import { ChatThreadsProvider } from '@/components/chat/chat-threads-context';
 import { UserProfileProvider } from '@/lib/user/user-profile-context';
 import { DrawerProvider } from './drawer-context';
 import { DrawerSlot } from './drawer-slot';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 // ---- Tab definitions ----
 
@@ -289,6 +290,14 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     return () => window.removeEventListener('bb-navigate', handler);
   }, [navigateToId]);
 
+  // Listen for bb-dev-tools-open events (dispatched by sidebar Dev Tools menu item)
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return
+    const handler = () => setDevToolsOpen(true)
+    window.addEventListener('bb-dev-tools-open', handler)
+    return () => window.removeEventListener('bb-dev-tools-open', handler)
+  }, [])
+
   // Spacebar -> navigate home (dashboard) when not typing in an input
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -320,6 +329,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
 
   // Power-user hotkeys
   const [focusMode, setFocusMode] = useState(false);
+  const [devToolsOpen, setDevToolsOpen] = useState(false);
   const [cheatsheetOpen, setCheatsheetOpen] = useState(false);
 
   useHotkeys({
@@ -492,7 +502,16 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
 
         {/* Dev toolbar -- lazy-loaded, never bundled in production */}
         {process.env.NODE_ENV === 'development' && (
-          <Suspense fallback={null}><DevToolbar /></Suspense>
+          <Sheet open={devToolsOpen} onOpenChange={setDevToolsOpen}>
+            <SheetContent side="right" className="w-80 overflow-y-auto p-0">
+              <SheetHeader className="px-4 py-3 border-b border-sidebar-border">
+                <SheetTitle className="text-sm font-medium font-mono">Dev Tools</SheetTitle>
+              </SheetHeader>
+              <Suspense fallback={null}>
+                <DevToolbar />
+              </Suspense>
+            </SheetContent>
+          </Sheet>
         )}
       </BitBitOverlay>
       </AppDataProvider>

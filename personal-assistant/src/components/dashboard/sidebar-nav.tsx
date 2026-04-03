@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { BitBitAsciiAvatar } from '@/components/ui/bitbit-ascii-avatar';
 import {
   IconSettings,
+  IconCode,
   IconLogout,
   IconLayoutDashboard,
   IconMessage,
@@ -728,6 +729,17 @@ export function SidebarNav({
                   <IconBell className="size-4" />
                   Notifications
                 </DropdownMenuItem>
+                {process.env.NODE_ENV === 'development' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => window.dispatchEvent(new Event('bb-dev-tools-open'))}
+                    >
+                      <IconCode className="size-4" />
+                      Dev Tools
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onSignOut?.()}>
                   <IconLogout className="size-4" />
