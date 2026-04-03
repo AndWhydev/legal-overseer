@@ -259,7 +259,7 @@ function ConnectionCard({
 }: ConnectionCardProps) {
   if (variant === 'onboarding') {
     return (
-      <article className="flex items-center gap-3.5 rounded-[10px] border border-black/[0.06] bg-white/76 px-5 py-4 shadow-[0_8px_22px_rgba(15,23,42,0.04)] backdrop-blur-xl transition duration-200 hover:shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+      <article className="flex items-center gap-3.5 rounded-[10px] border border-black/[0.06] bg-white/76 px-5 py-4 shadow-[0_8px_22px_rgba(15,23,42,0.04)] transition duration-200 hover:shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
         <AppIcon id={connection.id} size={40} />
         <span className="flex-1 text-base font-medium text-[#171411]">{connection.name}</span>
         {connection.comingSoon ? (

@@ -662,7 +662,7 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
           className={cn(
             'absolute top-[3px] right-[3px]',
             'size-[18px] rounded-full',
-            'bg-black/60 backdrop-blur-sm',
+            'bg-black/60',
             'border-0 p-0 cursor-pointer',
             'text-white/85',
             'flex items-center justify-center',

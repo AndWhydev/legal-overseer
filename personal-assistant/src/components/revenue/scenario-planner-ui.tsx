@@ -78,7 +78,7 @@ export function ScenarioPlannerUI() {
           + New Scenario
         </button>
       ) : (
-        <div className="flex flex-col gap-3 rounded-xl bg-card backdrop-blur-lg p-5">
+        <div className="flex flex-col gap-3 rounded-xl bg-card p-5">
           <span className="text-sm font-medium text-foreground">
             Create What-If Scenario
           </span>
@@ -215,7 +215,7 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
   const deltaBg = isPositive ? 'bg-green-500/10' : 'bg-red-500/10'
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg bg-card backdrop-blur-lg p-4">
+    <div className="flex flex-col gap-3 rounded-lg bg-card p-4">
       {/* Header */}
       <div className="flex justify-between items-center">
         <span className="text-sm font-medium text-foreground">

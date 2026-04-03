@@ -64,7 +64,7 @@ export function ScenarioPlanner() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-xl bg-card backdrop-blur-lg shadow-sm p-5">
+      <div className="rounded-xl bg-card shadow-sm p-5">
         <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
           Scenario Planner
         </div>
@@ -96,7 +96,7 @@ export function ScenarioPlanner() {
         const p = result.results.percentiles
 
         return (
-          <div key={result.id} className="rounded-xl bg-card backdrop-blur-lg shadow-sm p-5">
+          <div key={result.id} className="rounded-xl bg-card shadow-sm p-5">
             <div className="flex items-center justify-between mb-2">
               <div>
                 <div className="text-sm font-medium text-foreground">

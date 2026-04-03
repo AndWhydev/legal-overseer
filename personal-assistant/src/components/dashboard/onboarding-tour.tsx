@@ -144,7 +144,7 @@ export function OnboardingTour({ onNavigate }: OnboardingTourProps) {
     <>
       {/* Overlay backdrop */}
       <div
-        className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[9998] bg-black/50"
         onClick={completeTour}
       />
 

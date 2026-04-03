@@ -83,7 +83,7 @@ function ToolCallRow({
               }}
             />
           )}
-          <span className="relative z-10 inline-flex size-8 shrink-0 items-center justify-center rounded-xl border border-border/55 bg-background/88 shadow-[0_12px_26px_-24px_rgba(0,0,0,0.85)]">
+          <span className="relative z-10 inline-flex size-8 shrink-0 items-center justify-center rounded-xl border border-border/55 bg-background shadow-[0_12px_26px_-24px_rgba(0,0,0,0.85)]">
             {iconNode}
           </span>
         </div>
@@ -255,7 +255,7 @@ export function ToolCallsSection({
                 exit={{ opacity: 0, scale: 0.74, y: 6 }}
                 transition={{ duration: 0.32, ease: [0.2, 0.9, 0.2, 1] }}
                 className={cn(
-                  "inline-flex size-10 items-center justify-center rounded-[18px] border border-border/60 bg-background/88 shadow-[0_16px_34px_-24px_rgba(0,0,0,0.9)]",
+                  "inline-flex size-10 items-center justify-center rounded-[18px] border border-border/60 bg-background shadow-[0_16px_34px_-24px_rgba(0,0,0,0.9)]",
                   index > 0 && "-ml-3.5"
                 )}
                 style={{

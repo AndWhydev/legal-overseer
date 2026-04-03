@@ -73,7 +73,7 @@ export function RevenueDigestCard() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-xl bg-card backdrop-blur-lg shadow-sm p-5">
+      <div className="rounded-xl bg-card shadow-sm p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <IconCalendar size={14} className="text-foreground" />

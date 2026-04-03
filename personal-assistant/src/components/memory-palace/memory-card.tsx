@@ -20,7 +20,7 @@ export function MemoryCard({ memory, categoryColor }: MemoryCardProps) {
   return (
     <div
       onClick={() => setExpanded(!expanded)}
-      className="cursor-pointer rounded-xl bg-card p-3.5 backdrop-blur-[12px] transition-colors hover:bg-secondary/50"
+      className="cursor-pointer rounded-xl bg-card p-3.5-[12px] transition-colors hover:bg-secondary/50"
       style={{ borderLeft: `3px solid ${categoryColor}` }}
     >
       {/* Header Row */}

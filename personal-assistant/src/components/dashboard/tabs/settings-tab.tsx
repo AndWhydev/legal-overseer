@@ -101,7 +101,7 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-background"
         onClick={onClose}
       />
       <Card className="relative z-10 w-[90%] max-w-[420px] shadow-lg">

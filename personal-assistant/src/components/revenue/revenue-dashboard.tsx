@@ -20,8 +20,6 @@ const tabBarStyle: React.CSSProperties = {
   padding: '4px',
   borderRadius: 'var(--radius-lg)',
   background: 'var(--bg-card)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
   width: 'fit-content',
 }
 

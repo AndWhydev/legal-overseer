@@ -71,7 +71,7 @@ export function ClientLeaderboard({ clients, atRisk = [] }: ClientLeaderboardPro
   if (allClients.length === 0) return null
 
   return (
-    <div className="rounded-xl bg-card backdrop-blur-lg overflow-hidden">
+    <div className="rounded-xl bg-card overflow-hidden">
       {/* Header */}
       <div className="grid grid-cols-[32px_1fr_90px_70px_70px_60px] items-center gap-2 px-4 py-2 text-xs text-muted-foreground uppercase tracking-wider font-medium bg-muted/50">
         <span>Score</span>

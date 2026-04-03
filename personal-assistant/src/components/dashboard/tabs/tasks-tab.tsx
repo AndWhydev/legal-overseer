@@ -110,7 +110,7 @@ function TasksTab() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <Card size="sm" className="min-w-[11rem] bg-background/85 shadow-sm backdrop-blur-sm">
+              <Card size="sm" className="min-w-[11rem] bg-background shadow-sm">
                 <CardHeader className="pb-0">
                   <CardDescription>Open</CardDescription>
                   <CardTitle>{openTasks}</CardTitle>
@@ -120,7 +120,7 @@ function TasksTab() {
                 </CardContent>
               </Card>
 
-              <Card size="sm" className="min-w-[11rem] bg-background/85 shadow-sm backdrop-blur-sm">
+              <Card size="sm" className="min-w-[11rem] bg-background shadow-sm">
                 <CardHeader className="pb-0">
                   <CardDescription>Overdue</CardDescription>
                   <CardTitle>{overdueTasks}</CardTitle>
@@ -130,7 +130,7 @@ function TasksTab() {
                 </CardContent>
               </Card>
 
-              <Card size="sm" className="min-w-[11rem] bg-background/85 shadow-sm backdrop-blur-sm">
+              <Card size="sm" className="min-w-[11rem] bg-background shadow-sm">
                 <CardHeader className="pb-0">
                   <CardDescription>BitBit Active</CardDescription>
                   <CardTitle>{aiActiveTasks}</CardTitle>
@@ -140,7 +140,7 @@ function TasksTab() {
                 </CardContent>
               </Card>
 
-              <Card size="sm" className="min-w-[11rem] bg-background/85 shadow-sm backdrop-blur-sm">
+              <Card size="sm" className="min-w-[11rem] bg-background shadow-sm">
                 <CardHeader className="pb-0">
                   <CardDescription>Completion</CardDescription>
                   <CardTitle>{completionRate}%</CardTitle>

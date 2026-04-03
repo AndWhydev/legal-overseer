@@ -45,8 +45,6 @@ export function TimelineBar({
         padding: '12px 16px',
         borderRadius: 'var(--radius-xl)',
         background: 'var(--bg-card)',
-        backdropFilter: 'var(--glass-blur)',
-        WebkitBackdropFilter: 'var(--glass-blur)',
         border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
         boxShadow: 'var(--card-shadow), var(--card-inset)',
       }}

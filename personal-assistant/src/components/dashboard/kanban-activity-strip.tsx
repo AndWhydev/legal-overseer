@@ -34,7 +34,7 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
             Active agent sessions stay visible without crowding the board itself.
           </p>
         </div>
-        <Badge variant="outline" className="w-fit border-emerald-500/30 bg-background/80 font-mono">
+        <Badge variant="outline" className="w-fit border-emerald-500/30 bg-background font-mono">
           {activeTasks.length}
         </Badge>
       </div>
@@ -43,7 +43,7 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
         {activeTasks.map((task) => (
           <div
             key={task.id}
-            className="flex min-w-[16rem] shrink-0 items-center gap-3 rounded-full border border-border/70 bg-background/90 px-3 py-2 shadow-sm"
+            className="flex min-w-[16rem] shrink-0 items-center gap-3 rounded-full border border-border/70 bg-background px-3 py-2 shadow-sm"
           >
             <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/12">
               <span className="size-2 animate-pulse rounded-full bg-emerald-500" />

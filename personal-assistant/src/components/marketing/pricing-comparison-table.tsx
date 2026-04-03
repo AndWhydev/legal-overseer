@@ -95,12 +95,12 @@ export default function PricingComparisonTable() {
         Compare all features
       </h2>
 
-      <div className="overflow-auto rounded-xl border border-border/30 bg-card/50">
+      <div className="overflow-auto rounded-xl border border-border/30 bg-card">
         <table className="w-full min-w-[640px] border-collapse">
           {/* Header */}
           <thead>
             <tr>
-              <th className="sticky left-0 z-[2] min-w-[180px] border-b border-border/30 bg-card/80 px-5 py-3.5 text-left text-sm font-medium text-muted-foreground/60">
+              <th className="sticky left-0 z-[2] min-w-[180px] border-b border-border/30 bg-card px-5 py-3.5 text-left text-sm font-medium text-muted-foreground/60">
                 Feature
               </th>
               {PLAN_NAMES.map((plan, i) => (
@@ -125,7 +125,7 @@ export default function PricingComparisonTable() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="sticky left-0 z-[1] border-b border-border/30 bg-card/80 px-5 pb-2 pt-3 text-xs font-medium uppercase tracking-[0.03em] text-muted-foreground/60"
+                    className="sticky left-0 z-[1] border-b border-border/30 bg-card px-5 pb-2 pt-3 text-xs font-medium uppercase tracking-[0.03em] text-muted-foreground/60"
                   >
                     {section.category}
                   </td>
@@ -140,7 +140,7 @@ export default function PricingComparisonTable() {
                     <td
                       className={cn(
                         'sticky left-0 z-[1] border-b border-border/30 px-5 py-2.5 text-sm text-muted-foreground',
-                        rowIdx % 2 === 0 ? 'bg-card/50' : 'bg-card/80',
+                        rowIdx % 2 === 0 ? 'bg-card' : 'bg-card',
                       )}
                     >
                       {row.name}

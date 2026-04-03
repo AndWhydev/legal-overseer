@@ -150,7 +150,7 @@ export function FeedbackWidget() {
       {/* Modal */}
       {open && (
         <div
-          className="fixed inset-0 z-[10000] flex items-end justify-end bg-black/50 backdrop-blur-sm p-6"
+          className="fixed inset-0 z-[10000] flex items-end justify-end bg-black/50 p-6"
           onClick={handleClose}
         >
           <div

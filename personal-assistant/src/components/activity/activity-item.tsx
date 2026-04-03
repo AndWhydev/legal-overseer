@@ -42,7 +42,7 @@ export function ActivityItem({ activity }: { activity: Activity }) {
   return (
     <div
       className={cn(
-        'rounded-lg border border-border/30 bg-card/50 transition-colors',
+        'rounded-lg border border-border/30 bg-card transition-colors',
         expanded && 'border-border/60'
       )}
     >

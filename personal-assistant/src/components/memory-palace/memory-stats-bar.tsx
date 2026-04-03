@@ -12,7 +12,7 @@ export function MemoryStatsBar({ stats }: MemoryStatsBarProps) {
     stats.avg_confidence > 0.4 ? '#F59E0B' : '#EF4444'
 
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-xl bg-card p-3 backdrop-blur-sm">
+    <div className="flex flex-wrap items-center gap-4 rounded-xl bg-card p-3">
       {/* Total Memories */}
       <StatPill
         label="Memories"

@@ -57,8 +57,6 @@ export function ProcessPipeline({
                 padding: '16px 20px 12px',
                 borderRadius: 'var(--radius-xl)',
                 background: 'var(--bg-card)',
-                backdropFilter: 'var(--glass-blur)',
-                WebkitBackdropFilter: 'var(--glass-blur)',
                 border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.03))',
                 boxShadow: `var(--card-shadow), var(--card-inset), 0 0 20px ${rawColor}10`,
                 backgroundImage: `linear-gradient(135deg, ${rawColor}08 0%, transparent 60%)`,

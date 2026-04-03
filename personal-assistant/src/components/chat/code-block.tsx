@@ -65,7 +65,7 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
   const showArtifactButton = onOpenArtifact && lineCount > 20
 
   return (
-    <div className="rounded-lg overflow-hidden border border-border bg-card/80 my-3">
+    <div className="rounded-lg overflow-hidden border border-border bg-card my-3">
       {/* Header */}
       <div className="flex items-center justify-between px-3.5 py-2.5 bg-muted/50 border-b border-border min-h-[40px]">
         {/* Language badge (left) */}

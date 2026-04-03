@@ -40,8 +40,6 @@ const kpiCardStyle: React.CSSProperties = {
   padding: '16px 20px',
   borderRadius: 'var(--radius-xl)',
   background: 'var(--bg-card)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
   display: 'flex',
   flexDirection: 'column',
   gap: 8,
@@ -89,7 +87,6 @@ const emptyStateStyle: React.CSSProperties = {
   fontSize: 14,
   borderRadius: 'var(--radius-lg)',
   background: 'var(--bg-card)',
-  backdropFilter: 'var(--glass-blur)',
 }
 
 const loadingPulseStyle: React.CSSProperties = {

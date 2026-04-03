@@ -85,8 +85,6 @@ const PROGRESS_STEPS = ['Draft', 'Sent', 'Paid'] as const
 const glassCard: React.CSSProperties = {
   borderRadius: 12,
   background: 'var(--glass-card-bg-light)',
-  backdropFilter: 'var(--glass-card-blur)',
-  WebkitBackdropFilter: 'var(--glass-card-blur)',
   boxShadow: 'var(--glass-card-inset)',
   overflow: 'hidden',
 }
@@ -1095,8 +1093,6 @@ function DragGhost({ invoice }: { invoice: InvoiceRow }) {
       padding: '12px 16px',
       borderRadius: 12,
       background: 'var(--glass-bg-heavy)',
-      backdropFilter: 'var(--glass-blur)',
-      WebkitBackdropFilter: 'var(--glass-blur)',
       boxShadow: 'var(--card-shadow-hover), 0 0 0 1px var(--glass-card-border)',
       transform: 'rotate(1.5deg) scale(1.02)',
       maxWidth: 320,

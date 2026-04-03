@@ -84,7 +84,7 @@ export function KanbanToolbar({
             <h2 className="text-lg font-medium tracking-tight text-foreground">
               Task board
             </h2>
-            <Badge variant="outline" className="bg-background/80 font-mono">
+            <Badge variant="outline" className="bg-background font-mono">
               {hasAnyFilters ? `${visibleCount}/${totalCount}` : totalCount}
             </Badge>
             {overdueCount > 0 && (

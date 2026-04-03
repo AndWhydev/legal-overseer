@@ -194,7 +194,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
             {steps.map(step => (
               <div
                 key={step.id}
-                className={`rounded-xl bg-card backdrop-blur-sm p-4 border-l-[3px] cursor-pointer ${statusBorderColors[step.status] || 'border-l-border'}`}
+                className={`rounded-xl bg-card p-4 border-l-[3px] cursor-pointer ${statusBorderColors[step.status] || 'border-l-border'}`}
                 onClick={() => setExpandedStep(expandedStep === step.step_key ? null : step.step_key)}
               >
                 <div className="flex items-center justify-between gap-2">

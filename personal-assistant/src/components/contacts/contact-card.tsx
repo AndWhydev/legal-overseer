@@ -14,7 +14,7 @@ export function ContactCard({ contact }: { contact: Contact }) {
 
   return (
     <Link href={`/dashboard/contacts/${contact.slug}`}>
-      <Card className="border-border/50 transition-colors hover:border-border hover:bg-card/80">
+      <Card className="border-border/50 transition-colors hover:border-border hover:bg-card">
         <CardContent className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">

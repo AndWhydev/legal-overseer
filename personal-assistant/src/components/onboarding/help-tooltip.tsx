@@ -111,7 +111,7 @@ export function HelpTooltip({
       {showTooltip && (
         <div
           ref={tooltipRef}
-          className={`absolute z-50 bg-popover backdrop-blur-xl border border-border rounded-xl px-4 py-3 min-w-60 max-w-80 shadow-lg pointer-events-auto ${getTooltipPositionClasses()}`}
+          className={`absolute z-50 bg-popover border border-border rounded-xl px-4 py-3 min-w-60 max-w-80 shadow-lg pointer-events-auto ${getTooltipPositionClasses()}`}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >

@@ -86,7 +86,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
           <div
             key={decision.id}
             onClick={() => setExpandedId(isExpanded ? null : decision.id)}
-            className="cursor-pointer rounded-xl bg-card p-3.5 backdrop-blur-[12px] transition-colors hover:bg-secondary/50"
+            className="cursor-pointer rounded-xl bg-card p-3.5-[12px] transition-colors hover:bg-secondary/50"
             style={{ borderLeft: `3px solid ${impactColor}` }}
           >
             {/* Header */}

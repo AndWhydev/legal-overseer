@@ -12,8 +12,6 @@ const containerStyle: React.CSSProperties = {
   padding: '16px 20px',
   borderRadius: 'var(--radius-xl)',
   background: 'var(--bg-card)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
 }
 
 const columnStyle: React.CSSProperties = {

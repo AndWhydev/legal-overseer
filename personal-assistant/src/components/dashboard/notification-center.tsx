@@ -377,8 +377,6 @@ export function NotificationCenter({ onTabChange }: NotificationCenterProps) {
               maxHeight: 480,
               zIndex: 1000,
               background: 'var(--bg-card, rgba(15, 20, 30, 0.95))',
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: 10,
               boxShadow: '0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04) inset',

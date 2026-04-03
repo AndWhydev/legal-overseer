@@ -151,8 +151,8 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
     <>
       <div
         className={cn(
-          'flex items-center gap-3 rounded-xl border border-border/30 bg-card/50 px-4 py-3 backdrop-blur-sm transition-colors',
-          !isComingSoon && 'hover:bg-card/70',
+          'flex items-center gap-3 rounded-xl border border-border/30 bg-card px-4 py-3 transition-colors',
+          !isComingSoon && 'hover:bg-card',
           isComingSoon && 'opacity-50',
         )}
         style={externalStyle}
@@ -213,7 +213,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
       {apiKeyDialogOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center">
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60"
             onClick={() => { setApiKeyDialogOpen(false); setError(''); }}
           />
           <div className="relative w-[90%] max-w-[420px] rounded-xl border border-border bg-card p-6 shadow-lg">

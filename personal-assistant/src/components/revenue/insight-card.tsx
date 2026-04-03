@@ -73,7 +73,7 @@ export function RevenueInsightCard({ insight, onAction }: InsightCardProps) {
 
   return (
     <div
-      className={`flex items-start gap-3 rounded-lg p-3 backdrop-blur-lg cursor-pointer transition-colors ${
+      className={`flex items-start gap-3 rounded-lg p-3 cursor-pointer transition-colors ${
         hovering ? 'bg-accent' : 'bg-card'
       }`}
       onClick={() => setExpanded(!expanded)}

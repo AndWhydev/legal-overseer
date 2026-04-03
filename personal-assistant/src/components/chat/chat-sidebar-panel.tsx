@@ -170,7 +170,7 @@ export function ChatSidebarPanel() {
               >
                 <Icon className="size-4 shrink-0" />
                 <span>{label}</span>
-                <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background/70 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
                   {count}
                 </SidebarMenuBadge>
               </SidebarMenuButton>

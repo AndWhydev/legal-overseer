@@ -165,7 +165,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-sm">
-            <thead className="bg-background/60 text-xs uppercase tracking-wide text-muted-foreground">
+            <thead className="bg-background text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Period</th>

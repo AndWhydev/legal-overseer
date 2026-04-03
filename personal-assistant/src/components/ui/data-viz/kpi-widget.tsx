@@ -23,8 +23,6 @@ const cardStyle: React.CSSProperties = {
   padding: '20px 24px',
   borderRadius: 'var(--radius-xl)',
   background: 'var(--bg-card)',
-  backdropFilter: 'var(--glass-blur)',
-  WebkitBackdropFilter: 'var(--glass-blur)',
   border: 'none',
   boxShadow: 'var(--card-shadow), var(--card-inset)',
   display: 'flex',

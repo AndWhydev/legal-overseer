@@ -114,7 +114,7 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
       tabIndex={isOverlay ? -1 : 0}
       aria-label={isOverlay ? undefined : `Open task ${task.title}`}
       className={cn(
-        'group relative rounded-2xl border border-border/70 bg-card/95 p-4 text-left shadow-[0_14px_32px_-24px_rgba(0,0,0,0.7)] transition duration-200',
+        'group relative rounded-2xl border border-border/70 bg-card p-4 text-left shadow-[0_14px_32px_-24px_rgba(0,0,0,0.7)] transition duration-200',
         'focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
         !isOverlay && 'cursor-pointer hover:-translate-y-0.5 hover:border-border hover:shadow-[0_18px_36px_-24px_rgba(0,0,0,0.75)]',
         isOptimistic && 'opacity-70',

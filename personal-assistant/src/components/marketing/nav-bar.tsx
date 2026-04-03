@@ -17,7 +17,7 @@ export function NavBar() {
   }
 
   return (
-    <nav className="sticky top-0 z-[1000] border-b border-border/30 bg-[rgba(10,10,15,0.85)] px-5 py-3 backdrop-blur-xl">
+    <nav className="sticky top-0 z-[1000] border-b border-border/30 bg-[rgba(10,10,15,0.85)] px-5 py-3">
       <div className="mx-auto flex max-w-[1200px] items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 no-underline">

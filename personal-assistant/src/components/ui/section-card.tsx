@@ -14,8 +14,6 @@ export function SectionCard({ title, headerActions, children, className }: Secti
       className={cn('rounded-xl p-4', className)}
       style={{
         background: 'var(--bb-surface)',
-        backdropFilter: 'var(--glass-blur)',
-        WebkitBackdropFilter: 'var(--glass-blur)',
         border: '1px solid var(--glass-divider)',
       }}
     >

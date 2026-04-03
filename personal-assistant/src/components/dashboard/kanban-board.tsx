@@ -458,7 +458,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
                   <KanbanColumn key={column.id} value={column.id} className="flex h-full min-w-[18rem] max-w-[24rem] flex-1">
                     <section
                       aria-labelledby={columnHeadingId}
-                      className="flex h-full min-h-0 w-full flex-col rounded-[24px] border border-border/70 bg-background/90 shadow-[0_18px_46px_-34px_rgba(0,0,0,0.75)]"
+                      className="flex h-full min-h-0 w-full flex-col rounded-[24px] border border-border/70 bg-background shadow-[0_18px_46px_-34px_rgba(0,0,0,0.75)]"
                     >
                       <div className="border-b border-border/60 px-4 pb-4 pt-4">
                         <div className="flex items-start justify-between gap-3">
@@ -471,7 +471,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
                             </p>
                           </div>
 
-                          <Badge variant="outline" className="bg-background/70 font-mono">
+                          <Badge variant="outline" className="bg-background font-mono">
                             {columnTasks.length}
                           </Badge>
                         </div>
@@ -532,7 +532,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-6 left-1/2 z-50 flex min-w-[18rem] -translate-x-1/2 items-center gap-3 rounded-2xl border border-border/70 bg-background/95 p-3 shadow-[0_20px_40px_-26px_rgba(0,0,0,0.7)] backdrop-blur-sm"
+          className="fixed bottom-6 left-1/2 z-50 flex min-w-[18rem] -translate-x-1/2 items-center gap-3 rounded-2xl border border-border/70 bg-background p-3 shadow-[0_20px_40px_-26px_rgba(0,0,0,0.7)]"
         >
           <span className="flex-1 text-sm font-medium text-foreground">
             {undoToast.message}

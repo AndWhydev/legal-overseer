@@ -215,7 +215,7 @@ export const CompactCodeBlock = memo(function CompactCodeBlock({
     >
       <button
         onClick={handleCopy}
-        className="cursor-pointer absolute top-1 right-1 p-1.5 rounded bg-background/80 hover:bg-background border border-border opacity-0 group-hover/codeblock:opacity-100 transition-opacity z-10"
+        className="cursor-pointer absolute top-1 right-1 p-1.5 rounded bg-background hover:bg-background border border-border opacity-0 group-hover/codeblock:opacity-100 transition-opacity z-10"
         aria-label="Copy code"
       >
         {copied ? (

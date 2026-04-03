@@ -49,7 +49,7 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
     <div className="relative">
       <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-widest">Command your team</div>
       <div
-        className={`flex items-center gap-3 rounded-xl bg-card backdrop-blur-lg px-4 py-3 border transition-colors ${
+        className={`flex items-center gap-3 rounded-xl bg-card px-4 py-3 border transition-colors ${
           focused ? 'border-ring' : 'border-border'
         }`}
       >
