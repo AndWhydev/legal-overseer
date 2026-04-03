@@ -43,7 +43,7 @@ Overhaul BitBit's memory retrieval pipeline with entity graph, temporal knowledg
 Plans:
 - [x] 35-01: Enable pgvector, create tables + indexes + RLS
 - [x] 35-02: Entity extraction pipeline (Haiku-based SVO extraction from messages/memories)
-- [ ] 35-03: Backfill entity_nodes from contacts, edges from projects.metadata
+- [x] 35-03: Backfill entity_nodes from contacts, edges from projects.metadata
 
 ### Phase 36: Graph-Aware Retrieval
 **Goal:** Replace confidence-only proactive recall with graph+vector hybrid. Increase token budget from 500 to 1500. Enhanced memory search via graph traversal.
@@ -99,7 +99,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
-| 35. Entity Graph Foundation | 2/3 | In progress | - |
+| 35. Entity Graph Foundation | 3/3 | Complete | 2026-04-04 |
 | 36. Graph-Aware Retrieval | 0/2 | Not started | - |
 | 37. Contextual Retrieval | 0/2 | Not started | - |
 | 38. Sleep Consolidation | 0/2 | Not started | - |
