@@ -63,8 +63,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 37-01: Build contextualizer.ts, integrate into chunker.ts ingestion pipeline
-- [ ] 37-02: Re-embed existing memories with contextual prefixes (backfill job)
+- [x] 37-01: Build contextualizer.ts, integrate into chunker.ts ingestion pipeline
+- [x] 37-02: Re-embed existing memories with contextual prefixes (backfill job)
 
 ### Phase 38: Sleep-Cycle Consolidation
 **Goal:** Nightly cron that summarizes per-entity, resolves fact conflicts, discovers latent relationships, prunes noise, generates morning briefing.
@@ -101,7 +101,7 @@ Plans:
 |-------|---------------|--------|-----------|
 | 35. Entity Graph Foundation | 3/3 | Complete | 2026-04-04 |
 | 36. Graph-Aware Retrieval | 2/2 | Complete | 2026-04-04 |
-| 37. Contextual Retrieval | 0/2 | Not started | - |
+| 37. Contextual Retrieval | 2/2 | Complete | 2026-04-04 |
 | 38. Sleep Consolidation | 0/2 | Not started | - |
 | 39. Adaptive Query Routing | 0/1 | Not started | - |
 | 40. Predictive + Procedural | 0/2 | Not started | - |

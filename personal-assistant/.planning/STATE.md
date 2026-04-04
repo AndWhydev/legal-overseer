@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Proactive omniscient intelligence that deeply understands the user's world
-**Current focus:** Phase 37 — Contextual Retrieval at Ingestion
+**Current focus:** Phase 38 — Sleep-Cycle Consolidation
 
 ## Current Position
 
-Phase: 37 of 40 (Contextual Retrieval at Ingestion)
+Phase: 38 of 40 (Sleep-Cycle Consolidation)
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-04-04 — Phase 36 complete (graph-aware retrieval)
+Last activity: 2026-04-04 — Phase 37 complete (contextual retrieval)
 
-Progress: ██████████████████░░░░░░░░░░░░ ~65%
+Progress: ████████████████████░░��░░░░░░░ ~70%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 10 min
-- Total execution time: 0.9 hours
+- Total plans completed: 7
+- Average duration: 8 min
+- Total execution time: 1.0 hours
 
 **By Phase:**
 
@@ -29,17 +29,16 @@ Progress: ██████████████████░░░░░�
 |-------|-------|-------|----------|
 | 35 | 3/3 | 40min | 13min |
 | 36 | 2/2 | 11min | 6min |
+| 37 | 2/2 | 10min | 5min |
 
 ## Accumulated Context
 
 ### Decisions
 
-- pgvector, organizations FK, match_entity_nodes RPC
-- Haiku + Zod extraction, Google key pending
-- graphAwareRecall primary, legacyProactiveRecall fallback
-- 1500 token budget, blended scoring
-- Graph search as 5th source in search_memory (runs first)
-- Entity resolution via getEntityByAlias in context assembler
+All prior decisions plus:
+- maxOutputTokens for AI SDK, CONTEXTUALIZE_ENABLED toggle
+- Logging in embedding-queue.ts not cron route
+- body_full preferred for complete message content
 
 ### Deferred Issues
 
@@ -52,5 +51,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Phase 36 complete, ready for Phase 37
+Stopped at: Phase 37 complete, ready for Phase 38
 Resume file: None
