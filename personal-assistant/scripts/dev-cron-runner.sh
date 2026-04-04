@@ -52,6 +52,7 @@ while true; do
     hit "/api/cron/relationship-health" &
     hit "/api/cron/calibrate-confidence" &
     hit "/api/cron/memory-consolidation" &
+    hit "/api/cron/sleep-consolidation" &
     hit "/api/cron/billing" &
     hit "/api/cron/calibrate-confidence" &
     hit "/api/cron/sentiment-drift" &

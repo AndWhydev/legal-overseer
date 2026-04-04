@@ -1,0 +1,565 @@
+/**
+ * Sleep Consolidation Pipeline — 5-stage nightly process that:
+ * 1. SUMMARIZE: Per-entity daily digest via Haiku
+ * 2. RESOLVE CONFLICTS: Temporal precedence for duplicate edges
+ * 3. DISCOVER RELATIONSHIPS: Latent edges from co-occurring events
+ * 4. PRUNE: Archive low-confidence entityless memories
+ * 5. MORNING BRIEFING: Compile actionable intel for the next day
+ *
+ * Designed to run as a daily cron job (e.g. 3am UTC).
+ */
+
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { generateText } from 'ai'
+import { models } from '@/lib/ai'
+import { logger } from '@/lib/core/logger'
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export interface SleepConsolidationReport {
+  orgId: string
+  summarized: number
+  conflictsResolved: number
+  relationshipsDiscovered: number
+  pruned: number
+  briefingGenerated: boolean
+  startedAt: string
+  completedAt: string
+}
+
+interface MorningBriefing {
+  generatedAt: string
+  upcomingDeadlines: Array<{ entityName: string; verb: string; objectText: string | null; occurredAt: string }>
+  blockedEntities: Array<{ sourceId: string; targetId: string; relationType: string }>
+  newDiscoveries: number
+  pendingApprovals: number
+}
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const ENTITY_BATCH_SIZE = 10
+const MAX_DISCOVERY_PAIRS = 5
+
+// ─── Main Pipeline ───────────────────────────────────────────────────────────
+
+export async function runSleepConsolidation(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<SleepConsolidationReport> {
+  const report: SleepConsolidationReport = {
+    orgId,
+    summarized: 0,
+    conflictsResolved: 0,
+    relationshipsDiscovered: 0,
+    pruned: 0,
+    briefingGenerated: false,
+    startedAt: new Date().toISOString(),
+    completedAt: '',
+  }
+
+  // Stage 1: SUMMARIZE
+  try {
+    report.summarized = await stageSummarize(supabase, orgId)
+    logger.info('[sleep-consolidation] Stage 1 SUMMARIZE complete', {
+      orgId,
+      summarized: report.summarized,
+    })
+  } catch (err) {
+    logger.error('[sleep-consolidation] Stage 1 SUMMARIZE failed', {
+      orgId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  // Stage 2: RESOLVE CONFLICTS
+  try {
+    report.conflictsResolved = await stageResolveConflicts(supabase, orgId)
+    logger.info('[sleep-consolidation] Stage 2 RESOLVE CONFLICTS complete', {
+      orgId,
+      conflictsResolved: report.conflictsResolved,
+    })
+  } catch (err) {
+    logger.error('[sleep-consolidation] Stage 2 RESOLVE CONFLICTS failed', {
+      orgId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  // Stage 3: DISCOVER RELATIONSHIPS
+  try {
+    report.relationshipsDiscovered = await stageDiscoverRelationships(supabase, orgId)
+    logger.info('[sleep-consolidation] Stage 3 DISCOVER RELATIONSHIPS complete', {
+      orgId,
+      relationshipsDiscovered: report.relationshipsDiscovered,
+    })
+  } catch (err) {
+    logger.error('[sleep-consolidation] Stage 3 DISCOVER RELATIONSHIPS failed', {
+      orgId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  // Stage 4: PRUNE
+  try {
+    report.pruned = await stagePrune(supabase, orgId)
+    logger.info('[sleep-consolidation] Stage 4 PRUNE complete', {
+      orgId,
+      pruned: report.pruned,
+    })
+  } catch (err) {
+    logger.error('[sleep-consolidation] Stage 4 PRUNE failed', {
+      orgId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  // Stage 5: MORNING BRIEFING
+  try {
+    report.briefingGenerated = await stageMorningBriefing(supabase, orgId)
+    logger.info('[sleep-consolidation] Stage 5 MORNING BRIEFING complete', {
+      orgId,
+      briefingGenerated: report.briefingGenerated,
+    })
+  } catch (err) {
+    logger.error('[sleep-consolidation] Stage 5 MORNING BRIEFING failed', {
+      orgId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  report.completedAt = new Date().toISOString()
+  logger.info('[sleep-consolidation] Full cycle completed', report)
+
+  return report
+}
+
+// ─── Stage 1: SUMMARIZE ──────────────────────────────────────────────────────
+
+async function stageSummarize(supabase: SupabaseClient, orgId: string): Promise<number> {
+  const todayStart = new Date()
+  todayStart.setUTCHours(0, 0, 0, 0)
+  const todayISO = todayStart.toISOString()
+
+  // Find entities that have event_tuples created today
+  const { data: entityRows, error: entityErr } = await supabase
+    .from('event_tuples')
+    .select('subject_id')
+    .eq('org_id', orgId)
+    .gte('created_at', todayISO)
+
+  if (entityErr || !entityRows || entityRows.length === 0) return 0
+
+  // Deduplicate entity IDs
+  const entityIds = [...new Set(entityRows.map((r) => r.subject_id))]
+
+  let summarized = 0
+
+  // Process in batches
+  for (let i = 0; i < entityIds.length; i += ENTITY_BATCH_SIZE) {
+    const batch = entityIds.slice(i, i + ENTITY_BATCH_SIZE)
+
+    for (const entityId of batch) {
+      // Fetch entity name
+      const { data: entity } = await supabase
+        .from('entity_nodes')
+        .select('id, name, properties')
+        .eq('id', entityId)
+        .eq('org_id', orgId)
+        .single()
+
+      if (!entity) continue
+
+      // Fetch today's events for this entity
+      const { data: events } = await supabase
+        .from('event_tuples')
+        .select('verb, object_text, occurred_at')
+        .eq('org_id', orgId)
+        .eq('subject_id', entityId)
+        .gte('created_at', todayISO)
+        .order('occurred_at', { ascending: true })
+
+      if (!events || events.length === 0) continue
+
+      const eventLines = events
+        .map((e) => `- ${e.verb}${e.object_text ? `: ${e.object_text}` : ''} (${e.occurred_at})`)
+        .join('\n')
+
+      const { text: summary } = await generateText({
+        model: models.fast,
+        prompt: `Summarize today's activity for "${entity.name}" in 1-2 sentences. Be concise and factual.\n\nEvents:\n${eventLines}`,
+        maxOutputTokens: 150,
+      })
+
+      // Merge into entity_nodes.properties via JSONB
+      const now = new Date().toISOString()
+      const updatedProperties = {
+        ...(entity.properties as Record<string, unknown>),
+        daily_summary: summary.trim(),
+        last_summarized: now,
+      }
+
+      const { error: updateErr } = await supabase
+        .from('entity_nodes')
+        .update({ properties: updatedProperties })
+        .eq('id', entityId)
+        .eq('org_id', orgId)
+
+      if (!updateErr) summarized++
+    }
+  }
+
+  return summarized
+}
+
+// ─── Stage 2: RESOLVE CONFLICTS ─────────────────────────────────────────────
+
+async function stageResolveConflicts(supabase: SupabaseClient, orgId: string): Promise<number> {
+  // Find duplicate active edges: same (source_id, target_id, relation_type)
+  // Using RPC or raw query to do GROUP BY HAVING
+  // Try RPC first, fall back to JS-based duplicate detection
+  let conflicts: Array<{ source_id: string; target_id: string; relation_type: string }> | null = null
+  try {
+    const { data, error } = await supabase.rpc(
+      'find_duplicate_edges',
+      { p_org_id: orgId },
+    )
+    if (!error && data) {
+      conflicts = data as Array<{ source_id: string; target_id: string; relation_type: string }>
+    }
+  } catch {
+    // RPC not available, fall through to fallback
+  }
+
+  // Fallback: query all active edges and detect duplicates in JS
+  if (!conflicts) {
+    return await resolveConflictsFallback(supabase, orgId)
+  }
+
+  let resolved = 0
+  for (const conflict of conflicts as Array<{ source_id: string; target_id: string; relation_type: string }>) {
+    resolved += await resolveConflictGroup(supabase, orgId, conflict)
+  }
+
+  return resolved
+}
+
+async function resolveConflictsFallback(supabase: SupabaseClient, orgId: string): Promise<number> {
+  const { data: edges, error } = await supabase
+    .from('entity_edges')
+    .select('id, source_id, target_id, relation_type, valid_from')
+    .eq('org_id', orgId)
+    .is('valid_until', null)
+    .order('valid_from', { ascending: false })
+
+  if (error || !edges) return 0
+
+  // Group by composite key
+  const groups = new Map<string, Array<{ id: string; valid_from: string }>>()
+  for (const edge of edges) {
+    const key = `${edge.source_id}|${edge.target_id}|${edge.relation_type}`
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push({ id: edge.id, valid_from: edge.valid_from })
+  }
+
+  let resolved = 0
+  const now = new Date().toISOString()
+
+  for (const [, group] of groups) {
+    if (group.length <= 1) continue
+
+    // Sort by valid_from DESC — keep the most recent
+    group.sort((a, b) => new Date(b.valid_from).getTime() - new Date(a.valid_from).getTime())
+
+    // Invalidate all but the first (most recent)
+    const toInvalidate = group.slice(1).map((e) => e.id)
+
+    const { error: updateErr } = await supabase
+      .from('entity_edges')
+      .update({ valid_until: now })
+      .in('id', toInvalidate)
+      .eq('org_id', orgId)
+
+    if (!updateErr) resolved += toInvalidate.length
+  }
+
+  return resolved
+}
+
+async function resolveConflictGroup(
+  supabase: SupabaseClient,
+  orgId: string,
+  conflict: { source_id: string; target_id: string; relation_type: string },
+): Promise<number> {
+  const { data: edges, error } = await supabase
+    .from('entity_edges')
+    .select('id, valid_from')
+    .eq('org_id', orgId)
+    .eq('source_id', conflict.source_id)
+    .eq('target_id', conflict.target_id)
+    .eq('relation_type', conflict.relation_type)
+    .is('valid_until', null)
+    .order('valid_from', { ascending: false })
+
+  if (error || !edges || edges.length <= 1) return 0
+
+  // Keep most recent, invalidate the rest
+  const toInvalidate = edges.slice(1).map((e) => e.id)
+  const now = new Date().toISOString()
+
+  const { error: updateErr } = await supabase
+    .from('entity_edges')
+    .update({ valid_until: now })
+    .in('id', toInvalidate)
+    .eq('org_id', orgId)
+
+  return updateErr ? 0 : toInvalidate.length
+}
+
+// ─── Stage 3: DISCOVER RELATIONSHIPS ─────────────────────────────────────────
+
+async function stageDiscoverRelationships(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<number> {
+  const todayStart = new Date()
+  todayStart.setUTCHours(0, 0, 0, 0)
+  const todayISO = todayStart.toISOString()
+
+  // Find entity pairs that co-occur in today's event_tuples
+  // Approach: get all today's events, group by time proximity, find co-occurring pairs
+  const { data: todayEvents, error: evtErr } = await supabase
+    .from('event_tuples')
+    .select('subject_id, occurred_at')
+    .eq('org_id', orgId)
+    .gte('created_at', todayISO)
+
+  if (evtErr || !todayEvents || todayEvents.length < 2) return 0
+
+  // Group by date of occurred_at to find co-occurring entities
+  const dateEntityMap = new Map<string, Set<string>>()
+  for (const evt of todayEvents) {
+    const dateKey = evt.occurred_at.slice(0, 10) // YYYY-MM-DD
+    if (!dateEntityMap.has(dateKey)) dateEntityMap.set(dateKey, new Set())
+    dateEntityMap.get(dateKey)!.add(evt.subject_id)
+  }
+
+  // Collect candidate pairs (entities that co-occur on the same date)
+  const pairsSeen = new Set<string>()
+  const candidatePairs: Array<{ a: string; b: string }> = []
+
+  for (const [, entitySet] of dateEntityMap) {
+    const entities = Array.from(entitySet)
+    for (let i = 0; i < entities.length && candidatePairs.length < MAX_DISCOVERY_PAIRS * 3; i++) {
+      for (let j = i + 1; j < entities.length; j++) {
+        const key = [entities[i], entities[j]].sort().join('|')
+        if (pairsSeen.has(key)) continue
+        pairsSeen.add(key)
+        candidatePairs.push({ a: entities[i], b: entities[j] })
+      }
+    }
+  }
+
+  if (candidatePairs.length === 0) return 0
+
+  // Filter out pairs that already have a direct edge
+  const pairsWithoutEdge: Array<{ a: string; b: string }> = []
+  for (const pair of candidatePairs) {
+    if (pairsWithoutEdge.length >= MAX_DISCOVERY_PAIRS) break
+
+    const { data: existingEdge } = await supabase
+      .from('entity_edges')
+      .select('id')
+      .eq('org_id', orgId)
+      .or(
+        `and(source_id.eq.${pair.a},target_id.eq.${pair.b}),and(source_id.eq.${pair.b},target_id.eq.${pair.a})`,
+      )
+      .is('valid_until', null)
+      .limit(1)
+
+    if (!existingEdge || existingEdge.length === 0) {
+      pairsWithoutEdge.push(pair)
+    }
+  }
+
+  if (pairsWithoutEdge.length === 0) return 0
+
+  // For each candidate pair, fetch entity names and ask Haiku
+  let discovered = 0
+  for (const pair of pairsWithoutEdge) {
+    const { data: entityA } = await supabase
+      .from('entity_nodes')
+      .select('name, entity_type')
+      .eq('id', pair.a)
+      .single()
+    const { data: entityB } = await supabase
+      .from('entity_nodes')
+      .select('name, entity_type')
+      .eq('id', pair.b)
+      .single()
+
+    if (!entityA || !entityB) continue
+
+    const { text: evaluation } = await generateText({
+      model: models.fast,
+      prompt: `Two entities appeared in related events today:\n- "${entityA.name}" (${entityA.entity_type})\n- "${entityB.name}" (${entityB.entity_type})\n\nIs there likely a meaningful relationship? Reply with ONLY "yes: <relation_type>" or "no". Keep relation_type short (e.g. "collaborates_with", "client_of", "related_to").`,
+      maxOutputTokens: 30,
+    })
+
+    const trimmed = evaluation.trim().toLowerCase()
+    if (trimmed.startsWith('yes:')) {
+      const relationType = trimmed.slice(4).trim().replace(/[^a-z_]/g, '') || 'related_to'
+
+      const { data: newEdge, error: edgeErr } = await supabase
+        .from('entity_edges')
+        .insert({
+          org_id: orgId,
+          source_id: pair.a,
+          target_id: pair.b,
+          relation_type: relationType,
+          properties: { source: 'consolidation' },
+          valid_from: new Date().toISOString(),
+          confidence: 0.5,
+          source_memory_id: null,
+        })
+        .select('id')
+        .single()
+
+      if (!edgeErr && newEdge) discovered++
+    }
+  }
+
+  return discovered
+}
+
+// ─── Stage 4: PRUNE ──────────────────────────────────────────────────────────
+
+async function stagePrune(supabase: SupabaseClient, orgId: string): Promise<number> {
+  const todayStart = new Date()
+  todayStart.setUTCHours(0, 0, 0, 0)
+  const todayISO = todayStart.toISOString()
+
+  // Find low-confidence memories created today with no entity links
+  const { data: toPrune, error: pruneErr } = await supabase
+    .from('memory_palace_entries')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('is_active', true)
+    .lt('confidence', 0.3)
+    .gte('created_at', todayISO)
+    .or('entity_ids.is.null,entity_ids.eq.{}')
+
+  if (pruneErr || !toPrune || toPrune.length === 0) return 0
+
+  const ids = toPrune.map((r) => r.id)
+
+  const { error: updateErr } = await supabase
+    .from('memory_palace_entries')
+    .update({
+      is_active: false,
+      metadata: {
+        archive_reason: 'low_confidence_no_entities',
+      },
+    })
+    .in('id', ids)
+    .eq('org_id', orgId)
+
+  return updateErr ? 0 : ids.length
+}
+
+// ─── Stage 5: MORNING BRIEFING ───────────────────────────────────────────────
+
+async function stageMorningBriefing(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<boolean> {
+  const now = new Date()
+  const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000)
+
+  // Upcoming deadlines: event_tuples with occurred_at in next 48h
+  const { data: deadlines } = await supabase
+    .from('event_tuples')
+    .select('subject_id, verb, object_text, occurred_at')
+    .eq('org_id', orgId)
+    .gte('occurred_at', now.toISOString())
+    .lte('occurred_at', in48h.toISOString())
+    .order('occurred_at', { ascending: true })
+    .limit(20)
+
+  // Resolve entity names for deadlines
+  const deadlineItems: MorningBriefing['upcomingDeadlines'] = []
+  for (const d of deadlines || []) {
+    const { data: entity } = await supabase
+      .from('entity_nodes')
+      .select('name')
+      .eq('id', d.subject_id)
+      .single()
+
+    deadlineItems.push({
+      entityName: entity?.name || d.subject_id,
+      verb: d.verb,
+      objectText: d.object_text,
+      occurredAt: d.occurred_at,
+    })
+  }
+
+  // Blocked entities
+  const { data: blockedEdges } = await supabase
+    .from('entity_edges')
+    .select('source_id, target_id, relation_type')
+    .eq('org_id', orgId)
+    .like('relation_type', '%block%')
+    .is('valid_until', null)
+    .limit(20)
+
+  // New discoveries from Stage 3
+  const todayStart = new Date()
+  todayStart.setUTCHours(0, 0, 0, 0)
+  const { data: discoveries } = await supabase
+    .from('entity_edges')
+    .select('id')
+    .eq('org_id', orgId)
+    .gte('ingested_at', todayStart.toISOString())
+    .eq('properties->>source', 'consolidation')
+
+  // Pending approvals count (convention: edges with relation_type containing 'approval' or 'pending')
+  const { data: pendingApprovals } = await supabase
+    .from('entity_edges')
+    .select('id')
+    .eq('org_id', orgId)
+    .like('relation_type', '%approv%')
+    .is('valid_until', null)
+
+  const briefing: MorningBriefing = {
+    generatedAt: now.toISOString(),
+    upcomingDeadlines: deadlineItems,
+    blockedEntities: (blockedEdges || []).map((e) => ({
+      sourceId: e.source_id,
+      targetId: e.target_id,
+      relationType: e.relation_type,
+    })),
+    newDiscoveries: discoveries?.length ?? 0,
+    pendingApprovals: pendingApprovals?.length ?? 0,
+  }
+
+  // Store in organisations.settings via JSONB merge
+  const { data: org } = await supabase
+    .from('organisations')
+    .select('settings')
+    .eq('id', orgId)
+    .single()
+
+  if (!org) return false
+
+  const currentSettings = (org.settings as Record<string, unknown>) || {}
+  const updatedSettings = {
+    ...currentSettings,
+    morning_briefing: briefing,
+  }
+
+  const { error: updateErr } = await supabase
+    .from('organisations')
+    .update({ settings: updatedSettings })
+    .eq('id', orgId)
+
+  return !updateErr
+}
