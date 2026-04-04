@@ -1,15 +1,14 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { navigation } from '@/docs.config'
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { navigation } from "@/docs.config"
 
 export function Breadcrumbs() {
   const pathname = usePathname()
-  
-  // Find current page in navigation
-  let sectionTitle = ''
-  let pageTitle = ''
+
+  let sectionTitle = ""
+  let pageTitle = ""
   for (const section of navigation) {
     for (const item of section.items) {
       if (item.href === pathname) {
@@ -18,27 +17,34 @@ export function Breadcrumbs() {
       }
     }
   }
-  
+
   return (
-    <nav style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.375rem',
-      fontSize: '0.8125rem',
-      color: 'var(--text-tertiary)',
-      marginBottom: '0.75rem',
-    }}>
-      <Link href="/docs/overview" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>Docs</Link>
+    <nav
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        fontSize: "14px",
+        color: "rgb(115, 114, 108)",
+        marginBottom: "12px",
+      }}
+    >
+      <Link
+        href="/docs/overview"
+        style={{ color: "rgb(115, 114, 108)", textDecoration: "none" }}
+      >
+        Docs
+      </Link>
       {sectionTitle && (
         <>
-          <span>/</span>
+          <span style={{ color: "rgb(115, 114, 108)" }}>/</span>
           <span>{sectionTitle}</span>
         </>
       )}
       {pageTitle && sectionTitle && (
         <>
-          <span>/</span>
-          <span style={{ color: 'var(--text-secondary)' }}>{pageTitle}</span>
+          <span style={{ color: "rgb(115, 114, 108)" }}>/</span>
+          <span style={{ color: "rgb(61, 61, 58)" }}>{pageTitle}</span>
         </>
       )}
     </nav>

@@ -1,32 +1,19 @@
 import { ReactNode } from "react"
-import { cn } from "@/lib/utils"
 
 type CalloutType = "tip" | "note" | "warning" | "danger"
 
-const config: Record<
-  CalloutType,
-  { bg: string; border: string; label: string }
-> = {
-  tip: {
-    bg: "bg-[hsl(270,95%,97%)]",
-    border: "border-l-[#9333ea]",
-    label: "Tip",
-  },
-  note: {
-    bg: "bg-[hsl(215,95%,97%)]",
-    border: "border-l-[#155dfc]",
-    label: "Note",
-  },
-  warning: {
-    bg: "bg-[hsl(45,95%,97%)]",
-    border: "border-l-[#ca8a04]",
-    label: "Warning",
-  },
-  danger: {
-    bg: "bg-[hsl(0,95%,97%)]",
-    border: "border-l-[#d01e22]",
-    label: "Danger",
-  },
+const icons: Record<CalloutType, string> = {
+  tip: "\uD83D\uDCA1",
+  note: "\u2139\uFE0F",
+  warning: "\u26A0\uFE0F",
+  danger: "\u26D4",
+}
+
+const labels: Record<CalloutType, string> = {
+  tip: "Tip",
+  note: "Note",
+  warning: "Warning",
+  danger: "Danger",
 }
 
 export function Callout({
@@ -38,21 +25,33 @@ export function Callout({
   title?: string
   children: ReactNode
 }) {
-  const c = config[type]
   return (
     <div
-      className={cn(
-        c.bg,
-        c.border,
-        "border-l-[3px] rounded-r-lg px-5 py-4 my-6 text-[15px] leading-[1.7]"
-      )}
+      style={{
+        backgroundColor: "rgb(245, 244, 237)",
+        border: "1px solid rgba(31, 30, 29, 0.3)",
+        borderRadius: "8px",
+        padding: "12px 16px",
+        margin: "24px 0",
+        fontSize: "15px",
+        lineHeight: "24px",
+      }}
     >
-      {title && (
-        <div className="font-semibold text-[var(--text-primary)] text-sm mb-1">
-          {title}
-        </div>
-      )}
-      <div className="text-[var(--text-body)]">{children}</div>
+      <div
+        style={{
+          fontWeight: 600,
+          fontSize: "14px",
+          color: "rgb(20, 20, 19)",
+          marginBottom: "4px",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        <span>{icons[type]}</span>
+        <span>{title || labels[type]}</span>
+      </div>
+      <div style={{ color: "rgb(61, 61, 58)" }}>{children}</div>
     </div>
   )
 }

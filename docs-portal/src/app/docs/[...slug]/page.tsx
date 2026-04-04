@@ -68,12 +68,28 @@ export default async function DocPage({
   return (
     <>
       <Header />
-      <div className="flex min-h-[calc(100vh-var(--header-height))]">
+      <div style={{ display: "flex", minHeight: "calc(100vh - 56px)" }}>
         <Sidebar navigation={navigation} />
-        <main className="flex-1 mx-auto px-6 py-8 min-w-0" style={{ maxWidth: "720px" }}>
+        <main
+          style={{
+            flex: 1,
+            maxWidth: "720px",
+            marginLeft: "auto",
+            marginRight: "auto",
+            padding: "32px 24px",
+            minWidth: 0,
+          }}
+        >
           <Breadcrumbs />
           {doc.frontmatter.description && (
-            <p className="text-lg mb-8" style={{ color: "rgba(38,38,38,0.80)" }}>
+            <p
+              style={{
+                fontSize: "16px",
+                lineHeight: "24px",
+                color: "rgb(61, 61, 58)",
+                marginBottom: "32px",
+              }}
+            >
               {doc.frontmatter.description as string}
             </p>
           )}

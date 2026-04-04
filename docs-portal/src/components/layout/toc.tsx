@@ -1,8 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { cn } from "@/lib/utils"
 
 interface TocItem {
   id: string
@@ -37,43 +35,52 @@ export function TableOfContents({ headings }: { headings: TocItem[] }) {
 
   return (
     <aside
-      className="hidden min-[1320px]:block shrink-0 sticky top-[56px] h-[calc(100vh-56px)]"
       style={{
-        width: "288px",
-        borderLeft: "1px solid rgba(38,38,38,0.10)",
+        display: "none",
+        width: "240px",
+        flexShrink: 0,
+        position: "sticky",
+        top: "56px",
+        height: "calc(100vh - 56px)",
+        overflowY: "auto",
+        padding: "24px 16px",
       }}
+      className="hidden min-[1320px]:block"
     >
-      <ScrollArea className="h-full">
-        <div className="px-4 py-6">
-          <div
-            className="mb-3"
-            style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              color: "rgba(38,38,38,0.40)",
-            }}
-          >
-            On this page
-          </div>
-          {headings.map(({ id, text, level }) => (
-            <a
-              key={id}
-              href={`#${id}`}
-              className={cn(
-                "block text-[13px] leading-snug py-1 no-underline transition-colors duration-150",
-                level === 3 && "pl-3",
-                activeId === id
-                  ? "text-[var(--brand-primary)] font-medium"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              )}
-            >
-              {text}
-            </a>
-          ))}
-        </div>
-      </ScrollArea>
+      <div
+        style={{
+          fontSize: "11px",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: "rgb(160, 159, 153)",
+          marginBottom: "12px",
+        }}
+      >
+        On this page
+      </div>
+      {headings.map(({ id, text, level }) => (
+        <a
+          key={id}
+          href={`#${id}`}
+          style={{
+            display: "block",
+            fontSize: "13px",
+            lineHeight: "20px",
+            padding: "4px 0",
+            paddingLeft: level === 3 ? "12px" : "0",
+            textDecoration: "none",
+            color:
+              activeId === id
+                ? "rgb(20, 20, 19)"
+                : "rgb(115, 114, 108)",
+            fontWeight: activeId === id ? 500 : 400,
+            transition: "color 150ms",
+          }}
+        >
+          {text}
+        </a>
+      ))}
     </aside>
   )
 }
