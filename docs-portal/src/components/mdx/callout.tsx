@@ -1,19 +1,14 @@
 import { ReactNode } from "react"
+import { Lightbulb, Info, AlertTriangle, AlertCircle } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 type CalloutType = "tip" | "note" | "warning" | "danger"
 
-const icons: Record<CalloutType, string> = {
-  tip: "\uD83D\uDCA1",
-  note: "\u2139\uFE0F",
-  warning: "\u26A0\uFE0F",
-  danger: "\u26D4",
-}
-
-const labels: Record<CalloutType, string> = {
-  tip: "Tip",
-  note: "Note",
-  warning: "Warning",
-  danger: "Danger",
+const config: Record<CalloutType, { icon: LucideIcon; label: string }> = {
+  tip: { icon: Lightbulb, label: "Tip" },
+  note: { icon: Info, label: "Note" },
+  warning: { icon: AlertTriangle, label: "Warning" },
+  danger: { icon: AlertCircle, label: "Danger" },
 }
 
 export function Callout({
@@ -25,6 +20,9 @@ export function Callout({
   title?: string
   children: ReactNode
 }) {
+  const c = config[type]
+  const Icon = c.icon
+
   return (
     <div
       style={{
@@ -48,8 +46,8 @@ export function Callout({
           gap: "6px",
         }}
       >
-        <span>{icons[type]}</span>
-        <span>{title || labels[type]}</span>
+        <Icon size={16} className="shrink-0" style={{ color: "rgb(80, 80, 80)", marginTop: "1px" }} />
+        <span>{title || c.label}</span>
       </div>
       <div style={{ color: "rgb(23, 23, 23)" }}>{children}</div>
     </div>

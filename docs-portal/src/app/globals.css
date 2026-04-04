@@ -289,3 +289,32 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Syntax highlighted code blocks (rehype-pretty-code) */
+[data-rehype-pretty-code-figure] pre {
+  background: var(--code-bg);
+  border: 1px solid rgb(222, 222, 222);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 24px 0;
+}
+
+[data-rehype-pretty-code-figure] code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: 14px;
+  line-height: 21px;
+}
+
+[data-rehype-pretty-code-figure] code [data-line] {
+  padding: 0 16px;
+}
+
+/* Inline code inside highlighted blocks should not double-style */
+[data-rehype-pretty-code-figure] code span {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}

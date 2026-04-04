@@ -1,4 +1,5 @@
 import remarkGfm from "remark-gfm"
+import rehypePrettyCode from "rehype-pretty-code"
 import { notFound } from "next/navigation"
 import { compileMDX } from "next-mdx-remote/rsc"
 import { getDocBySlug, getAllDocSlugs, extractHeadings } from "@/lib/mdx"
@@ -43,7 +44,12 @@ export default async function DocPage({
 
   const { content: mdxContent } = await compileMDX({
     source: doc.source,
-    options: { parseFrontmatter: true, mdxOptions: { remarkPlugins: [remarkGfm] } },
+    options: { parseFrontmatter: true, mdxOptions: {
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [
+        [rehypePrettyCode, { theme: "github-light", keepBackground: false }],
+      ],
+    } },
     components: {
       // Retained custom
       Tip,
