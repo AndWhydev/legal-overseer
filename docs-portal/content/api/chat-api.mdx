@@ -34,8 +34,8 @@ The Chat API (`src/app/api/agent/chat/route.ts`) is the primary endpoint for int
 
 The endpoint supports two authentication methods:
 
-1. **Bearer token** (mobile clients) — `Authorization: Bearer <token>`
-2. **Cookie-based** (web clients) — Supabase session cookie
+1. **Bearer token** for mobile clients: `Authorization: Bearer <token>`
+2. **Cookie-based** for web clients: Supabase session cookie
 
 In development, set `DEV_BYPASS=true` to skip authentication.
 
@@ -72,11 +72,11 @@ data: {"type":"done","data":{"inputTokens":1234,"outputTokens":567}}`} language=
 
 The endpoint includes several security layers:
 
-- **Input length validation** — message, threadId, and attachmentIds are all size-limited
-- **Injection detection** — messages are scanned for prompt injection attempts via `detectInjection()`
-- **Injection neutralization** — detected injections are neutralized before processing
-- **Rate limiting** — per-user endpoint limits via `checkUserEndpointLimit()`
-- **Timing jitter** — `addTimingJitter()` prevents timing-based side-channel attacks
+- **Input length validation** ensures message, threadId, and attachmentIds are all size-limited.
+- **Injection detection** scans messages for prompt injection attempts via `detectInjection()`.
+- **Injection neutralization** neutralizes detected injections before processing.
+- **Rate limiting** enforces per-user endpoint limits via `checkUserEndpointLimit()`.
+- **Timing jitter** via `addTimingJitter()` prevents timing-based side-channel attacks.
 
 <Warning>
 The dev bypass mode grants full access without authentication. It should never be enabled in production environments.

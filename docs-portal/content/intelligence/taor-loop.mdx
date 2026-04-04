@@ -5,7 +5,7 @@ description: "Think, Act, Observe, Repeat: the agentic decision engine at the he
 
 # TAOR Loop
 
-The TAOR (Think, Act, Observe, Repeat) loop is BitBit's core execution engine. It replaced the original 1,100-line `engine.ts` with a clean, model-driven architecture where **the model decides when to stop** — no iteration caps, no convergence hints, no observation masking.
+The TAOR (Think, Act, Observe, Repeat) loop is BitBit's core execution engine. It replaced the original 1,100-line `engine.ts` with a clean, model-driven architecture where **the model decides when to stop**. There are no iteration caps, no convergence hints, and no observation masking.
 
 A safety ceiling of 50 iterations exists purely for runaway cost protection.
 
@@ -40,7 +40,7 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
   <Step title="Tool Planning">
     The engine prepares the tool set:
     - **Eager tools** are always loaded (core CRUD, memory, search)
-    - **Deferred tools** are resolved via Tool RAG — matching user intent against tool descriptions using vector similarity
+    - **Deferred tools** are resolved via Tool RAG, matching user intent against tool descriptions using vector similarity
     - Tool definitions follow Anthropic's tool-use format
   </Step>
   <Step title="Execution Loop">
@@ -54,9 +54,9 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
   </Step>
   <Step title="Response Guard">
     Before delivery, the response passes through:
-    - **Leak detection** — scans for exposed API keys or credentials
-    - **Leak scrubbing** — redacts any detected secrets
-    - **Humanization** — ensures natural, non-robotic output
+    - **Leak detection** scans for exposed API keys or credentials.
+    - **Leak scrubbing** redacts any detected secrets.
+    - **Humanization** ensures natural, non-robotic output.
   </Step>
 </Steps>
 

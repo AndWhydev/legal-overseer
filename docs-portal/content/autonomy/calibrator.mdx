@@ -57,7 +57,7 @@ These rails ensure that even with skewed training data, the system cannot become
 
 ## Graduation Mechanism
 
-The calibrator also handles tool graduation — promoting tools from L2 (Propose) to L3 (Notify):
+The calibrator also handles tool graduation, promoting tools from L2 (Propose) to L3 (Notify).
 
 **Criteria:**
 - 20+ approved outcomes in the last 30 days
@@ -86,4 +86,4 @@ await recordActionOutcome(
 )
 ```
 
-This function never throws — recording outcomes should not break agent execution.
+This function never throws. Recording outcomes should not break agent execution.

@@ -61,8 +61,8 @@ flowchart TD
 
 ## Design Constraints
 
-- **All LLM calls use Haiku** — the cheapest model tier
-- **Each stage is idempotent** — safe to re-run if interrupted
+- **All LLM calls use Haiku**, the cheapest model tier.
+- **Each stage is idempotent** and safe to re-run if interrupted.
 - **Consolidation creates new data** (edges, tuples, summaries) but never mutates source memories
 - **Total cost**: ~$0.10-0.50 per nightly run at current volume
 

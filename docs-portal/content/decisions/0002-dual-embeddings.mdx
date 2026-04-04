@@ -25,7 +25,7 @@ Google's embedding model supports multimodal inputs (text, images, PDFs) in a sh
 
 Voyage-3.5 remains the stronger pure-text model, so it's kept as a secondary for text-heavy search paths.
 
-pgvector supports multiple vector columns natively, so this costs nothing architecturally — just two HNSW indexes and two embedding API calls per entity.
+pgvector supports multiple vector columns natively, so this costs nothing architecturally. It only requires two HNSW indexes and two embedding API calls per entity.
 
 ## Consequences
 

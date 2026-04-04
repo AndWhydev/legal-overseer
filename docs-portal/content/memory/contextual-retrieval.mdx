@@ -36,7 +36,7 @@ presaleservices.com.au, discussed via email on February 6, 2026.
 Agreed to $200 for the extra work. Will send invoice Friday."
 ```
 
-The contextualized version embeds into a much more useful vector — queries about "Steve" or "citations project" or "invoice" all hit this chunk correctly.
+The contextualized version embeds into a much more useful vector. Queries about "Steve" or "citations project" or "invoice" all hit this chunk correctly.
 
 ## Configuration
 
@@ -53,7 +53,7 @@ Contextual retrieval is enabled by default. Set `CONTEXTUALIZE_CHUNKS=false` to 
 At Haiku rates, contextual retrieval costs approximately **$1 per million tokens** at ingestion. At BitBit's current volume (hundreds of messages per day), this is negligible.
 
 <Note>
-This is a pure ingestion-time cost. Query-time retrieval is unaffected — the enriched chunks are already embedded and indexed. This is what makes the technique powerful: better retrieval quality with zero latency impact on queries.
+This is a pure ingestion-time cost. Query-time retrieval is unaffected because the enriched chunks are already embedded and indexed. Better retrieval quality with zero latency impact on queries.
 </Note>
 
 ## Graceful Degradation

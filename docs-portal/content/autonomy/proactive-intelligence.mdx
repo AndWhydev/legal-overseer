@@ -5,7 +5,7 @@ description: "The signal-to-action pipeline that runs every 15 minutes to antici
 
 # Proactive Intelligence
 
-The Proactive Intelligence layer (`src/lib/proactive/index.ts`) orchestrates an automated pipeline that gathers signals, classifies them, and takes action — or queues suggestions — without waiting for the user to ask.
+The Proactive Intelligence layer (`src/lib/proactive/index.ts`) orchestrates an automated pipeline that gathers signals, classifies them, and takes action or queues suggestions without waiting for the user to ask.
 
 It runs every 15 minutes via a cron route.
 
@@ -29,10 +29,10 @@ flowchart LR
 <Steps>
   <Step title="Load Org Configuration">
     Each organization has configurable proactive settings:
-    - `enabled` — master switch (default: true)
-    - `maxActionsPerHour` — rate limit (default: 10)
-    - `minConfidenceForAutoAction` — threshold for autonomous execution (default: 0.75)
-    - `minConfidenceForSuggestion` — threshold for queuing a suggestion (default: 0.45)
+    - `enabled` is the master switch (default: true).
+    - `maxActionsPerHour` sets the rate limit (default: 10).
+    - `minConfidenceForAutoAction` sets the threshold for autonomous execution (default: 0.75).
+    - `minConfidenceForSuggestion` sets the threshold for queuing a suggestion (default: 0.45).
   </Step>
   <Step title="Gather Signals">
     The aggregator collects signals from multiple intelligence sources:

@@ -78,7 +78,7 @@ Typed relationships between entities with **bi-temporal** validity tracking.
 | `source_memory_id` | UUID | Provenance link to source memory |
 
 <Note>
-**Bi-temporal edges** track two time dimensions: when the fact was true in the real world (`valid_from`/`valid_until`) and when BitBit learned it (`ingested_at`). This means old facts are invalidated but never deleted — the system can answer "what did we know about Steve's role in February?" even after that role changed.
+**Bi-temporal edges** track two time dimensions: when the fact was true in the real world (`valid_from`/`valid_until`) and when BitBit learned it (`ingested_at`). This means old facts are invalidated but never deleted. The system can answer "what did we know about Steve's role in February?" even after that role changed.
 </Note>
 
 ## event_tuples

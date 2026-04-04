@@ -38,11 +38,11 @@ Different agents carry different risk profiles. High-stakes agents require highe
 
 Thresholds are resolved through a priority cascade:
 
-1. **Calibrated thresholds** — derived from historical outcome data (see [Confidence Calibrator](/autonomy/calibrator))
-2. **Agent config** — per-agent overrides from the agent registry
-3. **Agent type** — static overrides in `AGENT_THRESHOLDS`
-4. **Org settings** — organization-level overrides in `organisations.settings`
-5. **Defaults** — act=0.85, ask=0.55
+1. **Calibrated thresholds** derived from historical outcome data (see [Confidence Calibrator](/autonomy/calibrator))
+2. **Agent config** per-agent overrides from the agent registry
+3. **Agent type** static overrides in `AGENT_THRESHOLDS`
+4. **Org settings** organization-level overrides in `organisations.settings`
+5. **Defaults** at act=0.85, ask=0.55
 
 The `getEffectiveThresholds()` function merges these, using the most specific non-undefined value for each field.
 
@@ -57,7 +57,7 @@ The router enforces strict validation:
 
 ## Integration with Autonomy Levels
 
-The confidence router works in tandem with the [Autonomy Levels](/autonomy/levels) system. Autonomy levels act as a **pre-filter** — L4 (silent) and L3 (notify) tools bypass the confidence router entirely. Only L2 (propose) and L1 (approve) tools go through confidence routing to determine whether to auto-execute or queue for approval.
+The confidence router works in tandem with the [Autonomy Levels](/autonomy/levels) system. Autonomy levels act as a **pre-filter**. L4 (silent) and L3 (notify) tools bypass the confidence router entirely. Only L2 (propose) and L1 (approve) tools go through confidence routing to determine whether to auto-execute or queue for approval.
 
 ```
 Tool Call → Autonomy Level Check

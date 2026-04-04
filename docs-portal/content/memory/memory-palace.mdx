@@ -50,11 +50,11 @@ interface MemoryPalaceEntry {
 
 Memories flow through a lifecycle:
 
-1. **Created** — new memory written with initial confidence
-2. **Active** — confidence above threshold, surfaces in proactive recall
-3. **Reinforced** — confidence boosted by access or confirmation
-4. **Consolidated** — important episodic memories promote to semantic during sleep
-5. **Pruned** — low-confidence, unlinked memories archived during sleep
+1. **Created** is when a new memory is written with initial confidence.
+2. **Active** means confidence is above threshold and the memory surfaces in proactive recall.
+3. **Reinforced** means confidence was boosted by access or confirmation.
+4. **Consolidated** means important episodic memories promoted to semantic during sleep.
+5. **Pruned** means low-confidence, unlinked memories were archived during sleep.
 
 <Note>
 Consolidation only creates new data (edges, tuples, summaries). It never mutates or deletes source memories, making the process safe to re-run.
@@ -68,8 +68,8 @@ When a memory is written, the entity extraction pipeline runs asynchronously to 
 
 The `search_memory` tool combines three retrieval strategies:
 
-1. **Sparse retrieval** — keyword/BM25 matching
-2. **Dense retrieval** — vector similarity via Voyage AI embeddings
-3. **Graph search** — entity-relationship traversal via pgvector
+1. **Sparse retrieval** uses keyword and BM25 matching.
+2. **Dense retrieval** uses vector similarity via Voyage AI embeddings.
+3. **Graph search** uses entity-relationship traversal via pgvector.
 
 Results are merged using Reciprocal Rank Fusion (RRF). The [Adaptive Query Router](/intelligence/confidence-routing) selects the right-sized pipeline based on query complexity.
