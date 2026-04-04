@@ -153,7 +153,7 @@ describe('Sleep Consolidation Pipeline', () => {
       expect(props.daily_summary).toBeTruthy()
       expect(typeof props.daily_summary).toBe('string')
       expect(props.last_summarized).toBeTruthy()
-    }, 60000)
+    }, 180000)
   })
 
   describe('Stage 2: RESOLVE CONFLICTS', () => {
@@ -200,7 +200,7 @@ describe('Sleep Consolidation Pipeline', () => {
         expect(active.length).toBe(1)
         expect(invalidated.length).toBe(1)
       }
-    }, 120000)
+    }, 180000)
   })
 
   describe('Stage 3: DISCOVER RELATIONSHIPS', () => {
@@ -250,7 +250,7 @@ describe('Sleep Consolidation Pipeline', () => {
         // LLM did not recognise relationship - pipeline still ran without error
         expect(report.relationshipsDiscovered).toBeGreaterThanOrEqual(0)
       }
-    }, 120000)
+    }, 180000)
   })
 
   describe('Stage 5: MORNING BRIEFING', () => {
@@ -280,6 +280,6 @@ describe('Sleep Consolidation Pipeline', () => {
       const briefing = settings.morning_briefing as Record<string, unknown>
       expect(briefing.generatedAt).toBeTruthy()
       expect(Array.isArray(briefing.upcomingDeadlines)).toBe(true)
-    }, 60000)
+    }, 180000)
   })
 })

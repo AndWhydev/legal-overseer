@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 
 const PHASES = [
-  { name: 'Think', description: 'Pre-flight checks, model routing, context assembly', angle: 0, color: '#2563EB' },
-  { name: 'Act', description: 'Tool planning, batch execution, streaming', angle: 90, color: '#D97706' },
-  { name: 'Observe', description: 'Collect results, evaluate quality, detect issues', angle: 180, color: '#16A34A' },
-  { name: 'Repeat', description: 'Model decides: continue, iterate, or conclude', angle: 270, color: '#7C3AED' },
+  { name: 'Think', description: 'Pre-flight checks, model routing, context assembly', angle: 0, color: 'rgb(23, 23, 23)' },
+  { name: 'Act', description: 'Tool planning, batch execution, streaming', angle: 90, color: 'rgb(80, 80, 80)' },
+  { name: 'Observe', description: 'Collect results, evaluate quality, detect issues', angle: 180, color: 'rgb(120, 120, 120)' },
+  { name: 'Repeat', description: 'Model decides: continue, iterate, or conclude', angle: 270, color: 'rgb(160, 160, 160)' },
 ]
 
 export function TAORLoop() {
@@ -21,9 +21,9 @@ export function TAORLoop() {
     return () => clearInterval(timer)
   }, [animating])
 
-  const radius = 100
-  const cx = 150
-  const cy = 150
+  const radius = 80
+  const cx = 120
+  const cy = 120
 
   return (
     <figure style={{
@@ -34,10 +34,10 @@ export function TAORLoop() {
       borderRadius: '12px',
       textAlign: 'center',
     }}>
-      <svg width="300" height="300" viewBox="0 0 300 300" style={{ maxWidth: '100%' }}>
+      <svg width="240" height="240" viewBox="0 0 240 240" style={{ maxWidth: '100%' }}>
         {/* Center circle */}
-        <circle cx={cx} cy={cy} r="35" fill="var(--bg-code)" stroke="var(--border-strong)" strokeWidth="1.5" />
-        <text x={cx} y={cy + 5} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--text-primary)" fontFamily="Inter, system-ui">TAOR</text>
+        <circle cx={cx} cy={cy} r="24" fill="var(--bg-code)" stroke="var(--border-strong)" strokeWidth="1.5" />
+        <text x={cx} y={cy + 5} textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--text-primary)" fontFamily="Inter, system-ui">TAOR</text>
 
         {/* Connecting arcs */}
         {PHASES.map((_, i) => {
@@ -52,7 +52,7 @@ export function TAORLoop() {
               key={`arc-${i}`}
               d={`M ${x1} ${y1} A ${radius - 15} ${radius - 15} 0 0 1 ${x2} ${y2}`}
               fill="none"
-              stroke={active === i ? PHASES[i].color : 'var(--border-default)'}
+              stroke={active === i ? 'rgb(23, 23, 23)' : 'rgb(222, 222, 222)'}
               strokeWidth={active === i ? 2.5 : 1}
               strokeDasharray={active === i ? 'none' : '4 4'}
               style={{ transition: 'all 0.5s ease' }}
@@ -71,13 +71,13 @@ export function TAORLoop() {
                onClick={() => { setAnimating(false); setActive(i) }}
                style={{ cursor: 'pointer' }}>
               <circle
-                cx={x} cy={y} r={isActive ? 28 : 24}
-                fill={isActive ? phase.color : 'var(--bg-surface)'}
-                stroke={phase.color}
+                cx={x} cy={y} r={isActive ? 22 : 18}
+                fill={isActive ? 'rgb(23, 23, 23)' : 'white'}
+                stroke={isActive ? 'rgb(23, 23, 23)' : 'rgb(180, 180, 180)'}
                 strokeWidth={isActive ? 2 : 1.5}
                 style={{ transition: 'all 0.3s ease' }}
               />
-              <text x={x} y={y + 4} textAnchor="middle" fontSize="11" fontWeight="600"
+              <text x={x} y={y + 4} textAnchor="middle" fontSize="10" fontWeight="600"
                 fill={isActive ? 'white' : 'var(--text-primary)'} fontFamily="Inter, system-ui"
                 style={{ transition: 'fill 0.3s ease' }}>
                 {phase.name}
@@ -101,7 +101,7 @@ export function TAORLoop() {
         justifyContent: 'center',
         transition: 'all 0.3s ease',
       }}>
-        <strong style={{ color: PHASES[active].color, marginRight: '0.5rem' }}>
+        <strong style={{ color: 'rgb(23, 23, 23)', marginRight: '0.5rem' }}>
           {PHASES[active].name}:
         </strong>
         {PHASES[active].description}
