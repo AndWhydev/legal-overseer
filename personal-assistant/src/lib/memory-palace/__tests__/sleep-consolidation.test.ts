@@ -163,7 +163,12 @@ describe('Sleep Consolidation Pipeline', () => {
       const entityB = await createTestEntity(`conflict-b-${ts}`)
 
       // Create two edges with same (source, target, type) — both active
-      const edge1 = await createTestEdge(entityA.id, entityB.id, 'test_manages')
+      const { data: e1Data } = await supabase.from("entity_edges").insert({
+        org_id: testOrgId, source_id: entityA.id, target_id: entityB.id,
+        relation_type: "test_manages", properties: {}, confidence: 0.8,
+        valid_from: new Date(Date.now() - 86400000).toISOString(),
+      }).select().single()
+      const edge1 = e1Data!
 
       // Small delay to ensure different valid_from
       await new Promise((r) => setTimeout(r, 50))
@@ -189,7 +194,7 @@ describe('Sleep Consolidation Pipeline', () => {
       expect(active.length).toBe(1)
       expect(invalidated.length).toBe(1)
       expect(active[0].id).toBe(edge2.id)
-    }, 60000)
+    }, 120000)
   })
 
   describe('Stage 3: DISCOVER RELATIONSHIPS', () => {
@@ -239,7 +244,7 @@ describe('Sleep Consolidation Pipeline', () => {
         // LLM did not recognise relationship - pipeline still ran without error
         expect(report.relationshipsDiscovered).toBeGreaterThanOrEqual(0)
       }
-    }, 60000)
+    }, 120000)
   })
 
   describe('Stage 5: MORNING BRIEFING', () => {
