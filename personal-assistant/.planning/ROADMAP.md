@@ -83,7 +83,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 39-01: Build query-router.ts, integrate into search_memory and proactive recall
+- [x] 39-01: Build query-router.ts, integrate into search_memory and proactive recall
 
 ### Phase 40: Predictive Loading + Procedural Memory
 **Goal:** Pre-load context at conversation start based on deadlines/recency/patterns. Store and trigger learned workflows as procedural memories.
@@ -103,5 +103,5 @@ Plans:
 | 36. Graph-Aware Retrieval | 2/2 | Complete | 2026-04-04 |
 | 37. Contextual Retrieval | 2/2 | Complete | 2026-04-04 |
 | 38. Sleep Consolidation | 2/2 | Complete | 2026-04-04 |
-| 39. Adaptive Query Routing | 0/1 | Not started | - |
+| 39. Adaptive Query Routing | 1/1 | Complete | 2026-04-04 |
 | 40. Predictive + Procedural | 0/2 | Not started | - |
