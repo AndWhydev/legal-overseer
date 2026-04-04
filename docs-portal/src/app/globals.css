@@ -393,6 +393,16 @@
 .mdx-content [data-slot] td {
   all: revert;
 }
+/* Prevent mdx-content heading styles from leaking into jalco components */
+.mdx-content [data-slot] h3,
+.mdx-content [data-slot] h4 {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  margin: 0;
+  letter-spacing: normal;
+}
 
 /* Ensure jalco components have proper bottom margin when stacked */
 .mdx-content [data-slot] {

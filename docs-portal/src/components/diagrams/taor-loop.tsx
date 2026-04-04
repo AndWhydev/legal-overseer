@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const PHASES = [
   { name: 'Think', description: 'Pre-flight checks, model routing, context assembly' },
@@ -10,8 +10,10 @@ const PHASES = [
 ]
 
 export function TAORLoop() {
+  const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
-  const [hovered, setHovered] = useState<number | null>(null)
+  const rafRef = useRef<number>(0)
+  const startRef = useRef<number>(0)
 
   const size = 320
   const cx = size / 2
@@ -19,17 +21,52 @@ export function TAORLoop() {
   const radius = 110
   const nodeR = 28
   const centerR = 30
+  const duration = 8000 // 8s per full rotation
 
+  // Node positions at 12, 3, 6, 9 o'clock
   const nodes = PHASES.map((phase, i) => {
     const angle = (i * 90 - 90) * Math.PI / 180
     return {
       ...phase,
       x: cx + radius * Math.cos(angle),
       y: cy + radius * Math.sin(angle),
+      angleDeg: i * 90, // 0, 90, 180, 270 degrees from top
     }
   })
 
-  // Arc length = quarter circle for the spinner
+  useEffect(() => {
+    if (paused) return
+
+    const animate = (timestamp: number) => {
+      if (!startRef.current) startRef.current = timestamp
+      const elapsed = timestamp - startRef.current
+      const progress = (elapsed % duration) / duration // 0 to 1
+      const currentAngle = progress * 360 // 0 to 360
+
+      // Determine which node the arc center is closest to
+      // Arc center is at currentAngle, nodes are at 0, 90, 180, 270
+      // A node is "active" when the arc center is within 45 degrees of it
+      let closest = 0
+      let minDist = 360
+      for (let i = 0; i < 4; i++) {
+        const nodeAngle = i * 90
+        let dist = Math.abs(currentAngle - nodeAngle)
+        if (dist > 180) dist = 360 - dist
+        if (dist < minDist) {
+          minDist = dist
+          closest = i
+        }
+      }
+      setActive(closest)
+
+      rafRef.current = requestAnimationFrame(animate)
+    }
+
+    rafRef.current = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [paused])
+
+  // Arc: quarter circle that rotates with CSS
   const arcLen = Math.PI * radius / 2
   const circumference = 2 * Math.PI * radius
 
@@ -46,7 +83,7 @@ export function TAORLoop() {
         viewBox={`0 0 ${size} ${size}`}
         style={{ maxWidth: '100%', display: 'block', margin: '0 auto' }}
       >
-        {/* Dashed track circle */}
+        {/* Dashed track */}
         <circle
           cx={cx} cy={cy} r={radius}
           fill="none"
@@ -55,7 +92,7 @@ export function TAORLoop() {
           strokeDasharray="6 4"
         />
 
-        {/* Spinning arc — smooth continuous rotation */}
+        {/* Spinning arc */}
         <circle
           cx={cx} cy={cy} r={radius}
           fill="none"
@@ -66,11 +103,11 @@ export function TAORLoop() {
           strokeDashoffset={arcLen / 2}
           style={{
             transformOrigin: `${cx}px ${cy}px`,
-            animation: paused ? 'none' : 'taor-spin 8s linear infinite',
+            animation: paused ? 'none' : `taor-spin ${duration}ms linear infinite`,
           }}
         />
 
-        {/* Center label */}
+        {/* Center */}
         <circle cx={cx} cy={cy} r={centerR} fill="rgb(23, 23, 23)" />
         <text
           x={cx} y={cy + 1}
@@ -80,27 +117,21 @@ export function TAORLoop() {
           fontWeight="500"
           fill="white"
           fontFamily="Inter, system-ui, sans-serif"
-          letterSpacing="-0.02em"
         >
           TAOR
         </text>
 
-        {/* Phase nodes */}
+        {/* Phase nodes - active one fills black */}
         {nodes.map((node, i) => {
-          const isHovered = hovered === i
+          const isActive = active === i
           return (
-            <g
-              key={node.name}
-              onMouseEnter={() => setHovered(i)}
-              onMouseLeave={() => setHovered(null)}
-              style={{ cursor: 'pointer' }}
-            >
+            <g key={node.name} style={{ cursor: 'pointer' }} onClick={() => setPaused(!paused)}>
               <circle
-                cx={node.x} cy={node.y} r={isHovered ? nodeR + 2 : nodeR}
-                fill={isHovered ? 'rgb(23, 23, 23)' : '#faf9f5'}
-                stroke={isHovered ? 'rgb(23, 23, 23)' : 'rgb(210, 210, 208)'}
-                strokeWidth={isHovered ? 0 : 1.5}
-                style={{ transition: 'all 0.2s ease' }}
+                cx={node.x} cy={node.y} r={nodeR}
+                fill={isActive ? 'rgb(23, 23, 23)' : '#faf9f5'}
+                stroke={isActive ? 'rgb(23, 23, 23)' : 'rgb(210, 210, 208)'}
+                strokeWidth={isActive ? 0 : 1.5}
+                style={{ transition: 'all 0.25s ease' }}
               />
               <text
                 x={node.x} y={node.y + 1}
@@ -108,10 +139,9 @@ export function TAORLoop() {
                 dominantBaseline="middle"
                 fontSize="12"
                 fontWeight="500"
-                fill={isHovered ? 'white' : 'rgb(23, 23, 23)'}
+                fill={isActive ? 'white' : 'rgb(23, 23, 23)'}
                 fontFamily="Inter, system-ui, sans-serif"
-                letterSpacing="-0.01em"
-                style={{ transition: 'fill 0.2s ease', pointerEvents: 'none' }}
+                style={{ transition: 'fill 0.25s ease', pointerEvents: 'none' }}
               >
                 {node.name}
               </text>
@@ -120,27 +150,30 @@ export function TAORLoop() {
         })}
       </svg>
 
-      {/* Description on hover */}
-      {hovered !== null && (
-        <div style={{
-          marginTop: '1rem',
-          padding: '0.625rem 1rem',
-          background: 'rgba(238, 238, 230, 0.4)',
-          borderRadius: '8px',
-          fontSize: '14px',
-          color: 'rgb(80, 80, 80)',
-          lineHeight: '1.5',
-        }}>
-          <strong style={{ color: 'rgb(23, 23, 23)' }}>{PHASES[hovered].name}</strong>{' '}
-          {PHASES[hovered].description}
-        </div>
-      )}
+      {/* Active phase description */}
+      <div style={{
+        marginTop: '1rem',
+        padding: '0.625rem 1rem',
+        background: 'rgba(238, 238, 230, 0.4)',
+        borderRadius: '8px',
+        fontSize: '14px',
+        color: 'rgb(80, 80, 80)',
+        lineHeight: '1.5',
+        minHeight: '44px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '6px',
+      }}>
+        <strong style={{ color: 'rgb(23, 23, 23)' }}>{PHASES[active].name}</strong>
+        {PHASES[active].description}
+      </div>
 
       <button
         onClick={() => setPaused(!paused)}
-        aria-label={paused ? 'Play animation' : 'Pause animation'}
+        aria-label={paused ? 'Play' : 'Pause'}
         style={{
-          marginTop: '1rem',
+          marginTop: '0.75rem',
           padding: '0.375rem 1rem',
           fontSize: '12px',
           background: 'transparent',
@@ -154,7 +187,6 @@ export function TAORLoop() {
         {paused ? 'Play' : 'Pause'}
       </button>
 
-      {/* CSS animation */}
       <style>{`
         @keyframes taor-spin {
           from { transform: rotate(0deg); }
