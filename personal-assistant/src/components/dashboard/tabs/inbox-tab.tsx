@@ -598,6 +598,19 @@ function InboxTab() {
     setTimeout(() => setUndoToasts(prev => prev.filter(t => t.id !== id)), 5000);
   }, []);
 
+  const closeDrawer = useCallback(() => {
+    setSelectedMessage(null);
+
+    if (closeDrawerTimeoutRef.current) {
+      clearTimeout(closeDrawerTimeoutRef.current);
+    }
+
+    closeDrawerTimeoutRef.current = setTimeout(() => {
+      setDrawerMessage(null);
+      closeDrawerTimeoutRef.current = null;
+    }, 280);
+  }, []);
+
   const openDrawerWithMessage = useCallback((message: InboxMessage | null) => {
     if (closeDrawerTimeoutRef.current) {
       clearTimeout(closeDrawerTimeoutRef.current);
@@ -613,19 +626,6 @@ function InboxTab() {
     setSelectedMessage(message);
     setDrawerMessage(message);
   }, [selectedMessage, closeDrawer]);
-
-  const closeDrawer = useCallback(() => {
-    setSelectedMessage(null);
-
-    if (closeDrawerTimeoutRef.current) {
-      clearTimeout(closeDrawerTimeoutRef.current);
-    }
-
-    closeDrawerTimeoutRef.current = setTimeout(() => {
-      setDrawerMessage(null);
-      closeDrawerTimeoutRef.current = null;
-    }, 280);
-  }, []);
 
   // ── Handlers ──
   const handleArchive = useCallback(async (id: string) => {
