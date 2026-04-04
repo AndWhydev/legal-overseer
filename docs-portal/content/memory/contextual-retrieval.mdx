@@ -1,0 +1,71 @@
+---
+title: "Contextual Retrieval"
+description: "Anthropic's technique for chunk enrichment that reduces retrieval failures by 67%."
+---
+
+# Contextual Retrieval
+
+Contextual Retrieval (`src/lib/rag/contextualizer.ts`) implements Anthropic's published technique for enriching chunks at ingestion time. By prepending entity and topic context to each chunk before embedding, retrieval failures drop by **67%** at **zero query-time cost**.
+
+<Tip>
+The key insight: chunks lose context when split from their source document. "He agreed to $200" means nothing without knowing who "he" is or what the $200 is for. Contextual retrieval fixes this by enriching each chunk with its surrounding context before it ever reaches the vector store.
+</Tip>
+
+## How It Works
+
+At ingestion time (not query time), each chunk is enriched:
+
+1. Take a chunk from the source message
+2. Send both the full message and the chunk to Haiku with a context prompt
+3. Haiku generates a 1-2 sentence context: who is speaking, what entity/project is discussed, approximate date
+4. Prepend that context to the chunk text
+5. Embed the contextualized chunk (not the raw chunk)
+
+### Before (raw chunk)
+
+```
+"Agreed to $200 for the extra work. Will send invoice Friday."
+```
+
+### After (contextualized chunk)
+
+```
+"Steve West agreed to pay $200 for additional citations work on
+presaleservices.com.au, discussed via email on February 6, 2026.
+
+Agreed to $200 for the extra work. Will send invoice Friday."
+```
+
+The contextualized version embeds into a much more useful vector — queries about "Steve" or "citations project" or "invoice" all hit this chunk correctly.
+
+## Configuration
+
+Contextual retrieval is enabled by default. Set `CONTEXTUALIZE_CHUNKS=false` to disable.
+
+- **Minimum chunk length**: 50 characters (shorter chunks are skipped)
+- **Context prompt limit**: 150 output tokens
+- **Model**: Haiku (cheapest tier)
+- **Full message window**: First 4,000 characters
+- **Chunk window**: First 2,000 characters
+
+## Cost
+
+At Haiku rates, contextual retrieval costs approximately **$1 per million tokens** at ingestion. At BitBit's current volume (hundreds of messages per day), this is negligible.
+
+<Note>
+This is a pure ingestion-time cost. Query-time retrieval is unaffected — the enriched chunks are already embedded and indexed. This is what makes the technique powerful: better retrieval quality with zero latency impact on queries.
+</Note>
+
+## Graceful Degradation
+
+If the Haiku call fails for any chunk, the original chunk is used unchanged. The system logs enrichment stats:
+
+```
+[contextualizer] Enriched 8/10 chunks
+```
+
+## Applies To
+
+- New channel messages ingested via the relay daemon
+- New `memory_palace_entries`
+- Conversation messages via the unified pipeline

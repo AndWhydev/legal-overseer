@@ -1,0 +1,79 @@
+---
+title: "Entity Extraction"
+description: "Haiku-based SVO extraction pipeline that populates the knowledge graph from messages."
+---
+
+# Entity Extraction
+
+The Entity Extractor (`src/lib/knowledge-graph/entity-extractor.ts`) uses Claude Haiku to decompose messages into structured knowledge graph data: entities, relationships, and events. It runs as a **fire-and-forget** step after memory writes, meaning extraction failures never block the main conversation flow.
+
+## Extraction Pipeline
+
+<Steps>
+  <Step title="Filter trivial messages">
+    Messages shorter than 3 characters are skipped. Greetings like "ok", "hi", and "thanks" produce empty results.
+  </Step>
+  <Step title="Call Haiku with structured output">
+    The message is sent to Haiku with a system prompt that enforces conservative extraction rules. The response is validated against a Zod schema using `generateObject()` from the Vercel AI SDK.
+  </Step>
+  <Step title="Resolve entities">
+    Each extracted entity name is passed to `findOrCreateEntity()`. If the entity already exists (matched by name or alias), the existing node is returned. Otherwise, a new `entity_node` is created.
+  </Step>
+  <Step title="Create edges">
+    Extracted relationships (e.g., "Steve works_on Phase 2") are stored as `entity_edges` linking the resolved entity nodes.
+  </Step>
+  <Step title="Create event tuples">
+    Extracted events (e.g., "Steve paid $200") are stored as `event_tuples` with the subject resolved to an entity_node ID.
+  </Step>
+</Steps>
+
+## Zod Schema
+
+The LLM output is validated against a strict schema:
+
+```typescript
+const ExtractionSchema = z.object({
+  entities: z.array(z.object({
+    name: z.string(),           // Proper name or short label
+    type: z.enum([person, project, company, invoice, channel]),
+    aliases: z.array(z.string()).optional(),
+  })),
+  relationships: z.array(z.object({
+    source_name: z.string(),    // Must match an entity name above
+    target_name: z.string(),    // Must match an entity name above
+    relation_type: z.string(),  // e.g. owns, works_on, blocked_by
+  })),
+  events: z.array(z.object({
+    subject_name: z.string(),   // Must match an entity name above
+    verb: z.string(),           // snake_case action verb
+    object_text: z.string(),    // Free text description
+  })),
+})
+```
+
+## Extraction Rules
+
+The prompt enforces conservative extraction:
+
+- Only extract clearly identifiable entities (proper nouns, specific projects)
+- Do not extract pronouns, generic greetings, or vague references
+- Entity names must be properly capitalized
+- Relationship and event verbs must be lowercase snake_case
+- Each entity in relationships/events must match a name in the entities array
+
+<Note>
+The extractor is intentionally conservative. A missed extraction costs nothing (the information can be captured later), but a false extraction pollutes the knowledge graph. The confidence threshold for relationship discovery during sleep consolidation (0.7) provides a secondary safety net.
+</Note>
+
+## Integration Point
+
+Entity extraction plugs into the existing embedding pipeline in `embedding-service.ts`. After a new memory or channel message is written, the extraction runs asynchronously:
+
+```
+Memory Write → Embedding Generation → Entity Extraction (fire-and-forget)
+                                           ├── findOrCreateEntity()
+                                           ├── createEdge()
+                                           └── createEventTuple()
+```
+
+The fire-and-forget pattern means the user gets their response immediately. Graph population happens in the background.

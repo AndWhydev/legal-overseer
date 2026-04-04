@@ -1,0 +1,83 @@
+---
+title: "Architecture Overview"
+description: "BitBit's 6-layer Cognitive Memory OS, TAOR execution loop, and 4-tier context assembly pipeline."
+---
+
+# Architecture Overview
+
+BitBit is a **Cognitive Operating System** — a Next.js App Router frontend backed by an agentic TAOR (Think, Act, Observe, Repeat) loop that processes user messages through multi-layered intelligence.
+
+## Layer Diagram
+
+The system is organized into six interconnected layers, each independently testable and deployable:
+
+```
+Layer 6: Predictive Context Loading + Procedural Memory
+Layer 5: Adaptive Query Routing (simple/moderate/complex)
+Layer 4: Sleep-Cycle Consolidation (nightly 5-stage pipeline)
+Layer 3: Contextual Retrieval at Ingestion (Haiku enrichment)
+Layer 2: Graph-Aware Retrieval (proactive recall + search_memory)
+Layer 1: Entity Graph + Temporal Knowledge (pgvector foundation)
+```
+
+Lower layers are prerequisites for upper layers. Layer 1 (Entity Graph) is the foundation everything builds upon.
+
+## The TAOR Loop
+
+Every user message flows through the TAOR execution cycle:
+
+<Steps>
+  <Step title="Think (Pre-flight)">
+    Input validation, safety checks, injection detection, and session authentication via Supabase Auth.
+  </Step>
+  <Step title="Think (Model Routing)">
+    Selects Haiku (fast/cheap), Sonnet (balanced), or Opus (complex reasoning) based on message complexity. 2+ keyword matches trigger tier promotion.
+  </Step>
+  <Step title="Think (Context Assembly)">
+    Builds relevant context within a 48K token budget and a 200ms latency target. Four tiers assembled in parallel with graceful per-tier degradation.
+  </Step>
+  <Step title="Act (Tool Planning + Execution)">
+    Claude determines which tools to invoke. Eager core tools are always loaded; deferred tools are resolved on-demand via Tool RAG matching user intent to tool descriptions.
+  </Step>
+  <Step title="Observe (Results + Guard)">
+    Tool results feed back into the loop. Response guard filters harmful or inappropriate output. Circuit breaker prevents cascading failures.
+  </Step>
+  <Step title="Repeat">
+    The loop continues until the model signals `end_turn` or the safety ceiling (50 iterations) is hit. Each iteration streams SSE events to the client.
+  </Step>
+</Steps>
+
+## 4-Tier Context Assembly
+
+Context is assembled within a **48K token budget** with a **<200ms latency target**:
+
+| Tier | Content | Priority |
+|------|---------|----------|
+| **Working Memory** | System prompt, identity, guidelines, current state | Highest |
+| **Session History** | Recent messages (verbatim) + compressed older turns + key facts | High |
+| **Compiled Memory** | RAG retrieval (hybrid sparse + dense + graph-aware) + Memory Palace + Knowledge Graph | Medium |
+| **Action State** | Pending approvals from the approval queue | Lowest |
+
+All tiers fetch in parallel. If a tier fails, others continue — the system degrades gracefully rather than failing entirely.
+
+## Data Flow
+
+```
+User Message → Auth → TAOR Loop → Tool Calls → Supabase CRUD
+                                                      ↓
+                                              Realtime Broadcast
+                                                      ↓
+                                              React UI Auto-Update
+```
+
+<Tip>
+The Supabase Realtime subscription means the kanban board, activity feed, and contact directory all update instantly when the agent creates or modifies data — no polling required.
+</Tip>
+
+## Safety and Reliability
+
+- **Response Guard** — filters harmful output before delivery
+- **Circuit Breaker** — prevents cascading failures in external service calls
+- **Dead Letter Queue** — captures failed operations for retry
+- **Cost Guard** — monitors and limits API spend per request
+- **Injection Guard** — detects and neutralizes prompt injection attempts

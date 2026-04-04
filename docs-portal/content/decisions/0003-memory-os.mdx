@@ -1,0 +1,74 @@
+---
+title: "ADR-0003: 6-Layer Cognitive Memory OS"
+description: "The architectural decision to build a full cognitive memory stack instead of surgical fixes."
+---
+
+# ADR-0003: 6-Layer Cognitive Memory OS
+
+**Status:** Accepted
+
+## Context
+
+BitBit's memory retrieval surfaced only recent, high-confidence memories due to:
+
+1. Proactive recall used confidence-only ordering (top 5, 500 tokens)
+2. No entity relationships or temporal reasoning
+3. Passive consolidation (decay only, no summarization or discovery)
+4. Fixed retrieval depth regardless of query complexity
+
+Research into state-of-the-art systems (Graphiti, Chronos, MAGMA, MemGPT, Mem0, Anthropic's contextual retrieval) identified a convergent architecture pattern.
+
+## Options Considered
+
+| Option | Description | Effort |
+|--------|-------------|--------|
+| **A: Precision Retrieval** | Fix proactive recall ordering, increase token budget | Low |
+| **B: Temporal Knowledge Graph** | Entity graph + temporal edges + graph-aware retrieval | Medium |
+| **C: Cognitive Memory OS** | All of B + contextual ingestion, sleep consolidation, adaptive routing, predictive loading, procedural memory | High |
+
+## Decision
+
+<Note>
+**Option C: Cognitive Memory OS** with incremental delivery through 6 layers. Each layer is independently testable and deployable. Lower layers are prerequisites for upper layers.
+</Note>
+
+## Architecture
+
+```
+Layer 6: Predictive Context Loading + Procedural Memory
+Layer 5: Adaptive Query Routing (simple/moderate/complex)
+Layer 4: Sleep-Cycle Consolidation (nightly 5-stage pipeline)
+Layer 3: Contextual Retrieval at Ingestion (Haiku enrichment)
+Layer 2: Graph-Aware Retrieval (proactive recall + search_memory)
+Layer 1: Entity Graph + Temporal Knowledge (pgvector foundation)
+```
+
+## Key Design Decisions
+
+- **Bi-temporal edges** (Graphiti pattern): `valid_from`/`valid_until` + `ingested_at`. Facts evolve over time; old facts are invalidated but never deleted.
+- **SVO event tuples** (Chronos pattern): Subject-Verb-Object decomposition enables temporal queries.
+- **Blended scoring**: `0.4*relevance + 0.3*confidence + 0.2*recency + 0.1*edge_weight` replaces confidence-only ordering.
+- **Contextual retrieval** (Anthropic pattern): Haiku enriches chunks at ingestion. 67% less retrieval failure at zero query-time cost.
+- **Sleep consolidation**: 5-stage nightly pipeline mimicking cognitive sleep.
+- **Adaptive routing**: Rule-based classifier routes queries to right-sized pipelines, saving 35% latency on simple queries.
+
+## Consequences
+
+**Positive:**
+- Multi-hop reasoning works via graph traversal
+- Old memories surface when relevant (not just recent/high-confidence)
+- Morning briefings anticipate user needs
+- Procedural memory captures learned workflows
+- 30+ integration tests verify all layers
+
+**Negative:**
+- 6 new tables, 15+ new files, complex system to maintain
+- Sleep consolidation uses Haiku credits nightly (~$0.10-0.50/run)
+- Entity extraction adds latency to ingestion (mitigated: fire-and-forget)
+- Contextual retrieval adds ~$1/million tokens at ingestion
+
+## References
+
+- Design spec: `docs/superpowers/specs/2026-04-04-cognitive-memory-os-design.md`
+- Research: Graphiti (arxiv 2501.13956), Chronos (arxiv 2603.16862), MAGMA (arxiv 2601.03236)
+- Anthropic Contextual Retrieval: anthropic.com/news/contextual-retrieval

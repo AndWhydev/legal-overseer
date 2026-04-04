@@ -1,0 +1,70 @@
+---
+title: "Proactive Recall"
+description: "Graph-aware memory retrieval that surfaces relevant context using blended scoring."
+---
+
+# Proactive Recall
+
+Proactive Recall (`src/lib/memory-palace/proactive-recall.ts`) surfaces relevant memories during conversations by combining knowledge graph traversal with vector similarity search. It replaced a simple confidence-only ordering system with a graph-aware hybrid approach.
+
+## Before and After
+
+| Aspect | Legacy | Graph-Aware |
+|--------|--------|-------------|
+| Budget | 500 tokens | 1,500 tokens |
+| Ranking | Confidence only (top 5) | Blended 4-factor score |
+| Sources | memory_palace_entries only | Graph edges + events + vectors |
+| Entity awareness | None | Full graph neighborhood |
+
+## Recall Pipeline
+
+When a conversation turn arrives:
+
+1. **Extract entity mentions** from the current message (existing entity resolution)
+2. **Resolve to entity_node IDs** via the aliases array and fuzzy name matching
+3. **Parallel fetch** three data sources:
+   - **Graph walk**: 1-hop edges from mentioned entities where `valid_until IS NULL`
+   - **Vector search**: embed message, pgvector cosine similarity on `entity_nodes.embedding`, top 10
+   - **Event lookup**: recent `event_tuples` for mentioned entities (last 30 days)
+4. **Score each result** using the blended formula
+5. **Deduplicate** by entity_node ID
+6. **Format** top results into the 1,500-token budget
+7. **Inject** as a `<memory-context>` block in the system prompt
+
+## Blended Scoring Formula
+
+<Note>
+Each result is scored as: **0.4r + 0.3c + 0.2rec + 0.1ew**
+
+Where:
+- **r** = vector similarity (cosine distance from query embedding)
+- **c** = confidence score (0.0-1.0 from the source data)
+- **rec** = recency score: `exp(-0.01 * age_in_days)`, capped at [0, 1]
+- **ew** = edge weight: 1.0 for direct edges, 0.5 for 2-hop connections
+</Note>
+
+This formula ensures that relevant, confident, recent, and directly-connected information ranks highest, while still allowing older or less confident memories to surface when they are highly relevant to the current query.
+
+## Scored Item Types
+
+Each result is classified by its source:
+
+| Type | Source | Typical Content |
+|------|--------|----------------|
+| `edge` | Graph neighborhood | "Steve works_with Maya" |
+| `event` | Event tuples | "Steve paid $200 on Feb 6" |
+| `vector` | Embedding similarity | Related entity nodes |
+
+## Legacy Fallback
+
+When graph data is unavailable (no entity_nodes for the mentioned contacts), the system falls back to legacy proactive recall:
+
+- Top 5 memories per entity by confidence
+- Top 3 decisions per entity
+- Top 2 patterns per entity
+- 500-token budget
+- Minimum confidence threshold of 0.3
+
+<Tip>
+The legacy fallback ensures the system always provides context, even for newly created organizations that haven't built up their knowledge graph yet.
+</Tip>

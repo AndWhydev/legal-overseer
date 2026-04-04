@@ -1,0 +1,85 @@
+---
+title: "Chat API"
+description: "The POST endpoint that powers BitBit's conversational interface via SSE streaming."
+---
+
+# Chat API
+
+The Chat API (`src/app/api/agent/chat/route.ts`) is the primary endpoint for interacting with BitBit. It accepts user messages and streams back agent responses as Server-Sent Events.
+
+## Endpoint
+
+```
+POST /api/agent/chat
+```
+
+## Request
+
+```json
+{
+  "message": "What tasks do I have this week?",
+  "threadId": "optional-thread-uuid",
+  "attachmentIds": ["optional-attachment-uuid"]
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `message` | string | Yes | User message (max 10,000 chars) |
+| `threadId` | string | No | Conversation thread ID (max 128 chars) |
+| `attachmentIds` | string[] | No | File attachment IDs (max 10) |
+
+## Authentication
+
+The endpoint supports two authentication methods:
+
+1. **Bearer token** (mobile clients) — `Authorization: Bearer <token>`
+2. **Cookie-based** (web clients) — Supabase session cookie
+
+In development, set `DEV_BYPASS=true` to skip authentication.
+
+## Response (SSE Stream)
+
+The response is a `text/event-stream` with events:
+
+```
+data: {"type":"stage","data":{"stage":"model_routing","status":"start"}}
+
+data: {"type":"tool_call","data":{"name":"search_tasks","input":{...}}}
+
+data: {"type":"tool_result","data":{"name":"search_tasks","output":"..."}}
+
+data: {"type":"message","data":{"text":"Here are your tasks..."}}
+
+data: {"type":"done","data":{"inputTokens":1234,"outputTokens":567}}
+```
+
+### Event Types
+
+| Type | Description |
+|------|-------------|
+| `stage` | Pipeline stage transitions |
+| `thinking` | Model routing information |
+| `tool_call` | Tool invocation with parameters |
+| `tool_result` | Tool execution result |
+| `message` | Final text (streamed incrementally) |
+| `error` | Error information |
+| `done` | Completion with token counts |
+
+## Security
+
+The endpoint includes several security layers:
+
+- **Input length validation** — message, threadId, and attachmentIds are all size-limited
+- **Injection detection** — messages are scanned for prompt injection attempts via `detectInjection()`
+- **Injection neutralization** — detected injections are neutralized before processing
+- **Rate limiting** — per-user endpoint limits via `checkUserEndpointLimit()`
+- **Timing jitter** — `addTimingJitter()` prevents timing-based side-channel attacks
+
+<Warning>
+The dev bypass mode grants full access without authentication. It should never be enabled in production environments.
+</Warning>
+
+## Conversation Pipeline
+
+The endpoint delegates to `UnifiedConversationPipeline` which manages thread state, message history, and the TAOR loop lifecycle. Attachment content is built into multimodal content blocks via `buildAttachmentContentBlocks()`.

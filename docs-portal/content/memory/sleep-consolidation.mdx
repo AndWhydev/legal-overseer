@@ -1,0 +1,76 @@
+---
+title: "Sleep Consolidation"
+description: "The 5-stage nightly pipeline that summarizes, resolves, discovers, prunes, and briefs."
+---
+
+# Sleep Consolidation
+
+Sleep Consolidation (`src/lib/memory-palace/sleep-consolidation.ts`) is a nightly pipeline that mimics cognitive sleep processes. It runs as a daily cron job and processes the day's knowledge into a consolidated state.
+
+## The 5 Stages
+
+<Steps>
+  <Step title="Stage 1: SUMMARIZE">
+    For each entity_node with new event_tuples or edges today, Haiku generates a 2-3 sentence state summary. This is stored in `entity_nodes.properties.daily_summary`.
+
+    Example output: "Steve West completed the citations project. Invoice for $200 sent and paid. Next step: Phase 2 proposal pending his decision."
+  </Step>
+  <Step title="Stage 2: RESOLVE CONFLICTS">
+    Finds entity_edges where two edges share the same `(source_id, target_id, relation_type)` and both have `valid_until IS NULL`. The older edge gets `valid_until = now`, establishing temporal precedence.
+
+    Example: If Steve's role changed from "contractor" to "partner", the old "contractor" edge gets closed.
+  </Step>
+  <Step title="Stage 3: DISCOVER RELATIONSHIPS">
+    For entity pairs that co-occur in event_tuples (same day, same message, same thread) but have no direct edge, Haiku evaluates whether a meaningful relationship exists. If confidence > 0.7, a new edge is created with `source='consolidation'`.
+
+    This is how BitBit discovers implicit relationships that were never explicitly stated.
+  </Step>
+  <Step title="Stage 4: PRUNE">
+    Memories written today with confidence < 0.3 and zero entity links are archived (`is_active=false`). The existing decay pipeline continues for older memories.
+
+    Entities are processed in batches of 10 to avoid overwhelming the database.
+  </Step>
+  <Step title="Stage 5: MORNING BRIEFING">
+    Queries entities with:
+    - Deadlines within 48 hours
+    - Overdue actions
+    - Unread messages
+    - Newly discovered relationships
+    - Pending approval queue items
+    - Project lifecycle actions (invoices to generate, stale projects)
+
+    Haiku generates a structured briefing stored in `organisations.settings.morning_briefing`.
+  </Step>
+</Steps>
+
+## Design Constraints
+
+- **All LLM calls use Haiku** — the cheapest model tier
+- **Each stage is idempotent** — safe to re-run if interrupted
+- **Consolidation creates new data** (edges, tuples, summaries) but never mutates source memories
+- **Total cost**: ~$0.10-0.50 per nightly run at current volume
+
+<Warning>
+Relationship discovery (Stage 3) is limited to `MAX_DISCOVERY_PAIRS = 5` per run to prevent runaway Haiku calls. The confidence threshold of 0.7 prevents low-quality edges from polluting the graph.
+</Warning>
+
+## Consolidation Report
+
+Each run produces a report:
+
+```typescript
+interface SleepConsolidationReport {
+  orgId: string
+  summarized: number           // Entities summarized
+  conflictsResolved: number    // Duplicate edges resolved
+  relationshipsDiscovered: number  // New edges created
+  pruned: number               // Memories archived
+  briefingGenerated: boolean   // Morning briefing created
+  startedAt: string
+  completedAt: string
+}
+```
+
+## Project Lifecycle Integration
+
+Stage 5 also evaluates project lifecycles via `evaluateProjectLifecycles()`, which checks for projects ready to invoice, stale projects, and blocked projects with resolved blockers. These actions feed into the morning briefing.

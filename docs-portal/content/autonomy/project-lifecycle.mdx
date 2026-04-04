@@ -1,0 +1,78 @@
+---
+title: "Project Lifecycle"
+description: "Four automation rules that manage project state transitions based on real-time conditions."
+---
+
+# Project Lifecycle
+
+The Project Lifecycle engine (`src/lib/intelligence/project-lifecycle.ts`) evaluates active projects and recommends state transitions based on real-time conditions. It runs during both proactive intelligence cycles and sleep consolidation.
+
+## Automation Rules
+
+| Rule | Trigger | Action | Confidence |
+|------|---------|--------|------------|
+| **Generate Invoice** | All phases marked complete, project still `active` | Recommend invoice generation | 0.85 |
+| **Flag Stale (Invoice)** | Status is `pending_invoice` for 7+ days | Flag as stale, needs follow-up | 0.90 |
+| **Flag Stale (Activity)** | Status is `active`, no updates for 14+ days, no active phase | Flag as stale, needs attention | 0.80 |
+| **Resume Blocked** | Status is `blocked`, no unresolved `blocked_by` edges in entity graph | Recommend advancing to active | 0.75 |
+
+## How It Works
+
+The engine queries all projects with status `active`, `blocked`, or `pending_invoice`, then evaluates each against the four rules:
+
+```typescript
+interface LifecycleAction {
+  projectId: string
+  projectName: string
+  action: 'advance_phase' | 'generate_invoice' | 'close_project' | 'flag_stale'
+  reason: string
+  confidence: number
+}
+```
+
+### Rule 1: Generate Invoice
+
+When all phases in a project's metadata are marked `completed`, the project is ready to invoice. The engine checks:
+
+```
+phases.every(p => p.status === 'completed') && project.status === 'active'
+```
+
+### Rule 2: Flag Stale Invoice
+
+Projects stuck in `pending_invoice` status for more than 7 days likely need a follow-up with the client:
+
+```
+project.status === 'pending_invoice' && daysSinceUpdate > 7
+```
+
+### Rule 3: Flag Stale Activity
+
+Active projects with no updates for 14+ days and no currently active phase may have fallen through the cracks:
+
+```
+project.status === 'active' && daysSinceUpdate > 14 && !currentPhase
+```
+
+### Rule 4: Resume Blocked
+
+Blocked projects are checked against the entity graph for unresolved `blocked_by` edges. If no active blockers remain, the project can resume:
+
+```
+project.status === 'blocked' && activeBlockerCount === 0
+```
+
+<Note>
+The entity graph integration in Rule 4 is what makes this powerful. When a blocker is resolved elsewhere in the system (e.g., a payment is made, a dependency is completed), the lifecycle engine automatically detects that the block has cleared.
+</Note>
+
+## Integration Points
+
+Lifecycle actions surface in two places:
+
+1. **Morning Briefing** (via sleep consolidation) — included in the daily briefing as actionable items
+2. **Proactive Intelligence** (via 15-minute cron) — can trigger notifications or task creation based on the action type
+
+<Tip>
+These rules are intentionally simple and hardcoded. Complex ML-based lifecycle prediction is a future enhancement. The current rules catch the most common project management oversights with high reliability.
+</Tip>

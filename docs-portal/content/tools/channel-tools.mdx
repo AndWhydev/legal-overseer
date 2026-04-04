@@ -1,0 +1,113 @@
+---
+title: "Channel Tools"
+description: "Tools for reading, searching, and sending across all communication channels."
+---
+
+# Channel Tools
+
+Channel tools (`src/lib/agent/tools/channel-tools.ts`) provide unified access to all communication channels: Gmail, Outlook, WhatsApp, SMS, Slack, Apple Calendar, and Apple Reminders.
+
+## Message Tools
+
+### find_messages
+
+Search across all connected channels for messages matching a query.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | string | Sender name, subject keywords, content |
+| `channel` | string | Limit to: gmail, outlook, whatsapp, sms, slack |
+| `from` | string | Filter by sender name or email |
+| `since` | string | ISO date — how far back to look (default: 90 days) |
+| `limit` | number | Max results (default: 10) |
+| `unread_only` | boolean | Only return unprocessed messages |
+| `folder` | string | inbox, sent, or all (default: inbox) |
+
+<Tip>
+Use `folder: "sent"` to find emails the user wrote. This reveals their voice, communication style, and relationship dynamics — essential context for drafting replies.
+</Tip>
+
+### read_message
+
+Read the full content of a specific message by ID.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `message_id` | string | The message ID to read |
+
+### summarize_inbox
+
+Generate a natural-language summary of recent inbox messages grouped by category.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `hours` | number | Look back this many hours (default: 24) |
+
+## Compose Tools
+
+### draft_reply
+
+Create a draft email reply saved for user review before sending.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `message_id` | string | Message to reply to |
+| `body` | string | Reply message body |
+| `tone` | string | professional, casual, friendly, formal |
+
+### send_gmail
+
+Send an email via Gmail. Autonomy level: L2 (Propose First).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `to` | string | Recipient email |
+| `subject` | string | Email subject |
+| `body` | string | Email body |
+
+### send_outlook
+
+Send an email via Microsoft Outlook/365. Autonomy level: L2 (Propose First).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `to` | string | Recipient email |
+| `subject` | string | Email subject |
+| `body` | string | Email body |
+
+## Calendar and Reminders
+
+### get_upcoming
+
+List upcoming calendar events and due reminders within a specified window.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `days` | number | Days to look ahead (default: 7) |
+
+### create_reminder
+
+Create an Apple Reminder item (macOS only).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `title` | string | Reminder title |
+| `notes` | string | Additional notes |
+| `due_date` | string | ISO date |
+| `list` | string | Reminder list name (default: "Reminders") |
+
+### schedule_event
+
+Create a calendar event on Apple Calendar (macOS only).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `title` | string | Event title |
+| `start` | string | ISO start date/time |
+| `end` | string | ISO end date/time |
+| `location` | string | Event location |
+| `notes` | string | Event notes |
+
+<Note>
+Calendar and Reminders tools use macOS `osascript` (AppleScript) for native integration. They require the app to be running on macOS.
+</Note>

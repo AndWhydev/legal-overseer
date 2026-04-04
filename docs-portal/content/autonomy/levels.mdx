@@ -1,0 +1,67 @@
+---
+title: "Autonomy Levels"
+description: "L1 through L4: risk-based pre-filter for agent tool execution with org overrides."
+---
+
+# Autonomy Levels
+
+The Autonomy Levels system (`src/lib/intelligence/autonomy-levels.ts`) is a risk-based pre-filter that runs before the confidence router. It determines how much freedom BitBit has to execute each tool without human approval.
+
+## The Four Levels
+
+| Level | Name | Behavior | Example Tools |
+|-------|------|----------|---------------|
+| **L4** | Act Silently | Execute without asking. Activity log only. | `search_memory`, `find_messages`, `search_contacts` |
+| **L3** | Act + Notify | Execute and notify the user. | `create_task`, `add_memory`, `draft_reply` |
+| **L2** | Propose First | Queue in approval system, wait for confirmation. | `send_email`, `send_gmail`, `send_outlook` |
+| **L1** | Always Ask | Require explicit approval every time. | Financial/irreversible actions |
+
+## Tool Autonomy Map
+
+Every tool has a default autonomy level based on its risk profile:
+
+**L4 (Silent)** — Read-only operations:
+`search_memory`, `find_messages`, `search_contacts`, `get_contact`, `search_tasks`, `web_search`, `fetch_url`, `list_projects`, `list_standing_orders`, `summarize_inbox`, `read_message`
+
+**L3 (Notify)** — Write operations, reversible:
+`create_task`, `update_task`, `log_activity`, `add_memory`, `create_reminder`, `schedule_event`, `draft_reply`, `create_project`, `execute_code`, `generate_ad_scripts`
+
+**L2 (Propose)** — Outbound communications:
+`send_email`, `send_sms`, `send_whatsapp`, `send_gmail`, `send_outlook`, `approve_action`
+
+## Org Overrides
+
+Organizations can override the default level for any tool via `organisations.settings.autonomy_overrides`:
+
+```typescript
+interface OrgAutonomyOverrides {
+  autonomy_overrides?: Record<string, AutonomyLevel>
+}
+```
+
+The `getAutonomyLevel()` function checks org overrides first, falling back to the static map.
+
+## Integration with Confidence Router
+
+Autonomy levels act as a **pre-filter** before confidence routing:
+
+```
+Tool Call → getAutonomyLevel(toolName)
+  ├── L4_silent  → Execute immediately, log only
+  ├── L3_notify  → Execute immediately, notify user
+  └── L2/L1      → Confidence Router → Act / Ask / Escalate
+```
+
+L4 and L3 tools bypass the approval queue entirely. Only L2 and L1 tools go through the full confidence routing pipeline.
+
+<Tip>
+The autonomy level is based on the **tool itself**, while the confidence router evaluates the **specific action**. A tool might be L3 (notify) by default, but the confidence router might still escalate if the agent is unsure about the specific parameters.
+</Tip>
+
+## Graduation Mechanism
+
+Tools can graduate from L2 to L3 automatically when they accumulate enough approved outcomes. See [Confidence Calibrator](/autonomy/calibrator) for the graduation criteria.
+
+<Warning>
+Tools can only graduate to L3 (Act + Notify), never to L4 (Silent). External communications always notify the user, even when fully autonomous.
+</Warning>

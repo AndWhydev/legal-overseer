@@ -1,0 +1,75 @@
+---
+title: "Memory Palace"
+description: "Episodic and semantic memory with confidence decay, type classification, and consolidation."
+---
+
+# Memory Palace
+
+The Memory Palace (`src/lib/memory-palace/`) is BitBit's long-term knowledge store. It manages different types of memories with confidence decay, consolidation from episodic to semantic, and integration with the knowledge graph.
+
+## Memory Types
+
+| Type | Description | Decay Rate | Example |
+|------|-------------|-----------|---------|
+| `conversation` | Context from chat sessions | Fast (days) | "User asked about Steve's project" |
+| `decision` | Choices made and their reasoning | Slow (weeks) | "Chose to delay Maya's invoice" |
+| `pattern` | Recurring behaviors detected | Very slow | "User always emails Steve on Mondays" |
+| `fact` | Verified information | Minimal | "Steve's email is steve@example.com" |
+| `relationship` | Entity connections | Slow | "Steve is Maya's project manager" |
+| `pricing` | Financial decisions and rates | Slow | "Steve's rate is $100/hour" |
+
+## Confidence and Decay
+
+Every memory has a confidence score from 0.0 to 1.0. Confidence decays over time unless the memory is reinforced by:
+
+- Being referenced in conversation (implicit reinforcement)
+- Being confirmed by the user (explicit reinforcement)
+- Being consolidated during sleep cycles (promotion)
+
+Memories below a minimum confidence threshold (0.3) are candidates for pruning during nightly sleep consolidation.
+
+## Memory Storage
+
+Memories are stored in the `memory_palace_entries` table:
+
+```typescript
+interface MemoryPalaceEntry {
+  id: string
+  org_id: string
+  category: string        // conversation, decision, pattern, fact, etc.
+  content: string         // The memory text
+  confidence: number      // 0.0 to 1.0
+  entity_ids: string[]    // Linked entity_node IDs
+  source_type: string     // chat, channel, consolidation
+  created_at: string
+  last_accessed_at: string
+}
+```
+
+## Consolidation Lifecycle
+
+Memories flow through a lifecycle:
+
+1. **Created** — new memory written with initial confidence
+2. **Active** — confidence above threshold, surfaces in proactive recall
+3. **Reinforced** — confidence boosted by access or confirmation
+4. **Consolidated** — important episodic memories promote to semantic during sleep
+5. **Pruned** — low-confidence, unlinked memories archived during sleep
+
+<Note>
+Consolidation only creates new data (edges, tuples, summaries). It never mutates or deletes source memories, making the process safe to re-run.
+</Note>
+
+## Integration with Knowledge Graph
+
+When a memory is written, the entity extraction pipeline runs asynchronously to populate the knowledge graph. The `entity_ids` array links memories back to their relevant entity_nodes, enabling graph-aware retrieval during proactive recall.
+
+## Memory Search
+
+The `search_memory` tool combines three retrieval strategies:
+
+1. **Sparse retrieval** — keyword/BM25 matching
+2. **Dense retrieval** — vector similarity via Voyage AI embeddings
+3. **Graph search** — entity-relationship traversal via pgvector
+
+Results are merged using Reciprocal Rank Fusion (RRF). The [Adaptive Query Router](/intelligence/confidence-routing) selects the right-sized pipeline based on query complexity.

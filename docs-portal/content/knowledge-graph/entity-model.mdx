@@ -1,0 +1,77 @@
+---
+title: "Entity Model"
+description: "The knowledge graph schema: entity nodes with dual vectors, bi-temporal edges, and SVO event tuples."
+---
+
+# Entity Model
+
+BitBit's knowledge graph lives in Supabase via pgvector. It stores entities, their relationships, and temporal events across three tables designed for co-located graph+vector queries in a single SQL statement.
+
+## entity_nodes
+
+The core entity table stores people, projects, companies, invoices, and channels with dual vector embeddings.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `org_id` | UUID | Organization (multi-tenant isolation) |
+| `entity_type` | TEXT | `person`, `project`, `company`, `invoice`, `channel` |
+| `name` | TEXT | Display name |
+| `aliases` | TEXT[] | Fuzzy match targets for entity resolution |
+| `properties` | JSONB | Type-specific data (email, phone, status, daily_summary) |
+| `embedding` | vector(768) | Google multimodal embedding (primary) |
+| `text_embedding` | vector(1024) | Voyage-3.5 text embedding (secondary) |
+| `is_active` | BOOLEAN | Soft delete flag |
+
+<Tip>
+**Dual vectors** enable format-agnostic retrieval. The Google 768d embedding supports multimodal inputs (text, images, PDFs) in a shared vector space, so "find the invoice Steve sent" can match both the PDF attachment and the email discussing it. Voyage-3.5 (1024d) is kept as the stronger pure-text model for text-heavy queries.
+</Tip>
+
+Indexes: GIN on `aliases`, btree on `(org_id, entity_type)`, HNSW on both vector columns with `vector_cosine_ops`.
+
+## entity_edges
+
+Typed relationships between entities with **bi-temporal** validity tracking.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `source_id` | UUID | FK to entity_nodes |
+| `target_id` | UUID | FK to entity_nodes |
+| `relation_type` | TEXT | `works_with`, `owns`, `blocked_by`, `invoiced`, `communicated` |
+| `properties` | JSONB | Relation-specific data |
+| `valid_from` | TIMESTAMPTZ | When this relationship became true |
+| `valid_until` | TIMESTAMPTZ | When it ceased to be true (NULL = still active) |
+| `ingested_at` | TIMESTAMPTZ | When we learned about this relationship |
+| `confidence` | FLOAT | 0.0 to 1.0 |
+| `source_memory_id` | UUID | Provenance link to source memory |
+
+<Note>
+**Bi-temporal edges** track two time dimensions: when the fact was true in the real world (`valid_from`/`valid_until`) and when BitBit learned it (`ingested_at`). This means old facts are invalidated but never deleted — the system can answer "what did we know about Steve's role in February?" even after that role changed.
+</Note>
+
+## event_tuples
+
+Subject-Verb-Object (SVO) decomposition of discrete events, enabling temporal queries like "what happened with Steve last week?"
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `subject_id` | UUID | FK to entity_nodes (who did it) |
+| `verb` | TEXT | `paid`, `emailed`, `completed`, `blocked` |
+| `object_text` | TEXT | Free text: "$200", "Phase 2 proposal" |
+| `object_id` | UUID | FK to entity_nodes (nullable, for entity-to-entity events) |
+| `occurred_at` | TIMESTAMPTZ | When the event happened |
+| `occurred_until` | TIMESTAMPTZ | For ranges (nullable) |
+| `source_memory_id` | UUID | Provenance link |
+| `metadata` | JSONB | Additional context |
+
+## Entity Resolution
+
+When a contact is mentioned in conversation, a 5-step fuzzy cascade resolves it:
+
+1. Exact name match on `entity_nodes.name`
+2. Case-insensitive alias match via the `aliases` array
+3. Contact ID mapping (contacts table to entity_nodes)
+4. Fuzzy matching on name variants
+5. If no match found, a new entity_node is created on first mention

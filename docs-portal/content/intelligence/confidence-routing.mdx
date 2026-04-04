@@ -1,0 +1,64 @@
+---
+title: "Confidence Routing"
+description: "Act, ask, or escalate: how BitBit decides what to do based on confidence scores."
+---
+
+# Confidence Routing
+
+The Confidence Router (`src/lib/agent/confidence-router.ts`) determines whether BitBit should **act autonomously**, **ask for clarification**, or **escalate to the user** based on a confidence score for each decision.
+
+## Decision Matrix
+
+| Confidence Range | Decision | Behavior |
+|-----------------|----------|----------|
+| >= `act` threshold | **Act** | Execute the action autonomously |
+| >= `ask` and < `act` | **Ask** | Request clarification or confirmation |
+| < `ask` threshold | **Escalate** | Defer entirely to the user |
+
+Default thresholds: **act = 0.85**, **ask = 0.55**.
+
+## Per-Agent Overrides
+
+Different agents carry different risk profiles. High-stakes agents require higher confidence to auto-act:
+
+| Agent | Act | Ask | Risk Level |
+|-------|-----|-----|------------|
+| `invoice-flow` | 0.92 | 0.60 | High (money leaves the business) |
+| `proposal-bot` | 0.90 | 0.60 | High (financial proposals) |
+| `quote-bot` | 0.90 | 0.58 | High (pricing commitments) |
+| `client-comms` | 0.88 | 0.58 | High (sends messages as user) |
+| `lead-swarm` | 0.85 | 0.55 | Medium (standard processing) |
+| `channel-triage` | 0.80 | 0.50 | Medium (routing decisions) |
+| `sentry` | 0.75 | 0.45 | Low (alerting only) |
+| `ad-script-gen` | 0.78 | 0.48 | Low (content generation, reversible) |
+
+## Threshold Cascade
+
+Thresholds are resolved through a priority cascade:
+
+1. **Calibrated thresholds** — derived from historical outcome data (see [Confidence Calibrator](/autonomy/calibrator))
+2. **Agent config** — per-agent overrides from the agent registry
+3. **Agent type** — static overrides in `AGENT_THRESHOLDS`
+4. **Org settings** — organization-level overrides in `organisations.settings`
+5. **Defaults** — act=0.85, ask=0.55
+
+The `getEffectiveThresholds()` function merges these, using the most specific non-undefined value for each field.
+
+## Safety Rails
+
+<Warning>
+The router enforces strict validation:
+- **act** must always be greater than **ask** (if violated, defaults are used)
+- All thresholds are clamped to the 0-1 range
+- Invalid configurations log a warning and fall back to safe defaults
+</Warning>
+
+## Integration with Autonomy Levels
+
+The confidence router works in tandem with the [Autonomy Levels](/autonomy/levels) system. Autonomy levels act as a **pre-filter** — L4 (silent) and L3 (notify) tools bypass the confidence router entirely. Only L2 (propose) and L1 (approve) tools go through confidence routing to determine whether to auto-execute or queue for approval.
+
+```
+Tool Call → Autonomy Level Check
+  ├── L4/L3 → Execute directly (skip confidence routing)
+  └── L2/L1 → Confidence Router → Act / Ask / Escalate
+```
