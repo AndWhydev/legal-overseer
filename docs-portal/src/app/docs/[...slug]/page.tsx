@@ -1,3 +1,4 @@
+import remarkGfm from "remark-gfm"
 import { notFound } from "next/navigation"
 import { compileMDX } from "next-mdx-remote/rsc"
 import { getDocBySlug, getAllDocSlugs, extractHeadings } from "@/lib/mdx"
@@ -42,7 +43,7 @@ export default async function DocPage({
 
   const { content: mdxContent } = await compileMDX({
     source: doc.source,
-    options: { parseFrontmatter: true },
+    options: { parseFrontmatter: true, mdxOptions: { remarkPlugins: [remarkGfm] } },
     components: {
       // Retained custom
       Tip,
