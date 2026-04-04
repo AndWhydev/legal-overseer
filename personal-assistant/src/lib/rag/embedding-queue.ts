@@ -233,6 +233,14 @@ export async function processEmbeddingQueue(
               embedded: embedResult.embedded,
             })
 
+            if (job.metadata?.recontextualize) {
+              logger.info('[embedding-queue] Re-contextualized:', {
+                jobId: job.id,
+                messageId: job.message_id,
+                channel: job.metadata.channel,
+              })
+            }
+
             result.completed++
           }
 
