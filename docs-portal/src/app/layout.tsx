@@ -1,26 +1,44 @@
-import type { Metadata } from 'next'
-import './globals.css'
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
+import type { Metadata } from "next"
+import "./globals.css"
+import { Inter, Lora, JetBrains_Mono } from "next/font/google"
+import { cn } from "@/lib/utils"
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+})
+
+const lora = Lora({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "500"],
+  display: "swap",
+})
 
 export const metadata: Metadata = {
-  title: 'BitBit Documentation',
-  description: 'Internal documentation for BitBit — Agentic AI Operations Platform',
+  title: "BitBit Documentation",
+  description:
+    "Internal documentation for BitBit — Agentic AI Operations Platform",
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html
+      lang="en"
+      className={cn(inter.variable, lora.variable, jetbrainsMono.variable)}
+    >
       <body>{children}</body>
     </html>
   )

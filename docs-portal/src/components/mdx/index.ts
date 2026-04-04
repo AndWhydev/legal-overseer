@@ -1,4 +1,4 @@
-export { Callout, Tip, Note, Warning } from './callout'
+export { Callout, Tip, Note, Warning, Danger } from './callout'
 export { Steps, Step } from './steps'
 export { CardGroup, Card } from './card-group'
 export { CodeGroup } from './code-group'

@@ -1,6 +1,8 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { cn } from "@/lib/utils"
 
 interface TocItem {
   id: string
@@ -9,7 +11,7 @@ interface TocItem {
 }
 
 export function TableOfContents({ headings }: { headings: TocItem[] }) {
-  const [activeId, setActiveId] = useState('')
+  const [activeId, setActiveId] = useState("")
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -20,7 +22,7 @@ export function TableOfContents({ headings }: { headings: TocItem[] }) {
           }
         }
       },
-      { rootMargin: '-80px 0px -60% 0px' }
+      { rootMargin: "-80px 0px -60% 0px" }
     )
 
     headings.forEach(({ id }) => {
@@ -34,44 +36,29 @@ export function TableOfContents({ headings }: { headings: TocItem[] }) {
   if (headings.length === 0) return null
 
   return (
-    <aside style={{
-      width: 'var(--toc-width)',
-      height: 'calc(100vh - var(--header-height))',
-      position: 'sticky',
-      top: 'var(--header-height)',
-      overflowY: 'auto',
-      padding: '1.5rem 1rem',
-      flexShrink: 0,
-    }}>
-      <div style={{
-        fontSize: '0.6875rem',
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        color: 'var(--text-tertiary)',
-        marginBottom: '0.75rem',
-      }}>
-        On this page
-      </div>
-      {headings.map(({ id, text, level }) => (
-        <a
-          key={id}
-          href={`#${id}`}
-          style={{
-            display: 'block',
-            fontSize: '0.8125rem',
-            lineHeight: 1.5,
-            padding: '0.2rem 0',
-            paddingLeft: level === 3 ? '0.75rem' : '0',
-            color: activeId === id ? 'var(--text-link)' : 'var(--text-secondary)',
-            fontWeight: activeId === id ? 500 : 400,
-            textDecoration: 'none',
-            transition: 'color 0.15s ease',
-          }}
-        >
-          {text}
-        </a>
-      ))}
+    <aside className="hidden min-[1320px]:block w-[var(--toc-width)] shrink-0 sticky top-[var(--header-height)] h-[calc(100vh-var(--header-height))]">
+      <ScrollArea className="h-full">
+        <div className="px-4 py-6">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--text-tertiary)] mb-3">
+            On this page
+          </div>
+          {headings.map(({ id, text, level }) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              className={cn(
+                "block text-[13px] leading-snug py-1 no-underline transition-colors duration-150",
+                level === 3 && "pl-3",
+                activeId === id
+                  ? "text-[var(--brand-primary)] font-medium"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              )}
+            >
+              {text}
+            </a>
+          ))}
+        </div>
+      </ScrollArea>
     </aside>
   )
 }

@@ -1,8 +1,15 @@
-'use client'
+"use client"
 
-import { useState, useMemo } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useState, useMemo } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible"
+import { cn } from "@/lib/utils"
 
 interface NavItem {
   title: string
@@ -17,28 +24,26 @@ interface SidebarProps {
 export function Sidebar({ navigation }: SidebarProps) {
   const pathname = usePathname()
 
-  // Find which section contains the current page
   const activeSectionTitle = useMemo(() => {
     for (const section of navigation) {
-      if (section.items.some(item => item.href === pathname)) {
+      if (section.items.some((item) => item.href === pathname)) {
         return section.title
       }
     }
-    return ''
+    return ""
   }, [navigation, pathname])
 
-  // Initialize expanded set with the active section
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     const initial = new Set<string>()
     if (activeSectionTitle) initial.add(activeSectionTitle)
     return initial
   })
 
-  // Always keep active section expanded
-  const isExpanded = (title: string) => title === activeSectionTitle || expanded.has(title)
+  const isExpanded = (title: string) =>
+    title === activeSectionTitle || expanded.has(title)
 
   const toggleSection = (title: string) => {
-    setExpanded(prev => {
+    setExpanded((prev) => {
       const next = new Set(prev)
       if (next.has(title)) {
         next.delete(title)
@@ -50,82 +55,74 @@ export function Sidebar({ navigation }: SidebarProps) {
   }
 
   return (
-    <aside style={{
-      width: 'var(--sidebar-width)',
-      height: 'calc(100vh - var(--header-height))',
-      borderRight: '1px solid var(--border-default)',
-      background: 'var(--bg-surface)',
-      overflowY: 'auto',
-      position: 'sticky',
-      top: 'var(--header-height)',
-      padding: '1.5rem 0',
-      flexShrink: 0,
-    }}>
-      <nav>
-        {navigation.map((section) => {
-          const open = isExpanded(section.title)
-          return (
-            <div key={section.title} style={{ marginBottom: '0.25rem' }}>
-              <button
-                onClick={() => toggleSection(section.title)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  width: '100%',
-                  padding: '0.5rem 1.5rem',
-                  fontSize: '0.6875rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  color: 'var(--text-tertiary)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
+    <aside
+      className="w-[var(--sidebar-width)] shrink-0 sticky top-[var(--header-height)] h-[calc(100vh-var(--header-height))] bg-[var(--bg-sidebar)]"
+      style={{ borderRight: "0.5px solid var(--border-default)" }}
+    >
+      <ScrollArea className="h-full">
+        <nav className="py-6">
+          {navigation.map((section) => {
+            const open = isExpanded(section.title)
+            return (
+              <Collapsible
+                key={section.title}
+                open={open}
+                onOpenChange={() => toggleSection(section.title)}
               >
-                {section.title}
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  style={{
-                    transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.15s ease',
-                    flexShrink: 0,
-                  }}
-                >
-                  <path d="M4.5 2.5L8 6L4.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              {open && section.items.map((item) => {
-                const isActive = pathname === item.href
-                return (
-                  <Link
-                    key={item.href || item.title}
-                    href={item.href || '#'}
-                    style={{
-                      display: 'block',
-                      padding: '0.375rem 1.5rem',
-                      fontSize: '0.875rem',
-                      color: isActive ? 'var(--text-link)' : 'var(--text-secondary)',
-                      fontWeight: isActive ? 500 : 400,
-                      background: isActive ? 'var(--callout-warning-bg)' : 'transparent',
-                      borderRight: isActive ? '2px solid var(--text-link)' : '2px solid transparent',
-                      textDecoration: 'none',
-                      transition: 'all 0.15s ease',
-                    }}
+                <div className="mb-1">
+                  <CollapsibleTrigger
+                    className={cn(
+                      "flex w-full items-center justify-between px-6 py-2",
+                      "text-[11px] font-semibold uppercase tracking-[0.05em]",
+                      "text-[var(--text-tertiary)] bg-transparent border-none cursor-pointer text-left",
+                      "hover:text-[var(--text-secondary)] transition-colors"
+                    )}
                   >
-                    {item.title}
-                  </Link>
-                )
-              })}
-            </div>
-          )
-        })}
-      </nav>
+                    {section.title}
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      className={cn(
+                        "shrink-0 transition-transform duration-150",
+                        open && "rotate-90"
+                      )}
+                    >
+                      <path
+                        d="M4.5 2.5L8 6L4.5 9.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    {section.items.map((item) => {
+                      const isActive = pathname === item.href
+                      return (
+                        <Link
+                          key={item.href || item.title}
+                          href={item.href || "#"}
+                          className={cn(
+                            "block px-6 py-1.5 text-sm no-underline transition-all duration-150",
+                            isActive
+                              ? "text-[var(--brand-primary)] font-medium bg-[var(--bg-hover)] border-l-2 border-l-[var(--brand-primary)]"
+                              : "text-[var(--text-body)] font-normal border-l-2 border-l-transparent hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+                          )}
+                        >
+                          {item.title}
+                        </Link>
+                      )
+                    })}
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            )
+          })}
+        </nav>
+      </ScrollArea>
     </aside>
   )
 }
