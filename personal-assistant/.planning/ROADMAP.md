@@ -92,8 +92,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 40-01: Build predictive-loader.ts, integrate into context-assembler.ts
-- [ ] 40-02: procedural_memories table, creation paths (observed/explicit/consolidation), trigger matching in proactive recall
+- [x] 40-01: Build predictive-loader.ts, integrate into context-assembler.ts
+- [x] 40-02: procedural_memories table, creation paths (observed/explicit/consolidation), trigger matching in proactive recall
 
 ## Progress — Cognitive Memory OS
 
@@ -104,4 +104,4 @@ Plans:
 | 37. Contextual Retrieval | 2/2 | Complete | 2026-04-04 |
 | 38. Sleep Consolidation | 2/2 | Complete | 2026-04-04 |
 | 39. Adaptive Query Routing | 1/1 | Complete | 2026-04-04 |
-| 40. Predictive + Procedural | 0/2 | Not started | - |
+| 40. Predictive + Procedural | 2/2 | Complete | 2026-04-04 |
