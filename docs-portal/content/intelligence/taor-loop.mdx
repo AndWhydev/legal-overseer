@@ -46,9 +46,11 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
   <Step title="Execution Loop">
     The core loop calls the Claude API and processes the response:
 
-    <CodeBlock code={`Claude API Call → stop_reason?
-  ├── tool_use → Execute tools → Feed results back → Loop
-  └── end_turn → Yield final message → Done`} language="bash" title="Loop decision tree" />
+    <Mermaid chart={`flowchart LR
+    A[Claude API Call] --> B{stop_reason}
+    B -->|tool_use| C[Execute tools] --> D[Feed results back] --> A
+    B -->|end_turn| E[Yield final message] --> F[Done]
+`} caption="TAOR loop decision flow" />
 
     Tools execute in batches with streaming. Results are fed back as `tool_result` messages for the next iteration.
   </Step>

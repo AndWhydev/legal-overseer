@@ -45,12 +45,15 @@ The `getAutonomyLevel()` function checks org overrides first, falling back to th
 
 Autonomy levels act as a **pre-filter** before confidence routing:
 
-```
-Tool Call → getAutonomyLevel(toolName)
-  ├── L4_silent  → Execute immediately, log only
-  ├── L3_notify  → Execute immediately, notify user
-  └── L2/L1      → Confidence Router → Act / Ask / Escalate
-```
+<Mermaid chart={\`flowchart LR
+    A[Tool Call] --> B[getAutonomyLevel]
+    B -->|L4 silent| C[Execute + log]
+    B -->|L3 notify| D[Execute + notify user]
+    B -->|L2/L1| E{Confidence Router}
+    E -->|Act| F[Auto-execute]
+    E -->|Ask| G[Approval queue]
+    E -->|Escalate| H[Human required]
+\`} caption="Autonomy level routing" />
 
 L4 and L3 tools bypass the approval queue entirely. Only L2 and L1 tools go through the full confidence routing pipeline.
 

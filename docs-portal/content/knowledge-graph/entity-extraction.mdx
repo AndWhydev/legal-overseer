@@ -69,11 +69,11 @@ The extractor is intentionally conservative. A missed extraction costs nothing (
 
 Entity extraction plugs into the existing embedding pipeline in `embedding-service.ts`. After a new memory or channel message is written, the extraction runs asynchronously:
 
-```
-Memory Write → Embedding Generation → Entity Extraction (fire-and-forget)
-                                           ├── findOrCreateEntity()
-                                           ├── createEdge()
-                                           └── createEventTuple()
-```
+<Mermaid chart={\`flowchart LR
+    A[Memory Write] --> B[Embedding Generation] --> C[Entity Extraction]
+    C --> D[findOrCreateEntity]
+    C --> E[createEdge]
+    C --> F[createEventTuple]
+\`} caption="Entity extraction runs as a fire-and-forget step after embedding" />
 
 The fire-and-forget pattern means the user gets their response immediately. Graph population happens in the background.

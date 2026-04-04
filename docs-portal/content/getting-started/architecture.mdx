@@ -125,11 +125,11 @@ All tiers fetch in parallel. If a tier fails, others continue. The system degrad
 
 ## Data Flow
 
-<CodeBlock code={`User Message → Auth → TAOR Loop → Tool Calls → Supabase CRUD
-                                                      ↓
-                                              Realtime Broadcast
-                                                      ↓
-                                              React UI Auto-Update`} language="bash" title="Data flow" />
+<Mermaid chart={`flowchart LR
+    A[User Message] --> B[Auth] --> C[TAOR Loop] --> D[Tool Calls] --> E[Supabase CRUD]
+    E --> F[Realtime Broadcast]
+    F --> G[React UI Auto-Update]
+`} caption="Data flow" />
 
 <Tip>
 The Supabase Realtime subscription means the kanban board, activity feed, and contact directory all update instantly when the agent creates or modifies data. No polling required.

@@ -59,8 +59,11 @@ The router enforces strict validation:
 
 The confidence router works in tandem with the [Autonomy Levels](/autonomy/levels) system. Autonomy levels act as a **pre-filter**. L4 (silent) and L3 (notify) tools bypass the confidence router entirely. Only L2 (propose) and L1 (approve) tools go through confidence routing to determine whether to auto-execute or queue for approval.
 
-```
-Tool Call → Autonomy Level Check
-  ├── L4/L3 → Execute directly (skip confidence routing)
-  └── L2/L1 → Confidence Router → Act / Ask / Escalate
-```
+<Mermaid chart={\`flowchart LR
+    A[Tool Call] --> B{Autonomy Level}
+    B -->|L4/L3| C[Execute directly]
+    B -->|L2/L1| D{Confidence Router}
+    D -->|High| E[Act]
+    D -->|Medium| F[Ask]
+    D -->|Low| G[Escalate]
+\`} caption="Tool call routing through autonomy levels and confidence" />
