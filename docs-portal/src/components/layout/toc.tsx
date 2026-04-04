@@ -20,7 +20,7 @@ export function TableOfContents({ headings }: { headings: TocItem[] }) {
           }
         }
       },
-      { rootMargin: "-80px 0px -60% 0px" }
+      { rootMargin: "-120px 0px -60% 0px" }
     )
 
     headings.forEach(({ id }) => {
@@ -37,23 +37,28 @@ export function TableOfContents({ headings }: { headings: TocItem[] }) {
     <aside
       style={{
         display: "none",
-        width: "240px",
+        width: "244px",
         flexShrink: 0,
         position: "sticky",
-        top: "56px",
-        height: "calc(100vh - 56px)",
+        top: "104px",
+        height: "calc(100vh - 104px)",
         overflowY: "auto",
-        padding: "24px 16px",
+        padding: "24px 20px",
+        backgroundColor: "rgb(253, 253, 247)",
+        borderRadius: "12px",
+        marginTop: "24px",
+        marginRight: "24px",
+        alignSelf: "flex-start",
       }}
       className="hidden min-[1320px]:block"
     >
       <div
         style={{
-          fontSize: "11px",
-          fontWeight: 600,
+          fontSize: "12px",
+          fontWeight: 500,
           textTransform: "uppercase",
           letterSpacing: "0.08em",
-          color: "rgb(160, 159, 153)",
+          color: "rgb(140, 140, 140)",
           marginBottom: "12px",
         }}
       >
@@ -71,9 +76,7 @@ export function TableOfContents({ headings }: { headings: TocItem[] }) {
             paddingLeft: level === 3 ? "12px" : "0",
             textDecoration: "none",
             color:
-              activeId === id
-                ? "rgb(20, 20, 19)"
-                : "rgb(115, 114, 108)",
+              activeId === id ? "rgb(14, 14, 14)" : "rgb(80, 80, 80)",
             fontWeight: activeId === id ? 500 : 400,
             transition: "color 150ms",
           }}

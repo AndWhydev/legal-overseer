@@ -4,8 +4,8 @@ import { getDocBySlug, getAllDocSlugs, extractHeadings } from "@/lib/mdx"
 import { Header } from "@/components/layout/header"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TableOfContents } from "@/components/layout/toc"
-import { Breadcrumbs } from "@/components/layout/breadcrumbs"
 import { PrevNext } from "@/components/layout/prev-next"
+import { SectionLabel } from "@/components/layout/section-label"
 import { navigation } from "@/docs.config"
 
 // Retained custom components
@@ -53,7 +53,7 @@ export default async function DocPage({
       Mermaid,
       CardGroup,
       Card,
-      // jalco/ui — aliased for MDX backward compat
+      // jalco/ui
       Steps: Stepper,
       Step: StepperItem,
       CodeBlock,
@@ -75,11 +75,22 @@ export default async function DocPage({
   })
 
   const headings = extractHeadings(doc.content)
+  const currentPath = "/docs/" + slug.join("/")
+
+  // Find section title for the current page
+  let sectionTitle = ""
+  for (const section of navigation) {
+    for (const item of section.items) {
+      if (item.href === currentPath) {
+        sectionTitle = section.title
+      }
+    }
+  }
 
   return (
     <>
       <Header />
-      <div style={{ display: "flex", minHeight: "calc(100vh - 56px)" }}>
+      <div style={{ display: "flex", minHeight: "calc(100vh - 104px)" }}>
         <Sidebar navigation={navigation} />
         <main
           style={{
@@ -91,13 +102,13 @@ export default async function DocPage({
             minWidth: 0,
           }}
         >
-          <Breadcrumbs />
+          {sectionTitle && <SectionLabel label={sectionTitle} />}
           {doc.frontmatter.description && (
             <p
               style={{
                 fontSize: "16px",
-                lineHeight: "24px",
-                color: "rgb(61, 61, 58)",
+                lineHeight: "26.4px",
+                color: "rgb(80, 80, 80)",
                 marginBottom: "32px",
               }}
             >

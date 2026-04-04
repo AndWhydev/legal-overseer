@@ -20,7 +20,7 @@ export function PrevNext() {
       style={{
         display: "flex",
         justifyContent: "space-between",
-        borderTop: "1px solid rgba(31, 30, 29, 0.15)",
+        borderTop: "1px solid rgb(222, 222, 222)",
         marginTop: "48px",
         paddingTop: "24px",
       }}
@@ -35,11 +35,11 @@ export function PrevNext() {
             gap: "4px",
           }}
         >
-          <span style={{ fontSize: "12px", color: "rgb(160, 159, 153)" }}>
+          <span style={{ fontSize: "12px", color: "rgb(140, 140, 140)" }}>
             Previous
           </span>
           <span
-            style={{ fontSize: "14px", color: "rgb(20, 20, 19)", fontWeight: 500 }}
+            style={{ fontSize: "14px", color: "rgb(23, 23, 23)", fontWeight: 500 }}
           >
             {prev.title}
           </span>
@@ -58,11 +58,11 @@ export function PrevNext() {
             textAlign: "right",
           }}
         >
-          <span style={{ fontSize: "12px", color: "rgb(160, 159, 153)" }}>
+          <span style={{ fontSize: "12px", color: "rgb(140, 140, 140)" }}>
             Next
           </span>
           <span
-            style={{ fontSize: "14px", color: "rgb(20, 20, 19)", fontWeight: 500 }}
+            style={{ fontSize: "14px", color: "rgb(23, 23, 23)", fontWeight: 500 }}
           >
             {next.title}
           </span>

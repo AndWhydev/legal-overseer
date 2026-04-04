@@ -28,20 +28,20 @@ export function Callout({
   return (
     <div
       style={{
-        backgroundColor: "rgb(245, 244, 237)",
-        border: "1px solid rgba(31, 30, 29, 0.3)",
-        borderRadius: "8px",
+        backgroundColor: "rgb(245, 244, 240)",
+        border: "1px solid rgb(222, 222, 222)",
+        borderRadius: "6px",
         padding: "12px 16px",
         margin: "24px 0",
         fontSize: "15px",
-        lineHeight: "24px",
+        lineHeight: "26.4px",
       }}
     >
       <div
         style={{
           fontWeight: 600,
           fontSize: "14px",
-          color: "rgb(20, 20, 19)",
+          color: "rgb(23, 23, 23)",
           marginBottom: "4px",
           display: "flex",
           alignItems: "center",
@@ -51,7 +51,7 @@ export function Callout({
         <span>{icons[type]}</span>
         <span>{title || labels[type]}</span>
       </div>
-      <div style={{ color: "rgb(61, 61, 58)" }}>{children}</div>
+      <div style={{ color: "rgb(23, 23, 23)" }}>{children}</div>
     </div>
   )
 }

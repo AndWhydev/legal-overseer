@@ -5,52 +5,58 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --page-bg: rgb(250, 249, 245);
-  --text-heading: rgb(20, 20, 19);
-  --text-body: rgb(61, 61, 58);
-  --text-muted: rgb(115, 114, 108);
-  --text-faint: rgb(160, 159, 153);
-  --border-subtle: rgba(31, 30, 29, 0.15);
+  --page-bg: #ffffff;
+  --text-primary: rgb(23, 23, 23);
+  --text-heading: rgb(23, 23, 23);
+  --text-body: rgb(23, 23, 23);
+  --text-muted: rgb(80, 80, 80);
+  --text-faint: rgb(140, 140, 140);
+  --border-subtle: rgb(222, 222, 222);
   --border-medium: rgba(31, 30, 29, 0.3);
-  --code-bg: rgb(240, 238, 230);
-  --callout-bg: rgb(245, 244, 237);
-  --sidebar-width: 240px;
+  --code-bg: rgba(238, 238, 238, 0.5);
+  --callout-bg: rgb(245, 244, 240);
+  --toc-bg: rgb(253, 253, 247);
+  --nav-active-bg: rgba(14, 14, 14, 0.1);
+  --nav-active-radius: 12px;
+  --sidebar-width: 256px;
+  --toc-width: 244px;
   --content-max-width: 720px;
   --header-height: 56px;
+  --tab-bar-height: 48px;
 
-  /* shadcn/ui variables — warm gray tinted */
-  --background: oklch(0.987 0.003 85);
+  /* shadcn/ui variables */
+  --background: oklch(1 0 0);
   --foreground: oklch(0.205 0.006 285);
-  --card: oklch(0.987 0.003 85);
+  --card: oklch(1 0 0);
   --card-foreground: oklch(0.205 0.006 285);
-  --popover: oklch(0.987 0.003 85);
+  --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.205 0.006 285);
   --primary: oklch(0.205 0.006 285);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.965 0.003 85);
+  --secondary: oklch(0.965 0 0);
   --secondary-foreground: oklch(0.205 0.006 285);
-  --muted: oklch(0.965 0.003 85);
-  --muted-foreground: oklch(0.50 0.006 285);
-  --accent: oklch(0.965 0.003 85);
+  --muted: oklch(0.965 0 0);
+  --muted-foreground: oklch(0.50 0 0);
+  --accent: oklch(0.965 0 0);
   --accent-foreground: oklch(0.205 0.006 285);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.90 0.003 85);
-  --input: oklch(0.90 0.003 85);
-  --ring: oklch(0.50 0.006 285);
-  --chart-1: oklch(0.205 0.006 285);
+  --border: oklch(0.90 0 0);
+  --input: oklch(0.90 0 0);
+  --ring: oklch(0.50 0 0);
+  --chart-1: oklch(0.205 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.5rem;
-  --sidebar: oklch(0.987 0.003 85);
+  --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.205 0.006 285);
   --sidebar-primary: oklch(0.205 0.006 285);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.965 0.003 85);
+  --sidebar-accent: oklch(0.965 0 0);
   --sidebar-accent-foreground: oklch(0.205 0.006 285);
-  --sidebar-border: oklch(0.90 0.003 85);
-  --sidebar-ring: oklch(0.50 0.006 285);
+  --sidebar-border: oklch(0.90 0 0);
+  --sidebar-ring: oklch(0.50 0 0);
 }
 
 * {
@@ -62,10 +68,10 @@
 @layer base {
   html {
     background-color: var(--page-bg);
-    color: var(--text-heading);
+    color: var(--text-primary);
     font-family: "Inter", system-ui, -apple-system, sans-serif;
     font-size: 16px;
-    line-height: 24px;
+    line-height: 26.4px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -73,20 +79,52 @@
   body {
     min-height: 100vh;
     background-color: var(--page-bg);
+    line-height: 26.4px;
   }
 
   h1, h2, h3 {
     font-family: "Lora", Georgia, "Times New Roman", serif;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--text-heading);
   }
 
-  h1 { font-size: 28px; line-height: 36.4px; margin-bottom: 8px; }
-  h2 { font-size: 24px; line-height: 31.2px; margin-top: 40px; margin-bottom: 8px; }
-  h3 { font-size: 20px; line-height: 28px; margin-top: 32px; margin-bottom: 8px; }
-  h4 { font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 4px; color: var(--text-heading); }
+  h1 {
+    font-size: 30px;
+    line-height: 36px;
+    letter-spacing: -0.75px;
+    margin-bottom: 8px;
+  }
 
-  p { color: var(--text-body); margin-bottom: 8px; line-height: 24px; }
+  h2 {
+    font-size: 24px;
+    line-height: 32px;
+    letter-spacing: -0.5px;
+    color: rgb(17, 24, 39);
+    margin-top: 40px;
+    margin-bottom: 8px;
+  }
+
+  h3 {
+    font-size: 20px;
+    line-height: 28px;
+    margin-top: 32px;
+    margin-bottom: 8px;
+  }
+
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 24px;
+    margin-bottom: 4px;
+    color: var(--text-heading);
+  }
+
+  p {
+    font-size: 16px;
+    line-height: 26.4px;
+    color: var(--text-body);
+    margin-bottom: 8px;
+  }
 
   a { color: var(--text-heading); text-decoration: none; }
   a:hover { text-decoration: underline; }
@@ -96,8 +134,8 @@
     font-size: 14px;
     background: var(--code-bg);
     padding: 2px 8px;
-    border-radius: 4px;
-    color: var(--text-body);
+    border-radius: 6px;
+    color: rgb(17, 24, 39);
   }
 
   pre {
@@ -133,7 +171,7 @@
   }
 
   ul, ol { padding-left: 24px; margin-bottom: 16px; }
-  li { line-height: 24px; margin-bottom: 4px; color: var(--text-body); }
+  li { line-height: 26.4px; margin-bottom: 4px; color: var(--text-body); }
 
   hr { border: none; border-top: 1px solid var(--border-subtle); margin: 32px 0; }
 
