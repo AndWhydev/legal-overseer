@@ -27,6 +27,7 @@ import { TokenBudgetManager, type TierInput } from './token-budget-manager'
 import { proactiveRecall as recallForContext, formatProactiveRecall } from '@/lib/memory-palace'
 import { getEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
 import { logger } from '@/lib/core/logger'
+import { loadPredictiveContext } from './predictive-loader'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -634,6 +635,8 @@ export class ContextAssembler {
       }
     }
 
+    // Snapshot token count before proactive/predictive additions (1500 token budget)
+    const systemPromptTokens = this.budgetManager.estimateTokens(finalSystemPrompt)
     // Append Memory Palace proactive recall (institutional knowledge)
     try {
       // Resolve entity mentions to entity_node IDs via knowledge graph
@@ -657,6 +660,26 @@ export class ContextAssembler {
       }
     } catch {
       // Non-critical: proactive recall is additive, not essential
+    }
+
+    // ── Phase 5b: Predictive context (deadlines, recent activity, approvals) ──
+    try {
+      const predictive = await loadPredictiveContext(supabase, orgId)
+      if (predictive.text) {
+        // Budget: use remaining tokens from the 1500-token proactive recall budget
+        const currentTokens = this.budgetManager.estimateTokens(finalSystemPrompt)
+        const recallTokensUsed = currentTokens - systemPromptTokens
+        const remaining = 1500 - Math.max(recallTokensUsed, 0)
+        if (remaining > 100 && predictive.tokenEstimate <= remaining) {
+          finalSystemPrompt += '\n\n' + predictive.text
+        } else if (remaining > 100) {
+          // Trim to fit
+          const maxChars = Math.floor(remaining * 3.5)
+          finalSystemPrompt += '\n\n' + predictive.text.slice(0, maxChars)
+        }
+      }
+    } catch {
+      // Non-critical: predictive context is additive
     }
 
     // ── Phase 6: Build message history ──────────────────────────────────
