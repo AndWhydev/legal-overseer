@@ -7,6 +7,37 @@ description: "The knowledge graph schema: entity nodes with dual vectors, bi-tem
 
 BitBit's knowledge graph lives in Supabase via pgvector. It stores entities, their relationships, and temporal events across three tables designed for co-located graph+vector queries in a single SQL statement.
 
+<Mermaid chart={`
+erDiagram
+    entity_nodes ||--o{ entity_edges : "source"
+    entity_nodes ||--o{ entity_edges : "target"
+    entity_nodes ||--o{ event_tuples : "subject"
+    entity_nodes {
+        uuid id PK
+        text name
+        text entity_type
+        vector embedding_768
+        vector text_embedding_1024
+        jsonb properties
+    }
+    entity_edges {
+        uuid id PK
+        uuid source_id FK
+        uuid target_id FK
+        text relation_type
+        timestamp valid_from
+        timestamp valid_until
+        float confidence
+    }
+    event_tuples {
+        uuid id PK
+        uuid subject_id FK
+        text verb
+        text object_text
+        timestamp occurred_at
+    }
+`} caption="Entity graph schema with bi-temporal edges" />
+
 ## entity_nodes
 
 The core entity table stores people, projects, companies, invoices, and channels with dual vector embeddings.

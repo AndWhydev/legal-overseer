@@ -9,6 +9,9 @@ The TAOR (Think, Act, Observe, Repeat) loop is BitBit's core execution engine. I
 
 A safety ceiling of 50 iterations exists purely for runaway cost protection.
 
+<TAORLoop />
+
+
 ## Execution Flow
 
 <Steps>
@@ -76,6 +79,27 @@ The loop yields events as a server-sent event stream:
 <Tip>
 The `/api/agent/chat` route wraps the async generator in an SSE `ReadableStream`, sending each event as a `data:` frame. Clients can process events incrementally as they arrive.
 </Tip>
+
+<Mermaid chart={`
+sequenceDiagram
+    participant User
+    participant TAOR as TAOR Loop
+    participant LLM as Claude
+    participant Tools
+    participant DB as Supabase
+    
+    User->>TAOR: Send message
+    TAOR->>TAOR: Pre-flight checks
+    TAOR->>LLM: Context + tools
+    LLM->>TAOR: tool_use: search_memory
+    TAOR->>Tools: Execute search_memory
+    Tools->>DB: Query
+    DB-->>Tools: Results
+    Tools-->>TAOR: Tool result
+    TAOR->>LLM: Observe results
+    LLM-->>TAOR: Final response
+    TAOR-->>User: Stream response
+`} caption="TAOR loop executing a single tool call" />
 
 ## Circuit Breaker
 

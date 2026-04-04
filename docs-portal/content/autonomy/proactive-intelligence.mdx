@@ -9,6 +9,21 @@ The Proactive Intelligence layer (`src/lib/proactive/index.ts`) orchestrates an 
 
 It runs every 15 minutes via a cron route.
 
+<Mermaid chart={`
+flowchart LR
+    S1[Overdue Invoices] --> AGG[Aggregation]
+    S2[Blocked Projects] --> AGG
+    S3[Stale Conversations] --> AGG
+    S4[Project Deadlines] --> AGG
+    S5[Lifecycle Rules] --> AGG
+    
+    AGG --> CLS{Classifier}
+    CLS -->|Hardcoded rule match| ACT[Execute]
+    CLS -->|High confidence| ACT
+    CLS -->|Medium confidence| QUEUE[Approval Queue]
+    CLS -->|Low confidence| LOG[Log Only]
+`} caption="Proactive intelligence signal to action pipeline" />
+
 ## Pipeline
 
 <Steps>

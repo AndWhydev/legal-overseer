@@ -7,6 +7,22 @@ description: "The 5-stage nightly pipeline that summarizes, resolves, discovers,
 
 Sleep Consolidation (`src/lib/memory-palace/sleep-consolidation.ts`) is a nightly pipeline that mimics cognitive sleep processes. It runs as a daily cron job and processes the day's knowledge into a consolidated state.
 
+<Mermaid chart={`
+flowchart TD
+    A[Start: 2am AEST] --> B[Stage 1: Summarize]
+    B --> C[Stage 2: Resolve Conflicts]
+    C --> D[Stage 3: Discover Relationships]
+    D --> E[Stage 4: Prune Noise]
+    E --> F[Stage 5: Morning Briefing]
+    F --> G[Complete]
+    
+    B -->|Per entity| B1[Haiku generates digest]
+    C -->|Temporal precedence| C1[Newer fact wins]
+    D -->|Co-occurring entities| D1[Haiku evaluates relationship]
+    E -->|Low confidence + no links| E1[Archive]
+    F -->|Deadlines + blockers| F1[Store in org settings]
+`} caption="Nightly sleep consolidation pipeline" />
+
 ## The 5 Stages
 
 <Steps>

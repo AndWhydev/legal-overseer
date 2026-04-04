@@ -7,7 +7,8 @@ import { TableOfContents } from "@/components/layout/toc"
 import { Breadcrumbs } from "@/components/layout/breadcrumbs"
 import { PrevNext } from "@/components/layout/prev-next"
 import { navigation } from "@/docs.config"
-import { Tip, Note, Warning, Steps, Step, CardGroup, Card, CodeGroup, CodeBlock, Param, Accordion } from "@/components/mdx"
+import { Tip, Note, Warning, Steps, Step, CardGroup, Card, CodeGroup, CodeBlock, Param, Accordion, Mermaid } from "@/components/mdx"
+import { LayerStack, TAORLoop, ContextTiers, ConfidenceRouting } from "@/components/diagrams"
 
 export default async function DocPage({ params }: { params: Promise<{ slug: string[] }> }) {
   const { slug } = await params
@@ -18,7 +19,7 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
   const { content: mdxContent } = await compileMDX({
     source: doc.source,
     options: { parseFrontmatter: true },
-    components: { Tip, Note, Warning, Steps, Step, CardGroup, Card, CodeGroup, CodeBlock, Param, Accordion },
+    components: { Tip, Note, Warning, Steps, Step, CardGroup, Card, CodeGroup, CodeBlock, Param, Accordion, Mermaid, LayerStack, TAORLoop, ContextTiers, ConfidenceRouting },
   })
 
   const headings = extractHeadings(doc.content)
