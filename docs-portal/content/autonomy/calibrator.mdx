@@ -69,7 +69,7 @@ The calibrator also handles tool graduation, promoting tools from L2 (Propose) t
 2. Qualifying tools get promoted via `organisations.settings.autonomy_overrides`
 3. `getAutonomyLevel()` checks org overrides, so promotion takes effect immediately
 
-**Safety cap:** Tools can only graduate to L3 (Act + Notify), never L4 (Silent). External communications always produce a notification.
+- **Safety cap:** Tools can only graduate to L3 (Act + Notify), never L4 (Silent). External communications always produce a notification.
 
 <Note>
 Seeded data (used during development) is excluded from graduation calculations via the `threshold_source` field. Only organic outcomes from real tool executions count toward graduation.
