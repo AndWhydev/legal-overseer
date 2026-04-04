@@ -57,6 +57,12 @@ while true; do
     hit "/api/cron/calibrate-confidence" &
     hit "/api/cron/sentiment-drift" &
     hit "/api/cron/revenue-intelligence" &
+
+    # Weekly: only on Mondays (day 1)
+    if [ "$(date +%u)" -eq 1 ]; then
+      hit "/api/cron/weekly-report" &
+    fi
+
     COUNTER=0
   fi
 

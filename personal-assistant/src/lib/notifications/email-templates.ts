@@ -170,6 +170,33 @@ export interface WeeklyReportData {
   previousWeekLeads: number
   pipelineValue: number
   previousWeekPipeline: number
+  // Operations summary fields (from Cognitive Memory OS)
+  autonomyRate?: number
+  avgConfidence?: number
+  actDecisions?: number
+  askDecisions?: number
+  escalateDecisions?: number
+  projects?: Array<{
+    name: string
+    status: string
+    blockers: string[]
+    nextAction: string | null
+  }>
+  financial?: {
+    invoicesSent: number
+    invoicesPaid: number
+    totalInvoiced: number
+    totalReceived: number
+    overdue: number
+  }
+  communications?: {
+    messagesProcessed: number
+    approvalsPending: number
+    approvalsResolved: number
+  }
+  standingOrders?: { active: number; created: number; triggered: number }
+  highlights?: string[]
+  concerns?: string[]
 }
 
 export async function sendWeeklyReportEmail(
@@ -200,9 +227,82 @@ export async function sendWeeklyReportEmail(
     </tr>
   `).join('')
 
+  // Autonomy section
+  const autonomyHtml = data.autonomyRate !== undefined ? `
+    <h3 style="margin: 20px 0 10px 0; color: #1a1a1a;">Autonomy</h3>
+    <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #22c55e;">
+      <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: bold; color: #166534;">${data.autonomyRate}% autonomous</p>
+      <p style="margin: 0 0 4px 0; color: #333;">Avg confidence: ${(data.avgConfidence ?? 0).toFixed(2)}</p>
+      <p style="margin: 0; color: #666; font-size: 13px;">${data.actDecisions ?? 0} acted &middot; ${data.askDecisions ?? 0} asked &middot; ${data.escalateDecisions ?? 0} escalated</p>
+    </div>
+  ` : ''
+
+  // Projects section
+  const projectsHtml = data.projects && data.projects.length > 0 ? `
+    <h3 style="margin: 20px 0 10px 0; color: #1a1a1a;">Projects</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+      <tr style="background: #f5f5f5;">
+        <th style="padding: 8px; text-align: left;">Project</th>
+        <th style="padding: 8px; text-align: left;">Status</th>
+        <th style="padding: 8px; text-align: left;">Next Action</th>
+      </tr>
+      ${data.projects.map(p => {
+        const statusBg = p.status === 'active' ? '#dcfce7' : p.status === 'blocked' ? '#fef2f2' : '#f3f4f6'
+        const statusColor = p.status === 'active' ? '#166534' : p.status === 'blocked' ? '#991b1b' : '#374151'
+        const blockerNote = p.blockers.length > 0 ? ' (' + p.blockers[0] + ')' : ''
+        return `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${p.name}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">
+            <span style="display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; background: ${statusBg}; color: ${statusColor};">
+              ${p.status}${blockerNote}
+            </span>
+          </td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">${p.nextAction ?? 'None'}</td>
+        </tr>`
+      }).join('')}
+    </table>
+  ` : ''
+
+  // Financial section
+  const financialHtml = data.financial ? `
+    <h3 style="margin: 20px 0 10px 0; color: #1a1a1a;">Financial</h3>
+    <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+      <p style="margin: 0 0 4px 0;">Invoiced: $${data.financial.totalInvoiced.toFixed(0)} (${data.financial.invoicesSent} sent)</p>
+      <p style="margin: 0 0 4px 0;">Received: $${data.financial.totalReceived.toFixed(0)} (${data.financial.invoicesPaid} paid)</p>
+      ${data.financial.overdue > 0 ? `<p style="margin: 0; color: #dc2626; font-weight: 600;">${data.financial.overdue} overdue</p>` : ''}
+    </div>
+  ` : ''
+
+  // Communications section
+  const commsHtml = data.communications ? `
+    <h3 style="margin: 20px 0 10px 0; color: #1a1a1a;">Communications</h3>
+    <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+      <p style="margin: 0 0 4px 0;">${data.communications.messagesProcessed} messages processed</p>
+      <p style="margin: 0;">${data.communications.approvalsResolved} approvals resolved, ${data.communications.approvalsPending} pending</p>
+    </div>
+  ` : ''
+
+  // Highlights & Concerns
+  const highlightsHtml = data.highlights && data.highlights.length > 0 ? `
+    <h3 style="margin: 20px 0 10px 0; color: #166534;">Highlights</h3>
+    <ul style="margin: 0 0 20px 0; padding-left: 20px;">
+      ${data.highlights.map(h => `<li style="margin-bottom: 4px;">${h}</li>`).join('')}
+    </ul>
+  ` : ''
+
+  const concernsHtml = data.concerns && data.concerns.length > 0 ? `
+    <h3 style="margin: 20px 0 10px 0; color: #dc2626;">Concerns</h3>
+    <ul style="margin: 0 0 20px 0; padding-left: 20px; color: #991b1b;">
+      ${data.concerns.map(c => `<li style="margin-bottom: 4px;">${c}</li>`).join('')}
+    </ul>
+  ` : ''
+
   const html = wrapHtml(`
     <h2 style="color: #1a1a1a; margin-bottom: 5px;">Weekly Report</h2>
     <p style="color: #666; margin-bottom: 20px;">${data.weekStart} - ${data.weekEnd}</p>
+
+    ${autonomyHtml}
 
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
       <tr style="background: #f5f5f5;">
@@ -242,6 +342,16 @@ export async function sendWeeklyReportEmail(
       </tr>
       ${agentRows}
     </table>
+    ` : ''}
+
+    ${projectsHtml}
+    ${financialHtml}
+    ${commsHtml}
+    ${highlightsHtml}
+    ${concernsHtml}
+
+    ${data.standingOrders ? `
+    <p style="color: #666; font-size: 13px;">Standing orders: ${data.standingOrders.active} active, ${data.standingOrders.created} new this week</p>
     ` : ''}
 
     <p>

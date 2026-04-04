@@ -1,6 +1,7 @@
 import { withCronGuard } from '@/lib/cron/cron-guard'
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
 import type { WeeklyReportData } from '@/lib/notifications/email-templates'
+import { generateWeeklyOperationsSummary } from '@/lib/intelligence/weekly-operations-summary'
 import { logger } from '@/lib/core/logger'
 
 export const maxDuration = 300
@@ -131,6 +132,31 @@ export async function GET(request: Request) {
           previousWeekPipeline: 0,
         }
 
+        // Enrich with Cognitive Memory OS operations summary
+        try {
+          const opsSummary = await generateWeeklyOperationsSummary(supabase, orgId)
+          reportData.autonomyRate = opsSummary.autonomy.autonomyRate
+          reportData.avgConfidence = opsSummary.autonomy.avgConfidence
+          reportData.actDecisions = opsSummary.autonomy.actDecisions
+          reportData.askDecisions = opsSummary.autonomy.askDecisions
+          reportData.escalateDecisions = opsSummary.autonomy.escalateDecisions
+          reportData.projects = opsSummary.projects.map(p => ({
+            name: p.name,
+            status: p.status,
+            blockers: p.blockers,
+            nextAction: p.nextAction,
+          }))
+          reportData.financial = opsSummary.financial
+          reportData.communications = opsSummary.communications
+          reportData.standingOrders = opsSummary.standingOrders
+          reportData.highlights = opsSummary.highlights
+          reportData.concerns = opsSummary.concerns
+        } catch (opsErr) {
+          logger.warn('[cron/weekly-report] Operations summary failed, sending basic report', {
+            error: opsErr instanceof Error ? opsErr.message : String(opsErr),
+          })
+        }
+
         // Only send email if the recipient hasn't already received one this run,
         // preventing duplicate emails when multiple orgs share the same address.
         const toEmail = (process.env.NOTIFICATION_TO_EMAIL || 'hi@torkay.com').toLowerCase()
@@ -142,7 +168,7 @@ export async function GET(request: Request) {
           orgId,
           type: 'weekly_report',
           title: `Weekly Report: ${reportData.weekStart} - ${reportData.weekEnd}`,
-          body: `${reportData.totalAgentRuns} agent runs, $${reportData.totalCost.toFixed(2)} cost, ${reportData.leadsTotal} leads`,
+          body: `${reportData.totalAgentRuns} agent runs, $${reportData.totalCost.toFixed(2)} cost, ${reportData.leadsTotal} leads${reportData.autonomyRate !== undefined ? ` | ${reportData.autonomyRate}% autonomous (conf ${(reportData.avgConfidence ?? 0).toFixed(2)})` : ''}${reportData.concerns && reportData.concerns.length > 0 ? ` | ${reportData.concerns.length} concern(s)` : ''}`,
           urgency: 'low',
           channels,
           metadata: reportData as unknown as Record<string, unknown>,
