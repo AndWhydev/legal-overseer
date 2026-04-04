@@ -5,7 +5,7 @@ description: "The 4-tier context pipeline that builds relevant context within a 
 
 # Context Assembly
 
-The Context Assembler (`src/lib/context-assembly/context-assembler.ts`) builds all the context BitBit needs for each conversation turn. It targets **<200ms total assembly latency** by fetching all tiers in parallel with graceful per-tier degradation.
+The Context Assembler (`src/lib/context-assembly/context-assembler.ts`) builds all the context BitBit needs for each conversation turn. It targets **less than 200ms total assembly latency** by fetching all tiers in parallel with graceful per-tier degradation.
 
 ## Token Budget
 
