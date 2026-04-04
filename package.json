@@ -2,12 +2,13 @@
   "name": "bitbit",
   "version": "0.1.0",
   "private": true,
-  "description": "Agentic AI operations platform — deploy autonomous agents to run business operations",
+  "description": "Agentic AI operations platform \u2014 deploy autonomous agents to run business operations",
   "workspaces": [
     "packages/core",
     "packages/agents/*",
     "deployments/*",
-    "personal-assistant"
+    "personal-assistant",
+    "docs-portal"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=personal-assistant",
