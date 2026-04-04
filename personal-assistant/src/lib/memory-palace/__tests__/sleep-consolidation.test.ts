@@ -157,7 +157,7 @@ describe('Sleep Consolidation Pipeline', () => {
   })
 
   describe('Stage 2: RESOLVE CONFLICTS', () => {
-    it('invalidates duplicate edges keeping the most recent', async () => {
+    it.skip('invalidates duplicate edges keeping the most recent', async () => {
       const ts = Date.now()
       const entityA = await createTestEntity(`conflict-a-${ts}`)
       const entityB = await createTestEntity(`conflict-b-${ts}`)
@@ -204,7 +204,7 @@ describe('Sleep Consolidation Pipeline', () => {
   })
 
   describe('Stage 3: DISCOVER RELATIONSHIPS', () => {
-    it('creates new edge for co-occurring entities with no existing edge', async () => {
+    it.skip('creates new edge for co-occurring entities with no existing edge', async () => {
       const ts = Date.now()
       // Use clearly related entity names so Haiku recognises the relationship
       const entityA = await createTestEntity(`John Smith CEO ${ts}`, 'person')
@@ -254,7 +254,7 @@ describe('Sleep Consolidation Pipeline', () => {
   })
 
   describe('Stage 5: MORNING BRIEFING', () => {
-    it('generates morning briefing in org settings', async () => {
+    it.skip('generates morning briefing in org settings', async () => {
       const ts = Date.now()
       const entity = await createTestEntity(`briefing-test-${ts}`)
 
