@@ -22,6 +22,7 @@ import { shouldAutoExecute, type OrgAutonomyOverrides } from '@/lib/intelligence
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
 import { graphSearch } from '@/lib/memory-palace/memory-search'
 import { getEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
+import { classifyQuery, getRetrievalConfig } from '@/lib/rag/query-router'
 import {
   createTask,
   updateTask,
@@ -693,12 +694,14 @@ const handlers: Record<string, AgentToolHandler> = {
   // Memory tools stay in tools.ts (not shared — chat-specific)
   async search_memory(input, orgId, supabase) {
     const query = input.query as string
+    const { complexity } = classifyQuery(query)
+    const routerConfig = getRetrievalConfig(complexity)
+    logger.info("[search_memory] Query classified as:", complexity)
     const results: { source: string; entries: unknown[] }[] = []
 
-    // 0. Graph search (knowledge graph entities + relationships + events)
-    const graphResults = await (async () => {
+    // 0. Graph search (skip for simple queries per adaptive routing)
+    const graphResults = routerConfig.useGraph ? await (async () => {
       try {
-        // Extract potential entity names from query
         const keywords = query.split(/\s+/).filter(w => w.length > 2 && w[0] === w[0].toUpperCase())
         const entityIds: string[] = []
         for (const kw of keywords.slice(0, 3)) {
@@ -708,12 +711,12 @@ const handlers: Record<string, AgentToolHandler> = {
 
         return graphSearch(supabase, orgId, query, {
           entityIds: entityIds.length > 0 ? entityIds : undefined,
-          limit: 10,
+          limit: routerConfig.topK,
         })
       } catch {
         return []
       }
-    })()
+    })() : []
 
     if (graphResults.length > 0) {
       results.push({
@@ -735,7 +738,7 @@ const handlers: Record<string, AgentToolHandler> = {
         return searchVectors({
           query,
           orgId,
-          topK: 10,
+          topK: routerConfig.topK,
           channel: input.channel as string | undefined,
           sender: input.sender as string | undefined,
           dateFrom: input.date_from as string | undefined,
@@ -746,7 +749,7 @@ const handlers: Record<string, AgentToolHandler> = {
       (async () => {
         const { sparseSearch } = await import('@/lib/rag/sparse-search')
         return sparseSearch(supabase, orgId, query, {
-          limit: 10,
+          limit: routerConfig.topK,
           channel: input.channel as string | undefined,
           sender: input.sender as string | undefined,
           dateFrom: input.date_from as string | undefined,
@@ -884,6 +887,9 @@ const handlers: Record<string, AgentToolHandler> = {
 
     const toolName = input.tool_name as string | undefined
     const query = input.query as string | undefined
+    const { complexity } = classifyQuery(query)
+    const routerConfig = getRetrievalConfig(complexity)
+    logger.info("[search_memory] Query classified as:", complexity)
 
     if (toolName) {
       const schema = resolveToolSchema(toolName)

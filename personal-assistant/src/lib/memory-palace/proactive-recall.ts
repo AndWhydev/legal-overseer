@@ -28,10 +28,11 @@ import type {
   DecisionLogEntry,
   MemoryPattern,
 } from './types'
+import { getRetrievalConfig } from '@/lib/rag/query-router'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const MAX_RECALL_TOKENS = 1500
+const MAX_RECALL_TOKENS = getRetrievalConfig('moderate').tokenBudget
 const RECENCY_DECAY = 0.01
 const SCORE_WEIGHTS = {
   relevance: 0.4,
