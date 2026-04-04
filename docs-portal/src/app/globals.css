@@ -20,7 +20,7 @@
   --nav-active-radius: 12px;
   --sidebar-width: 256px;
   --toc-width: 244px;
-  --content-max-width: 720px;
+  --content-max-width: 640px;
   --header-height: 56px;
   --tab-bar-height: 48px;
 
@@ -263,4 +263,29 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Mobile layout: hide sidebar below md breakpoint */
+@media (max-width: 767px) {
+  .docs-layout {
+    display: block !important;
+  }
+}
+
+/* Tab bar: hide scrollbar on mobile */
+.docs-tab-bar {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.docs-tab-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

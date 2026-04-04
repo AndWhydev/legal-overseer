@@ -18,6 +18,7 @@ export function Sidebar({ navigation }: SidebarProps) {
 
   return (
     <aside
+      className="hidden md:block"
       style={{
         width: "256px",
         height: "calc(100vh - 104px)",
@@ -60,17 +61,19 @@ export function Sidebar({ navigation }: SidebarProps) {
                     fontWeight: isActive ? 400 : 500,
                     color: isActive ? "rgb(14, 14, 14)" : "rgb(80, 80, 80)",
                     background: isActive ? "rgba(14, 14, 14, 0.1)" : "transparent",
-                    borderRadius: isActive ? "12px" : "0",
-                    transition: "color 150ms, background 150ms",
+                    borderRadius: isActive ? "12px" : "8px",
+                    transition: "color 150ms ease, background-color 150ms ease",
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
                       e.currentTarget.style.color = "rgb(23, 23, 23)"
+                      e.currentTarget.style.backgroundColor = "rgba(14, 14, 14, 0.05)"
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
                       e.currentTarget.style.color = "rgb(80, 80, 80)"
+                      e.currentTarget.style.backgroundColor = "transparent"
                     }
                   }}
                 >

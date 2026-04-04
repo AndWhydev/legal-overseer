@@ -90,12 +90,12 @@ export default async function DocPage({
   return (
     <>
       <Header />
-      <div style={{ display: "flex", minHeight: "calc(100vh - 104px)" }}>
+      <div className="docs-layout" style={{ display: "flex", minHeight: "calc(100vh - 104px)" }}>
         <Sidebar navigation={navigation} />
         <main
           style={{
             flex: 1,
-            maxWidth: "720px",
+            maxWidth: "640px",
             marginLeft: "auto",
             marginRight: "auto",
             padding: "32px 24px",
@@ -108,7 +108,7 @@ export default async function DocPage({
               style={{
                 fontSize: "16px",
                 lineHeight: "26.4px",
-                color: "rgb(80, 80, 80)",
+                color: "var(--text-body)",
                 marginBottom: "32px",
               }}
             >

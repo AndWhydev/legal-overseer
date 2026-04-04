@@ -134,6 +134,7 @@ export function Header() {
 
       {/* Tab navigation bar */}
       <div
+        className="docs-tab-bar"
         style={{
           height: "48px",
           display: "flex",
@@ -151,6 +152,7 @@ export function Header() {
             <Link
               key={tab.prefix}
               href={href}
+              className="docs-tab-item"
               style={{
                 position: "relative",
                 display: "flex",
@@ -162,7 +164,18 @@ export function Header() {
                 color: active ? "rgb(23, 23, 23)" : "rgb(80, 80, 80)",
                 textDecoration: "none",
                 whiteSpace: "nowrap",
-                transition: "color 150ms",
+                borderRadius: "6px",
+                transition: "color 150ms ease, background-color 150ms ease",
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.backgroundColor = "rgba(14, 14, 14, 0.05)"
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.backgroundColor = "transparent"
+                }
               }}
             >
               {tab.label}
@@ -176,6 +189,7 @@ export function Header() {
                     height: "2px",
                     backgroundColor: "rgb(23, 23, 23)",
                     borderRadius: "1px",
+                    transition: "background-color 150ms ease",
                   }}
                 />
               )}
