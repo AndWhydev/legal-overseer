@@ -18,11 +18,11 @@ Proactive Recall (`src/lib/memory-palace/proactive-recall.ts`) surfaces relevant
 
 ## Recall Pipeline
 
-When a conversation turn arrives:
+When a conversation turn arrives, the following steps execute.
 
 1. **Extract entity mentions** from the current message (existing entity resolution)
 2. **Resolve to entity_node IDs** via the aliases array and fuzzy name matching
-3. **Parallel fetch** three data sources:
+3. **Parallel fetch** three data sources.
    - **Graph walk**: 1-hop edges from mentioned entities where `valid_until IS NULL`
    - **Vector search**: embed message, pgvector cosine similarity on `entity_nodes.embedding`, top 10
    - **Event lookup**: recent `event_tuples` for mentioned entities (last 30 days)
@@ -47,7 +47,7 @@ This formula ensures that relevant, confident, recent, and directly-connected in
 
 ## Scored Item Types
 
-Each result is classified by its source:
+Each result is classified by its source.
 
 | Type | Source | Typical Content |
 |------|--------|----------------|
@@ -57,7 +57,7 @@ Each result is classified by its source:
 
 ## Legacy Fallback
 
-When graph data is unavailable (no entity_nodes for the mentioned contacts), the system falls back to legacy proactive recall:
+When graph data is unavailable (no entity_nodes for the mentioned contacts), the system falls back to legacy proactive recall.
 
 - Top 5 memories per entity by confidence
 - Top 3 decisions per entity

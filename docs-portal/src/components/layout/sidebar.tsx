@@ -62,7 +62,7 @@ export function Sidebar({ navigation }: SidebarProps) {
                     fontWeight: isActive ? 400 : 500,
                     color: isActive ? "rgb(14, 14, 14)" : "rgb(80, 80, 80)",
                     background: isActive ? "rgba(14, 14, 14, 0.1)" : "transparent",
-                    borderRadius: isActive ? "12px" : "8px",
+                    borderRadius: isActive ? "8px" : "6px",
                     transition: "color 150ms ease, background-color 150ms ease",
                   }}
                   onMouseEnter={(e) => {

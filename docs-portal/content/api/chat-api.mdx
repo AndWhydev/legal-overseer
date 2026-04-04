@@ -32,7 +32,7 @@ The Chat API (`src/app/api/agent/chat/route.ts`) is the primary endpoint for int
 
 ## Authentication
 
-The endpoint supports two authentication methods:
+The endpoint supports two authentication methods.
 
 1. **Bearer token** for mobile clients: `Authorization: Bearer <token>`
 2. **Cookie-based** for web clients: Supabase session cookie
@@ -41,7 +41,7 @@ In development, set `DEV_BYPASS=true` to skip authentication.
 
 ## Response (SSE Stream)
 
-The response is a `text/event-stream` with events:
+The response is a `text/event-stream` with the following events.
 
 <CodeBlock code={`data: {"type":"stage","data":{"stage":"model_routing","status":"start"}}
 
@@ -70,7 +70,7 @@ data: {"type":"done","data":{"inputTokens":1234,"outputTokens":567}}`} language=
 
 ## Security
 
-The endpoint includes several security layers:
+The endpoint includes several security layers.
 
 - **Input length validation** ensures message, threadId, and attachmentIds are all size-limited.
 - **Injection detection** scans messages for prompt injection attempts via `detectInjection()`.

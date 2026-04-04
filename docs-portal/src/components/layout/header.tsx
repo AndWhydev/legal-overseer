@@ -39,7 +39,7 @@ export function Header() {
         position: "sticky",
         top: 0,
         zIndex: 50,
-        backgroundColor: "#ffffff",
+        backgroundColor: "#faf9f5",
       }}
     >
       {/* Top bar: logo + search */}
@@ -53,13 +53,8 @@ export function Header() {
       >
         <Link href="/docs/overview" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <rect width="24" height="24" rx="6" fill="rgb(23, 23, 23)" />
-            <path
-              d="M7 12h10M12 7v10"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
+            <rect x="2" y="2" width="12" height="12" rx="2.5" fill="#141413" />
+            <rect x="10" y="10" width="12" height="12" rx="2.5" fill="#141413" opacity="0.55" />
           </svg>
           <span
             style={{

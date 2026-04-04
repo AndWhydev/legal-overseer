@@ -27,6 +27,9 @@ export const metadata: Metadata = {
   title: "BitBit Documentation",
   description:
     "Internal documentation for BitBit — Agentic AI Operations Platform",
+  icons: {
+    icon: "/favicon.svg",
+  },
 }
 
 export default function RootLayout({

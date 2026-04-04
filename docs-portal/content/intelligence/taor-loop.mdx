@@ -16,7 +16,7 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
 
 <Steps>
   <Step title="Pre-flight Checks">
-    Before the loop begins, the engine runs validation:
+    Before the loop begins, the engine runs validation.
     - Input length check (max 10,000 characters)
     - Thread ID validation
     - Injection detection and neutralization
@@ -24,7 +24,7 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
     - Calibrated confidence threshold loading (if available)
   </Step>
   <Step title="Model Routing">
-    If no model is explicitly specified, the auto-router selects the appropriate tier:
+    If no model is explicitly specified, the auto-router selects the appropriate tier.
 
     | Tier | Model | Max Tokens | Triggers |
     |------|-------|-----------|----------|
@@ -38,13 +38,13 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
     The `ContextAssembler` builds the full context within a 48K token budget. This happens in parallel across four tiers with a 200ms latency target. See [Context Assembly](/intelligence/context-assembly) for details.
   </Step>
   <Step title="Tool Planning">
-    The engine prepares the tool set:
+    The engine prepares the tool set.
     - **Eager tools** are always loaded (core CRUD, memory, search)
     - **Deferred tools** are resolved via Tool RAG, matching user intent against tool descriptions using vector similarity
     - Tool definitions follow Anthropic's tool-use format
   </Step>
   <Step title="Execution Loop">
-    The core loop calls the Claude API and processes the response:
+    The core loop calls the Claude API and processes the response.
 
     <Mermaid chart={`flowchart LR
     A[Claude API Call] --> B{stop_reason}
@@ -55,7 +55,7 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
     Tools execute in batches with streaming. Results are fed back as `tool_result` messages for the next iteration.
   </Step>
   <Step title="Response Guard">
-    Before delivery, the response passes through:
+    Before delivery, the response passes through three guards.
     - **Leak detection** scans for exposed API keys or credentials.
     - **Leak scrubbing** redacts any detected secrets.
     - **Humanization** ensures natural, non-robotic output.
@@ -64,7 +64,7 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
 
 ## SSE Event Stream
 
-The loop yields events as a server-sent event stream:
+The loop yields events as a server-sent event stream.
 
 <ApiRefTable
   title="SSE Event Types"

@@ -9,7 +9,7 @@ The Context Assembler (`src/lib/context-assembly/context-assembler.ts`) builds a
 
 ## Token Budget
 
-The total context budget is **48,000 tokens**, managed by the `TokenBudgetManager`. Each tier receives a portion of the budget based on priority:
+The total context budget is **48,000 tokens**, managed by the `TokenBudgetManager`. Each tier receives a portion of the budget based on priority.
 
 | Tier | Content | Budget Share | Fallback |
 |------|---------|-------------|----------|
@@ -22,7 +22,7 @@ The total context budget is **48,000 tokens**, managed by the `TokenBudgetManage
 
 ## Assembly Pipeline
 
-The assembler runs these operations in parallel:
+The assembler runs these operations in parallel.
 
 1. **Entity mention scanning** detects contact and project names in the user message.
 2. **Session history loading** pulls recent messages and thread summaries.
@@ -41,7 +41,7 @@ The system prompt is built by `buildEntityAwarePrompt()`. It includes base ident
 
 ## Token Budget Manager
 
-The `TokenBudgetManager` tracks allocation across tiers:
+The `TokenBudgetManager` tracks allocation across tiers.
 
 ```typescript
 interface TokenAllocation {
@@ -56,7 +56,7 @@ Each tier reports its actual token usage after assembly. The manager ensures no 
 
 ## Configuration
 
-Default settings (overridable per-request):
+Default settings (overridable per-request).
 
 ```typescript
 {
