@@ -110,7 +110,7 @@ function LeadsToolbarInner({
       <Separator orientation="vertical" className="mx-1 h-5" />
 
       {/* Inline Pipeline Metrics */}
-      <div className="flex items-center gap-0 text-sm font-mono text-muted-foreground whitespace-nowrap" aria-label="Pipeline metrics">
+      <div className="flex items-center gap-0 text-sm text-muted-foreground whitespace-nowrap" aria-label="Pipeline metrics">
         <span>{pipelineValue}</span>
         <span className="mx-1" aria-hidden="true">&middot;</span>
         <span>{conversionRate}</span>
