@@ -59,12 +59,6 @@
   --sidebar-ring: oklch(0.50 0 0);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 @layer base {
   html {
     background-color: var(--page-bg);
@@ -82,104 +76,154 @@
     line-height: 26.4px;
   }
 
-  h1, h2, h3 {
-    font-family: "Lora", Georgia, "Times New Roman", serif;
-    font-weight: 400;
-    color: var(--text-heading);
-  }
-
-  h1 {
-    font-size: 30px;
-    line-height: 36px;
-    letter-spacing: -0.75px;
-    margin-bottom: 8px;
-  }
-
-  h2 {
-    font-size: 24px;
-    line-height: 32px;
-    letter-spacing: -0.5px;
-    color: rgb(17, 24, 39);
-    margin-top: 40px;
-    margin-bottom: 8px;
-  }
-
-  h3 {
-    font-size: 20px;
-    line-height: 28px;
-    margin-top: 32px;
-    margin-bottom: 8px;
-  }
-
-  h4 {
-    font-size: 16px;
-    font-weight: 600;
-    margin-top: 24px;
-    margin-bottom: 4px;
-    color: var(--text-heading);
-  }
-
-  p {
-    font-size: 16px;
-    line-height: 26.4px;
-    color: var(--text-body);
-    margin-bottom: 8px;
-  }
-
-  a { color: var(--text-heading); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
-  code {
-    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-    font-size: 14px;
-    background: var(--code-bg);
-    padding: 2px 8px;
-    border-radius: 6px;
-    color: rgb(17, 24, 39);
-  }
-
-  pre {
-    background: var(--code-bg);
-    border-radius: 8px;
-    padding: 16px;
-    overflow-x: auto;
-    margin: 24px 0;
-    font-size: 14px;
-    line-height: 21px;
-  }
-
-  pre code {
-    background: none;
-    padding: 0;
-    border-radius: 0;
-  }
-
-  table { width: 100%; border-collapse: collapse; margin: 24px 0; }
-  th {
-    text-align: left;
-    font-weight: 600;
-    font-size: 14px;
-    padding: 0 8px 8px 0;
-    border-bottom: 1px solid var(--border-subtle);
-    color: var(--text-heading);
-  }
-  td {
-    font-size: 14px;
-    padding: 8px 8px 8px 0;
-    color: var(--text-body);
-    vertical-align: top;
-  }
-
-  ul, ol { padding-left: 24px; margin-bottom: 16px; }
-  li { line-height: 26.4px; margin-bottom: 4px; color: var(--text-body); }
-
-  hr { border: none; border-top: 1px solid var(--border-subtle); margin: 32px 0; }
-
-  strong { color: var(--text-heading); font-weight: 600; }
-
+  /* ONLY apply border-border to all elements, NOT margin/padding reset */
   * {
     @apply border-border outline-ring/50;
   }
+}
+
+/* --- MDX Content Typography ------------------------------------------
+   These rules ONLY apply inside .mdx-content (the prose area).
+   They do NOT affect jalco/shadcn components which live outside this scope.
+   --------------------------------------------------------------------- */
+
+.mdx-content h1,
+.mdx-content h2,
+.mdx-content h3 {
+  font-family: "Lora", Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  color: var(--text-heading);
+}
+
+.mdx-content h1 {
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.75px;
+  margin-bottom: 8px;
+}
+
+.mdx-content h2 {
+  font-size: 24px;
+  line-height: 32px;
+  letter-spacing: -0.5px;
+  color: rgb(17, 24, 39);
+  margin-top: 40px;
+  margin-bottom: 12px;
+}
+
+.mdx-content h3 {
+  font-size: 20px;
+  line-height: 28px;
+  margin-top: 32px;
+  margin-bottom: 8px;
+}
+
+.mdx-content h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 4px;
+  color: var(--text-heading);
+}
+
+.mdx-content p {
+  font-size: 16px;
+  line-height: 26.4px;
+  color: var(--text-body);
+  margin-bottom: 16px;
+}
+
+.mdx-content a {
+  color: var(--text-heading);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgb(200, 200, 200);
+}
+
+.mdx-content a:hover {
+  text-decoration-color: var(--text-heading);
+}
+
+.mdx-content > code,
+.mdx-content p code,
+.mdx-content li code,
+.mdx-content td code {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  font-size: 14px;
+  background: var(--code-bg);
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: rgb(17, 24, 39);
+}
+
+.mdx-content pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 24px 0;
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.mdx-content pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* Markdown tables (from remark-gfm) -- NOT jalco tables */
+.mdx-content > table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 14px;
+}
+
+.mdx-content > table th {
+  text-align: left;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-heading);
+}
+
+.mdx-content > table td {
+  padding: 8px 12px;
+  color: var(--text-body);
+  vertical-align: top;
+  border-bottom: 1px solid rgba(222, 222, 222, 0.5);
+}
+
+.mdx-content ul,
+.mdx-content ol {
+  padding-left: 24px;
+  margin-bottom: 16px;
+}
+
+.mdx-content li {
+  line-height: 26.4px;
+  margin-bottom: 4px;
+  color: var(--text-body);
+}
+
+.mdx-content hr {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 32px 0;
+}
+
+.mdx-content strong {
+  color: var(--text-heading);
+  font-weight: 600;
+}
+
+.mdx-content blockquote {
+  border-left: 3px solid var(--border-subtle);
+  padding-left: 16px;
+  margin: 16px 0;
+  color: var(--text-muted);
 }
 
 /* Scrollbar */
