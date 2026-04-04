@@ -4,7 +4,10 @@ import { getDocBySlug, getAllDocSlugs, extractHeadings } from '@/lib/mdx'
 import { Header } from '@/components/layout/header'
 import { Sidebar } from '@/components/layout/sidebar'
 import { TableOfContents } from '@/components/layout/toc'
+import { Breadcrumbs } from '@/components/layout/breadcrumbs'
+import { PrevNext } from '@/components/layout/prev-next'
 import { navigation } from '@/docs.config'
+import { Tip, Note, Warning, Steps, Step, CardGroup, Card, CodeGroup, CodeBlock, Param, Accordion } from '@/components/mdx'
 
 export default async function DocPage({ params }: { params: Promise<{ slug: string[] }> }) {
   const { slug } = await params
@@ -15,6 +18,7 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
   const { content: mdxContent } = await compileMDX({
     source: doc.source,
     options: { parseFrontmatter: true },
+    components: { Tip, Note, Warning, Steps, Step, CardGroup, Card, CodeGroup, CodeBlock, Param, Accordion },
   })
   
   const headings = extractHeadings(doc.content)
@@ -31,6 +35,7 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
           padding: '2rem 1.5rem',
           minWidth: 0,
         }}>
+          <Breadcrumbs />
           <h1>{doc.frontmatter.title as string}</h1>
           {doc.frontmatter.description && (
             <p style={{ fontSize: '1.125rem', color: 'var(--text-secondary)', marginBottom: '2rem' }}>
@@ -40,6 +45,7 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
           <div className="mdx-content">
             {mdxContent}
           </div>
+          <PrevNext />
         </main>
         <TableOfContents headings={headings} />
       </div>
