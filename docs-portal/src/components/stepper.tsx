@@ -79,9 +79,9 @@ function StepperItem({
               status === "completed" &&
                 "border-primary bg-primary text-primary-foreground",
               status === "active" &&
-                "border-primary bg-primary/10 text-primary",
+                "border-transparent bg-[#e5e4df] text-foreground",
               status === "default" &&
-                "border-border bg-background text-muted-foreground"
+                "border-transparent bg-[#f0efeb] text-foreground"
             )}
           >
             {icon ? (
@@ -98,8 +98,8 @@ function StepperItem({
             className={cn(
               "w-px min-h-4 grow",
               status === "completed"
-                ? "bg-primary"
-                : "bg-border dark:bg-muted-foreground/25",
+                ? "bg-[#d0cfca]"
+                : "bg-[#e5e4df]",
               "group-last/step:hidden"
             )}
           />
@@ -111,7 +111,7 @@ function StepperItem({
         >
           <div className="flex flex-col gap-0.5">
             <h3
-              className="text-sm font-semibold leading-tight text-foreground"
+              className="text-sm font-bold leading-tight text-foreground" style={{ fontFamily: "Inter, system-ui, sans-serif" }}
             >
               {title}
             </h3>
