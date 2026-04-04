@@ -7,21 +7,22 @@ import { TableOfContents } from "@/components/layout/toc"
 import { Breadcrumbs } from "@/components/layout/breadcrumbs"
 import { PrevNext } from "@/components/layout/prev-next"
 import { navigation } from "@/docs.config"
-import {
-  Tip,
-  Note,
-  Warning,
-  Danger,
-  Steps,
-  Step,
-  CardGroup,
-  Card,
-  CodeGroup,
-  CodeBlock,
-  Param,
-  Accordion,
-  Mermaid,
-} from "@/components/mdx"
+
+// Retained custom components
+import { Tip, Note, Warning, Danger, Accordion, Mermaid, CardGroup, Card } from "@/components/mdx"
+
+// jalco/ui components
+import { Stepper, StepperItem } from "@/components/stepper"
+import { CodeBlock } from "@/components/code-block"
+import { CodeBlockCommand } from "@/components/code-block-command"
+import { FileTree } from "@/components/file-tree"
+import { ApiRefTable } from "@/components/api-ref-table"
+import { CronSchedule } from "@/components/cron-schedule"
+import { EnvTable } from "@/components/env-table"
+import { Kbd, KbdCombo } from "@/components/kbd"
+import { StatusIndicator } from "@/components/status-indicator"
+
+// Custom diagrams
 import {
   LayerStack,
   TAORLoop,
@@ -43,19 +44,29 @@ export default async function DocPage({
     source: doc.source,
     options: { parseFrontmatter: true },
     components: {
+      // Retained custom
       Tip,
       Note,
       Warning,
       Danger,
-      Steps,
-      Step,
-      CardGroup,
-      Card,
-      CodeGroup,
-      CodeBlock,
-      Param,
       Accordion,
       Mermaid,
+      CardGroup,
+      Card,
+      // jalco/ui — aliased for MDX backward compat
+      Steps: Stepper,
+      Step: StepperItem,
+      CodeBlock,
+      CodeGroup: CodeBlockCommand,
+      CodeBlockCommand,
+      FileTree,
+      ApiRefTable,
+      CronSchedule,
+      EnvTable,
+      Kbd,
+      KbdCombo,
+      StatusIndicator,
+      // Diagrams
       LayerStack,
       TAORLoop,
       ContextTiers,

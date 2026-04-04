@@ -1,5 +1,7 @@
 "use client"
 
+import { Kbd } from "@/components/kbd"
+
 export function Header() {
   return (
     <header
@@ -88,24 +90,10 @@ export function Header() {
           <path d="m21 21-4.3-4.3" />
         </svg>
         <span>Search docs...</span>
-        <kbd
-          style={{
-            display: "inline-flex",
-            height: "20px",
-            alignItems: "center",
-            gap: "2px",
-            borderRadius: "4px",
-            border: "1px solid rgba(31, 30, 29, 0.15)",
-            backgroundColor: "rgb(250, 249, 245)",
-            padding: "0 6px",
-            fontFamily: "JetBrains Mono, ui-monospace, monospace",
-            fontSize: "11px",
-            fontWeight: 500,
-            color: "rgb(160, 159, 153)",
-          }}
-        >
-          <span style={{ fontSize: "12px" }}>&#8984;</span>K
-        </kbd>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}>
+          <Kbd size="sm" variant="flat">{"\u2318"}</Kbd>
+          <Kbd size="sm" variant="flat">K</Kbd>
+        </span>
       </button>
     </header>
   )

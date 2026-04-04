@@ -5,29 +5,30 @@ description: "The POST endpoint that powers BitBit's conversational interface vi
 
 # Chat API
 
+<StatusIndicator status="operational" label="API Operational" />
+
 The Chat API (`src/app/api/agent/chat/route.ts`) is the primary endpoint for interacting with BitBit. It accepts user messages and streams back agent responses as Server-Sent Events.
 
 ## Endpoint
 
-```
-POST /api/agent/chat
-```
+<CodeBlock code="POST /api/agent/chat" language="bash" title="Chat endpoint" />
 
 ## Request
 
-```json
-{
+<CodeBlock code={`{
   "message": "What tasks do I have this week?",
   "threadId": "optional-thread-uuid",
   "attachmentIds": ["optional-attachment-uuid"]
-}
-```
+}`} language="json" title="Request body" />
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `message` | string | Yes | User message (max 10,000 chars) |
-| `threadId` | string | No | Conversation thread ID (max 128 chars) |
-| `attachmentIds` | string[] | No | File attachment IDs (max 10) |
+<ApiRefTable
+  title="Request Parameters"
+  props={[
+    { name: "message", type: "string", required: true, description: "User message (max 10,000 chars)" },
+    { name: "threadId", type: "string", required: false, description: "Conversation thread ID (max 128 chars)" },
+    { name: "attachmentIds", type: "string[]", required: false, description: "File attachment IDs (max 10)" },
+  ]}
+/>
 
 ## Authentication
 
@@ -42,8 +43,7 @@ In development, set `DEV_BYPASS=true` to skip authentication.
 
 The response is a `text/event-stream` with events:
 
-```
-data: {"type":"stage","data":{"stage":"model_routing","status":"start"}}
+<CodeBlock code={`data: {"type":"stage","data":{"stage":"model_routing","status":"start"}}
 
 data: {"type":"tool_call","data":{"name":"search_tasks","input":{...}}}
 
@@ -51,20 +51,22 @@ data: {"type":"tool_result","data":{"name":"search_tasks","output":"..."}}
 
 data: {"type":"message","data":{"text":"Here are your tasks..."}}
 
-data: {"type":"done","data":{"inputTokens":1234,"outputTokens":567}}
-```
+data: {"type":"done","data":{"inputTokens":1234,"outputTokens":567}}`} language="json" title="SSE event stream" />
 
 ### Event Types
 
-| Type | Description |
-|------|-------------|
-| `stage` | Pipeline stage transitions |
-| `thinking` | Model routing information |
-| `tool_call` | Tool invocation with parameters |
-| `tool_result` | Tool execution result |
-| `message` | Final text (streamed incrementally) |
-| `error` | Error information |
-| `done` | Completion with token counts |
+<ApiRefTable
+  title="SSE Event Types"
+  props={[
+    { name: "stage", type: "string", description: "Pipeline stage transitions" },
+    { name: "thinking", type: "string", description: "Model routing information" },
+    { name: "tool_call", type: "string", description: "Tool invocation with parameters" },
+    { name: "tool_result", type: "string", description: "Tool execution result" },
+    { name: "message", type: "string", description: "Final text (streamed incrementally)" },
+    { name: "error", type: "string", description: "Error information" },
+    { name: "done", type: "string", description: "Completion with token counts" },
+  ]}
+/>
 
 ## Security
 

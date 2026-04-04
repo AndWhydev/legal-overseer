@@ -7,58 +7,80 @@ description: "The 27+ scheduled jobs that power BitBit's background intelligence
 
 BitBit runs **27+ cron jobs** via Next.js API routes (`src/app/api/cron/`). These handle everything from memory consolidation to proactive intelligence to channel synchronization.
 
-## Full Cron Schedule
+## High-Frequency Jobs (15 min)
 
-| Endpoint | Schedule | Purpose |
-|----------|----------|---------|
-| `/api/cron/channel-sync` | Every 15 min | Poll all connected channels for new messages |
-| `/api/cron/proactive-intelligence` | Every 15 min | Run the full proactive analysis pipeline |
-| `/api/cron/proactive-alerts` | Every 15 min | Evaluate and dispatch proactive notifications |
-| `/api/cron/triage` | Every 15 min | Classify and route incoming messages |
-| `/api/cron/intelligence` | Every 30 min | Run intelligence analytics and pattern detection |
-| `/api/cron/process-embeddings` | Every 30 min | Process pending embedding queue |
-| `/api/cron/sentiment-drift` | Every 1 hour | Track sentiment changes in contact communications |
-| `/api/cron/contact-timing` | Every 1 hour | Update optimal contact timing patterns |
-| `/api/cron/token-refresh` | Every 1 hour | Refresh OAuth tokens (Gmail, Outlook) |
-| `/api/cron/revenue-intelligence` | Every 6 hours | Analyze revenue patterns and forecasts |
-| `/api/cron/relationship-health` | Every 6 hours | Score contact engagement and flag gaps |
-| `/api/cron/entity-profile-refresh` | Every 6 hours | Update entity_node properties from latest data |
-| `/api/cron/sentry` | Every 5 min | Background monitoring watches |
-| `/api/cron/role-tick` | Every 1 hour | Process agent role rotations |
-| `/api/cron/scheduler` | Every 1 min | Execute scheduled tasks from the task queue |
-| `/api/cron/sleep-consolidation` | Daily 3am UTC | 5-stage nightly memory consolidation |
-| `/api/cron/sleep-compute` | Daily 3am UTC | Compute sleep cycle metrics |
-| `/api/cron/memory-consolidation` | Daily 4am UTC | Legacy memory decay and promotion |
-| `/api/cron/consolidation` | Daily 4am UTC | General data consolidation |
-| `/api/cron/calibrate-confidence` | Daily 5am UTC | Adjust confidence routing thresholds |
-| `/api/cron/morning-briefing` | Daily 6am local | Generate morning briefing |
-| `/api/cron/monday-briefing` | Weekly (Monday) | Extended weekly briefing |
-| `/api/cron/daily-digest` | Daily 8am local | Send daily digest notification |
-| `/api/cron/weekly-report` | Weekly (Friday) | Generate weekly performance report |
-| `/api/cron/monthly-report` | Monthly (1st) | Generate monthly summary |
-| `/api/cron/billing` | Monthly | Process subscription billing |
-| `/api/cron/archive-threads` | Weekly | Archive stale conversation threads |
+<CronSchedule expression="*/15 * * * *" title="Channel Sync" showNextRuns={3} />
 
-<Note>
-Cron jobs are implemented as standard Next.js API route handlers. They are triggered by an external scheduler (Vercel Cron or a cron daemon) that calls each endpoint on schedule. Each job is idempotent and safe to re-run.
-</Note>
+<CronSchedule expression="*/15 * * * *" title="Proactive Intelligence" />
+
+<CronSchedule expression="*/15 * * * *" title="Proactive Alerts" />
+
+<CronSchedule expression="*/15 * * * *" title="Triage" />
+
+## Medium-Frequency Jobs (30 min - 1 hour)
+
+<CronSchedule expression="*/30 * * * *" title="Intelligence Analytics" />
+
+<CronSchedule expression="*/30 * * * *" title="Process Embeddings" />
+
+<CronSchedule expression="0 * * * *" title="Sentiment Drift" />
+
+<CronSchedule expression="0 * * * *" title="Contact Timing" />
+
+<CronSchedule expression="0 * * * *" title="Token Refresh (OAuth)" />
+
+<CronSchedule expression="0 * * * *" title="Role Tick" />
+
+## Low-Frequency Jobs (6 hours)
+
+<CronSchedule expression="0 */6 * * *" title="Revenue Intelligence" />
+
+<CronSchedule expression="0 */6 * * *" title="Relationship Health" />
+
+<CronSchedule expression="0 */6 * * *" title="Entity Profile Refresh" />
+
+## Sentry Monitoring
+
+<CronSchedule expression="*/5 * * * *" title="Sentry Background Watches" showNextRuns={5} />
 
 ## Nightly Pipeline
 
 The nightly jobs run in sequence between 3am and 6am UTC:
 
-1. **Sleep Consolidation** (3am) — summarize, resolve, discover, prune, brief
-2. **Memory Consolidation** (4am) — decay, promote, archive
-3. **Confidence Calibration** (5am) — adjust thresholds from outcome data
-4. **Morning Briefing** (6am) — compile actionable intel for the day
+<Steps>
+  <Step title="Sleep Consolidation (3am UTC)">
+    5-stage pipeline: summarize, resolve, discover, prune, brief.
+    <CronSchedule expression="0 3 * * *" title="Sleep Consolidation" showNextRuns={3} />
+  </Step>
+  <Step title="Memory Consolidation (4am UTC)">
+    Decay, promote, and archive memories based on access patterns.
+    <CronSchedule expression="0 4 * * *" title="Memory Consolidation" />
+  </Step>
+  <Step title="Confidence Calibration (5am UTC)">
+    Adjust confidence routing thresholds from outcome data.
+    <CronSchedule expression="0 5 * * *" title="Confidence Calibration" />
+  </Step>
+  <Step title="Morning Briefing (6am local)">
+    Compile actionable intelligence for the day.
+    <CronSchedule expression="0 6 * * *" title="Morning Briefing" />
+  </Step>
+</Steps>
 
-## High-Frequency Jobs
+## Weekly and Monthly Jobs
 
-The 15-minute cycle handles real-time responsiveness:
+<CronSchedule expression="0 6 * * 1" title="Monday Briefing" showNextRuns={2} />
 
-- **Channel Sync** — discovers new messages across all connected channels
-- **Proactive Intelligence** — evaluates signals and takes action
-- **Triage** — classifies and routes incoming messages to the right handler
+<CronSchedule expression="0 8 * * *" title="Daily Digest" />
+
+<CronSchedule expression="0 17 * * 5" title="Weekly Report" showNextRuns={2} />
+
+<CronSchedule expression="0 9 1 * *" title="Monthly Report" showNextRuns={2} />
+
+<CronSchedule expression="0 0 * * 0" title="Archive Threads" />
+
+<Note>
+Cron jobs are implemented as standard Next.js API route handlers. They are triggered by an external scheduler (Vercel Cron or a cron daemon) that calls each endpoint on schedule. Each job is idempotent and safe to re-run.
+</Note>
 
 <Warning>
 The sentry cron runs every 5 minutes and monitors configured watches (e.g., website uptime, Google Search Console changes). It should be lightweight to avoid excessive API costs.

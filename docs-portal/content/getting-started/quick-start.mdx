@@ -17,45 +17,53 @@ This guide walks you through setting up BitBit for local development.
 
 <Steps>
   <Step title="Clone and install">
-    ```bash
-    git clone https://github.com/your-org/bitbit.git
-    cd bitbit/personal-assistant
-    pnpm install
-    ```
+    <CodeBlockCommand
+      pnpm="pnpm install"
+      npm="npm install"
+      yarn="yarn install"
+      bun="bun install"
+    />
+
+    First clone the repo:
+
+    <CodeBlock code={`git clone https://github.com/your-org/bitbit.git
+cd bitbit/personal-assistant`} language="bash" title="Clone repository" />
   </Step>
   <Step title="Configure environment">
     Copy the example env file and fill in your API keys:
 
-    ```bash
-    cp .env.example .env.local
-    ```
+    <CodeBlock code="cp .env.example .env.local" language="bash" />
 
     Required variables:
 
-    ```
-    ANTHROPIC_API_KEY=sk-ant-...
-    VOYAGE_API_KEY=pa-...
-    NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-    SUPABASE_SERVICE_ROLE_KEY=...
-    ```
+    <EnvTable
+      title="Required Environment Variables"
+      variables={[
+        { key: "ANTHROPIC_API_KEY", value: "sk-ant-...", description: "Claude API key for the TAOR loop" },
+        { key: "VOYAGE_API_KEY", value: "pa-...", description: "Voyage AI embedding API key" },
+        { key: "NEXT_PUBLIC_SUPABASE_URL", value: "http://localhost:54321", environment: "development", description: "Local Supabase instance URL" },
+        { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", value: "eyJ...", environment: "development", description: "Supabase anonymous key" },
+        { key: "SUPABASE_SERVICE_ROLE_KEY", value: "eyJ...", environment: "development", description: "Supabase service role key (server-side only)" },
+      ]}
+    />
 
     <Note>
     Optional: Set `GOOGLE_API_KEY` for dual-embedding support (768d multimodal). Without it, the system falls back to Voyage-only embeddings.
     </Note>
   </Step>
   <Step title="Start Supabase locally">
-    ```bash
-    supabase start
-    supabase db reset  # applies all 80+ migrations
-    ```
+    <CodeBlock code={`supabase start
+supabase db reset  # applies all 80+ migrations`} language="bash" title="Start Supabase" />
 
     This creates all tables including `entity_nodes`, `entity_edges`, `event_tuples`, `memory_palace_entries`, and the full application schema.
   </Step>
   <Step title="Start the dev server">
-    ```bash
-    pnpm dev
-    ```
+    <CodeBlockCommand
+      pnpm="pnpm dev"
+      npm="npm run dev"
+      yarn="yarn dev"
+      bun="bun dev"
+    />
 
     The app runs at `http://localhost:3000`. The chat endpoint is at `/api/agent/chat`.
   </Step>
@@ -66,21 +74,44 @@ This guide walks you through setting up BitBit for local development.
 
 ## Project Structure
 
-```
-personal-assistant/
-├── src/app/          # Next.js App Router (pages, API routes, cron)
-├── src/lib/          # Core business logic (65+ modules)
-│   ├── agent/        # TAOR loop, tools, model routing
-│   ├── memory-palace/# Episodic + semantic memory
-│   ├── knowledge-graph/ # Entity graph (pgvector)
-│   ├── context-assembly/# 4-tier context pipeline
-│   ├── rag/          # Hybrid retrieval
-│   ├── proactive/    # Signal → Decision → Action
-│   └── channels/     # Gmail, Outlook, WhatsApp, etc.
-├── src/components/   # 31 domain-specific React component dirs
-├── supabase/         # 80+ migrations, seed data
-└── .planning/        # Architecture and planning docs
-```
+<FileTree
+  tree={[
+    { name: "personal-assistant", children: [
+      { name: "src", children: [
+        { name: "app", children: [
+          { name: "api", children: [
+            { name: "agent", children: [{ name: "chat", children: [{ name: "route.ts" }] }] },
+            { name: "cron", children: [{ name: "..." }] },
+          ]},
+          { name: "dashboard", children: [{ name: "page.tsx" }] },
+        ]},
+        { name: "lib", children: [
+          { name: "agent", children: [{ name: "taor-loop.ts" }, { name: "tools" }] },
+          { name: "memory-palace", children: [{ name: "index.ts" }] },
+          { name: "knowledge-graph", children: [{ name: "index.ts" }] },
+          { name: "context-assembly", children: [{ name: "index.ts" }] },
+          { name: "rag", children: [{ name: "index.ts" }] },
+          { name: "proactive", children: [{ name: "index.ts" }] },
+          { name: "channels", children: [{ name: "gmail.ts" }, { name: "outlook.ts" }, { name: "whatsapp.ts" }] },
+        ]},
+        { name: "components", children: [
+          { name: "kanban" },
+          { name: "chat" },
+          { name: "contacts" },
+        ]},
+      ]},
+      { name: "supabase", children: [
+        { name: "migrations", children: [{ name: "..." }] },
+        { name: "seed.sql" },
+      ]},
+      { name: ".planning" },
+      { name: "package.json" },
+      { name: ".env.example" },
+    ]},
+  ]}
+  iconStyle="colored"
+  highlight={["personal-assistant/src/lib/agent/taor-loop.ts"]}
+/>
 
 <Tip>
 Components are organized by **feature domain** (e.g., `components/kanban/`, `components/chat/`) rather than atomic design. This keeps related code co-located.

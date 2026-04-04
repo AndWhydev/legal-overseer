@@ -46,11 +46,9 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
   <Step title="Execution Loop">
     The core loop calls the Claude API and processes the response:
 
-    ```
-    Claude API Call → stop_reason?
-      ├── tool_use → Execute tools → Feed results back → Loop
-      └── end_turn → Yield final message → Done
-    ```
+    <CodeBlock code={`Claude API Call → stop_reason?
+  ├── tool_use → Execute tools → Feed results back → Loop
+  └── end_turn → Yield final message → Done`} language="bash" title="Loop decision tree" />
 
     Tools execute in batches with streaming. Results are fed back as `tool_result` messages for the next iteration.
   </Step>
@@ -66,15 +64,18 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
 
 The loop yields events as a server-sent event stream:
 
-| Event Type | Description |
-|-----------|-------------|
-| `stage` | Pipeline stage transitions (model_routing, context_assembly, etc.) |
-| `thinking` | Model routing and planning information |
-| `tool_call` | Tool invocation with name and parameters |
-| `tool_result` | Tool execution result |
-| `message` | Final text response (streamed incrementally) |
-| `error` | Error information |
-| `done` | Completion event with total token usage |
+<ApiRefTable
+  title="SSE Event Types"
+  props={[
+    { name: "stage", type: "string", description: "Pipeline stage transitions (model_routing, context_assembly, etc.)" },
+    { name: "thinking", type: "string", description: "Model routing and planning information" },
+    { name: "tool_call", type: "string", description: "Tool invocation with name and parameters" },
+    { name: "tool_result", type: "string", description: "Tool execution result" },
+    { name: "message", type: "string", description: "Final text response (streamed incrementally)" },
+    { name: "error", type: "string", description: "Error information" },
+    { name: "done", type: "string", description: "Completion event with total token usage" },
+  ]}
+/>
 
 <Tip>
 The `/api/agent/chat` route wraps the async generator in an SSE `ReadableStream`, sending each event as a `data:` frame. Clients can process events incrementally as they arrive.
