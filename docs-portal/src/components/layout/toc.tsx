@@ -36,10 +36,25 @@ export function TableOfContents({ headings }: { headings: TocItem[] }) {
   if (headings.length === 0) return null
 
   return (
-    <aside className="hidden min-[1320px]:block w-[var(--toc-width)] shrink-0 sticky top-[var(--header-height)] h-[calc(100vh-var(--header-height))]">
+    <aside
+      className="hidden min-[1320px]:block shrink-0 sticky top-[56px] h-[calc(100vh-56px)]"
+      style={{
+        width: "288px",
+        borderLeft: "1px solid rgba(38,38,38,0.10)",
+      }}
+    >
       <ScrollArea className="h-full">
         <div className="px-4 py-6">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--text-tertiary)] mb-3">
+          <div
+            className="mb-3"
+            style={{
+              fontSize: "11px",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              color: "rgba(38,38,38,0.40)",
+            }}
+          >
             On this page
           </div>
           {headings.map(({ id, text, level }) => (

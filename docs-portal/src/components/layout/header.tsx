@@ -5,8 +5,12 @@ import { Button } from "@/components/ui/button"
 export function Header() {
   return (
     <header
-      className="h-[var(--header-height)] bg-[var(--bg-surface)] flex items-center px-6 sticky top-0 z-50"
-      style={{ borderBottom: "0.5px solid var(--border-default)" }}
+      className="flex items-center px-6 sticky top-0 z-50"
+      style={{
+        height: "56px",
+        backgroundColor: "#FFFFFF",
+        borderBottom: "1px solid rgba(38,38,38,0.10)",
+      }}
     >
       <div className="flex items-center gap-2">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">

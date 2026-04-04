@@ -70,11 +70,10 @@ export default async function DocPage({
       <Header />
       <div className="flex min-h-[calc(100vh-var(--header-height))]">
         <Sidebar navigation={navigation} />
-        <main className="flex-1 max-w-[var(--content-max-width)] mx-auto px-6 py-8 min-w-0">
+        <main className="flex-1 mx-auto px-6 py-8 min-w-0" style={{ maxWidth: "720px" }}>
           <Breadcrumbs />
-          <h1>{doc.frontmatter.title as string}</h1>
           {doc.frontmatter.description && (
-            <p className="text-lg text-[var(--text-body)] mb-8">
+            <p className="text-lg mb-8" style={{ color: "rgba(38,38,38,0.80)" }}>
               {doc.frontmatter.description as string}
             </p>
           )}

@@ -56,8 +56,12 @@ export function Sidebar({ navigation }: SidebarProps) {
 
   return (
     <aside
-      className="w-[var(--sidebar-width)] shrink-0 sticky top-[var(--header-height)] h-[calc(100vh-var(--header-height))] bg-[var(--bg-sidebar)]"
-      style={{ borderRight: "0.5px solid var(--border-default)" }}
+      className="shrink-0 sticky top-[56px] h-[calc(100vh-56px)] overflow-y-auto"
+      style={{
+        width: "256px",
+        backgroundColor: "#FFFFFF",
+        borderRight: "1px solid rgba(38,38,38,0.10)",
+      }}
     >
       <ScrollArea className="h-full">
         <nav className="py-6">
