@@ -13,6 +13,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { generateText } from 'ai'
 import { models } from '@/lib/ai'
 import { logger } from '@/lib/core/logger'
+import { evaluateProjectLifecycles } from '@/lib/intelligence/project-lifecycle'
+import type { LifecycleAction } from '@/lib/intelligence/project-lifecycle'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -33,6 +35,7 @@ interface MorningBriefing {
   blockedEntities: Array<{ sourceId: string; targetId: string; relationType: string }>
   newDiscoveries: number
   pendingApprovals: number
+  lifecycleActions: Array<{ projectName: string; action: string; reason: string; confidence: number }>
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -529,6 +532,23 @@ async function stageMorningBriefing(
     .like('relation_type', '%approv%')
     .is('valid_until', null)
 
+  // Evaluate project lifecycle actions for the briefing
+  let lifecycleActions: LifecycleAction[] = []
+  try {
+    lifecycleActions = await evaluateProjectLifecycles(supabase, orgId)
+    if (lifecycleActions.length > 0) {
+      logger.info('[sleep-consolidation] Stage 5 lifecycle actions found', {
+        orgId,
+        count: lifecycleActions.length,
+      })
+    }
+  } catch (err) {
+    logger.warn('[sleep-consolidation] Stage 5 lifecycle evaluation failed', {
+      orgId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
   const briefing: MorningBriefing = {
     generatedAt: now.toISOString(),
     upcomingDeadlines: deadlineItems,
@@ -539,6 +559,12 @@ async function stageMorningBriefing(
     })),
     newDiscoveries: discoveries?.length ?? 0,
     pendingApprovals: pendingApprovals?.length ?? 0,
+    lifecycleActions: lifecycleActions.map((a) => ({
+      projectName: a.projectName,
+      action: a.action,
+      reason: a.reason,
+      confidence: a.confidence,
+    })),
   }
 
   // Store in organisations.settings via JSONB merge

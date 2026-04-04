@@ -17,6 +17,7 @@ import { logger } from '@/lib/core/logger'
 import { aggregateSignals } from './aggregator'
 import { classifySignals } from './classifier'
 import { executeAction } from './executor'
+import { evaluateProjectLifecycles } from '@/lib/intelligence/project-lifecycle'
 import type {
   ProactiveSignal,
   ProactiveAction,
@@ -242,6 +243,45 @@ function matchHardcodedRule(signal: ProactiveSignal): import('./types').Proactiv
     }
   }
 
+  // Rule 4: Project lifecycle — all phases complete, ready to invoice
+  if (signal.type === 'project_lifecycle_generate_invoice') {
+    return {
+      shouldAct: true,
+      action: 'create_task',
+      confidence: (data.confidence as number) ?? 0.85,
+      reasoning: `Project "${String(data.project_name)}": ${String(data.reason)}`,
+      urgency: 'today',
+      channel: 'chat_whisper',
+      autonomyLevel: 3,
+    }
+  }
+
+  // Rule 5: Project lifecycle — stale invoice or stale project
+  if (signal.type === 'project_lifecycle_flag_stale') {
+    return {
+      shouldAct: true,
+      action: 'alert_user',
+      confidence: (data.confidence as number) ?? 0.8,
+      reasoning: `Project "${String(data.project_name)}": ${String(data.reason)}`,
+      urgency: 'today',
+      channel: 'chat_whisper',
+      autonomyLevel: 3,
+    }
+  }
+
+  // Rule 6: Project lifecycle — blockers resolved, ready to advance
+  if (signal.type === 'project_lifecycle_advance_phase') {
+    return {
+      shouldAct: true,
+      action: 'create_task',
+      confidence: (data.confidence as number) ?? 0.75,
+      reasoning: `Project "${String(data.project_name)}": ${String(data.reason)}`,
+      urgency: 'today',
+      channel: 'chat_whisper',
+      autonomyLevel: 3,
+    }
+  }
+
   return null
 }
 
@@ -257,7 +297,8 @@ function matchHardcodedRule(signal: ProactiveSignal): import('./types').Proactiv
  * - Hot leads
  * - Unanswered messages (stale conversations)
  * - Upcoming deadlines (tasks due soon)
- * - Negative sentiment flags
+ * - Project deadline signals (overdue actions, stale blockers)
+ * - Project lifecycle signals (phase completion, stale invoices, blocker resolution)
  */
 async function gatherSignals(
   supabase: SupabaseClient,
@@ -273,15 +314,17 @@ async function gatherSignals(
     staleConversations,
     upcomingDeadlines,
     projectDeadlines,
+    lifecycleSignals,
   ] = await Promise.all([
     gatherOverdueInvoiceSignals(supabase, orgId, now),
     gatherHotLeadSignals(supabase, orgId, now),
     gatherStaleConversationSignals(supabase, orgId, now),
     gatherUpcomingDeadlineSignals(supabase, orgId, now),
     gatherProjectDeadlineSignals(supabase, orgId, now),
+    gatherProjectLifecycleSignals(supabase, orgId, now),
   ])
 
-  signals.push(...overdueInvoices, ...hotLeads, ...staleConversations, ...upcomingDeadlines, ...projectDeadlines)
+  signals.push(...overdueInvoices, ...hotLeads, ...staleConversations, ...upcomingDeadlines, ...projectDeadlines, ...lifecycleSignals)
 
   return signals
 }
@@ -521,6 +564,45 @@ async function gatherProjectDeadlineSignals(
     return signals
   } catch (err) {
     logger.warn('[proactive] Failed to gather project deadline signals', {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return []
+  }
+}
+
+async function gatherProjectLifecycleSignals(
+  supabase: SupabaseClient,
+  orgId: string,
+  now: string,
+): Promise<ProactiveSignal[]> {
+  try {
+    const actions = await evaluateProjectLifecycles(supabase, orgId)
+    if (!actions.length) return []
+
+    return actions.map((action) => {
+      const severityMap: Record<string, ProactiveSignal['severity']> = {
+        generate_invoice: 'high',
+        flag_stale: 'medium',
+        advance_phase: 'medium',
+        close_project: 'low',
+      }
+
+      return {
+        type: 'project_lifecycle_' + action.action,
+        source: 'project_lifecycle',
+        severity: severityMap[action.action] ?? 'medium',
+        data: {
+          project_id: action.projectId,
+          project_name: action.projectName,
+          action: action.action,
+          reason: action.reason,
+          confidence: action.confidence,
+        },
+        timestamp: now,
+      }
+    })
+  } catch (err) {
+    logger.warn('[proactive] Failed to gather project lifecycle signals', {
       error: err instanceof Error ? err.message : String(err),
     })
     return []
