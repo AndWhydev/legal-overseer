@@ -233,11 +233,11 @@ export async function processEmbeddingQueue(
               embedded: embedResult.embedded,
             })
 
-            if (job.metadata?.recontextualize) {
+            if ((job.metadata as unknown as Record<string, unknown>)?.recontextualize) {
               logger.info('[embedding-queue] Re-contextualized:', {
                 jobId: job.id,
                 messageId: job.message_id,
-                channel: job.metadata.channel,
+                channel: job.metadata?.channel,
               })
             }
 

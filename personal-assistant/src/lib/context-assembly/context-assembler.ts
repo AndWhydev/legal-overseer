@@ -667,9 +667,7 @@ export class ContextAssembler {
     try {
       const procedure = await matchProcedure(supabase, orgId, currentMessage)
       if (procedure) {
-        const procSection = `## Known Procedure: ${procedure.name}
-${procedure.steps.map((s: string, i: number) => `${i + 1}. ${s}`).join('
-')}`
+        const procSection = `## Known Procedure: ${procedure.name}\n${procedure.steps.map((s: string, i: number) => `${i + 1}. ${s}`).join("\n")}`
         finalSystemPrompt = `${finalSystemPrompt}
 
 ${procSection}`

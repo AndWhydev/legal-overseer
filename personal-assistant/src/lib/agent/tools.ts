@@ -718,7 +718,7 @@ const handlers: Record<string, AgentToolHandler> = {
   // Memory tools stay in tools.ts (not shared — chat-specific)
   async search_memory(input, orgId, supabase) {
     const query = input.query as string
-    const { complexity } = classifyQuery(query)
+    const { complexity } = classifyQuery(query || "")
     const routerConfig = getRetrievalConfig(complexity)
     logger.info("[search_memory] Query classified as:", complexity)
     const results: { source: string; entries: unknown[] }[] = []
@@ -910,7 +910,7 @@ const handlers: Record<string, AgentToolHandler> = {
     const name = input.name as string
     const triggerPattern = input.trigger_pattern as string
     const steps = input.steps as string[]
-    const source = (input.source as observed | explicit) || explicit
+    const source = ((input.source as string) || "explicit") as "observed" | "explicit" | "consolidation"
 
     if (!name || !triggerPattern || !steps?.length) {
       return { success: false, error: "name, trigger_pattern, and steps are required" }
@@ -918,7 +918,7 @@ const handlers: Record<string, AgentToolHandler> = {
 
     // Validate regex
     try {
-      new RegExp(triggerPattern, i)
+      new RegExp(triggerPattern, "i")
     } catch {
       return { success: false, error: `Invalid regex pattern: ${triggerPattern}` }
     }
@@ -933,7 +933,7 @@ const handlers: Record<string, AgentToolHandler> = {
 
     const toolName = input.tool_name as string | undefined
     const query = input.query as string | undefined
-    const { complexity } = classifyQuery(query)
+    const { complexity } = classifyQuery(query || "")
     const routerConfig = getRetrievalConfig(complexity)
     logger.info("[search_memory] Query classified as:", complexity)
 
