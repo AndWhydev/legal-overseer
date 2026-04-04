@@ -4,6 +4,7 @@ import {
   storeCalibratedThresholds,
 } from '@/lib/intelligence/confidence-calibrator'
 import { logger } from '@/lib/core/logger'
+import { checkGraduations } from '@/lib/intelligence/autonomy-graduation'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
       .select('id')
 
     if (orgError) {
-      throw new Error(`Failed to fetch organisations: ${orgError.message}`)
+      throw new Error('Failed to fetch organisations: ' + orgError.message)
     }
 
     if (!orgs || orgs.length === 0) {
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
 
     let totalCalibrated = 0
     let totalSkipped = 0
+    let totalGraduated = 0
     const results: Record<string, unknown>[] = []
 
     for (const org of orgs) {
@@ -56,20 +58,36 @@ export async function GET(request: Request) {
               await storeCalibratedThresholds(supabase, orgId, agentType, calibrated)
               totalCalibrated++
               logger.info(
-                `[cron/calibrate-confidence] Calibrated ${agentType} for org ${orgId}: ` +
-                `act=${calibrated.act.toFixed(2)} ask=${calibrated.ask.toFixed(2)} ` +
-                `samples=${calibrated.sampleSize}`,
+                '[cron/calibrate-confidence] Calibrated ' + agentType + ' for org ' + orgId + ': ' +
+                'act=' + calibrated.act.toFixed(2) + ' ask=' + calibrated.ask.toFixed(2) + ' ' +
+                'samples=' + calibrated.sampleSize,
               )
             } else {
               totalSkipped++
             }
           } catch (agentErr) {
             logger.warn(
-              `[cron/calibrate-confidence] Failed to calibrate ${agentType} for org ${orgId}:`,
+              '[cron/calibrate-confidence] Failed to calibrate ' + agentType + ' for org ' + orgId + ':',
               agentErr,
             )
             totalSkipped++
           }
+        }
+
+        // Check autonomy graduations for this org
+        try {
+          const graduations = await checkGraduations(supabase, orgId)
+          const graduated = graduations.filter(g => g.graduated)
+          if (graduated.length > 0) {
+            totalGraduated += graduated.length
+            const summary = graduated.map(g => g.tool + ' (' + (g.approvalRate * 100).toFixed(1) + '%)').join(', ')
+            logger.info('[cron/calibrate-confidence] Graduated tools: ' + summary)
+          }
+        } catch (gradErr) {
+          logger.warn(
+            '[cron/calibrate-confidence] Graduation check failed for org ' + orgId + ':',
+            gradErr,
+          )
         }
 
         results.push({
@@ -78,7 +96,7 @@ export async function GET(request: Request) {
         })
       } catch (orgErr) {
         logger.error(
-          `[cron/calibrate-confidence] Failed processing org ${orgId}:`,
+          '[cron/calibrate-confidence] Failed processing org ' + orgId + ':',
           orgErr,
         )
         results.push({
@@ -89,11 +107,12 @@ export async function GET(request: Request) {
     }
 
     return {
-      message: `Calibration complete: ${totalCalibrated} calibrated, ${totalSkipped} skipped (insufficient data)`,
+      message: 'Calibration complete: ' + totalCalibrated + ' calibrated, ' + totalSkipped + ' skipped, ' + totalGraduated + ' graduated',
       details: {
         orgsProcessed: orgs.length,
         calibrated: totalCalibrated,
         skipped: totalSkipped,
+        graduated: totalGraduated,
         results,
       },
     }
