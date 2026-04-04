@@ -29,7 +29,7 @@ function NextActionPanelInner({ nextAction, nextActionAt, onSave }: NextActionPa
 
   return (
     <div>
-      <h4 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h4 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
         Next Action
       </h4>
 

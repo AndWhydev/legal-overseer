@@ -99,7 +99,7 @@ function LeadsKanbanViewInner({
               {/* Column header */}
               <div className="px-2 pb-2">
                 <div className="mb-2 flex items-center gap-2">
-                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
                     {column.label}
                   </h3>
                   <span className="font-mono text-sm font-medium text-muted-foreground" aria-label={`${leads.length} leads`}>
@@ -111,7 +111,7 @@ function LeadsKanbanViewInner({
 
               {/* Drop zone */}
               <div
-                className="flex min-h-[120px] flex-1 flex-col gap-2.5 rounded-xl border border-dashed border-transparent p-2 transition-colors"
+                className="flex min-h-[120px] flex-1 flex-col gap-3 rounded-xl border border-dashed border-transparent p-2 transition-colors"
                 aria-label={`Drop zone for ${column.label}`}
               >
                 {leads.map((lead) => (

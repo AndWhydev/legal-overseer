@@ -49,7 +49,7 @@ function FactorList({ breakdown }: { breakdown: ScoreBreakdown | null }) {
 function ScoreBreakdownPanelInner({ fitScore, opportunityScore, fitBreakdown, opportunityBreakdown }: ScoreBreakdownPanelProps) {
   return (
     <div>
-      <h4 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h4 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
         Score Breakdown
       </h4>
 
@@ -60,14 +60,14 @@ function ScoreBreakdownPanelInner({ fitScore, opportunityScore, fitBreakdown, op
 
       {fitBreakdown && (
         <div className="mb-3">
-          <div className="mb-2 text-xs font-medium text-muted-foreground">Fit Factors</div>
+          <div className="mb-2 text-sm font-medium text-muted-foreground">Fit Factors</div>
           <FactorList breakdown={fitBreakdown} />
         </div>
       )}
 
       {opportunityBreakdown && (
         <div>
-          <div className="mb-2 text-xs font-medium text-muted-foreground">Opportunity Factors</div>
+          <div className="mb-2 text-sm font-medium text-muted-foreground">Opportunity Factors</div>
           <FactorList breakdown={opportunityBreakdown} />
         </div>
       )}

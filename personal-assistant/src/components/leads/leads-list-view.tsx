@@ -47,7 +47,7 @@ const LeadDetailPanel = memo(function LeadDetailPanel({ lead, onAdvanceStage }: 
   const isLost = lead.status === 'lost'
 
   return (
-    <div className="space-y-4 border-t bg-muted/30 p-5">
+    <div className="space-y-4 border-t bg-muted p-5">
       {/* Progress bar */}
       <div className="flex items-center gap-1" role="progressbar" aria-label="Lead stage progress">
         {PROGRESS_STAGES.map((stage, i) => (
@@ -57,7 +57,7 @@ const LeadDetailPanel = memo(function LeadDetailPanel({ lead, onAdvanceStage }: 
               className={cn('h-0.5', isLost && '[&>[data-slot=progress-indicator]]:bg-muted-foreground')}
             />
             <span className={cn(
-              'text-xs font-medium',
+              'text-sm font-medium',
               i <= stageIdx ? 'text-foreground' : 'text-muted-foreground'
             )}>
               {stage.label}
@@ -88,7 +88,7 @@ const LeadDetailPanel = memo(function LeadDetailPanel({ lead, onAdvanceStage }: 
       {/* Contact */}
       {(lead.prospect_phone || (lead.prospect_emails && lead.prospect_emails.length > 0)) && (
         <div>
-          <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Contact</h4>
+          <h4 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Contact</h4>
           {lead.prospect_phone && (
             <div className="text-sm text-muted-foreground">
               Phone: <span className="text-foreground">{lead.prospect_phone}</span>
@@ -105,8 +105,8 @@ const LeadDetailPanel = memo(function LeadDetailPanel({ lead, onAdvanceStage }: 
       {/* Notes */}
       {lead.notes && (
         <div>
-          <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Notes</h4>
-          <div className="whitespace-pre-wrap rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground leading-relaxed">
+          <h4 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Notes</h4>
+          <div className="whitespace-pre-wrap rounded-lg bg-muted p-3 text-sm text-muted-foreground leading-relaxed">
             {lead.notes}
           </div>
         </div>

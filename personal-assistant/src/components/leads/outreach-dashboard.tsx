@@ -135,7 +135,7 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
       {/* Campaigns Section */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Campaigns</h3>
+          <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Campaigns</h3>
           <Button onClick={() => setCampaignCreateOpen(true)}>
             <IconPlus data-icon /> New Campaign
           </Button>
@@ -175,14 +175,14 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
               {campaigns.map(campaign => (
                 <div
                   key={campaign.id}
-                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted"
                 >
                   <span className="flex-1 text-sm font-medium text-foreground">{campaign.name}</span>
                   <Badge variant={(CAMPAIGN_STATUS_VARIANT as Record<string, 'default' | 'secondary' | 'destructive' | 'outline'>)[campaign.status] ?? 'secondary'}>
                     {campaign.status}
                   </Badge>
                   <span className="text-sm font-mono text-muted-foreground">{campaign.sent_count} sent</span>
-                  <span className="text-sm font-mono text-muted-foreground">{formatDate(campaign.created_at)}</span>
+                  <span className="text-sm text-muted-foreground">{formatDate(campaign.created_at)}</span>
                   {(campaign.status === 'draft' || campaign.status === 'active') && (
                     <Button
                       size="sm"
@@ -204,7 +204,7 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
       {/* Templates Section */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Templates</h3>
+          <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Templates</h3>
           <Button variant="outline" onClick={() => setTemplateEditorOpen(true)}>
             <IconPlus data-icon /> New Template
           </Button>
@@ -235,7 +235,7 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
               {templates.map(template => (
                 <div
                   key={template.id}
-                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted"
                 >
                   <IconFileText data-icon className="shrink-0 text-muted-foreground" />
                   <span className="flex-1 text-sm font-medium text-foreground">{template.name}</span>

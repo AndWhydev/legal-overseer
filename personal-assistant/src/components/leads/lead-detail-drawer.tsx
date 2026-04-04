@@ -160,7 +160,7 @@ function LeadDetailDrawerInner({ lead, open, onClose, onUpdate, onAdvanceStage }
                   className={cn('h-0.5', isLost && '[&>[data-slot=progress-indicator]]:bg-muted-foreground')}
                 />
                 <span className={cn(
-                  'text-xs font-medium',
+                  'text-sm font-medium',
                   i <= stageIdx ? 'text-foreground' : 'text-muted-foreground'
                 )}>
                   {stage.label}
@@ -210,7 +210,7 @@ function LeadDetailDrawerInner({ lead, open, onClose, onUpdate, onAdvanceStage }
           {/* Contact Info */}
           {(lead.prospect_phone || (lead.prospect_emails && lead.prospect_emails.length > 0)) && (
             <div>
-              <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Contact</h4>
+              <h4 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Contact</h4>
               {lead.prospect_phone && (
                 <div className="text-sm text-muted-foreground">
                   Phone: <span className="text-foreground">{lead.prospect_phone}</span>
@@ -232,8 +232,8 @@ function LeadDetailDrawerInner({ lead, open, onClose, onUpdate, onAdvanceStage }
           {/* Notes */}
           {lead.notes && (
             <div>
-              <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Notes</h4>
-              <div className="whitespace-pre-wrap rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground leading-relaxed">
+              <h4 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Notes</h4>
+              <div className="whitespace-pre-wrap rounded-lg bg-muted p-3 text-sm text-muted-foreground leading-relaxed">
                 {lead.notes}
               </div>
             </div>
@@ -242,7 +242,7 @@ function LeadDetailDrawerInner({ lead, open, onClose, onUpdate, onAdvanceStage }
           {/* Service Interest */}
           {lead.service_interest && lead.service_interest.length > 0 && (
             <div>
-              <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Services</h4>
+              <h4 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Services</h4>
               <div className="flex flex-wrap gap-1.5">
                 {lead.service_interest.map((s) => (
                   <Badge key={s} variant="outline">{s}</Badge>
@@ -253,7 +253,7 @@ function LeadDetailDrawerInner({ lead, open, onClose, onUpdate, onAdvanceStage }
 
           {/* Activity Timeline */}
           <div>
-            <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Timeline</h4>
+            <h4 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Timeline</h4>
             <div className="space-y-2 border-l-2 border-border pl-3">
               <TimelineEntry label="Created" date={lead.created_at} />
               {lead.first_ack_at && <TimelineEntry label="First acknowledged" date={lead.first_ack_at} />}
@@ -264,7 +264,7 @@ function LeadDetailDrawerInner({ lead, open, onClose, onUpdate, onAdvanceStage }
           </div>
 
           {/* Lead ID */}
-          <div className="pt-2 font-mono text-xs text-muted-foreground">
+          <div className="pt-2 text-sm text-muted-foreground">
             ID: {lead.id}
           </div>
         </div>

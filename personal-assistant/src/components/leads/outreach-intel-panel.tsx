@@ -26,14 +26,14 @@ function OutreachIntelPanelInner({ opportunityNotes, outreachAngle, priorityServ
 
   return (
     <div>
-      <h4 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h4 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
         Outreach Intelligence
       </h4>
 
       {outreachAngle && (
         <Card className="mb-4 gap-1 py-3">
           <CardContent>
-            <div className="text-xs font-medium uppercase text-muted-foreground">Suggested Angle</div>
+            <div className="text-sm font-medium uppercase text-muted-foreground">Suggested Angle</div>
             <div className="text-sm font-medium text-foreground">{outreachAngle}</div>
           </CardContent>
         </Card>
@@ -54,7 +54,7 @@ function OutreachIntelPanelInner({ opportunityNotes, outreachAngle, priorityServ
 
       {priorityServices && priorityServices.length > 0 && (
         <div>
-          <div className="mb-2 text-xs font-medium text-muted-foreground">Priority Services</div>
+          <div className="mb-2 text-sm font-medium text-muted-foreground">Priority Services</div>
           <div className="flex flex-wrap gap-1.5">
             {priorityServices.map((s) => (
               <Badge key={s} variant="outline">{s}</Badge>

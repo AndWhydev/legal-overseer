@@ -49,7 +49,7 @@ function LeadCardInner({ lead, onClick }: LeadCardProps) {
 
         {/* Outreach angle */}
         {lead.outreach_angle && (
-          <p className="line-clamp-2 text-xs italic text-muted-foreground">
+          <p className="line-clamp-2 text-sm italic text-muted-foreground">
             &ldquo;{lead.outreach_angle}&rdquo;
           </p>
         )}
@@ -59,7 +59,7 @@ function LeadCardInner({ lead, onClick }: LeadCardProps) {
           <Badge variant={SCORE_VARIANT[lead.score] ?? 'secondary'}>
             {lead.score.charAt(0).toUpperCase() + lead.score.slice(1)}
           </Badge>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {relativeTime(lead.updated_at)}
           </span>
         </div>

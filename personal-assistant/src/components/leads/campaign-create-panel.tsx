@@ -147,7 +147,7 @@ function CampaignCreatePanelInner({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label>Select Leads ({emailableLeads.length} with email)</Label>
-              <Button variant="link" size="sm" onClick={selectAll} className="h-auto p-0 text-xs">
+              <Button variant="link" size="sm" onClick={selectAll} className="h-auto p-0 text-sm">
                 {selectedLeadIds.size === emailableLeads.length ? 'Deselect All' : 'Select All'}
               </Button>
             </div>
@@ -166,7 +166,7 @@ function CampaignCreatePanelInner({
                       key={lead.id}
                       onClick={() => toggleLead(lead.id)}
                       className={cn(
-                        'flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50',
+                        'flex cursor-pointer items-center gap-3 px-3 py-3 transition-colors hover:bg-muted',
                         selected && 'bg-muted'
                       )}
                     >
@@ -175,7 +175,7 @@ function CampaignCreatePanelInner({
                         onCheckedChange={() => toggleLead(lead.id)}
                       />
                       <span className="flex-1 text-sm font-medium text-foreground">{displayName}</span>
-                      <span className="text-xs font-mono text-muted-foreground">{lead.prospect_emails?.[0]}</span>
+                      <span className="text-sm text-muted-foreground">{lead.prospect_emails?.[0]}</span>
                     </div>
                   )
                 })

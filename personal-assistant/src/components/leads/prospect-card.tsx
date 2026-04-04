@@ -22,7 +22,7 @@ interface ProspectCardProps {
 function ScoreMini({ label, score }: { label: string; score: number }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       <span className="text-sm font-medium font-mono text-foreground">{score}</span>
     </div>
   )
