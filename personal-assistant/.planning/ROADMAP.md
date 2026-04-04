@@ -74,7 +74,7 @@ Plans:
 
 Plans:
 - [x] 38-01: Build sleep-consolidation.ts with 5-stage pipeline
-- [ ] 38-02: Morning briefing generator + dashboard/API surface + cron route
+- [x] 38-02: Morning briefing generator + dashboard/API surface + cron route
 
 ### Phase 39: Adaptive Query Routing
 **Goal:** Rule-based query classifier (simple/moderate/complex) that right-sizes retrieval. Simple queries skip heavy pipeline, complex queries get full graph+vector+rerank.
@@ -102,6 +102,6 @@ Plans:
 | 35. Entity Graph Foundation | 3/3 | Complete | 2026-04-04 |
 | 36. Graph-Aware Retrieval | 2/2 | Complete | 2026-04-04 |
 | 37. Contextual Retrieval | 2/2 | Complete | 2026-04-04 |
-| 38. Sleep Consolidation | 1/2 | In progress | - |
+| 38. Sleep Consolidation | 2/2 | Complete | 2026-04-04 |
 | 39. Adaptive Query Routing | 0/1 | Not started | - |
 | 40. Predictive + Procedural | 0/2 | Not started | - |
