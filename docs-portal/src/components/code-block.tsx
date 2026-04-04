@@ -110,10 +110,10 @@ export async function CodeBlock({
     <div
       data-slot="code-block"
       className={cn(
-        "overflow-hidden rounded-xl border shadow-sm",
+        "overflow-hidden rounded-lg border",
         muted
-          ? "border-border/40 bg-muted/30"
-          : "border-border/60 bg-card",
+          ? "border-border bg-muted/20"
+          : "border-border bg-background",
         className
       )}
       {...props}
@@ -121,10 +121,10 @@ export async function CodeBlock({
       {!compact && (
         <div
           className={cn(
-            "flex items-center justify-between gap-3 border-b px-4 py-3",
+            "flex items-center justify-between gap-3 border-b px-3 py-2.5",
             muted
               ? "border-border/40 bg-muted/20"
-              : "border-border/60 bg-muted/40"
+              : "border-border/50 bg-muted/30"
           )}
         >
           <div className="flex min-w-0 items-center gap-2">
@@ -141,7 +141,7 @@ export async function CodeBlock({
             ) : (
               <span
                 className={cn(
-                  "rounded-md border px-2 py-1 text-[11px] font-medium uppercase tracking-wide",
+                  "rounded border px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wide",
                   muted
                     ? "border-border/40 bg-muted/40 text-muted-foreground/70"
                     : "border-border/60 bg-background text-muted-foreground"
@@ -168,9 +168,9 @@ export async function CodeBlock({
           )}
           <div
             className={cn(
-              "code-block [&_code]:font-mono [&_code]:text-[13px] [&_pre]:m-0 [&_pre]:overflow-x-auto [&_pre]:p-4 [&_pre]:sm:p-5",
+              "code-block [&_code]:font-mono [&_code]:text-[13px] [&_pre]:m-0 [&_pre]:overflow-x-auto [&_pre]:p-4",
               theme
-                ? "[&_pre]:rounded-b-xl"
+                ? "[&_pre]:rounded-b-lg"
                 : "[&_pre]:bg-transparent",
               muted && "[&_code]:opacity-80"
             )}

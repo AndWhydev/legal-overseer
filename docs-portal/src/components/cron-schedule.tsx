@@ -220,7 +220,7 @@ function CronSchedule({
   if (fields.length !== 5) {
     return (
       <div
-        data-slot="cron-schedule"
+        data-slot="cron-schedule" style={{ marginBottom: "24px" }}
         className={cn(
           "rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive",
           className
@@ -240,7 +240,7 @@ function CronSchedule({
 
   return (
     <div
-      data-slot="cron-schedule"
+      data-slot="cron-schedule" style={{ marginBottom: "24px" }}
       className={cn(
         "overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm",
         className

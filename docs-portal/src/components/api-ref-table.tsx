@@ -32,14 +32,14 @@ interface ApiRefTableProps extends React.ComponentProps<"div"> {
 
 function typeColor(type: string) {
   const base = type.replace(/[[\]?|]/g, "").trim().toLowerCase()
-  if (base === "string") return "text-sky-400"
-  if (base === "number") return "text-amber-400"
-  if (base === "boolean") return "text-purple-400"
-  if (base === "function") return "text-rose-400"
-  if (base === "reactnode" || base === "react.reactnode") return "text-teal-400"
-  if (base === "undefined") return "text-blue-400"
+  if (base === "string") return "text-muted-foreground"
+  if (base === "number") return "text-muted-foreground"
+  if (base === "boolean") return "text-muted-foreground"
+  if (base === "function") return "text-muted-foreground"
+  if (base === "reactnode" || base === "react.reactnode") return "text-muted-foreground"
+  if (base === "undefined") return "text-muted-foreground"
   if (base === "null") return "text-gray-400"
-  return "text-emerald-400"
+  return "text-muted-foreground"
 }
 
 function TypeDisplay({ type }: { type: string }) {
@@ -83,7 +83,7 @@ function ApiRefRow({ prop }: { prop: ApiProp }) {
         aria-expanded={hasDetails ? open : undefined}
       >
         <span className="min-w-[180px] shrink-0 font-mono text-sm">
-          <span className="text-sky-300">{prop.name}</span>
+          <span className="text-foreground">{prop.name}</span>
           {!prop.required && (
             <span className="text-muted-foreground">?</span>
           )}
@@ -128,7 +128,7 @@ function ApiRefRow({ prop }: { prop: ApiProp }) {
 
 export function ApiRefTable({ title, props, className, ...rest }: ApiRefTableProps) {
   return (
-    <div data-slot="api-ref-table" className={cn("overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm", className)} {...rest}>
+    <div data-slot="api-ref-table" className={cn("overflow-hidden rounded-lg border border-border bg-background", className)} {...rest}>
       <div className="border-b border-border/40 px-4 py-3">
         <h3 className="text-lg font-bold tracking-tight">{title}</h3>
       </div>

@@ -101,8 +101,8 @@ export function CodeBlockWrapper({
         className={cn(
           "flex w-full items-center justify-center gap-1.5 border-t py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground",
           muted
-            ? "border-border/40 bg-muted/10 hover:bg-muted/30"
-            : "border-border/60 bg-muted/30 hover:bg-muted/50"
+            ? "border-border bg-muted/10 hover:bg-muted/20"
+            : "border-border bg-muted/20 hover:bg-muted/30"
         )}
       >
         <ChevronDown

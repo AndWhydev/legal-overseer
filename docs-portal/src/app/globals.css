@@ -174,14 +174,17 @@
 }
 
 /* Markdown tables (from remark-gfm) -- NOT jalco tables */
-.mdx-content > table {
+.mdx-content table {
   width: 100%;
   border-collapse: collapse;
   margin: 24px 0;
   font-size: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.mdx-content > table th {
+.mdx-content table th {
   text-align: left;
   font-weight: 600;
   padding: 8px 12px;
@@ -189,11 +192,13 @@
   color: var(--text-heading);
 }
 
-.mdx-content > table td {
-  padding: 8px 12px;
+.mdx-content table td {
+  padding: 10px 12px;
   color: var(--text-body);
   vertical-align: top;
   border-bottom: 1px solid rgba(222, 222, 222, 0.5);
+  white-space: normal;
+  word-break: break-word;
 }
 
 .mdx-content ul,
@@ -361,4 +366,27 @@
   background: none;
   padding: 0;
   border-radius: 0;
+}
+
+
+/* Prevent mdx-content styles from creating double borders inside jalco CodeBlock */
+.mdx-content [data-slot] pre,
+.mdx-content [data-slot] code {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* Jalco components inside mdx-content should not inherit table/heading resets */
+.mdx-content [data-slot] table,
+.mdx-content [data-slot] th,
+.mdx-content [data-slot] td {
+  all: revert;
+}
+
+/* Ensure jalco components have proper bottom margin when stacked */
+.mdx-content [data-slot] {
+  margin-bottom: 24px;
 }

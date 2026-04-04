@@ -55,6 +55,7 @@ export function Sidebar({ navigation }: SidebarProps) {
                   style={{
                     display: "block",
                     padding: "6px 12px 6px 16px",
+                    marginBottom: "4px",
                     fontSize: "14px",
                     lineHeight: "20px",
                     textDecoration: "none",
