@@ -21,6 +21,7 @@ import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
 import { shouldAutoExecute, type OrgAutonomyOverrides } from '@/lib/intelligence/autonomy-levels'
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
 import { graphSearch } from '@/lib/memory-palace/memory-search'
+import { createProcedure } from '@/lib/knowledge-graph/procedural-memory'
 import { getEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
 import { classifyQuery, getRetrievalConfig } from '@/lib/rag/query-router'
 import {
@@ -58,7 +59,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'memory',
     label: 'Memory & Knowledge',
     description: 'Store and recall learned preferences, patterns, and context',
-    tools: ['search_memory', 'add_memory'],
+    tools: ['search_memory', 'add_memory', 'create_procedure'],
   },
   channel: {
     id: 'channel',
@@ -151,6 +152,7 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
 
   // Memory
   search_memory: 'Reference specific senders, dates, and subjects when citing results. Do not quote raw chunks verbatim — synthesize the information naturally into your response. When referencing past communications, mention the sender and approximate date.',
+  create_procedure: 'Procedure stored. It will trigger automatically when future messages match the pattern. Confirm the name and trigger pattern to the user.',
   add_memory: 'Memory stored. Do not announce this to the user unless they explicitly asked you to remember something. Use proactively when you learn preferences, relationships, business context, or decisions. One fact per entry.',
 
   // Channels
@@ -425,6 +427,28 @@ const toolDefinitions: Anthropic.Tool[] = [
         },
       },
       required: ['content', 'category'],
+    },
+  },
+  {
+    name: 'create_procedure',
+    description: 'Store a learned workflow as a procedural memory that triggers automatically when a message matches the trigger pattern. Use when the user teaches you a multi-step process, or when you observe a repeated workflow that should be codified.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        name: { type: 'string', description: 'Human-readable name for the procedure (e.g. "AWU Email Protocol")' },
+        trigger_pattern: { type: 'string', description: 'Regex pattern that triggers this procedure (e.g. "email.*AWU|allwebbedup")' },
+        steps: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Ordered list of steps to follow when this procedure triggers',
+        },
+        source: {
+          type: 'string',
+          enum: ['observed', 'explicit'],
+          description: 'Whether the user explicitly taught this or it was observed from behavior',
+        },
+      },
+      required: ['name', 'trigger_pattern', 'steps'],
     },
   },
   {
@@ -880,6 +904,28 @@ const handlers: Record<string, AgentToolHandler> = {
 
     if (error) return { success: false, error: error.message }
     return { success: true, data }
+  },
+
+  async create_procedure(input, orgId, supabase) {
+    const name = input.name as string
+    const triggerPattern = input.trigger_pattern as string
+    const steps = input.steps as string[]
+    const source = (input.source as observed | explicit) || explicit
+
+    if (!name || !triggerPattern || !steps?.length) {
+      return { success: false, error: name, trigger_pattern, and steps are required }
+    }
+
+    // Validate regex
+    try {
+      new RegExp(triggerPattern, i)
+    } catch {
+      return { success: false, error: `Invalid regex pattern: ${triggerPattern}` }
+    }
+
+    const proc = await createProcedure(supabase, orgId, name, triggerPattern, steps, source)
+    if (!proc) return { success: false, error: Failed to create procedure }
+    return { success: true, data: { id: proc.id, name: proc.name, trigger_pattern: proc.trigger_pattern, steps: proc.steps } }
   },
 
   async resolve_tool(input, _orgId, _supabase) {

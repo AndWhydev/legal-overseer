@@ -26,6 +26,7 @@ import { scanForEntityMentions } from '@/lib/context/entity-mention-scanner'
 import { TokenBudgetManager, type TierInput } from './token-budget-manager'
 import { proactiveRecall as recallForContext, formatProactiveRecall } from '@/lib/memory-palace'
 import { getEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
+import { matchProcedure } from '@/lib/knowledge-graph/procedural-memory'
 import { logger } from '@/lib/core/logger'
 import { loadPredictiveContext } from './predictive-loader'
 
@@ -660,6 +661,21 @@ export class ContextAssembler {
       }
     } catch {
       // Non-critical: proactive recall is additive, not essential
+    }
+
+    // ── Phase 5a: Procedural memory matching ────────────────────────────
+    try {
+      const procedure = await matchProcedure(supabase, orgId, currentMessage)
+      if (procedure) {
+        const procSection = `## Known Procedure: ${procedure.name}
+${procedure.steps.map((s: string, i: number) => `${i + 1}. ${s}`).join('
+')}`
+        finalSystemPrompt = `${finalSystemPrompt}
+
+${procSection}`
+      }
+    } catch {
+      // Non-critical: procedural memory is additive
     }
 
     // ── Phase 5b: Predictive context (deadlines, recent activity, approvals) ──
