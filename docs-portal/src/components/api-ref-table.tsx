@@ -76,7 +76,7 @@ function ApiRefRow({ prop }: { prop: ApiProp }) {
         onClick={() => hasDetails && setOpen(!open)}
         disabled={!hasDetails}
         className={cn(
-          "flex w-full items-center gap-4 px-4 py-3 text-left transition-colors",
+          "flex w-full items-center gap-4 px-4 py-4 text-left transition-colors",
           hasDetails && "cursor-pointer hover:bg-muted/30",
           !hasDetails && "cursor-default"
         )}

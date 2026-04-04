@@ -11,7 +11,7 @@ import { SectionLabel } from "@/components/layout/section-label"
 import { navigation } from "@/docs.config"
 
 // Retained custom components
-import { Tip, Note, Warning, Danger, Accordion, Mermaid, CardGroup, Card } from "@/components/mdx"
+import { Tip, Note, Warning, Danger, Accordion, Mermaid, CardGroup, Card, ImageLightbox } from "@/components/mdx"
 
 // jalco/ui components
 import { Stepper, StepperItem } from "@/components/stepper"
@@ -73,6 +73,8 @@ export default async function DocPage({
       Kbd,
       KbdCombo,
       StatusIndicator,
+      // Image lightbox
+      ImageLightbox,
       // Diagrams
       LayerStack,
       TAORLoop,

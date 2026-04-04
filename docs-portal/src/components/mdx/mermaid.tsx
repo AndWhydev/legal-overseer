@@ -57,10 +57,10 @@ export function Mermaid({ chart, caption }: { chart: string; caption?: string })
 
   return (
     <figure style={{
-      margin: '2rem 0',
-      padding: '1.5rem',
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border-default)',
+      margin: '24px 0',
+      padding: '24px',
+      background: '#faf9f5',
+      border: '1px solid rgb(222, 222, 220)',
       borderRadius: '12px',
       textAlign: 'center',
       overflow: 'auto',

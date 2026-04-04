@@ -186,23 +186,28 @@
 .mdx-content table th {
   text-align: left;
   font-weight: 600;
-  padding: 10px 16px;
+  padding: 12px 16px;
   border-bottom: 2px solid rgb(222, 222, 222);
   color: var(--text-heading);
   background: #f5f5f0;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 .mdx-content table td {
-  padding: 10px 16px;
+  padding: 12px 16px;
   color: var(--text-body);
   vertical-align: top;
   border-bottom: 1px solid rgb(240, 240, 238);
   font-size: 14px;
   line-height: 1.5;
-  word-break: break-word;
+  white-space: nowrap;
+}
+
+.mdx-content table td:last-child {
+  white-space: normal;
 }
 
 .mdx-content table tr:last-child td {
@@ -395,16 +400,57 @@
 }
 /* Prevent mdx-content heading styles from leaking into jalco components */
 .mdx-content [data-slot] h3,
-.mdx-content [data-slot] h4 {
-  font-family: Inter, system-ui, sans-serif;
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: inherit;
-  margin: 0;
-  letter-spacing: normal;
+.mdx-content [data-slot] h4,
+.mdx-content [data-slot="stepper-item"] h3 {
+  all: unset;
+  font-family: Inter, system-ui, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 20px !important;
+  margin: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  letter-spacing: normal !important;
+  display: inline !important;
+  color: rgb(23, 23, 23) !important;
 }
 
 /* Ensure jalco components have proper bottom margin when stacked */
 .mdx-content [data-slot] {
   margin-bottom: 24px;
+}
+
+/* CodeBlock/CodeBlockCommand full width inside mdx-content */
+.mdx-content [data-slot="code-block"],
+.mdx-content [data-slot="code-block-command"] {
+  width: 100%;
+}
+
+/* EnvTable spacing */
+.mdx-content [data-slot="env-table"] {
+  font-size: 13px;
+}
+
+/* Mermaid diagram theming */
+.mdx-content figure svg .node rect,
+.mdx-content figure svg .node circle,
+.mdx-content figure svg .node polygon {
+  fill: #faf9f5 !important;
+  stroke: rgb(200, 200, 198) !important;
+}
+.mdx-content figure svg .edgeLabel {
+  background-color: #faf9f5 !important;
+}
+
+/* Image zoom cursor in mdx-content */
+.mdx-content img {
+  cursor: zoom-in;
+  border-radius: 8px;
+}
+
+/* Remove top spacing gap from first heading */
+.mdx-content > h1:first-child,
+.mdx-content > h2:first-child,
+.mdx-content > h3:first-child {
+  margin-top: 0;
 }

@@ -17,3 +17,5 @@ export { CronSchedule } from '@/components/cron-schedule'
 export { EnvTable } from '@/components/env-table'
 export { Kbd, KbdCombo } from '@/components/kbd'
 export { StatusIndicator } from '@/components/status-indicator'
+
+export { ImageLightbox } from './image-lightbox'

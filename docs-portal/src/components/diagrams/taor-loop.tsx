@@ -100,7 +100,7 @@ export function TAORLoop() {
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeDasharray={`${arcLen} ${circumference - arcLen}`}
-          strokeDashoffset={arcLen / 2}
+          strokeDashoffset={arcLen * 1.5}
           style={{
             transformOrigin: `${cx}px ${cy}px`,
             animation: paused ? 'none' : `taor-spin ${duration}ms linear infinite`,
