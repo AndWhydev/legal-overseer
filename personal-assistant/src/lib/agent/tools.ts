@@ -913,7 +913,7 @@ const handlers: Record<string, AgentToolHandler> = {
     const source = (input.source as observed | explicit) || explicit
 
     if (!name || !triggerPattern || !steps?.length) {
-      return { success: false, error: name, trigger_pattern, and steps are required }
+      return { success: false, error: "name, trigger_pattern, and steps are required" }
     }
 
     // Validate regex
@@ -924,7 +924,7 @@ const handlers: Record<string, AgentToolHandler> = {
     }
 
     const proc = await createProcedure(supabase, orgId, name, triggerPattern, steps, source)
-    if (!proc) return { success: false, error: Failed to create procedure }
+    if (!proc) return { success: false, error: "Failed to create procedure" }
     return { success: true, data: { id: proc.id, name: proc.name, trigger_pattern: proc.trigger_pattern, steps: proc.steps } }
   },
 
