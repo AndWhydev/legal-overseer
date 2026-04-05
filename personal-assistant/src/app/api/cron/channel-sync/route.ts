@@ -28,16 +28,16 @@ export async function GET(request: Request) {
 
       // Query relay-enabled connected channels for this org
       const { data: connections } = await supabase
-        .from('channel_connections')
-        .select('channel_type')
+        .from('org_connections')
+        .select('provider')
         .eq('org_id', orgId)
         .eq('status', 'connected')
-        .eq('relay_enabled', true)
+        .eq('transport', 'poll')
 
       if (!connections || connections.length === 0) continue
 
       for (const conn of connections) {
-        const channelType = conn.channel_type as ChannelType
+        const channelType = conn.provider as ChannelType
         const result = await pollChannel(supabase, orgId, channelType)
 
         channelResults.push({ orgId, channel: channelType, result })

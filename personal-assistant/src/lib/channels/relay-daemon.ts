@@ -372,17 +372,18 @@ export async function pollChannel(
   try {
     // Read channel_connections row
     const { data: conn, error: connErr } = await supabase
-      .from('channel_connections')
+      .from('org_connections')
       .select('*')
       .eq('org_id', orgId)
-      .eq('channel_type', channelType)
+      .eq('provider', channelType)
+      .eq('status', 'connected')
       .single()
 
     if (connErr || !conn) {
       return { messagesFound: 0, messagesInserted: 0, skipped: true, error: connErr?.message || 'No connection found' }
     }
 
-    if (!conn.relay_enabled) {
+    if (conn.transport !== 'poll') {
       return { messagesFound: 0, messagesInserted: 0, skipped: true }
     }
 
@@ -585,15 +586,25 @@ export async function pollChannel(
     )
 
     await supabase
-      .from('channel_connections')
+      .from('org_connections')
       .update({
         poll_cursor: latestDate.toISOString(),
         last_sync: new Date().toISOString(),
       })
       .eq('org_id', orgId)
-      .eq('channel_type', channelType)
+      .eq('provider', channelType)
 
     const totalDurationMs = Date.now() - pollStartMs
+
+    // Log sync result
+    await supabase.from('connection_sync_logs').insert({
+      connection_id: conn.id,
+      status: inserted > 0 || messages.length === 0 ? 'success' : 'partial',
+      messages_found: messages.length,
+      messages_inserted: inserted,
+      duplicates: externalIdDupes + contentHashDupes,
+      duration_ms: totalDurationMs,
+    })
 
     // Structured latency log
     logger.info(JSON.stringify({
