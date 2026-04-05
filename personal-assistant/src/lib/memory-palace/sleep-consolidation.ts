@@ -21,6 +21,7 @@ import type { LifecycleAction } from '@/lib/intelligence/project-lifecycle'
 export interface SleepConsolidationReport {
   orgId: string
   summarized: number
+  patternsPromoted: number
   conflictsResolved: number
   relationshipsDiscovered: number
   pruned: number
@@ -52,6 +53,7 @@ export async function runSleepConsolidation(
   const report: SleepConsolidationReport = {
     orgId,
     summarized: 0,
+    patternsPromoted: 0,
     conflictsResolved: 0,
     relationshipsDiscovered: 0,
     pruned: 0,
@@ -71,6 +73,18 @@ export async function runSleepConsolidation(
     logger.error('[sleep-consolidation] Stage 1 SUMMARIZE failed', {
       orgId,
       error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  // Stage 1.5: PROMOTE PATTERNS
+  try {
+    report.patternsPromoted = await stagePromotePatterns(supabase, orgId)
+    logger.info('[sleep-consolidation] Stage 1.5 PROMOTE PATTERNS complete', {
+      orgId, patternsPromoted: report.patternsPromoted,
+    })
+  } catch (err) {
+    logger.error('[sleep-consolidation] Stage 1.5 PROMOTE PATTERNS failed', {
+      orgId, error: err instanceof Error ? err.message : String(err),
     })
   }
 
@@ -134,6 +148,70 @@ export async function runSleepConsolidation(
   logger.info('[sleep-consolidation] Full cycle completed', report)
 
   return report
+}
+
+// ─── Stage 1.5: PROMOTE PATTERNS ────────────────────────────────────────────
+
+async function stagePromotePatterns(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<number> {
+  const { data: candidates, error } = await supabase
+    .from('memory_patterns')
+    .select('*')
+    .eq('org_id', orgId)
+    .eq('status', 'active')
+    .gte('confidence', 0.7)
+    .gte('sample_count', 3)
+
+  if (error || !candidates || candidates.length === 0) return 0
+
+  const eligible = candidates.filter(
+    (p: { confidence: number; promotion_threshold: number }) => p.confidence >= p.promotion_threshold
+  )
+
+  let promoted = 0
+
+  for (const pattern of eligible) {
+    const { data: newMemory, error: insertErr } = await supabase
+      .from('memory_palace_entries')
+      .insert({
+        org_id: orgId,
+        category: 'convention',
+        title: `Learned: ${(pattern.pattern_type as string).replace(/_/g, ' ')}`,
+        content: pattern.description,
+        confidence: pattern.confidence,
+        decay_rate: 'never',
+        corroboration_count: pattern.sample_count,
+        entity_ids: pattern.entity_ids,
+        entity_names: pattern.entity_names,
+        source: 'consolidation',
+        is_active: true,
+        tags: ['auto-promoted', pattern.pattern_type],
+        metadata: {
+          promoted_from_pattern_id: pattern.id,
+          promotion_date: new Date().toISOString(),
+          evidence_count: pattern.sample_count,
+          pattern_data: pattern.pattern_data,
+          first_observed: pattern.first_observed_at,
+          last_observed: pattern.last_observed_at,
+        },
+      })
+      .select('id')
+      .single()
+
+    if (insertErr || !newMemory) continue
+
+    await supabase
+      .from('memory_patterns')
+      .update({ status: 'promoted', promoted_to_memory_id: newMemory.id })
+      .eq('id', pattern.id)
+      .eq('org_id', orgId)
+
+    promoted++
+  }
+
+  return promoted
 }
 
 // ─── Stage 1: SUMMARIZE ──────────────────────────────────────────────────────
