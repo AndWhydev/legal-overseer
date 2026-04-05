@@ -23,12 +23,13 @@ function ConnectionsPageInner() {
   return (
     <>
       <ConnectionsGrid onConnectionClick={handleConnectionClick} />
-      <ConnectionDetailContent
-        connection={selectedConnection}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        onDisconnect={handleDisconnect}
-      />
+      {selectedConnection && (
+        <ConnectionDetailContent
+          connection={selectedConnection}
+          onClose={() => setDrawerOpen(false)}
+          onDisconnect={handleDisconnect}
+        />
+      )}
     </>
   )
 }
