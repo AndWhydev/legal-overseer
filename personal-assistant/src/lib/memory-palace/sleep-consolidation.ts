@@ -24,10 +24,17 @@ export interface SleepConsolidationReport {
   patternsPromoted: number
   conflictsResolved: number
   relationshipsDiscovered: number
+  communitiesDetected: number
   pruned: number
   briefingGenerated: boolean
   startedAt: string
   completedAt: string
+}
+
+interface CommunityCluster {
+  memberIds: string[]
+  mutualEdgeCount: number
+  sharedEventCount: number
 }
 
 interface MorningBriefing {
@@ -56,6 +63,7 @@ export async function runSleepConsolidation(
     patternsPromoted: 0,
     conflictsResolved: 0,
     relationshipsDiscovered: 0,
+    communitiesDetected: 0,
     pruned: 0,
     briefingGenerated: false,
     startedAt: new Date().toISOString(),
@@ -111,6 +119,20 @@ export async function runSleepConsolidation(
     })
   } catch (err) {
     logger.error('[sleep-consolidation] Stage 3 DISCOVER RELATIONSHIPS failed', {
+      orgId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  // Stage 3.5: DETECT COMMUNITIES
+  try {
+    report.communitiesDetected = await stageCommunityDetection(supabase, orgId)
+    logger.info('[sleep-consolidation] Stage 3.5 DETECT COMMUNITIES complete', {
+      orgId,
+      communitiesDetected: report.communitiesDetected,
+    })
+  } catch (err) {
+    logger.error('[sleep-consolidation] Stage 3.5 DETECT COMMUNITIES failed', {
       orgId,
       error: err instanceof Error ? err.message : String(err),
     })
@@ -510,6 +532,238 @@ async function stageDiscoverRelationships(
   }
 
   return discovered
+}
+
+// ─── Stage 3.5: DETECT COMMUNITIES ──────────────────────────────────────────
+
+async function stageCommunityDetection(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<number> {
+  // Step 1: Build adjacency data from active edges
+  const { data: edges, error: edgeErr } = await supabase
+    .from('entity_edges')
+    .select('source_id, target_id, relation_type')
+    .eq('org_id', orgId)
+    .is('valid_until', null)
+    .order('ingested_at', { ascending: false })
+    .limit(1000)
+
+  if (edgeErr || !edges || edges.length < 3) return 0
+
+  const adjacency = new Map<string, Set<string>>()
+  for (const edge of edges) {
+    if (!adjacency.has(edge.source_id)) adjacency.set(edge.source_id, new Set())
+    if (!adjacency.has(edge.target_id)) adjacency.set(edge.target_id, new Set())
+    adjacency.get(edge.source_id)!.add(edge.target_id)
+    adjacency.get(edge.target_id)!.add(edge.source_id)
+  }
+
+  // Step 2: Find dense clusters via shared neighbors
+  const candidateClusters: CommunityCluster[] = []
+  const processedPairs = new Set<string>()
+
+  for (const edge of edges) {
+    const pairKey = [edge.source_id, edge.target_id].sort().join('|')
+    if (processedPairs.has(pairKey)) continue
+    processedPairs.add(pairKey)
+
+    const neighborsA = adjacency.get(edge.source_id) ?? new Set()
+    const neighborsB = adjacency.get(edge.target_id) ?? new Set()
+    const intersection = new Set([...neighborsA].filter(n => neighborsB.has(n)))
+
+    if (intersection.size < 1) continue
+
+    const memberIds = new Set([edge.source_id, edge.target_id, ...intersection])
+    const memberArray = [...memberIds].slice(0, 10) // Cap at 10
+
+    // Count mutual edges between cluster members
+    let mutualEdgeCount = 0
+    for (const e of edges) {
+      if (memberIds.has(e.source_id) && memberIds.has(e.target_id)) {
+        mutualEdgeCount++
+      }
+    }
+
+    if (mutualEdgeCount < 3) continue
+
+    candidateClusters.push({
+      memberIds: memberArray,
+      mutualEdgeCount,
+      sharedEventCount: 0, // Will be computed below
+    })
+  }
+
+  if (candidateClusters.length === 0) return 0
+
+  // Filter by shared event count (>= 5 in past 30 days)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString()
+  const qualifiedClusters: CommunityCluster[] = []
+
+  for (const cluster of candidateClusters) {
+    const { data: eventData } = await supabase
+      .from('event_tuples')
+      .select('id')
+      .eq('org_id', orgId)
+      .in('subject_id', cluster.memberIds)
+      .gte('occurred_at', thirtyDaysAgo)
+
+    const sharedEventCount = eventData?.length ?? 0
+    if (sharedEventCount < 5) continue
+
+    cluster.sharedEventCount = sharedEventCount
+    qualifiedClusters.push(cluster)
+  }
+
+  if (qualifiedClusters.length === 0) return 0
+
+  // Greedy merge: if two clusters share >= 2 members, merge them
+  const merged: CommunityCluster[] = []
+  const used = new Set<number>()
+
+  for (let i = 0; i < qualifiedClusters.length; i++) {
+    if (used.has(i)) continue
+    let current = { ...qualifiedClusters[i], memberIds: [...qualifiedClusters[i].memberIds] }
+    for (let j = i + 1; j < qualifiedClusters.length; j++) {
+      if (used.has(j)) continue
+      const overlap = current.memberIds.filter(m => qualifiedClusters[j].memberIds.includes(m))
+      if (overlap.length >= 2) {
+        const combined = new Set([...current.memberIds, ...qualifiedClusters[j].memberIds])
+        current.memberIds = [...combined].slice(0, 10)
+        current.mutualEdgeCount += qualifiedClusters[j].mutualEdgeCount
+        current.sharedEventCount += qualifiedClusters[j].sharedEventCount
+        used.add(j)
+      }
+    }
+    merged.push(current)
+  }
+
+  // Step 3 & 4: Generate summaries and persist community nodes
+  let detected = 0
+  const refreshedCommunityNames: string[] = []
+
+  for (const cluster of merged) {
+    // Fetch member names
+    const { data: members } = await supabase
+      .from('entity_nodes')
+      .select('name')
+      .in('id', cluster.memberIds)
+      .eq('org_id', orgId)
+
+    if (!members || members.length === 0) continue
+    const memberNames = members.map(m => m.name)
+
+    // Fetch recent event verbs
+    const { data: recentEvents } = await supabase
+      .from('event_tuples')
+      .select('verb')
+      .eq('org_id', orgId)
+      .in('subject_id', cluster.memberIds)
+      .gte('occurred_at', thirtyDaysAgo)
+      .limit(20)
+
+    const recentVerbs = [...new Set((recentEvents ?? []).map(e => e.verb))]
+
+    // Fetch edge types between members
+    const edgeTypes = [...new Set(
+      edges
+        .filter(e => cluster.memberIds.includes(e.source_id) && cluster.memberIds.includes(e.target_id))
+        .map(e => e.relation_type)
+    )]
+
+    // Generate summary via Haiku
+    let summary: string
+    try {
+      const { text } = await generateText({
+        model: models.fast,
+        prompt: `Summarize this entity cluster in 1 sentence. Be specific about what connects them.\n\nEntities: ${memberNames.join(', ')}\nRecent activity: ${recentVerbs.join(', ')}\nRelationship types: ${edgeTypes.join(', ')}`,
+        maxOutputTokens: 100,
+      })
+      summary = text.trim()
+    } catch {
+      continue // Skip cluster if summary generation fails
+    }
+
+    const communityName = `Community: ${memberNames.slice(0, 3).join(', ')}`
+    refreshedCommunityNames.push(communityName)
+
+    // Upsert community entity node
+    const { data: communityNode, error: upsertErr } = await supabase
+      .from('entity_nodes')
+      .upsert({
+        org_id: orgId,
+        entity_type: 'community',
+        name: communityName,
+        aliases: [],
+        properties: {
+          summary,
+          member_ids: cluster.memberIds,
+          member_count: cluster.memberIds.length,
+          mutual_edge_count: cluster.mutualEdgeCount,
+          shared_event_count: cluster.sharedEventCount,
+          detected_at: new Date().toISOString(),
+        },
+        is_active: true,
+      }, {
+        onConflict: 'org_id,name',
+      })
+      .select('id')
+      .single()
+
+    if (upsertErr || !communityNode) continue
+
+    // Create member_of edges (skip if already exists)
+    for (const memberId of cluster.memberIds) {
+      const { data: existing } = await supabase
+        .from('entity_edges')
+        .select('id')
+        .eq('org_id', orgId)
+        .eq('source_id', memberId)
+        .eq('target_id', communityNode.id)
+        .eq('relation_type', 'member_of')
+        .is('valid_until', null)
+        .limit(1)
+
+      if (!existing || existing.length === 0) {
+        await supabase.from('entity_edges').insert({
+          org_id: orgId,
+          source_id: memberId,
+          target_id: communityNode.id,
+          relation_type: 'member_of',
+          properties: { source: 'consolidation' },
+          valid_from: new Date().toISOString(),
+          confidence: 0.9,
+        })
+      }
+    }
+
+    detected++
+  }
+
+  // Step 5: Expire stale communities (>7 days without refresh)
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString()
+  const { data: staleCommunities } = await supabase
+    .from('entity_nodes')
+    .select('id, name, properties')
+    .eq('org_id', orgId)
+    .eq('entity_type', 'community')
+    .eq('is_active', true)
+
+  if (staleCommunities) {
+    for (const community of staleCommunities) {
+      if (refreshedCommunityNames.includes(community.name)) continue
+      const detectedAt = (community.properties as Record<string, unknown>)?.detected_at as string | undefined
+      if (detectedAt && detectedAt < sevenDaysAgo) {
+        await supabase
+          .from('entity_nodes')
+          .update({ is_active: false })
+          .eq('id', community.id)
+          .eq('org_id', orgId)
+      }
+    }
+  }
+
+  return detected
 }
 
 // ─── Stage 4: PRUNE ──────────────────────────────────────────────────────────

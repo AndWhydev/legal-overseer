@@ -670,6 +670,45 @@ export class ContextAssembler {
           finalSystemPrompt = `${finalSystemPrompt}\n\n${formattedContext}`
         }
       }
+      // Fetch community summaries for resolved entities
+      if (entityNodeIds.length > 0) {
+        const communitySummaries: string[] = []
+        for (const nodeId of entityNodeIds) {
+          try {
+            const { data: communityEdges } = await supabase
+              .from('entity_edges')
+              .select('target_id')
+              .eq('org_id', orgId)
+              .eq('source_id', nodeId)
+              .eq('relation_type', 'member_of')
+              .is('valid_until', null)
+
+            if (communityEdges) {
+              for (const edge of communityEdges) {
+                const { data: community } = await supabase
+                  .from('entity_nodes')
+                  .select('properties')
+                  .eq('id', edge.target_id)
+                  .eq('entity_type', 'community')
+                  .eq('is_active', true)
+                  .single()
+
+                if (community?.properties?.summary) {
+                  communitySummaries.push(community.properties.summary as string)
+                }
+              }
+            }
+          } catch {
+            // Skip individual community lookups that fail
+          }
+        }
+
+        if (communitySummaries.length > 0) {
+          const uniqueSummaries = [...new Set(communitySummaries)]
+          const communitySection = `## Active Communities\n${uniqueSummaries.map(s => `- ${s}`).join('\n')}`
+          finalSystemPrompt = `${finalSystemPrompt}\n\n${communitySection}`
+        }
+      }
     } catch {
       // Non-critical: proactive recall is additive, not essential
     }
