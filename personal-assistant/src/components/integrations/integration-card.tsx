@@ -172,7 +172,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
             <span className="text-sm font-medium">{integration.name}</span>
             {connected && onInfoClick && (
               <>
-                <Badge variant="outline" className="border-yellow-500/40 text-yellow-500 text-[10px] px-1.5 py-0">
+                <Badge variant="outline" className="border-yellow-500/40 text-yellow-500 text-[12px] px-1.5 py-0">
                   Custom
                 </Badge>
                 <button
@@ -187,7 +187,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
             )}
             <SuccessTick visible={showTick} />
             {isComingSoon && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Soon</Badge>
+              <Badge variant="secondary" className="text-[12px] px-1.5 py-0">Soon</Badge>
             )}
           </div>
           <p className="mt-0.5 text-sm leading-snug text-muted-foreground">

@@ -115,7 +115,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
               onStatusChange={onStatusChange}
               onWhatsAppConnect={onWhatsAppConnect}
               onInfoClick={
-                onConnectionInfoClick && orgConnections
+                onConnectionInfoClick && orgConnections?.some(c => c.provider === integration.id && c.transport === 'bridge')
                   ? (() => {
                       const conn = orgConnections.find(c => c.provider === integration.id && c.transport === 'bridge');
                       if (conn) onConnectionInfoClick(conn);
