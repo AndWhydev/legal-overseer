@@ -150,6 +150,16 @@ export function extractCitationsFromToolResult(
     }
   })
 
+  // Handle web_read — single URL source
+  if (items.length === 0 && typeof results.url === 'string' && typeof results.title === 'string') {
+    citations.push({
+      index: citations.length + 1,
+      url: String(results.url).trim(),
+      title: String(results.title).trim(),
+      description: results.provider ? `Read via ${results.provider}` : undefined,
+    })
+  }
+
   return citations
 }
 

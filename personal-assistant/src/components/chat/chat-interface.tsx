@@ -39,6 +39,7 @@ import {
 import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
 import { InvoiceArtifact } from './invoice-artifact'
 import { ChatAttachmentList } from './chat-attachment'
+import { SourcesFooter } from './sources-footer'
 import { CHAT_ATTACHMENTS_EVENT, CHAT_COMMAND_EVENT } from '@/components/dashboard/voice-pill'
 import { useFileUpload } from '@/hooks/use-file-upload'
 import { useArtifacts } from './use-artifacts'
@@ -2092,6 +2093,12 @@ export function ChatInterface() {
                       onEdit={msg.role === 'user' ? handleEditMessage : undefined}
                       onOpenArtifact={handleOpenArtifact}
                     />
+                    {isCurrentResponse && msg.citations && msg.citations.length > 0 && !isLoading && (
+                      <SourcesFooter sources={msg.citations} />
+                    )}
+                    {!isCurrentResponse && msg.citations && msg.citations.length > 0 && (
+                      <SourcesFooter sources={msg.citations} />
+                    )}
                     {/* Checkpoints are internal system state — hidden from users */}
                     {/* Invoice artifacts — anchored to the message that generated them */}
                     {invoiceArtifacts.filter(inv => inv.afterMessageId === msg.id).map(inv => (

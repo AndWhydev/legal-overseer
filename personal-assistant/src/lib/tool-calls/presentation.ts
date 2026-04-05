@@ -70,6 +70,10 @@ const TOOL_DISPLAY_NAMES: Record<string, string> = {
   send_email: 'Sending email',
   update_lead: 'Updating lead',
   update_task: 'Updating task',
+  web_search: 'Searching the web',
+  web_read: 'Reading page',
+  web_extract: 'Extracting data',
+  web_crawl: 'Crawling site',
 }
 
 const TOOL_CATEGORY_OVERRIDES: Record<string, string> = {
@@ -106,6 +110,10 @@ const TOOL_CATEGORY_OVERRIDES: Record<string, string> = {
   sub_agent_start: 'handoff',
   update_lead: 'people',
   update_task: 'tasks',
+  web_search: 'web',
+  web_read: 'web',
+  web_extract: 'web',
+  web_crawl: 'web',
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -262,6 +270,36 @@ export function extractToolDetail(name: string, input: unknown, result?: unknown
     }
   }
 
+  if (name === 'web_search') {
+    const query = inp.query || inp.q
+    if (typeof query === 'string' && query.length > 0) return truncate(query, 60)
+  }
+
+  if (name === 'web_read' || name === 'web_extract') {
+    const url = inp.url as string
+    if (typeof url === 'string' && url.length > 0) {
+      try {
+        return new URL(url).hostname
+      } catch {
+        return truncate(url.replace(/^https?:\/\//, ''), 40)
+      }
+    }
+  }
+
+  if (name === 'web_crawl') {
+    const url = inp.url as string
+    const resData = isRecord(result) ? result : {}
+    const pageCount = Array.isArray(resData.pages) ? resData.pages.length : null
+    if (typeof url === 'string' && url.length > 0) {
+      try {
+        const domain = new URL(url).hostname
+        return pageCount ? `${domain} · ${pageCount} pages` : domain
+      } catch {
+        return truncate(url.replace(/^https?:\/\//, ''), 40)
+      }
+    }
+  }
+
   return null
 }
 
@@ -299,6 +337,19 @@ export function extractResultSummary(name: string, result?: unknown, success?: b
   if (name === 'read_message' || name === 'get_contact') return 'Done'
   if (name === 'browse_website') return 'Page loaded'
   if (name === 'get_calendar' || name === 'schedule_event' || name === 'get_upcoming') return 'Done'
+  if (name === 'web_search') {
+    if (Array.isArray(res.results)) {
+      return `${(res.results as unknown[]).length} result${(res.results as unknown[]).length !== 1 ? 's' : ''}`
+    }
+  }
+  if (name === 'web_read') return 'Page loaded'
+  if (name === 'web_extract') return 'Data extracted'
+  if (name === 'web_crawl') {
+    if (Array.isArray(res.pages)) {
+      return `${(res.pages as unknown[]).length} page${(res.pages as unknown[]).length !== 1 ? 's' : ''} read`
+    }
+    return 'Done'
+  }
   if (success === true) return 'Done'
 
   return null
