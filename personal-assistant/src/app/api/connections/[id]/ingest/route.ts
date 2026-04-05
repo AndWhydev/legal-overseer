@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { isDuplicate, computeContentHash } from '@/lib/channels/dedup'
 import { logger } from '@/lib/core/logger'
+import { extractAndPopulateGraph } from '@/lib/knowledge-graph/entity-extractor'
 import type { ChannelMessage } from '@/lib/channels/types'
 
 export const maxDuration = 60
@@ -123,7 +124,7 @@ export async function POST(
     const contentHash = computeContentHash(msg.sender, msg.subject, msg.body)
 
     // Insert into channel_messages (same table as polled messages)
-    const { error: upsertErr } = await supabase
+    const { data: insertedRow, error: upsertErr } = await supabase
       .from('channel_messages')
       .upsert(
         {
@@ -149,11 +150,46 @@ export async function POST(
         },
         { onConflict: 'org_id,channel,external_id', ignoreDuplicates: true }
       )
+      .select('id')
+      .single()
 
     if (upsertErr) {
       errors.push(`Failed to insert ${envelope.id}: ${upsertErr.message}`)
-    } else {
+    } else if (insertedRow) {
       inserted++
+
+      // Trigger classification (marks as pending for synthesizer pipeline)
+      await supabase
+        .from('channel_messages')
+        .update({ classification: 'pending' })
+        .eq('id', insertedRow.id)
+        .eq('org_id', orgId)
+
+      // Knowledge graph entity extraction (fire-and-forget)
+      if (msg.body && msg.body.length >= 10) {
+        extractAndPopulateGraph(supabase, orgId, msg.bodyFull || msg.body, {
+          sender: msg.sender,
+          channel: channelType,
+          timestamp: msg.receivedAt.toISOString(),
+        }).catch(() => {})
+      }
+
+      // RAG embedding (fire-and-forget)
+      if (process.env.PINECONE_API_KEY) {
+        import('@/lib/rag/embedding-queue').then(({ enqueueEmbedding }) => {
+          enqueueEmbedding(supabase as any, orgId, msg.externalId, msg.bodyFull || msg.body, {
+            message_id: msg.externalId,
+            org_id: orgId,
+            channel: channelType,
+            sender: msg.sender,
+            sender_email: msg.senderEmail,
+            subject: msg.subject,
+            received_at: msg.receivedAt.toISOString(),
+            chunk_index: 0,
+            total_chunks: 1,
+          }).catch(() => {})
+        }).catch(() => {})
+      }
     }
   }
 
