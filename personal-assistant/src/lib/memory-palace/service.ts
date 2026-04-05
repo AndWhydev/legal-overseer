@@ -436,6 +436,35 @@ export class MemoryPalaceService {
   }
 
   /**
+   * Contradict a memory: decrease confidence when user corrects the agent.
+   */
+  async contradictMemory(memoryId: string, penalty: number = 0.15): Promise<void> {
+    const { data: current } = await this.supabase
+      .from('memory_palace_entries')
+      .select('confidence, corroboration_count')
+      .eq('id', memoryId)
+      .eq('org_id', this.orgId)
+      .maybeSingle()
+
+    if (!current) return
+
+    const newConfidence = Math.max(0.05, (current.confidence as number) - penalty)
+
+    await this.supabase
+      .from('memory_palace_entries')
+      .update({
+        confidence: newConfidence,
+        metadata: { last_contradiction_at: new Date().toISOString() },
+      })
+      .eq('id', memoryId)
+      .eq('org_id', this.orgId)
+
+    logger.info('[memory-palace] Memory contradicted', {
+      memoryId, oldConfidence: current.confidence, newConfidence, penalty,
+    })
+  }
+
+  /**
    * Supersede a memory with a newer one.
    */
   async supersedeMemory(oldMemoryId: string, newMemoryId: string): Promise<void> {

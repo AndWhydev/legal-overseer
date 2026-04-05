@@ -29,9 +29,28 @@ import { detectLeak, scrubLeaks, guardAndHumanize } from '@/lib/agent/response-g
 import { logger } from '@/lib/core/logger'
 import { detectTopicShift } from '@/lib/agent/citation-extractor'
 
+import { MemoryPalaceService } from '@/lib/memory-palace/service'
+
 import type { EngineConfig, AgentEvent } from './types'
 import { preFlightChecks } from './pre-flight'
 import { executeToolBatchStreaming, type ToolExecutionResult } from './tool-executor'
+
+// ---------------------------------------------------------------------------
+// Correction detection for memory contradiction feedback
+// ---------------------------------------------------------------------------
+
+const CORRECTION_PATTERNS = [
+  /^no[,.]?\s/i,
+  /that'?s (?:not |in)?correct/i,
+  /that'?s wrong/i,
+  /actually[,.]?\s/i,
+  /you(?:'re| are) (?:wrong|mistaken|incorrect)/i,
+  /(?:wrong|incorrect) (?:amount|price|date|name|number)/i,
+]
+
+function isUserCorrection(message: string): boolean {
+  return CORRECTION_PATTERNS.some(p => p.test(message.trim()))
+}
 
 // ---------------------------------------------------------------------------
 // Complexity estimator (fallback when Haiku planner times out)
@@ -78,6 +97,9 @@ export async function* runTAORLoop(
   let executionTokens = 0
   let activeRole: string | undefined
 
+  // ── Memory corroboration feedback loop state ───────────────────────
+  let previousSurfacedMemoryIds: string[] = []
+
   // ── 1. Pre-flight checks ───────────────────────────────────────────
   const preflight = await preFlightChecks(config, message)
   for (const event of preflight.events) {
@@ -101,6 +123,21 @@ export async function* runTAORLoop(
 
   yield { type: 'thinking_start', data: {} }
 
+  // ── 2b. Correction detection — penalise previously surfaced memories ──
+  if (previousSurfacedMemoryIds.length > 0 && isUserCorrection(message)) {
+    try {
+      const memService = new MemoryPalaceService(config.supabase, config.orgId)
+      for (const memId of previousSurfacedMemoryIds) {
+        memService.contradictMemory(memId, 0.15).catch(() => {})
+      }
+      logger.info('[taor] Correction detected — contradicted surfaced memories', {
+        count: previousSurfacedMemoryIds.length,
+      })
+    } catch {
+      // Non-critical: memory feedback is best-effort
+    }
+  }
+
   // ── 3. Context assembly ────────────────────────────────────────────
   yield { type: 'stage', data: { stage: 'context_assembly', status: 'start' } }
 
@@ -115,6 +152,7 @@ export async function* runTAORLoop(
       const ctx = await assembler.assemble(config.supabase, config.userId, config.orgId, config.threadId, message)
       systemPrompt = ctx.systemPrompt
       config.history = ctx.messageHistory
+      previousSurfacedMemoryIds = ctx.metadata.surfacedMemoryIds ?? []
       yield {
         type: 'stage',
         data: {
@@ -472,6 +510,21 @@ export async function* runTAORLoop(
       }
       finalMessage = humanizedText
       yield { type: 'message', data: humanizedText }
+
+      // Positive feedback: corroborate surfaced memories on successful completion
+      if (previousSurfacedMemoryIds.length > 0) {
+        try {
+          const memService = new MemoryPalaceService(config.supabase, config.orgId)
+          for (const memId of previousSurfacedMemoryIds) {
+            memService.corroborateMemory(memId, 0.02).catch(() => {})
+          }
+          logger.info('[taor] Corroborated surfaced memories on success', {
+            count: previousSurfacedMemoryIds.length,
+          })
+        } catch {
+          // Non-critical: memory feedback is best-effort
+        }
+      }
 
       // Mark remaining plan stages as done
       for (const stage of planStages) {

@@ -73,6 +73,7 @@ export interface AssembledContext {
     assemblyMs: number
     entityMentions: string[]
     pendingActionCount: number
+    surfacedMemoryIds: string[]
   }
 }
 
@@ -641,6 +642,7 @@ export class ContextAssembler {
     // Snapshot token count before proactive/predictive additions (1500 token budget)
     const systemPromptTokens = this.budgetManager.estimateTokens(finalSystemPrompt)
     // Append Memory Palace proactive recall (institutional knowledge)
+    const surfacedMemoryIds: string[] = []
     try {
       // Resolve entity mentions to entity_node IDs via knowledge graph
       const entityNodeIds: string[] = []
@@ -656,6 +658,13 @@ export class ContextAssembler {
       const recallResults = await recallForContext(supabase, orgId, entityNodeIds)
 
       if (recallResults.length > 0) {
+        // Collect surfaced memory IDs for corroboration feedback loop
+        for (const result of recallResults) {
+          for (const mem of result.memories) {
+            if (mem.id) surfacedMemoryIds.push(mem.id)
+          }
+        }
+
         const formattedContext = formatProactiveRecall(recallResults)
         if (formattedContext) {
           finalSystemPrompt = `${finalSystemPrompt}\n\n${formattedContext}`
@@ -797,6 +806,7 @@ ${procSection}`
         assemblyMs,
         entityMentions,
         pendingActionCount: approvals.length,
+        surfacedMemoryIds,
       },
     }
   }
