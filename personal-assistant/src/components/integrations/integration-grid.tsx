@@ -121,7 +121,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
         {/* Custom connection card */}
         {!isLoading && (
           <a
-            href="/docs/connections/bridge"
+            href="https://docs.bitbit.chat/docs/connections/overview" rel="noopener"
             target="_blank"
             rel="noopener"
             className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-card px-4 py-3 transition-colors hover:border-muted-foreground/40"
