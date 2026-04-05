@@ -759,3 +759,61 @@ Sleep consolidation runs (3am UTC)
 - **Cross-thread plan linking**: Plans are scoped to a single thread. Cross-thread plan coordination (e.g., "continue the plan from yesterday") requires thread resolution, which is a separate concern.
 - **Backfill job for existing memories**: Embedding pre-existing memories is a one-time operational task, not a code feature. Can be done via a Supabase Edge Function or a manual script post-migration.
 - **Memory importance weighting in RRF**: The current RRF implementation treats both search modalities equally. Weighting (e.g., 0.6 * vector_rrf + 0.4 * tsvector_rrf) is a tuning parameter that should be informed by usage data, not pre-specified.
+
+---
+
+## 9. Cross-Agent Memory Access — Shared Brain Architecture
+
+### Architectural Constraint
+
+BitBit has **four agent systems** that all present as "BitBit" to the user:
+
+1. **TAOR Loop** — interactive conversational agent (chat interface)
+2. **Swarm System** (`src/lib/swarm/`) — multi-agent DAGs with typed roles (sales, finance, comms, operations, research, coordinator), each with distinct personas and risk tolerances
+3. **Roles System** (`src/lib/roles/`) — tick-based autonomous background agents (sales, finance, comms, growth, builder) that periodically evaluate state and propose actions
+4. **Proactive Layer** (`src/lib/proactive/`) — signal→action engine that decides when BitBit should act without being asked
+
+**The Memory Palace and Knowledge Graph must be the single source of truth that ALL four systems read from AND write to.** A swarm's finance agent discovering a client is overdue must write that to the shared memory so the TAOR loop knows about it when the user asks. A proactive signal about a missed deadline must be enrichable from memory context.
+
+### Design Principle: Source Agent Provenance
+
+Every memory write should track which agent system generated it via a `source_agent` field:
+
+```typescript
+// Extension to existing source_type provenance
+interface MemoryProvenance {
+  source_type: 'extraction' | 'user_explicit' | 'agent_reflection' | 'consolidation'
+  source_agent?: 'taor_loop' | 'swarm_sales' | 'swarm_finance' | 'swarm_comms' | 'swarm_operations' | 'swarm_research' | 'role_sales' | 'role_finance' | 'role_comms' | 'proactive' | 'sleep_consolidation'
+}
+```
+
+This enables **trust-weighted retrieval** — a financial fact from the finance swarm agent (conservative, high-priority weight) carries more weight than a casual extraction from the research agent.
+
+### Implementation: Unified Memory Interface
+
+All four agent systems should access memory through the same interface — `MemoryPalaceService` (already exists in `service.ts`). The changes needed:
+
+1. **`createMemory()`** — Add optional `source_agent` parameter. Default to `'taor_loop'` for backward compatibility.
+2. **`searchMemories()`** — No change needed. All systems query the same store.
+3. **`corroborateMemory()` / `contradictMemory()`** — Add `source_agent` to the corroboration log for audit trail.
+4. **Hybrid search (Feature 1)** — Available to all callers automatically since it's implemented in `MemorySearch`.
+
+### Where Each System Connects
+
+| System | Reads Memory | Writes Memory | Current State |
+|---|---|---|---|
+| TAOR Loop | via Context Assembler + proactive recall | via MemoryConsolidator + reflection | **Active** |
+| Swarm Participants | unknown — needs audit | unknown — needs audit | **Needs wiring** |
+| Roles System | `RoleContext` likely loads some context | `RoleEvaluation.stateUpdates` may write | **Needs audit** |
+| Proactive Layer | `ProactiveSignal.data` enrichment | Likely writes via action execution | **Needs audit** |
+| Sleep Consolidation | Reads all memories for processing | Writes summaries, promotions, prunes | **Active** |
+
+### Migration Path
+
+This spec focuses on the TAOR loop path (Features 1-4) because it's the most heavily used and well-understood. The multi-agent wiring is a **follow-on task** after the core memory upgrades are proven:
+
+1. **Phase 1** (this spec): Implement hybrid search, auto-promotion, feedback loop, plan persistence — all through the TAOR loop path
+2. **Phase 2** (follow-on): Audit swarm/roles/proactive for memory access patterns, wire them through the same `MemoryPalaceService` with `source_agent` provenance
+3. **Phase 3** (Sub-project D): Trust-weighted retrieval using `source_agent` and agent persona risk tolerances to rank memory results
+
+The `source_agent` field should be added to the DB schema in Phase 1 (migration is cheap) even though it's only populated by the TAOR loop initially. This avoids a second migration later.
