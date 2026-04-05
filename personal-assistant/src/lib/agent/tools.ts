@@ -1,29 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { channelToolDefinitions, channelToolHandlers } from './tools/channel-tools'
-import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
-import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools/code-execution'
-import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
-import { adToolDefinitions, adToolHandlers } from './tools/ad-tools'
-import { seoToolDefinitions, seoToolHandlers } from './tools/seo-tools'
-import { tenderToolDefinitions, tenderToolHandlers } from './tools/tender-tools'
-import { contentToolDefinitions, contentToolHandlers } from './tools/content-tools'
-import { builderToolDefinitions, builderToolHandlers } from './tools/builder-tools'
-import { projectToolDefinitions, projectToolHandlers } from './tools/project-tools'
-import { standingOrderToolDefinitions, standingOrderToolHandlers } from './tools/standing-order-tools'
-import { spawnAgentToolDefinition, handleSpawnAgent, type SpawnContext } from './tools/spawn-agent'
-import { composeCreatorStudioDeck } from '@/lib/creator-studio'
-import { routeAgentAction } from './confidence-router'
-import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
-import { executeApprovedAction, requeueExpiredAction } from './action-executor'
-import { notifyApproval } from './approval-notifier'
-import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
-import { shouldAutoExecute, type OrgAutonomyOverrides } from '@/lib/intelligence/autonomy-levels'
-import { dispatchNotification } from '@/lib/notifications/dispatcher'
-import { graphSearch } from '@/lib/memory-palace/memory-search'
-import { createProcedure } from '@/lib/knowledge-graph/procedural-memory'
-import { getEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
-import { classifyQuery, getRetrievalConfig } from '@/lib/rag/query-router'
+import { webToolDefinitions, webToolHandlers } from './tools/web-tools'
 import {
   createTask,
   updateTask,
@@ -32,206 +10,11 @@ import {
   getContact,
   logActivity,
 } from './shared-tools'
-import { logger } from '@/lib/core/logger'
-import { getOrgPlan, checkToolPlanGate, TOOL_PLAN_REQUIREMENTS } from '@/lib/billing/plan-gates'
-
-// ---------------------------------------------------------------------------
-// Tool Group metadata (for future Tool RAG via pgvector)
-// ---------------------------------------------------------------------------
-
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo' | 'tenders' | 'content' | 'builder'
-
-export interface ToolGroupMeta {
-  id: ToolGroup
-  label: string
-  description: string
-  tools: string[]
-}
-
-export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
-  core: {
-    id: 'core',
-    label: 'Core Operations',
-    description: 'Task management, contacts, activity logging, and creator tools',
-    tools: ['create_task', 'update_task', 'search_tasks', 'search_contacts', 'get_contact', 'log_activity', 'compose_creator_notification_mockup', 'generate_invoice', 'resolve_tool', 'list_projects', 'update_project', 'create_project', 'list_standing_orders', 'create_standing_order', 'update_standing_order'],
-  },
-  memory: {
-    id: 'memory',
-    label: 'Memory & Knowledge',
-    description: 'Store and recall learned preferences, patterns, and context',
-    tools: ['search_memory', 'add_memory', 'create_procedure'],
-  },
-  channel: {
-    id: 'channel',
-    label: 'Channel Integration',
-    description: 'Sync, search, and interact with communication channels (Gmail, Calendar, etc.)',
-    tools: ['find_messages', 'read_message', 'draft_reply', 'summarize_inbox', 'get_upcoming', 'create_reminder', 'schedule_event', 'send_gmail', 'send_outlook'],
-  },
-  web: {
-    id: 'web',
-    label: 'Web & Research',
-    description: 'Search the web and fetch URL content for research',
-    tools: ['web_search', 'fetch_url', 'browse_website'],
-  },
-  comms: {
-    id: 'comms',
-    label: 'Outbound Communications',
-    description: 'Send emails, SMS messages, and manage pending action approvals',
-    tools: ['send_email', 'send_sms', 'send_whatsapp', 'approve_action'],
-  },
-  agentic: {
-    id: 'agentic',
-    label: 'Agentic Execution',
-    description: 'Run code against the BitBit SDK to solve complex problems, query data flexibly, and compose multi-step operations',
-    tools: ['execute_code', 'spawn_agent'],
-  },
-  ads: {
-    id: 'ads',
-    label: 'Ad Scripts',
-    description: 'Generate video ad scripts for social platforms with hook variations, storyboards, and platform-specific formatting',
-    tools: ['generate_ad_scripts', 'list_ad_batches', 'adapt_script'],
-  },
-  seo: {
-    id: 'seo',
-    label: 'SEO & AI Visibility',
-    description: 'Audit AI search visibility, generate SEO-optimized content, create schema markup, and view visibility reports',
-    tools: ['audit_visibility', 'generate_seo_content', 'generate_schema_markup', 'visibility_report'],
-  },
-  tenders: {
-    id: 'tenders',
-    label: 'Tender Hunter',
-    description: 'Search government tenders, score fit against capabilities, and generate draft responses',
-    tools: ['search_tenders', 'score_tender', 'generate_tender_response'],
-  },
-  content: {
-    id: 'content',
-    label: 'Content & Social',
-    description: 'Generate social media posts and blog drafts with platform-specific formatting and brand voice',
-    tools: ['schedule_post', 'generate_blog', 'content_calendar'],
-  },
-  builder: {
-    id: 'builder',
-    label: 'Website Builder',
-    description: 'Generate, preview, and deploy professional websites from templates or descriptions',
-    tools: ['generate_website', 'list_website_templates', 'revise_website', 'deploy_website', 'preview_website'],
-  },
-}
-
-/** Quick lookup: tool name → group. Derived from TOOL_GROUPS. */
-export const TOOL_GROUP_MAP: Record<string, ToolGroup> = Object.fromEntries(
-  Object.values(TOOL_GROUPS).flatMap(g => g.tools.map(t => [t, g.id]))
-) as Record<string, ToolGroup>
-
-/** Filter getAgentTools() by group. */
-export function getToolsByGroup(group: ToolGroup): Anthropic.Tool[] {
-  const toolNames = new Set(TOOL_GROUPS[group].tools)
-  return getAgentTools().filter(t => toolNames.has(t.name))
-}
-
-// ---------------------------------------------------------------------------
-// JIT Instructions (injected into tool_result content for point-of-use guidance)
-// ---------------------------------------------------------------------------
-
-export const JIT_INSTRUCTIONS: Record<string, string> = {
-  // Invoices
-  generate_invoice: 'Invoice generated and rendered as an embedded artifact in the chat UI. Do NOT repeat the invoice details as text. Just confirm briefly: "Invoice [number] generated for [recipient], [amount]. Ready to send when you approve." The user can see the full styled invoice in the artifact below your message.',
-
-  // Web & Research
-  web_search: 'Use these search results to answer the user\'s question. Cite sources with URLs when relevant. If results are insufficient, refine your search query and try again.',
-  fetch_url: 'Use the extracted page content to answer the user\'s question. Summarize key points rather than dumping raw text. Note if the content was truncated.',
-  browse_website: 'Use the extracted page content to answer the user\'s question. This content was rendered by a real browser, so JavaScript-generated content is included. If a screenshot was captured, describe what you see. Summarize key points rather than dumping raw text.',
-
-  // Contacts
-  search_contacts: 'Use the matched contact(s) to proceed with the user\'s request. If multiple matches exist, ask the user to clarify which one. Use the contact ID for subsequent tool calls.',
-  get_contact: 'Use this contact profile to provide informed, contextual responses. Reference their recent activity, relationships, and financial signals when relevant. Do not recite the entire profile back.',
-
-  // Tasks
-  create_task: 'Task created successfully. Confirm the task title and column to the user. If they mentioned a deadline or contact, remind them if those weren\'t included.',
-  update_task: 'Task updated. Briefly confirm what changed. If the task was moved to Done, ask if there are follow-up actions.',
-  search_tasks: 'Present the matching tasks concisely. If the user is looking for a specific task to update, confirm which one before proceeding.',
-
-  // Memory
-  search_memory: 'Reference specific senders, dates, and subjects when citing results. Do not quote raw chunks verbatim — synthesize the information naturally into your response. When referencing past communications, mention the sender and approximate date.',
-  create_procedure: 'Procedure stored. It will trigger automatically when future messages match the pattern. Confirm the name and trigger pattern to the user.',
-  add_memory: 'Memory stored. Do not announce this to the user unless they explicitly asked you to remember something. Use proactively when you learn preferences, relationships, business context, or decisions. One fact per entry.',
-
-  // Channels
-  find_messages: 'Present the most relevant messages first. Include sender, subject, and a brief preview. If the user is looking for something specific, highlight the best match. Never mention syncing, caching, or infrastructure details.',
-  read_message: 'Display the full message content. Include sender, subject, body, and timestamp. Offer to draft a reply if relevant.',
-  draft_reply: 'Draft created successfully and saved for review. Confirm the recipient, original message, and draft content. Remind user it requires approval before sending.',
-  summarize_inbox: 'Present the digest in a readable format. Highlight the action items and most important messages. Group by category for clarity.',
-  get_upcoming: 'Present the schedule in chronological order. Highlight overdue items and conflicts. Group by day if spanning multiple days.',
-  create_reminder: 'Reminder created. Confirm the title, list, and due date to the user.',
-  schedule_event: 'Event scheduled. Confirm the title, date/time, and location to the user.',
-  send_gmail: 'Email sent from the user\'s Gmail account. Confirm the recipient, subject, and message ID. This was sent from their actual Gmail address, not a system address.',
-  send_outlook: 'Email sent from the user\'s Outlook account. Confirm the recipient and subject. This was sent from their actual Outlook/Microsoft 365 address, not a system address.',
-
-  // Comms
-  send_email: 'Email sent successfully. Confirm the recipient and subject to the user. Suggest logging this action if it\'s business-relevant.',
-  send_sms: 'SMS sent successfully. Confirm the recipient to the user. Note if the message was split into multiple segments.',
-  send_whatsapp: 'WhatsApp message queued for delivery via the bridge. Confirm the recipient and a preview of the message to the user. Note that delivery depends on the bridge being connected.',
-
-  // Activity & Creative
-  log_activity: 'Activity logged. Continue with the user\'s request — do not announce that you logged an action.',
-  compose_creator_notification_mockup: 'Mockup generated. Present the key details and ask if the user wants to adjust any parameters.',
-
-  // Approvals
-  approve_action: 'Action has been approved and executed. Report the result to the user. If execution failed, explain the error and suggest next steps.',
-
-  // Agentic execution
-  execute_code: 'Code execution complete. Use the output and result to continue the conversation. If there was an error, fix the code and try again. Do not show raw code to the user — summarize what you found or did. Reference specific data points from the result.',
-  spawn_agent: 'Sub-agent completed. Use the returned summary to inform your response. Synthesize results from all sub-agents into one coherent message for the user. Never mention sub-agents, delegation, or parallel processing — just present the combined results naturally.',
-
-  resolve_tool: 'Tool schema loaded. You can now call this tool in subsequent turns. Do not announce the tool resolution to the user — just proceed to use the tool.',
-
-  // Ad Scripts
-  generate_ad_scripts: 'Ad scripts generated. Present the scripts in a structured format showing each platform\'s hook, body, CTA, and duration. Highlight the hook variations for A/B testing. If storyboard data is included, present the shot-by-shot breakdown with timing. Ask if the user wants to adapt any script to a different platform.',
-  list_ad_batches: 'Present the script batches as a list with batch ID, offer name, number of scripts, and date created. Ask if the user wants to view scripts from a specific batch.',
-  adapt_script: 'Script adapted for the new platform. Present the adapted version highlighting what changed (duration, pacing, format). Compare key differences between the original and adapted versions.',
-
-  // SEO & AI Visibility
-  audit_visibility: 'Visibility audit complete. Present the overall score prominently (X/100), then show per-query breakdown by AI source (Perplexity, ChatGPT, Gemini, Copilot). Highlight queries where the brand is absent — these are the priority optimization targets. Present recommendations as actionable next steps, not generic advice. If competitors were included, show comparative positioning.',
-  generate_seo_content: 'SEO content generated. Present the title and meta description first, then the main body. Show the FAQ section as expandable Q&A pairs. Mention the targeted queries it is optimized for. If structured data was included, note it is ready for implementation. Offer to generate schema markup for the content.',
-  generate_schema_markup: 'Schema markup generated. Present the JSON-LD in a code block the user can copy directly. Show any validation notes. Remind the user to paste this into the <head> section of their page. If there are multiple schema types that would benefit the page, suggest additional markup.',
-  visibility_report: 'Visibility report generated. Lead with the trend (improving/declining/stable) and current vs previous score. Show the per-query breakdown highlighting changes. Present competitor comparison as a ranked table with score deltas. Prioritize the recommendations that address the biggest visibility gaps.',
-
-  // Tender Hunter
-  search_tenders: 'Tender search results returned. Present matching tenders as a structured list showing: title, source, estimated value, deadline, and category. Highlight tenders closing within 14 days as urgent. If many results, summarize the top 5 by relevance and offer to show more. Suggest running score_tender on promising matches.',
-  score_tender: 'Tender fit assessment complete. Lead with the recommendation (PURSUE / CONSIDER / SKIP) in bold, followed by the overall fit score (X/100). Show the breakdown: compliance score, win probability, effort-vs-value ratio. List matched capabilities as strengths and gaps as areas to address. If recommendation is pursue or consider, offer to generate a draft response.',
-  generate_tender_response: 'Tender response draft generated. Present each response section with its title and content. Show the compliance matrix as a table (requirement, status: met/partially met/not met, evidence). Note the estimated effort hours. Remind the user this is a draft for human review — they should verify all claims and tailor the response before submission. Offer to score the tender for fit if not already done.',
-
-  // Content & Social
-  schedule_post: 'Social post generated. Present the formatted post to the user with the platform name, character count, and hashtag count. If the post includes hashtags, display them clearly. Ask if they want to adjust the tone, add/remove hashtags, or adapt it for a different platform.',
-  generate_blog: 'Blog draft generated. Present the title and meta description first, then the full body in markdown. Mention the word count and which keywords were integrated. Offer to refine specific sections, adjust length, or optimize for additional keywords.',
-  content_calendar: 'Present the content items as a list showing topic, platform, and date. If the calendar is empty, suggest creating content with schedule_post or generate_blog. Group items by platform if there are many.',
-
-  // Website Builder
-  generate_website: 'Website generated and shown as a live HTML preview artifact in the chat. Do NOT repeat the HTML code. Confirm briefly: "Generated [business_name] website using [template/custom design]. You can see the live preview on the right. Tell me what you want to change." The user can see the full responsive preview in the artifact panel.',
-  list_website_templates: 'Present the available templates as a concise list showing name, category, and a brief description. If the user seems interested in one, suggest using generate_website with that template_id.',
-  revise_website: 'Website updated with the requested changes. The revised preview is shown in the artifact panel. Confirm briefly what changed: "Updated [change summary]. Preview is refreshed on the right." Do not repeat HTML.',
-
-  // Deploy & Preview
-  deploy_website: 'Website deployed. Confirm the live URL and whether it was published or saved as a draft. If Elementor was used, mention that the client can edit it in the Elementor editor. If deployment failed, explain the error clearly and suggest next steps.',
-  preview_website: 'Share the preview URL with the user. Mention they can share this link with clients for review. Format as a clickable link.',
-}
-
-/** Get JIT instruction for a tool, if one exists. */
-export function getJITInstruction(toolName: string): string | undefined {
-  return JIT_INSTRUCTIONS[toolName]
-}
-
-// ---------------------------------------------------------------------------
-// Core types
-// ---------------------------------------------------------------------------
 
 export interface ToolResult {
   success: boolean
   data?: unknown
   error?: string
-  queued?: boolean
-  approvalId?: string
-  /** Side-channel events to forward to the parent's SSE stream (e.g., sub_agent_start/complete) */
-  sideEvents?: Array<{ type: string; data: unknown }>
 }
 
 export type AgentToolHandler = (
@@ -244,7 +27,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   {
     name: 'create_task',
     description:
-      'Create a new task on the kanban board. Use when the user wants to add a task, todo, or action item. Always include priority based on context. If a specific contact is mentioned, resolve them with search_contacts first to get their ID. Do NOT use this for reminders or calendar events — use create_reminder or schedule_event instead.',
+      'Create a task on the kanban board. Use when the user asks to add a task, todo, or action item. Set priority and column. Returns the created task.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -259,17 +42,13 @@ const toolDefinitions: Anthropic.Tool[] = [
           type: 'string',
           description: 'Column name to place the task in: "Backlog", "To Do", "In Progress", "Review", or "Done"',
         },
-        contact_id: {
-          type: 'string',
-          description: 'Contact UUID to link this task to (from search_contacts or entity context)',
-        },
       },
       required: ['title'],
     },
   },
   {
     name: 'update_task',
-    description: 'Update an existing task\'s title, description, status, priority, or column. Use when the user wants to change, move, complete, or archive a task. Requires the task_id — use search_tasks first if you don\'t have it.',
+    description: 'Update an existing task. Use this to change status, priority, description, or move between columns.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -288,7 +67,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'search_tasks',
-    description: 'Search tasks on the kanban board by keyword, status, or priority. Returns matching tasks with their IDs. Use this to find tasks before updating them, or to answer questions about what\'s on the board.',
+    description: 'Search tasks by keyword, status, or priority. Returns matching tasks from the kanban board.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -301,7 +80,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   {
     name: 'search_contacts',
     description:
-      'Find contacts by name, alias, email, or phone number. Uses fuzzy entity resolution across all known aliases. Always use this before referencing a contact in other tools to get their correct ID.',
+      'Search contacts by name, alias, email, or phone number. Uses entity resolution across all known aliases.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -312,7 +91,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'get_contact',
-    description: 'Load a contact\'s full profile including communication history, relationships, financial signals, active tasks, and deadlines. Use after search_contacts when you need deep context about a specific person. Do NOT use this for simple lookups — search_contacts is faster.',
+    description: 'Get full contact profile including communication patterns and all stored data.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -323,7 +102,7 @@ const toolDefinitions: Anthropic.Tool[] = [
   },
   {
     name: 'log_activity',
-    description: 'Record an action to the activity feed for transparency. Log significant actions like emails sent, tasks created from channel messages, or research completed. Do NOT log routine tool calls — only meaningful business actions.',
+    description: 'Log an action to the activity feed. Use after completing significant actions (sending emails, creating tasks, finishing research) so the user can see what you did.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -340,78 +119,20 @@ const toolDefinitions: Anthropic.Tool[] = [
     },
   },
   {
-    name: 'compose_creator_notification_mockup',
-    description:
-      'Compose a creator notification mockup payload (scene + notification stack) for UI rendering or content planning.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        industry: { type: 'string', description: 'Industry context (e.g. content-creator, agency)' },
-        carrier: { type: 'string', description: 'Top status bar carrier label' },
-        clock: { type: 'string', description: 'Device clock text' },
-        dateLabel: { type: 'string', description: 'Date label shown above the stack' },
-        device: { type: 'string', enum: ['iphone', 'android'] },
-        wallpaper: { type: 'string', enum: ['sunset-grid', 'night-wave', 'paper-grain', 'neon-city'] },
-        hideSensitive: { type: 'boolean' },
-        moduleOrder: {
-          type: 'array',
-          items: { type: 'string', enum: ['scene', 'notification-stack', 'appearance', 'privacy', 'export'] },
-        },
-        notifications: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              app: { type: 'string', enum: ['stripe', 'paypal', 'x', 'youtube', 'shopify', 'custom'] },
-              amount: { type: 'string' },
-              from: { type: 'string' },
-              message: { type: 'string' },
-              timeAgo: { type: 'string' },
-            },
-            required: ['app'],
-          },
-        },
-      },
-    },
-  },
-  {
-    name: 'approve_action',
-    description: 'Approve and execute a pending action from the approval queue. Use when the user confirms they want to proceed with a queued action (e.g. "yes send that email", "approve it", "go ahead"). You can reference the action by its short ID (shown in Pending Actions) or describe it. Also handles re-queuing expired actions from the last 7 days.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        approval_id: {
-          type: 'string',
-          description: 'The approval ID (full UUID or short 8-char prefix from the pending actions list)',
-        },
-        action_description: {
-          type: 'string',
-          description: 'Description of the action to approve (used for fuzzy matching if approval_id is not provided)',
-        },
-      },
-      required: [] as string[],
-    },
-  },
-  {
     name: 'search_memory',
-    description: 'Search across all past communications, emails, messages, and stored knowledge using semantic similarity. Use when the user asks about past conversations, emails, messages, or anything that happened before. Also searches stored preferences and patterns.',
+    description: 'Search stored memories by keyword or category. Use when the user asks about something you may have learned in past sessions.',
     input_schema: {
       type: 'object' as const,
       properties: {
-        query: { type: 'string', description: 'Natural language search query — be specific about what you\'re looking for' },
-        channel: { type: 'string', description: 'Filter by channel: gmail, outlook, whatsapp, sms, slack' },
-        sender: { type: 'string', description: 'Filter by sender name or email' },
-        date_from: { type: 'string', description: 'Start date filter (ISO 8601 or natural language like "last week")' },
-        date_to: { type: 'string', description: 'End date filter (ISO 8601)' },
-        category: { type: 'string', description: 'Filter by memory category (for stored knowledge only)' },
+        query: { type: 'string', description: 'Search query' },
+        category: { type: 'string', description: 'Filter by category' },
       },
       required: ['query'],
     },
   },
   {
     name: 'add_memory',
-    description: 'Store a new knowledge entry to remember across sessions. Use for user preferences, recurring patterns, domain knowledge, and important context. Choose the most specific category. Do NOT store ephemeral information like today\'s weather or one-time requests.',
+    description: 'Store a memory. Use when the user tells you a preference, pattern, or fact worth remembering across sessions. Don\'t store ephemeral task details.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -427,40 +148,6 @@ const toolDefinitions: Anthropic.Tool[] = [
         },
       },
       required: ['content', 'category'],
-    },
-  },
-  {
-    name: 'create_procedure',
-    description: 'Store a learned workflow as a procedural memory that triggers automatically when a message matches the trigger pattern. Use when the user teaches you a multi-step process, or when you observe a repeated workflow that should be codified.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        name: { type: 'string', description: 'Human-readable name for the procedure (e.g. "AWU Email Protocol")' },
-        trigger_pattern: { type: 'string', description: 'Regex pattern that triggers this procedure (e.g. "email.*AWU|allwebbedup")' },
-        steps: {
-          type: 'array',
-          items: { type: 'string' },
-          description: 'Ordered list of steps to follow when this procedure triggers',
-        },
-        source: {
-          type: 'string',
-          enum: ['observed', 'explicit'],
-          description: 'Whether the user explicitly taught this or it was observed from behavior',
-        },
-      },
-      required: ['name', 'trigger_pattern', 'steps'],
-    },
-  },
-  {
-    name: 'resolve_tool',
-    description: 'Load the full schema for a deferred tool so you can call it. Use when you need a tool from the "Additional Tools (On-Demand)" list in the system prompt. After resolving, the tool becomes available for use in subsequent turns.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        tool_name: { type: 'string', description: 'Exact name of the tool to load (from the on-demand list)' },
-        query: { type: 'string', description: 'Optional: keyword search if you are unsure of the exact name' },
-      },
-      required: [] as string[],
     },
   },
 ]
@@ -510,39 +197,7 @@ const handlers: Record<string, AgentToolHandler> = {
   async get_contact(input, orgId, supabase) {
     const contact = await getContact(supabase, orgId, input.slug as string)
     if (!contact) return { success: false, error: 'Contact not found' }
-
-    // Enrich with entity graph data (relationships, timeline, memories, financial signals)
-    const { assembleEntityBriefing } = await import('@/lib/context/assembler')
-    const briefing = await assembleEntityBriefing(supabase, orgId, 'contact', contact.id)
-
-    const enriched = {
-      ...contact,
-      entityContext: {
-        relationships: briefing.relationships.slice(0, 10).map(r => ({
-          type: r.relationshipType,
-          entityType: r.entityType,
-          entityId: r.entityId,
-          strength: r.strength,
-        })),
-        recentEvents: briefing.timeline.slice(0, 5).map(e => ({
-          type: e.eventType,
-          date: e.occurredAt,
-          channel: e.channelSource,
-        })),
-        memories: briefing.memories.slice(0, 5).map(m => ({
-          content: m.content,
-          confidence: m.confidence,
-          category: m.category,
-        })),
-        financialSignals: briefing.crossReferences.financialSignals,
-        activeTasks: briefing.crossReferences.relatedTasks.filter(
-          t => t.status === 'pending' || t.status === 'in_progress'
-        ),
-        deadlines: briefing.crossReferences.deadlines,
-      },
-    }
-
-    return { success: true, data: enriched }
+    return { success: true, data: contact }
   },
 
   async log_activity(input, orgId, supabase) {
@@ -554,350 +209,26 @@ const handlers: Record<string, AgentToolHandler> = {
     })
   },
 
-  async compose_creator_notification_mockup(input) {
-    const notifications = Array.isArray(input.notifications)
-      ? input.notifications.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object')
-      : undefined
-
-    const moduleOrder = Array.isArray(input.moduleOrder)
-      ? input.moduleOrder.filter((item): item is string => typeof item === 'string')
-      : undefined
-
-    const deck = composeCreatorStudioDeck({
-      industry: input.industry as string | undefined,
-      carrier: input.carrier as string | undefined,
-      clock: input.clock as string | undefined,
-      dateLabel: input.dateLabel as string | undefined,
-      device: input.device as 'iphone' | 'android' | undefined,
-      wallpaper: input.wallpaper as 'sunset-grid' | 'night-wave' | 'paper-grain' | 'neon-city' | undefined,
-      hideSensitive: input.hideSensitive as boolean | undefined,
-      moduleOrder: moduleOrder as Array<'scene' | 'notification-stack' | 'appearance' | 'privacy' | 'export'> | undefined,
-      notifications: notifications as Array<{
-        id?: string
-        app: 'stripe' | 'paypal' | 'x' | 'youtube' | 'shopify' | 'custom'
-        amount?: string
-        from?: string
-        message?: string
-        timeAgo?: string
-      }> | undefined,
-    })
-
-    return { success: true, data: deck }
-  },
-
-  async approve_action(input, orgId, supabase) {
-    const approvalId = input.approval_id as string | undefined
-    const actionDescription = input.action_description as string | undefined
-
-    if (!approvalId && !actionDescription) {
-      return { success: false, error: 'Provide either approval_id or action_description to identify the action' }
-    }
-
-    try {
-      let matchedApproval: import('./approval-queue').ApprovalRecord | undefined
-
-      if (approvalId) {
-        // Direct lookup — support both full UUID and 8-char prefix
-        const pending = await getPendingApprovals(supabase, orgId, { limit: 50 })
-        matchedApproval = pending.find(a =>
-          a.id === approvalId || a.id.startsWith(approvalId)
-        )
-
-        // Check expired approvals (last 7 days) if not found in pending
-        if (!matchedApproval) {
-          const { data: expired } = await supabase
-            .from('approval_queue')
-            .select('*, agent_configs(name)')
-            .eq('org_id', orgId)
-            .in('status', ['expired', 'auto_expired'])
-            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-            .or(`id.eq.${approvalId},id.like.${approvalId}%`)
-            .limit(1)
-
-          if (expired && expired.length > 0) {
-            const expiredRecord = expired[0] as import('./approval-queue').ApprovalRecord
-            const requeued = await requeueExpiredAction(supabase, expiredRecord)
-            matchedApproval = requeued
-          }
-        }
-      } else if (actionDescription) {
-        // Fuzzy match on action_summary
-        const pending = await getPendingApprovals(supabase, orgId, { limit: 50 })
-        const descLower = actionDescription.toLowerCase()
-
-        // Score each approval by how well it matches the description
-        matchedApproval = pending.find(a =>
-          a.action_summary.toLowerCase().includes(descLower) ||
-          descLower.includes(a.action_summary.toLowerCase()) ||
-          a.action_type.toLowerCase().includes(descLower)
-        )
-
-        // Broader fallback: word overlap scoring
-        if (!matchedApproval && pending.length > 0) {
-          const descWords = descLower.split(/\s+/).filter(w => w.length > 2)
-          let bestScore = 0
-          for (const a of pending) {
-            const summaryLower = a.action_summary.toLowerCase()
-            const score = descWords.filter(w => summaryLower.includes(w)).length
-            if (score > bestScore) {
-              bestScore = score
-              matchedApproval = a
-            }
-          }
-          // Require at least 1 word match
-          if (bestScore === 0) matchedApproval = undefined
-        }
-
-        // Check expired approvals if nothing pending matches
-        if (!matchedApproval) {
-          const { data: expired } = await supabase
-            .from('approval_queue')
-            .select('*, agent_configs(name)')
-            .eq('org_id', orgId)
-            .in('status', ['expired', 'auto_expired'])
-            .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-            .ilike('action_summary', `%${actionDescription}%`)
-            .order('created_at', { ascending: false })
-            .limit(1)
-
-          if (expired && expired.length > 0) {
-            const expiredRecord = expired[0] as import('./approval-queue').ApprovalRecord
-            const requeued = await requeueExpiredAction(supabase, expiredRecord)
-            matchedApproval = requeued
-          }
-        }
-      }
-
-      if (!matchedApproval) {
-        return {
-          success: false,
-          error: approvalId
-            ? `No pending or recently expired action found with ID "${approvalId}"`
-            : `No pending action matching "${actionDescription}" found`,
-        }
-      }
-
-      // Resolve the approval as approved via chat
-      const resolved = await resolveApproval(
-        supabase,
-        matchedApproval.id,
-        'approved',
-        'chat-agent',
-        'chat',
-      )
-
-      // Execute the approved action
-      const result = await executeApprovedAction(supabase, resolved)
-
-      return {
-        success: result.success,
-        data: {
-          approvalId: resolved.id,
-          actionType: resolved.action_type,
-          actionSummary: resolved.action_summary,
-          executionResult: result,
-        },
-        error: result.error,
-      }
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-
-      // Handle specific error codes from resolveApproval
-      if (errorMsg === 'APPROVAL_NOT_FOUND') {
-        return { success: false, error: 'Approval not found — it may have been deleted' }
-      }
-      if (errorMsg === 'APPROVAL_ALREADY_RESOLVED') {
-        return { success: false, error: 'This action has already been resolved (approved, rejected, or expired)' }
-      }
-
-      logger.error('[approve_action] Error:', err)
-      return { success: false, error: `Failed to approve action: ${errorMsg}` }
-    }
-  },
-
   // Memory tools stay in tools.ts (not shared — chat-specific)
   async search_memory(input, orgId, supabase) {
-    const query = input.query as string
-    const { complexity } = classifyQuery(query || "")
-    const routerConfig = getRetrievalConfig(complexity)
-    logger.info("[search_memory] Query classified as:", complexity)
-    const results: { source: string; entries: unknown[] }[] = []
+    let query = supabase.from('memory_entries').select('*').eq('org_id', orgId)
 
-    // 0. Graph search (skip for simple queries per adaptive routing)
-    const graphResults = routerConfig.useGraph ? await (async () => {
-      try {
-        const keywords = query.split(/\s+/).filter(w => w.length > 2 && w[0] === w[0].toUpperCase())
-        const entityIds: string[] = []
-        for (const kw of keywords.slice(0, 3)) {
-          const node = await getEntityByAlias(supabase, orgId, kw)
-          if (node) entityIds.push(node.id)
-        }
+    if (input.category) query = query.eq('category', input.category as string)
+    if (input.query) query = query.ilike('content', `%${input.query}%`)
 
-        return graphSearch(supabase, orgId, query, {
-          entityIds: entityIds.length > 0 ? entityIds : undefined,
-          limit: routerConfig.topK,
-        })
-      } catch {
-        return []
-      }
-    })() : []
-
-    if (graphResults.length > 0) {
-      results.push({
-        source: 'knowledge_graph',
-        entries: graphResults.map(r => ({
-          content: r.content,
-          score: r.score,
-          source: r.source,
-          ...r.metadata,
-        })),
-      })
-    }
-
-    // Run dense (Pinecone) and sparse (Supabase full-text) search in parallel
-    const [denseResult, sparseResult] = await Promise.allSettled([
-      // 1. Dense vector search (Pinecone + Voyage-3.5)
-      (async () => {
-        const { searchVectors } = await import('@/lib/rag/retriever')
-        return searchVectors({
-          query,
-          orgId,
-          topK: routerConfig.topK,
-          channel: input.channel as string | undefined,
-          sender: input.sender as string | undefined,
-          dateFrom: input.date_from as string | undefined,
-          dateTo: input.date_to as string | undefined,
-        })
-      })(),
-      // 2. Sparse keyword search (Supabase full-text)
-      (async () => {
-        const { sparseSearch } = await import('@/lib/rag/sparse-search')
-        return sparseSearch(supabase, orgId, query, {
-          limit: routerConfig.topK,
-          channel: input.channel as string | undefined,
-          sender: input.sender as string | undefined,
-          dateFrom: input.date_from as string | undefined,
-          dateTo: input.date_to as string | undefined,
-        })
-      })(),
-    ])
-
-    // Merge results via RRF if both succeeded
-    if (denseResult.status === 'fulfilled' && denseResult.value.length > 0) {
-      results.push({
-        source: 'communications',
-        entries: denseResult.value.map(c => ({
-          content: c.content,
-          score: c.score,
-          channel: c.metadata.channel,
-          sender: c.metadata.sender,
-          date: c.metadata.received_at,
-          subject: c.metadata.subject,
-          citation: c.citationRef,
-        })),
-      })
-    }
-
-    if (sparseResult.status === 'fulfilled' && sparseResult.value.length > 0) {
-      // Add sparse results that aren't already in dense results
-      const denseContents = new Set(
-        denseResult.status === 'fulfilled'
-          ? denseResult.value.map(c => c.content.slice(0, 100))
-          : []
-      )
-      const uniqueSparse = sparseResult.value.filter(
-        s => !denseContents.has(s.content.slice(0, 100))
-      )
-      if (uniqueSparse.length > 0) {
-        results.push({
-          source: 'keyword_matches',
-          entries: uniqueSparse.map(s => ({
-            content: s.content,
-            channel: s.channel,
-            sender: s.sender,
-            date: s.receivedAt,
-            subject: s.subject,
-          })),
-        })
-      }
-    }
-
-    if (denseResult.status === 'rejected') {
-      logger.warn('[search_memory] Dense search failed:', denseResult.reason)
-    }
-
-    // 3. Semantic memories (stored facts, preferences, relationships)
-    // Use multiple search strategies: combined keywords AND individual keywords
-    const searchKeywords = query.split(/\s+/).filter(w => w.length > 2 && !['the', 'and', 'for', 'that', 'this', 'can', 'you', 'hey'].includes(w.toLowerCase())).slice(0, 4)
-    const allSemanticMems: Array<{ content: string; category: string; confidence: number }> = []
-
-    // Strategy A: combined keywords (e.g., %Andy%invoice%)
-    if (searchKeywords.length >= 2) {
-      const { data } = await supabase
-        .from('semantic_memories')
-        .select('content, category, confidence')
-        .eq('org_id', orgId)
-        .eq('is_active', true)
-        .ilike('content', `%${searchKeywords.slice(0, 3).join('%')}%`)
-        .order('confidence', { ascending: false })
-        .limit(5)
-      if (data) allSemanticMems.push(...data)
-    }
-
-    // Strategy B: each keyword individually (catches partial matches)
-    for (const kw of searchKeywords.slice(0, 2)) {
-      const { data } = await supabase
-        .from('semantic_memories')
-        .select('content, category, confidence')
-        .eq('org_id', orgId)
-        .eq('is_active', true)
-        .ilike('content', `%${kw}%`)
-        .order('confidence', { ascending: false })
-        .limit(3)
-      if (data) allSemanticMems.push(...data)
-    }
-
-    // Deduplicate by content
-    const seenContent = new Set<string>()
-    const uniqueMems = allSemanticMems.filter(m => {
-      const key = m.content.slice(0, 80)
-      if (seenContent.has(key)) return false
-      seenContent.add(key)
-      return true
-    }).slice(0, 8)
-
-    if (uniqueMems.length > 0) {
-      results.push({ source: 'stored_knowledge', entries: uniqueMems })
-    }
-
-    // 4. Memory Palace entries fallback
-    let dbQuery = supabase.from('memory_palace_entries').select('*').eq('org_id', orgId).eq('is_active', true)
-    if (input.category) dbQuery = dbQuery.eq('category', input.category as string)
-    if (input.query) dbQuery = dbQuery.ilike('content', `%${query}%`)
-    const { data: memories } = await dbQuery.order('confidence', { ascending: false }).limit(5)
-    if (memories && memories.length > 0) {
-      results.push({ source: 'memory_palace', entries: memories })
-    }
-
-    const totalResults = results.reduce((sum, r) => sum + r.entries.length, 0)
-    if (totalResults === 0) {
-      return { success: true, data: { results: [], total: 0, message: 'No matching memories or communications found.' } }
-    }
-    return { success: true, data: { results, total: totalResults } }
+    const { data, error } = await query.order('created_at', { ascending: false }).limit(20)
+    if (error) return { success: false, error: error.message }
+    return { success: true, data: { results: data, total: data?.length ?? 0 } }
   },
 
   async add_memory(input, orgId, supabase) {
     const { data, error } = await supabase
-      .from('memory_palace_entries')
+      .from('memory_entries')
       .insert({
         org_id: orgId,
         content: input.content as string,
-        category: (input.category as string) || 'fact',
+        category: input.category as string,
         confidence: (input.confidence as number) ?? 0.8,
-        source: 'user_explicit',
-        is_active: true,
-        entity_ids: [],
-        entity_names: [],
       })
       .select()
       .single()
@@ -905,236 +236,38 @@ const handlers: Record<string, AgentToolHandler> = {
     if (error) return { success: false, error: error.message }
     return { success: true, data }
   },
-
-  async create_procedure(input, orgId, supabase) {
-    const name = input.name as string
-    const triggerPattern = input.trigger_pattern as string
-    const steps = input.steps as string[]
-    const source = ((input.source as string) || "explicit") as "observed" | "explicit" | "consolidation"
-
-    if (!name || !triggerPattern || !steps?.length) {
-      return { success: false, error: "name, trigger_pattern, and steps are required" }
-    }
-
-    // Validate regex
-    try {
-      new RegExp(triggerPattern, "i")
-    } catch {
-      return { success: false, error: `Invalid regex pattern: ${triggerPattern}` }
-    }
-
-    const proc = await createProcedure(supabase, orgId, name, triggerPattern, steps, source)
-    if (!proc) return { success: false, error: "Failed to create procedure" }
-    return { success: true, data: { id: proc.id, name: proc.name, trigger_pattern: proc.trigger_pattern, steps: proc.steps } }
-  },
-
-  async resolve_tool(input, _orgId, _supabase) {
-    const { resolveToolSchema, searchToolSchemas } = await import('./tools/deferred-loader')
-
-    const toolName = input.tool_name as string | undefined
-    const query = input.query as string | undefined
-    const { complexity } = classifyQuery(query || "")
-    const routerConfig = getRetrievalConfig(complexity)
-    logger.info("[search_memory] Query classified as:", complexity)
-
-    if (toolName) {
-      const schema = resolveToolSchema(toolName)
-      if (!schema) return { success: false, error: `Tool "${toolName}" not found. Check the on-demand tools list.` }
-      return { success: true, data: { name: schema.name, description: schema.description, input_schema: schema.input_schema } }
-    }
-
-    if (query) {
-      const results = searchToolSchemas(query, 3)
-      if (results.length === 0) return { success: false, error: `No tools matching "${query}". Check the on-demand tools list.` }
-      return { success: true, data: results.map(t => ({ name: t.name, description: t.description })) }
-    }
-
-    return { success: false, error: 'Provide either tool_name or query.' }
-  },
 }
 
 const allHandlers: Record<string, AgentToolHandler> = {
   ...handlers,
   ...channelToolHandlers,
-  ...superpowerToolHandlers,
-  ...codeExecutionToolHandlers,
-  ...adToolHandlers,
-  ...seoToolHandlers,
-  ...tenderToolHandlers,
-  ...contentToolHandlers,
-  ...builderToolHandlers,
-  ...projectToolHandlers,
-  ...standingOrderToolHandlers,
-  async generate_invoice(input, orgId, supabase) {
-    return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
-  },
+  ...webToolHandlers,
 }
 
-export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition]
-  if (!groups || groups.length === 0) return allTools
-
-  const selectedGroups = new Set<ToolGroup>(['core', ...groups])
-  const allowedTools = new Set<string>()
-  for (const g of selectedGroups) {
-    if (TOOL_GROUPS[g]) {
-      for (const t of TOOL_GROUPS[g].tools) allowedTools.add(t)
-    }
-  }
-  return allTools.filter(t => allowedTools.has(t.name))
+export function getAgentTools(): Anthropic.Tool[] {
+  return [...toolDefinitions, ...channelToolDefinitions, ...webToolDefinitions]
 }
 
-export interface ExecuteToolOptions {
-  agentConfigId?: string
-  agentConfig?: { confidence_thresholds?: { act?: number; ask?: number } }
-  orgSettings?: { confidence_thresholds?: { act?: number; ask?: number } }
-  calibratedThresholds?: { act: number; ask: number; sampleSize: number } | null
-  confidenceScore?: number
-  agentType?: string
-  orgAutonomyOverrides?: OrgAutonomyOverrides | null
-  spawnDepth?: number
-  maxSpawnDepth?: number
-  parentAgentId?: string
-}
+const TOOL_TIMEOUT_MS = 30_000
 
 export async function executeAgentTool(
   name: string,
   input: Record<string, unknown>,
   orgId: string,
-  supabase: SupabaseClient,
-  options?: ExecuteToolOptions
+  supabase: SupabaseClient
 ): Promise<ToolResult> {
   const handler = allHandlers[name]
   if (!handler) {
     return { success: false, error: `Unknown tool: ${name}` }
   }
-
-  // ---------------------------------------------------------------------------
-  // Plan gate check for growth tools — must come before execution.
-  // ---------------------------------------------------------------------------
-  const requiredPlan = TOOL_PLAN_REQUIREMENTS[name]
-  if (requiredPlan) {
-    const orgPlan = await getOrgPlan(supabase, orgId)
-    const gate = checkToolPlanGate(orgPlan, name)
-    if (!gate.allowed) {
-      return {
-        success: false,
-        error: `${name} requires the ${gate.requiredPlan} plan or higher. You're on the ${orgPlan} plan. Ask the user to upgrade at /pricing to unlock this feature.`,
-      }
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Autonomy pre-filter: check tool risk level BEFORE confidence routing.
-  // L4 (silent) and L3 (notify) bypass the approval queue entirely.
-  // L2 (propose) and L1 (approve) fall through to existing confidence routing.
-  // ---------------------------------------------------------------------------
-  const confidenceScore = options?.confidenceScore ?? 1 // Default to 1 (max confidence) for chat-driven calls
-  const autonomy = shouldAutoExecute(name, confidenceScore, options?.orgAutonomyOverrides)
-
-  if (autonomy.execute) {
-    // L4 or L3 with sufficient confidence — execute directly
-    logger.debug(`[tools] Autonomy bypass: ${autonomy.reason}`)
-    try {
-      const result = await handler(input, orgId, supabase)
-
-      // L3: fire-and-forget notification so user knows what happened
-      if (autonomy.notify) {
-        dispatchNotification(supabase, {
-          orgId,
-          type: 'info',
-          title: `Agent executed: ${name}`,
-          body: autonomy.reason,
-          urgency: 'low',
-          channels: ['dashboard'],
-          metadata: { toolName: name, autonomyLevel: 'L3_notify' },
-        }).catch(() => { /* swallow */ })
-      }
-
-      return result
-    } catch (err) {
-      return { success: false, error: String(err) }
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // L2 / L1 (or L3 with low confidence): fall through to confidence routing
-  // ---------------------------------------------------------------------------
-
-  // Apply confidence routing if confidence score is provided and approval infrastructure exists
-  if (
-    options?.confidenceScore !== undefined &&
-    options?.agentConfigId &&
-    options?.confidenceScore >= 0 &&
-    options?.confidenceScore <= 1
-  ) {
-    const routing = routeAgentAction(
-      options.confidenceScore,
-      options.agentConfig,
-      options.orgSettings,
-      options.agentType,
-      options.calibratedThresholds,
-    )
-
-    // Record auto-act outcomes for calibration (fire-and-forget)
-    if (routing.decision === 'act' && options.agentType) {
-      recordActionOutcome(
-        supabase,
-        orgId,
-        options.agentType,
-        name,
-        options.confidenceScore,
-        true, // auto-acted = implicitly approved
-        null, // correctness unknown at execution time
-        routing.thresholdSource ?? 'static',
-      ).catch(() => { /* swallow */ })
-    }
-
-    // If routing decision is 'ask' or 'escalate', queue for approval instead of executing
-    if (routing.decision === 'ask' || routing.decision === 'escalate') {
-      try {
-        const approval = await queueAgentAction(supabase, {
-          org_id: orgId,
-          agent_config_id: options.agentConfigId,
-          action_type: name,
-          action_payload: input,
-          action_summary: `Tool: ${name}`,
-          confidence_score: options.confidenceScore,
-          agentConfig: options.agentConfig,
-          orgSettings: options.orgSettings,
-        })
-
-        if (approval) {
-          // Trigger notification for the approval
-          await notifyApproval(supabase, approval).catch(err => {
-            logger.warn(`[tools] notifyApproval failed for approval ${approval.id}:`, { error: err })
-          })
-          return {
-            success: true,
-            queued: true,
-            approvalId: approval.id,
-            data: { routing: routing.decision, confidence: options.confidenceScore },
-          }
-        }
-      } catch (err) {
-        logger.warn(`[tools] queueAgentAction failed:`, { error: err })
-        // Fall through to execution on approval queue failure (fail open)
-      }
-    }
-  }
-
-  // spawn_agent requires special context not available to generic handlers
-  if (name === 'spawn_agent') {
-    return handleSpawnAgent(input, orgId, supabase, {
-      currentDepth: options?.spawnDepth ?? 0,
-      maxDepth: options?.maxSpawnDepth ?? 3,
-      parentAgentId: options?.parentAgentId,
-      engineConfig: options as unknown as Record<string, unknown>,
-    })
-  }
-
   try {
-    return await handler(input, orgId, supabase)
+    const result = await Promise.race([
+      handler(input, orgId, supabase),
+      new Promise<ToolResult>((_, reject) =>
+        setTimeout(() => reject(new Error(`Tool ${name} timed out after 30 seconds`)), TOOL_TIMEOUT_MS)
+      ),
+    ])
+    return result
   } catch (err) {
     return { success: false, error: String(err) }
   }

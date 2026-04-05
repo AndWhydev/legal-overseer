@@ -1,6 +1,5 @@
 import { readFileSync, existsSync, readdirSync } from 'fs'
 import { join } from 'path'
-import type { SupabaseClient } from '@supabase/supabase-js'
 
 interface CacheEntry {
   timestamp: number
@@ -12,14 +11,10 @@ const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
 export async function loadVoiceProfile(
   deploymentSlug: string,
-  profileName?: string,
-  supabase?: SupabaseClient,
-  orgId?: string,
+  profileName?: string
 ): Promise<string> {
   // Build cache key
-  const cacheKey = orgId
-    ? `${deploymentSlug}:${orgId}:${profileName || 'default'}`
-    : `${deploymentSlug}:${profileName || 'default'}`
+  const cacheKey = `${deploymentSlug}:${profileName || 'default'}`
 
   // Check cache first
   const cached = voiceCache.get(cacheKey)
@@ -27,36 +22,8 @@ export async function loadVoiceProfile(
     return cached.content
   }
 
-  // Try Supabase first (voice_profiles table)
-  if (supabase && orgId) {
-    try {
-      let query = supabase
-        .from('voice_profiles')
-        .select('name, content')
-        .eq('org_id', orgId)
-        .eq('is_active', true)
-
-      if (profileName) {
-        query = query.eq('name', profileName)
-      } else {
-        query = query.eq('is_default', true)
-      }
-
-      const { data } = await query.limit(1).single()
-
-      if (data) {
-        const voiceText = (data as { content: string }).content
-        voiceCache.set(cacheKey, { timestamp: Date.now(), content: voiceText })
-        return voiceText
-      }
-    } catch {
-      // Fall through to disk
-    }
-  }
-
-  // Fall back to disk
   try {
-    const projectRoot = '/home/claude/bitbit'
+    const projectRoot = process.cwd()
     const voicesDir = join(projectRoot, 'deployments', deploymentSlug, 'voices')
 
     if (!existsSync(voicesDir)) {
