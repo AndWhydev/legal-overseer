@@ -1,28 +1,19 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import {
-  IconPlugOff,
-  IconRefresh,
-  IconTestPipe,
-  IconLoader2,
-  IconCircleCheck,
-  IconCircleX,
-  IconCircleDot,
-} from '@tabler/icons-react'
+import { IconRefresh, IconPlugOff, IconTestPipe, IconLoader2, IconX } from '@tabler/icons-react'
 import type { OrgConnection, SyncLogEntry } from '@/lib/connections'
 
-const timeSince = (iso: string) => {
+interface ConnectionDetailDrawerProps {
+  connection: OrgConnection
+  onClose: () => void
+  onDisconnect: (id: string) => void
+}
+
+function timeSince(iso: string) {
   const ms = Date.now() - new Date(iso).getTime()
   if (ms < 60_000) return 'just now'
   if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m ago`
@@ -30,246 +21,176 @@ const timeSince = (iso: string) => {
   return new Date(iso).toLocaleDateString()
 }
 
-interface ConnectionDetailDrawerProps {
-  connection: OrgConnection | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onDisconnect: (id: string) => void
-}
-
-export function ConnectionDetailDrawer({
+export function ConnectionDetailContent({
   connection,
-  open,
-  onOpenChange,
+  onClose,
   onDisconnect,
 }: ConnectionDetailDrawerProps) {
   const [logs, setLogs] = useState<SyncLogEntry[]>([])
-  const [logsLoading, setLogsLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
-  const [testResult, setTestResult] = useState<string | null>(null)
   const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<string | null>(null)
 
   const fetchLogs = useCallback(async () => {
-    if (!connection) return
-    setLogsLoading(true)
-    try {
-      const res = await fetch(`/api/connections/${connection.id}/logs?limit=10`)
-      if (res.ok) {
-        const data = await res.json()
-        setLogs(data.logs ?? [])
-      }
-    } catch {
-      // silently ignore
-    } finally {
-      setLogsLoading(false)
+    const res = await fetch(`/api/connections/${connection.id}/logs?limit=10`)
+    if (res.ok) {
+      const data = await res.json()
+      setLogs(data.logs || [])
     }
-  }, [connection])
+  }, [connection.id])
 
   useEffect(() => {
-    if (open && connection) {
-      setTestResult(null)
-      void fetchLogs()
-    }
-  }, [open, connection, fetchLogs])
+    void fetchLogs()
+  }, [fetchLogs])
 
-  async function handleSync() {
-    if (!connection) return
+  const handleSync = async () => {
     setSyncing(true)
     try {
-      await fetch(`/api/connections/${connection.id}/sync`, { method: 'POST' })
-      void fetchLogs()
+      const res = await fetch(`/api/connections/${connection.id}/sync`, { method: 'POST' })
+      if (res.ok) void fetchLogs()
     } finally {
       setSyncing(false)
     }
   }
 
-  async function handleTest() {
-    if (!connection) return
+  const handleTest = async () => {
     setTesting(true)
     setTestResult(null)
     try {
       const res = await fetch(`/api/connections/${connection.id}/test`, { method: 'POST' })
       const data = await res.json()
-      setTestResult(res.ok ? 'Connection OK' : (data.error ?? 'Test failed'))
-    } catch {
-      setTestResult('Network error')
+      setTestResult(data.ok ? 'passed' : data.error || 'failed')
     } finally {
       setTesting(false)
     }
   }
 
-  function handleDisconnect() {
-    if (!connection) return
-    if (!confirm(`Disconnect ${connection.display_name}? Your synced messages will be preserved.`)) return
-    onDisconnect(connection.id)
-    onOpenChange(false)
-  }
-
-  const accountEmail = connection?.config?.account_email as string | undefined
+  const accountEmail = (connection.config as Record<string, string>)?.account_email || connection.provider
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-        {connection ? (
-          <>
-            <SheetHeader className="border-b border-border pb-4">
-              <SheetTitle>{connection.display_name}</SheetTitle>
-              {accountEmail ? (
-                <SheetDescription>{accountEmail}</SheetDescription>
-              ) : null}
-            </SheetHeader>
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <div>
+          <h3 className="text-sm font-semibold">{connection.display_name}</h3>
+          <p className="text-xs text-muted-foreground">{accountEmail}</p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose} className="size-7">
+          <IconX size={16} />
+        </Button>
+      </div>
 
-            <div className="flex flex-col gap-6 px-4 py-4">
-              {/* Status badges */}
-              <div className="flex flex-wrap gap-2">
-                <Badge
-                  variant={connection.status === 'connected' ? 'default' : 'secondary'}
-                >
-                  {connection.status}
-                </Badge>
-                <Badge variant="outline">{connection.transport}</Badge>
-              </div>
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto px-4 py-4">
+        {/* Badges */}
+        <div className="flex flex-wrap gap-1.5">
+          <Badge variant={connection.status === 'connected' ? 'default' : 'destructive'} className="text-[11px]">
+            {connection.status}
+          </Badge>
+          <Badge variant="outline" className="text-[11px]">{connection.transport}</Badge>
+        </div>
 
-              <Separator />
+        <Separator className="my-4" />
 
-              {/* Stats row */}
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div>
-                  <p className="text-lg font-semibold text-foreground">{connection.message_count}</p>
-                  <p className="text-xs text-muted-foreground">Messages</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-foreground">
-                    {connection.last_sync_at ? timeSince(connection.last_sync_at) : '—'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Last sync</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-foreground">
-                    {connection.last_error ? 1 : 0}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Errors</p>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Action buttons */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSync}
-                  disabled={syncing || connection.transport === 'bridge'}
-                  className="flex-1"
-                >
-                  {syncing ? (
-                    <IconLoader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                  ) : (
-                    <IconRefresh className="mr-1.5 h-4 w-4" />
-                  )}
-                  Sync Now
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleTest}
-                  disabled={testing}
-                  className="flex-1"
-                >
-                  {testing ? (
-                    <IconLoader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                  ) : (
-                    <IconTestPipe className="mr-1.5 h-4 w-4" />
-                  )}
-                  Test
-                </Button>
-              </div>
-
-              {testResult ? (
-                <p className="rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-foreground">
-                  {testResult}
-                </p>
-              ) : null}
-
-              <Separator />
-
-              {/* Activity log */}
-              <div>
-                <h3 className="mb-3 text-sm font-medium text-foreground">Activity</h3>
-                {logsLoading ? (
-                  <div className="flex justify-center py-4">
-                    <IconLoader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : logs.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No activity yet.</p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {logs.map((entry) => {
-                      const StatusIcon =
-                        entry.status === 'success'
-                          ? IconCircleCheck
-                          : entry.status === 'error'
-                          ? IconCircleX
-                          : IconCircleDot
-                      const dotColor =
-                        entry.status === 'success'
-                          ? 'text-green-500'
-                          : entry.status === 'error'
-                          ? 'text-red-500'
-                          : 'text-yellow-500'
-
-                      return (
-                        <div
-                          key={entry.id}
-                          className="flex items-start gap-2.5 rounded-lg border border-border bg-secondary/50 px-3 py-2"
-                        >
-                          <StatusIcon className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${dotColor}`} />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm text-foreground">
-                              {entry.error_message
-                                ? entry.error_message
-                                : `${entry.messages_inserted} inserted${entry.duplicates ? `, ${entry.duplicates} dupes` : ''}`}
-                            </p>
-                          </div>
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            {timeSince(entry.created_at)}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Setup guide link */}
-              <a
-                href="/docs/connections/bridge"
-                className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-              >
-                Setup guide →
-              </a>
-
-              {/* Disconnect */}
-              <div className="border-t border-border pt-2">
-                <Button
-                  variant="outline"
-                  className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
-                  onClick={handleDisconnect}
-                >
-                  <IconPlugOff className="mr-2 h-4 w-4" />
-                  Disconnect
-                </Button>
-                <p className="mt-1.5 text-center text-xs text-muted-foreground">
-                  Synced messages will be preserved
-                </p>
-              </div>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div>
+            <div className="text-lg font-semibold">{connection.message_count}</div>
+            <div className="text-[11px] text-muted-foreground">Messages</div>
+          </div>
+          <div>
+            <div className="text-lg font-semibold">
+              {connection.last_sync_at ? timeSince(connection.last_sync_at) : '\u2014'}
             </div>
-          </>
-        ) : null}
-      </SheetContent>
-    </Sheet>
+            <div className="text-[11px] text-muted-foreground">Last sync</div>
+          </div>
+          <div>
+            <div className="text-lg font-semibold">{connection.last_error ? '1' : '0'}</div>
+            <div className="text-[11px] text-muted-foreground">Errors</div>
+          </div>
+        </div>
+
+        <Separator className="my-4" />
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 text-xs"
+            onClick={handleSync}
+            disabled={syncing || connection.transport === 'bridge'}
+          >
+            {syncing ? <IconLoader2 className="mr-1.5 size-3.5 animate-spin" /> : <IconRefresh className="mr-1.5 size-3.5" />}
+            Sync Now
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 text-xs"
+            onClick={handleTest}
+            disabled={testing}
+          >
+            {testing ? <IconLoader2 className="mr-1.5 size-3.5 animate-spin" /> : <IconTestPipe className="mr-1.5 size-3.5" />}
+            Test
+          </Button>
+        </div>
+
+        {testResult && (
+          <div className={`mt-2 rounded-md p-2 text-xs ${testResult === 'passed' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+            {testResult === 'passed' ? 'Connection test passed' : testResult}
+          </div>
+        )}
+
+        <Separator className="my-4" />
+
+        {/* Activity */}
+        <h4 className="mb-2 text-xs font-medium text-muted-foreground">Recent activity</h4>
+        <div className="space-y-1.5">
+          {logs.length === 0 && (
+            <p className="text-xs text-muted-foreground">No sync activity yet</p>
+          )}
+          {logs.map((log) => (
+            <div key={log.id} className="flex items-center justify-between rounded-md border px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className={`size-1.5 rounded-full ${log.status === 'success' ? 'bg-green-500' : log.status === 'error' ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                <span className="text-xs">
+                  {log.status === 'success'
+                    ? `${log.messages_inserted} inserted${log.duplicates ? `, ${log.duplicates} dupes` : ''}`
+                    : log.status === 'error'
+                    ? (log.error_message || 'Sync failed')
+                    : `${log.messages_inserted}/${log.messages_found} partial`}
+                </span>
+              </div>
+              <span className="text-[11px] text-muted-foreground">{timeSince(log.created_at)}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4">
+          <a
+            href="https://docs.bitbit.chat/docs/connections/overview"
+            target="_blank"
+            rel="noopener"
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Setup guide \u2192
+          </a>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t px-4 py-3">
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 text-xs"
+          onClick={() => onDisconnect(connection.id)}
+        >
+          <IconPlugOff className="mr-1.5 size-3.5" />
+          Disconnect
+        </Button>
+      </div>
+    </div>
   )
 }

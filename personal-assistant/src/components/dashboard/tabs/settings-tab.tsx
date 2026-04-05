@@ -15,7 +15,8 @@ import { cn } from '@/lib/utils';
 import { BillingSettings } from '@/components/settings/billing-settings';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
-import { ConnectionDetailDrawer } from '@/components/connections/connection-detail-drawer';
+import { ConnectionDetailContent } from '@/components/connections/connection-detail-drawer';
+import { useDrawer } from '@/components/dashboard/drawer-context';
 import type { OrgConnection } from '@/lib/connections';
 import { RagStatsWidget } from '@/components/dashboard/rag-stats-widget';
 import { createClient } from '@/lib/supabase/client';
@@ -199,8 +200,7 @@ export function SettingsConnectionsTab() {
   const [integrationsLoading, setIntegrationsLoading] = useState(true);
   const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
   const [orgConnections, setOrgConnections] = useState<OrgConnection[]>([]);
-  const [selectedConnection, setSelectedConnection] = useState<OrgConnection | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { setDrawer, closeDrawer } = useDrawer();
 
   const fetchIntegrations = useCallback(async () => {
     try {
@@ -253,21 +253,19 @@ export function SettingsConnectionsTab() {
           onWhatsAppConnect={() => setWhatsappModalOpen(true)}
           orgConnections={orgConnections}
           onConnectionInfoClick={(conn) => {
-            setSelectedConnection(conn);
-            setDrawerOpen(true);
+            setDrawer(
+              <ConnectionDetailContent
+                connection={conn}
+                onClose={closeDrawer}
+                onDisconnect={() => {
+                  closeDrawer();
+                  fetchIntegrations();
+                }}
+              />
+            );
           }}
         />
 
-        <ConnectionDetailDrawer
-          connection={selectedConnection}
-          open={drawerOpen}
-          onOpenChange={setDrawerOpen}
-          onDisconnect={() => {
-            setDrawerOpen(false);
-            setSelectedConnection(null);
-            fetchIntegrations();
-          }}
-        />
       </div>
 
       {whatsappModalOpen && (

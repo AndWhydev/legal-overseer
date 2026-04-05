@@ -171,14 +171,19 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{integration.name}</span>
             {connected && onInfoClick && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onInfoClick(); }}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                title="Connection details"
-              >
-                <IconInfoCircle size={14} />
-              </button>
+              <>
+                <Badge variant="outline" className="border-yellow-500/40 text-yellow-500 text-[10px] px-1.5 py-0">
+                  Custom
+                </Badge>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onInfoClick(); }}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  title="Connection details"
+                >
+                  <IconInfoCircle size={14} />
+                </button>
+              </>
             )}
             <SuccessTick visible={showTick} />
             {isComingSoon && (
