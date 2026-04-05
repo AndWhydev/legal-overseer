@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { ConnectionsGrid } from '@/components/connections/connections-grid'
-import { ConnectionDetailDrawer } from '@/components/connections/connection-detail-drawer'
+import { ConnectionDetailContent } from '@/components/connections/connection-detail-drawer'
 import type { OrgConnection } from '@/lib/connections'
 
 function ConnectionsPageInner() {
@@ -23,7 +23,7 @@ function ConnectionsPageInner() {
   return (
     <>
       <ConnectionsGrid onConnectionClick={handleConnectionClick} />
-      <ConnectionDetailDrawer
+      <ConnectionDetailContent
         connection={selectedConnection}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}

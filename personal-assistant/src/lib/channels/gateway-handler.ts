@@ -67,7 +67,17 @@ export async function handleGatewayMessage(params: GatewayMessageParams): Promis
     return;
   }
 
-  await sendChannelReply(channel, replyTo, responseText);
+  // Split response into multiple bubbles on blank lines (messaging persona
+  // instructs the model to separate thoughts with blank lines).
+  // Each non-empty chunk becomes a separate message for natural text feel.
+  const bubbles = responseText
+    .split(/\n\n+/)
+    .map(b => b.trim())
+    .filter(b => b.length > 0)
+
+  for (const bubble of bubbles) {
+    await sendChannelReply(channel, replyTo, bubble);
+  }
 }
 
 async function sendChannelReply(channel: Channel, replyTo: string, text: string): Promise<void> {
