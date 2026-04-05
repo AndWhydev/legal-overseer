@@ -981,14 +981,25 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
 
     const { data: cached } = await dbQuery
 
-    const lastSyncQuery = await supabase
-      .from('channel_connections')
-      .select('last_sync, channel_type')
+    // Check org_connections first (new system), fallback to channel_connections
+    let lastSync: string | null = null
+    const orgConnQuery = await supabase
+      .from('org_connections')
+      .select('last_sync_at, provider')
       .eq('org_id', orgId)
-      .order('last_sync', { ascending: false })
+      .order('last_sync_at', { ascending: false })
       .limit(1)
-
-    const lastSync = lastSyncQuery.data?.[0]?.last_sync
+    if (orgConnQuery.data?.[0]?.last_sync_at) {
+      lastSync = orgConnQuery.data[0].last_sync_at
+    } else {
+      const legacyQuery = await supabase
+        .from('channel_connections')
+        .select('last_sync, channel_type')
+        .eq('org_id', orgId)
+        .order('last_sync', { ascending: false })
+        .limit(1)
+      lastSync = legacyQuery.data?.[0]?.last_sync ?? null
+    }
     const cacheAgeMs = lastSync ? Date.now() - new Date(lastSync).getTime() : Infinity
     const isFresh = cacheAgeMs < 5 * 60 * 1000
 
