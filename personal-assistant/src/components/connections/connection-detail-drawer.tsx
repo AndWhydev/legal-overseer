@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { IconRefresh, IconPlugOff, IconTestPipe, IconLoader2, IconX } from '@tabler/icons-react'
 import type { OrgConnection, SyncLogEntry } from '@/lib/connections'
 
@@ -67,12 +66,22 @@ export function ConnectionDetailContent({
 
   const accountEmail = (connection.config as Record<string, string>)?.account_email || connection.provider
 
+  // Proper display names for known providers
+  const DISPLAY_NAMES: Record<string, string> = {
+    imessage: 'iMessage',
+    gmail: 'Gmail',
+    outlook: 'Outlook',
+    whatsapp: 'WhatsApp',
+    'google-calendar': 'Google Calendar',
+  }
+  const displayName = DISPLAY_NAMES[connection.provider] || connection.display_name
+
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
-          <h3 className="text-sm font-semibold">{connection.display_name}</h3>
+          <h3 className="text-sm font-semibold">{displayName}</h3>
           <p className="text-xs text-muted-foreground">{accountEmail}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="size-7">
@@ -90,7 +99,7 @@ export function ConnectionDetailContent({
           <Badge variant="outline" className="text-[11px]">{connection.transport}</Badge>
         </div>
 
-        <Separator className="my-4" />
+        <div className="my-3" />
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 text-center">
@@ -110,7 +119,7 @@ export function ConnectionDetailContent({
           </div>
         </div>
 
-        <Separator className="my-4" />
+        <div className="my-3" />
 
         {/* Actions */}
         <div className="flex gap-2">
@@ -142,7 +151,7 @@ export function ConnectionDetailContent({
           </div>
         )}
 
-        <Separator className="my-4" />
+        <div className="my-3" />
 
         {/* Activity */}
         <h4 className="mb-2 text-xs font-medium text-muted-foreground">Recent activity</h4>
@@ -174,7 +183,7 @@ export function ConnectionDetailContent({
             rel="noopener"
             className="text-xs text-muted-foreground hover:text-foreground"
           >
-            Setup guide \u2192
+            Setup guide →
           </a>
         </div>
       </div>
