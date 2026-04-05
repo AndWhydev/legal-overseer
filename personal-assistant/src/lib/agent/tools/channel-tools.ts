@@ -976,7 +976,19 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
 
     if (channel) dbQuery = dbQuery.eq('channel', channel)
     if (query) dbQuery = dbQuery.or(`subject.ilike.%${query}%,body.ilike.%${query}%,sender.ilike.%${query}%`)
-    if (from) dbQuery = dbQuery.or(`sender.ilike.%${from}%,metadata->>sender_email.ilike.%${from}%`)
+    if (from) {
+      // Normalize AU phone numbers: 04xx -> +614xx for matching bridge-ingested messages
+      const fromVariants = [from]
+      if (/^0[45]\d{8}$/.test(from.replace(/\s/g, ''))) {
+        fromVariants.push('+61' + from.replace(/\s/g, '').slice(1))
+      } else if (/^\+61[45]\d{8}$/.test(from.replace(/\s/g, ''))) {
+        fromVariants.push('0' + from.replace(/\s/g, '').slice(3))
+      }
+      const orClauses = fromVariants
+        .flatMap(v => [`sender.ilike.%${v}%`, `metadata->>sender_email.ilike.%${v}%`])
+        .join(',')
+      dbQuery = dbQuery.or(orClauses)
+    }
     if (unreadOnly) dbQuery = dbQuery.eq('processed', false)
 
     const { data: cached } = await dbQuery
