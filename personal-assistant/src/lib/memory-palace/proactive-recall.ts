@@ -330,32 +330,76 @@ export async function proactiveRecall(
   supabase: SupabaseClient,
   orgId: string,
   entityIds: string[],
+  threadId?: string,
 ): Promise<ProactiveRecallResult[]> {
-  if (entityIds.length === 0) return []
+  const results: ProactiveRecallResult[] = []
 
-  try {
-    const graphResults = await graphAwareRecall(supabase, orgId, entityIds)
-    if (graphResults.length > 0) {
-      // Adapt GraphAwareRecallResult to ProactiveRecallResult for compatibility
-      return graphResults.map(r => ({
-        entityId: r.entityId,
-        entityName: r.entityName,
-        memories: [],
-        decisions: [],
-        patterns: [],
-        formattedText: r.formattedText,
-        tokenEstimate: r.tokenEstimate,
-        scoredItems: r.scoredItems,
-      }))
+  if (entityIds.length > 0) {
+    try {
+      const graphResults = await graphAwareRecall(supabase, orgId, entityIds)
+      if (graphResults.length > 0) {
+        // Adapt GraphAwareRecallResult to ProactiveRecallResult for compatibility
+        results.push(...graphResults.map(r => ({
+          entityId: r.entityId,
+          entityName: r.entityName,
+          memories: [],
+          decisions: [],
+          patterns: [],
+          formattedText: r.formattedText,
+          tokenEstimate: r.tokenEstimate,
+          scoredItems: r.scoredItems,
+        })))
+      }
+    } catch (err) {
+      logger.warn('[proactive-recall] Graph recall failed, falling back to legacy', {
+        error: err instanceof Error ? err.message : String(err),
+      })
     }
-  } catch (err) {
-    logger.warn('[proactive-recall] Graph recall failed, falling back to legacy', {
-      error: err instanceof Error ? err.message : String(err),
-    })
+
+    // Fallback to legacy if graph returned nothing
+    if (results.length === 0) {
+      const legacyResults = await legacyProactiveRecall(supabase, orgId, entityIds)
+      results.push(...legacyResults)
+    }
   }
 
-  // Fallback to legacy
-  return legacyProactiveRecall(supabase, orgId, entityIds)
+  // Surface any active plans for this thread
+  if (threadId) {
+    try {
+      const { data: activePlans } = await supabase
+        .from('memory_palace_entries')
+        .select('id, title, content, metadata')
+        .eq('org_id', orgId)
+        .eq('is_active', true)
+        .eq('source_thread_id', threadId)
+        .eq('category', 'pattern')
+        .filter('metadata->>plan_type', 'eq', 'taor_execution')
+        .filter('metadata->>status', 'eq', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (activePlans && activePlans.length > 0) {
+        const plan = activePlans[0]
+        let stageLabels = plan.title ?? 'Unknown plan'
+        try {
+          const planContent = JSON.parse(plan.content)
+          stageLabels = planContent.stages.map((s: { label: string }) => s.label).join(' -> ')
+        } catch {}
+
+        results.push({
+          entityId: 'plan',
+          entityName: 'Current Objectives',
+          memories: [],
+          decisions: [],
+          patterns: [],
+          formattedText: `## Active Plan\n${plan.title}\nStages: ${stageLabels}`,
+          tokenEstimate: Math.ceil(stageLabels.length / 3.5) + 20,
+        })
+      }
+    } catch {}
+  }
+
+  return results
 }
 
 /**

@@ -655,7 +655,7 @@ export class ContextAssembler {
         }
       }
 
-      const recallResults = await recallForContext(supabase, orgId, entityNodeIds)
+      const recallResults = await recallForContext(supabase, orgId, entityNodeIds, threadId)
 
       if (recallResults.length > 0) {
         // Collect surfaced memory IDs for corroboration feedback loop

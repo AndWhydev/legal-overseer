@@ -100,6 +100,9 @@ export async function* runTAORLoop(
   // ── Memory corroboration feedback loop state ───────────────────────
   let previousSurfacedMemoryIds: string[] = []
 
+  // ── Plan persistence state ────────────────────────────────────────
+  let planMemoryId: string | null = null
+
   // ── 1. Pre-flight checks ───────────────────────────────────────────
   const preflight = await preFlightChecks(config, message)
   for (const event of preflight.events) {
@@ -219,6 +222,33 @@ export async function* runTAORLoop(
       planStages = raceResult.plan.stages
       planComplexity = raceResult.plan.complexity
       yield { type: 'plan', data: { stages: planStages } }
+
+      // Persist plan as a pattern memory (fast decay — unproven until completed)
+      if (planStages.length > 0 && config.threadId) {
+        try {
+          const palace = new MemoryPalaceService(config.supabase, config.orgId)
+          planMemoryId = await palace.createMemory({
+            memoryType: 'pattern',
+            title: `Plan: ${planStages.map(s => s.label).join(' -> ')}`,
+            content: JSON.stringify({
+              stages: planStages,
+              userMessage: message.slice(0, 200),
+              toolGroups: raceResult.plan.toolGroups ?? [],
+            }),
+            typeMetadata: {
+              plan_type: 'taor_execution',
+              stage_count: planStages.length,
+              status: 'active',
+            },
+            confidence: 0.4,
+            decayRate: 'fast',
+            sourceType: 'agent_reflection',
+            sourceThreadId: config.threadId,
+          })
+        } catch {
+          // Plan memory creation is non-critical
+        }
+      }
 
       if (raceResult.plan.toolGroups.length > 0) {
         tools = getAgentTools(raceResult.plan.toolGroups as ToolGroup[])
@@ -523,6 +553,58 @@ export async function* runTAORLoop(
           })
         } catch {
           // Non-critical: memory feedback is best-effort
+        }
+      }
+
+      // Plan persistence: update plan memory with execution results
+      if (planMemoryId) {
+        const completedStages = planStages.filter(s => activatedStages.has(s.id))
+        const allCompleted = completedStages.length === planStages.length
+
+        // Update plan memory with actual execution data (fire-and-forget)
+        Promise.resolve(
+          config.supabase
+            .from('memory_palace_entries')
+            .update({
+              metadata: {
+                plan_type: 'taor_execution',
+                status: allCompleted ? 'completed' : 'partial',
+                stages_completed: completedStages.length,
+                stages_total: planStages.length,
+                iterations: iterationCount,
+                completed_at: new Date().toISOString(),
+              },
+            })
+            .eq('id', planMemoryId)
+            .eq('org_id', config.orgId)
+        ).catch(() => {})
+
+        // Promote successful multi-stage plans to lesson_learned
+        if (allCompleted && planStages.length >= 2) {
+          const palace = new MemoryPalaceService(config.supabase, config.orgId)
+          palace.createMemory({
+            memoryType: 'lesson_learned',
+            title: `Successful approach: ${planStages[0].label}`,
+            content: `For "${message.slice(0, 100)}", the approach ${planStages.map(s => s.label).join(' -> ')} worked. Completed in ${iterationCount} iterations.`,
+            typeMetadata: {
+              plan_stages: planStages.map(s => s.label),
+              iterations: iterationCount,
+              original_plan_id: planMemoryId,
+            },
+            confidence: 0.7,
+            decayRate: 'slow',
+            sourceType: 'agent_reflection',
+            sourceThreadId: config.threadId,
+          }).catch(() => {})
+
+          // Mark plan memory as inactive (superseded by lesson)
+          Promise.resolve(
+            config.supabase
+              .from('memory_palace_entries')
+              .update({ is_active: false })
+              .eq('id', planMemoryId)
+              .eq('org_id', config.orgId)
+          ).catch(() => {})
         }
       }
 
