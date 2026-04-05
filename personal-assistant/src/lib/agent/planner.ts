@@ -7,6 +7,7 @@ import type { ToolGroup } from './tools'
 export interface PlanOutput {
   stages: PlanStage[]
   toolGroups: ToolGroup[]
+  complexity: 'low' | 'medium' | 'high'
 }
 
 const VALID_TOOL_GROUPS = new Set<ToolGroup>(['core', 'memory', 'channel', 'web', 'comms', 'agentic'])
@@ -73,6 +74,8 @@ const PlanOutputSchema = z.object({
     .describe('Array of 1-4 execution stages, focused on what matters to the user'),
   toolGroups: z.array(z.string())
     .describe('Tool groups needed (do NOT include "core" — it is always added). Available: memory, channel, web, comms, agentic'),
+  complexity: z.enum(['low', 'medium', 'high'])
+    .describe('Overall request complexity: low=greeting/simple lookup, medium=standard 1-2 step, high=multi-step research/financial/cross-entity'),
 })
 
 export { PlanOutputSchema }
@@ -95,9 +98,15 @@ Also select which tool groups are needed for this request.
 Available groups: core (always included automatically), memory, channel, web, comms
 Select 1-3 additional groups beyond core.
 
-Output a JSON object (not array) with two fields:
+Also classify the overall complexity of this request:
+- "low": greeting, acknowledgment, simple single-step lookup, small talk
+- "medium": standard query, 1-2 step operation, routine tool use
+- "high": multi-step research, cross-entity reasoning, financial/scheduling decisions, temporal reasoning ("last time", "compared to"), conflict resolution, 3+ stages needed
+
+Output a JSON object (not array) with three fields:
 - "stages": the array of stage objects as described above
 - "toolGroups": array of group names (do NOT include "core" — it is always added)
+- "complexity": one of "low", "medium", "high"
 
 Examples of toolGroups selection:
 - "Send Sezer a WhatsApp" -> ["channel", "comms"]
@@ -175,10 +184,10 @@ async function generatePlanStructured(
       toolGroups,
     })
 
-    return { stages, toolGroups }
+    return { stages, toolGroups, complexity: data.complexity ?? 'medium' }
   } catch {
     clearTimeout(timeout)
-    return { stages: [], toolGroups: [] }
+    return { stages: [], toolGroups: [], complexity: 'medium' as const }
   }
 }
 
@@ -228,10 +237,10 @@ async function generatePlanLegacy(
         rawToolGroups = parsed.toolGroups
       }
     } else {
-      return { stages: [], toolGroups: [] }
+      return { stages: [], toolGroups: [], complexity: 'medium' as const }
     }
 
-    if (rawStages.length === 0) return { stages: [], toolGroups: [] }
+    if (rawStages.length === 0) return { stages: [], toolGroups: [], complexity: 'medium' as const }
 
     const stages = rawStages.slice(0, 4).map((s: any) => ({
       id: String(s.id || ''),
@@ -246,10 +255,18 @@ async function generatePlanLegacy(
       (g): g is ToolGroup => typeof g === 'string' && g !== 'core' && VALID_TOOL_GROUPS.has(g as ToolGroup)
     )
 
-    return { stages, toolGroups }
+    const rawComplexity = typeof parsed === 'object' && parsed !== null
+      ? (parsed as Record<string, unknown>).complexity
+      : undefined
+    const complexity: 'low' | 'medium' | 'high' =
+      rawComplexity === 'low' || rawComplexity === 'medium' || rawComplexity === 'high'
+        ? rawComplexity
+        : 'medium'
+
+    return { stages, toolGroups, complexity }
   } catch {
     clearTimeout(timeout)
-    return { stages: [], toolGroups: [] }
+    return { stages: [], toolGroups: [], complexity: 'medium' as const }
   }
 }
 
