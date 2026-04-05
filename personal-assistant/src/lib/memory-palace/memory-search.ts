@@ -20,6 +20,25 @@ import type {
   MemoryTimelineEvent,
 } from './types'
 
+// ─── Temporal Signal Detection ──────────────────────────────────────────────
+
+const TEMPORAL_PATTERNS = [
+  /\blast time\b/i,
+  /\bwhen did (we|I|you)\b/i,
+  /\bpreviously\b/i,
+  /\bbefore\b/i,
+  /\bhistory\b/i,
+  /\bremember when\b/i,
+  /\bhow long ago\b/i,
+  /\blast (week|month|time|conversation)\b/i,
+  /\b(first|earliest|originally)\b/i,
+  /\bback (in|when)\b/i,
+]
+
+export function hasTemporalSignal(message: string): boolean {
+  return TEMPORAL_PATTERNS.some(p => p.test(message))
+}
+
 /**
  * Escape SQL LIKE/ILIKE wildcard characters from user input
  * to prevent pattern injection (%, _, \ are special in LIKE).
@@ -223,6 +242,147 @@ export class MemorySearch {
     }
 
     return (data ?? []) as MemoryPalaceEntry[]
+  }
+
+  /**
+   * Episodic retrieval mode — temporal-first search that activates when the
+   * incoming message contains temporal signals. Combines timestamp-range
+   * queries with semantic search, returning results weighted by recency.
+   */
+  async episodicSearch(options: MemorySearchOptions & {
+    timeRange?: { from?: string; to?: string }
+  }): Promise<MemorySearchResult> {
+    const {
+      query,
+      orgId,
+      entityId,
+      limit = 20,
+      timeRange,
+      includeDecisions = true,
+      includePatterns = false,
+      minConfidence = 0,
+    } = options
+
+    const result: MemorySearchResult = {
+      memories: [],
+      decisions: [],
+      patterns: [],
+      totalCount: 0,
+    }
+
+    try {
+      // 1. Timestamp-range query: fetch memories ordered by created_at DESC
+      let temporalQuery = this.supabase
+        .from('memory_palace_entries')
+        .select('*')
+        .eq('org_id', orgId)
+        .eq('is_active', true)
+        .gte('confidence', minConfidence)
+        .order('created_at', { ascending: false })
+        .limit(limit * 2)  // over-fetch for re-ranking
+
+      if (entityId) {
+        temporalQuery = temporalQuery.contains('entity_ids', [entityId])
+      }
+      if (timeRange?.from) {
+        temporalQuery = temporalQuery.gte('created_at', timeRange.from)
+      }
+      if (timeRange?.to) {
+        temporalQuery = temporalQuery.lte('created_at', timeRange.to)
+      }
+
+      const { data: temporalResults } = await temporalQuery
+      const temporalMemories = (temporalResults ?? []) as MemoryPalaceEntry[]
+
+      // 2. Semantic query: standard full-text search
+      const { data: semanticResults } = await this.supabase
+        .rpc('search_memory_palace', {
+          p_org_id: orgId,
+          p_query: query,
+          p_category: null,
+          p_entity_id: entityId ?? null,
+          p_limit: limit,
+        })
+      const semanticMemories = (semanticResults ?? []) as (MemoryPalaceEntry & { rank: number })[]
+
+      // 3. Merge and re-rank: temporal relevance weighted higher
+      const scored = new Map<string, { memory: MemoryPalaceEntry; score: number }>()
+
+      for (const mem of temporalMemories) {
+        const recencyDays = (Date.now() - new Date(mem.created_at).getTime()) / 86_400_000
+        const temporalScore = Math.exp(-0.05 * recencyDays)  // exponential decay
+        scored.set(mem.id, {
+          memory: mem,
+          score: 0.6 * temporalScore + 0.2 * mem.confidence,  // temporal-weighted
+        })
+      }
+
+      for (const mem of semanticMemories) {
+        const existing = scored.get(mem.id)
+        const semanticScore = mem.rank ?? 0.5
+        if (existing) {
+          // Boost items that appear in both indices
+          existing.score += 0.2 * semanticScore + 0.1  // dual-index bonus
+        } else {
+          const recencyDays = (Date.now() - new Date(mem.created_at).getTime()) / 86_400_000
+          const temporalScore = Math.exp(-0.05 * recencyDays)
+          scored.set(mem.id, {
+            memory: mem,
+            score: 0.3 * temporalScore + 0.2 * mem.confidence + 0.2 * semanticScore,
+          })
+        }
+      }
+
+      // Sort by combined score, take top N (stable sort by created_at as tiebreaker)
+      result.memories = Array.from(scored.values())
+        .sort((a, b) => {
+          const scoreDiff = b.score - a.score
+          if (Math.abs(scoreDiff) < 0.001) {
+            return new Date(b.memory.created_at).getTime() - new Date(a.memory.created_at).getTime()
+          }
+          return scoreDiff
+        })
+        .slice(0, limit)
+        .map(s => s.memory)
+
+      // 4. Decisions (temporal-ordered)
+      if (includeDecisions) {
+        let decisionQuery = this.supabase
+          .from('decision_log')
+          .select('*')
+          .eq('org_id', orgId)
+          .eq('status', 'active')
+          .order('decided_at', { ascending: false })
+          .limit(Math.ceil(limit / 3))
+
+        if (entityId) {
+          decisionQuery = decisionQuery.contains('entity_ids', [entityId])
+        }
+
+        const { data: decisions } = await decisionQuery
+        result.decisions = (decisions ?? []) as DecisionLogEntry[]
+      }
+
+      // 5. Patterns (optional, off by default for episodic)
+      if (includePatterns) {
+        result.patterns = await this.searchPatterns(orgId, query, entityId, Math.ceil(limit / 3))
+      }
+
+      result.totalCount = result.memories.length + result.decisions.length + result.patterns.length
+
+      logger.debug('[memory-search] Episodic search completed', {
+        query,
+        memories: result.memories.length,
+        decisions: result.decisions.length,
+      })
+    } catch (err) {
+      logger.error('[memory-search] Episodic search failed', {
+        error: err instanceof Error ? err.message : String(err),
+        query,
+      })
+    }
+
+    return result
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────────

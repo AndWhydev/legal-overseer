@@ -22,7 +22,7 @@ import { notifyApproval } from './approval-notifier'
 import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
 import { shouldAutoExecute, type OrgAutonomyOverrides } from '@/lib/intelligence/autonomy-levels'
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
-import { graphSearch } from '@/lib/memory-palace/memory-search'
+import { graphSearch, hasTemporalSignal, MemorySearch } from '@/lib/memory-palace/memory-search'
 import { createProcedure } from '@/lib/knowledge-graph/procedural-memory'
 import { getEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
 import { classifyQuery, getRetrievalConfig } from '@/lib/rag/query-router'
@@ -721,6 +721,32 @@ const handlers: Record<string, AgentToolHandler> = {
   // Memory tools stay in tools.ts (not shared — chat-specific)
   async search_memory(input, orgId, supabase) {
     const query = input.query as string
+
+    // Temporal signal detection: route to episodic search for time-oriented queries
+    if (hasTemporalSignal(query)) {
+      logger.info('[search_memory] Temporal signal detected, routing to episodic search')
+      const memorySearch = new MemorySearch(supabase)
+      const episodicResult = await memorySearch.episodicSearch({
+        query,
+        orgId,
+        entityId: input.entity_id as string | undefined,
+        limit: 20,
+      })
+
+      const results: { source: string; entries: unknown[] }[] = []
+      if (episodicResult.memories.length > 0) {
+        results.push({ source: 'episodic_memories', entries: episodicResult.memories })
+      }
+      if (episodicResult.decisions.length > 0) {
+        results.push({ source: 'decisions', entries: episodicResult.decisions })
+      }
+      const totalResults = results.reduce((sum, r) => sum + r.entries.length, 0)
+      if (totalResults === 0) {
+        return { success: true, data: { results: [], total: 0, message: 'No matching memories found for temporal query.' } }
+      }
+      return { success: true, data: { results, total: totalResults } }
+    }
+
     const { complexity } = classifyQuery(query || "")
     const routerConfig = getRetrievalConfig(complexity)
     logger.info("[search_memory] Query classified as:", complexity)
