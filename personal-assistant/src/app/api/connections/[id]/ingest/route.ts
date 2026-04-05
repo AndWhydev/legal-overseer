@@ -46,7 +46,7 @@ export async function POST(
 
   // Look up connection
   const { data: conn, error: connErr } = await supabase
-    .from('channel_connections')
+    .from('org_connections')
     .select('*')
     .eq('id', connectionId)
     .single()
@@ -58,7 +58,7 @@ export async function POST(
   // Verify bridge token
   const authHeader = request.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '')
-  const expectedToken = conn.config?.bridge_token
+  const expectedToken = conn.bridge_token
 
   if (!expectedToken || token !== expectedToken) {
     return NextResponse.json({ error: 'Invalid bridge token' }, { status: 401 })
@@ -157,14 +157,29 @@ export async function POST(
     }
   }
 
-  // Update connection metadata
+  // Update connection metadata and increment message_count
   await supabase
-    .from('channel_connections')
+    .from('org_connections')
     .update({
       last_sync: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq('id', connectionId)
+
+  if (inserted > 0) {
+    await supabase.rpc('increment_message_count', { connection_id: connectionId, delta: inserted })
+  }
+
+  // Log sync event
+  await supabase.from('connection_sync_logs').insert({
+    connection_id: connectionId,
+    status: errors.length > 0 && inserted === 0 ? 'error' : errors.length > 0 ? 'partial' : 'success',
+    messages_found: body.messages.length,
+    messages_inserted: inserted,
+    duplicates,
+    error_message: errors.length > 0 ? errors.join('; ') : null,
+    duration_ms: null,
+  })
 
   logger.info(
     `[bridge-ingest] connection=${connectionId} channel=${channelType} inserted=${inserted} duplicates=${duplicates} errors=${errors.length}`
@@ -208,7 +223,7 @@ export async function GET(
   const supabase = createServiceClient(supabaseUrl, serviceKey)
 
   const { data: conn, error } = await supabase
-    .from('channel_connections')
+    .from('org_connections')
     .select('id, org_id, channel_type, status, last_sync, message_count')
     .eq('id', connectionId)
     .single()
