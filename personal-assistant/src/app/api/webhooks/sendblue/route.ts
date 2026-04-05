@@ -4,7 +4,6 @@ import { resolveChannelIdentity } from "@/lib/conversation/identity-resolver";
 import { enrichInboundMessage } from "@/lib/conversation/inbound-enrichment";
 import { handleGatewayMessage } from "@/lib/channels/gateway-handler";
 import { sendSendblueMessage } from "@/lib/channels/sendblue";
-import { after } from "next/server";
 import { logger } from "@/lib/core/logger";
 
 export const maxDuration = 60;
@@ -136,26 +135,24 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // Run pipeline in background — return 200 immediately
-  after(async () => {
-    try {
-      await handleGatewayMessage({
-        channel: "sendblue",
-        text: content,
-        identity: {
-          userId: identity.userId,
-          orgId: identity.orgId,
-          email: identity.email,
-          displayName: identity.displayName,
-        },
-        replyTo: fromNumber,
-      });
-    } catch (err) {
-      logger.error("[webhook/sendblue] Gateway handler error", {
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-  });
+  // Run pipeline inline — Sendblue has no strict webhook timeout
+  try {
+    await handleGatewayMessage({
+      channel: "sendblue",
+      text: content,
+      identity: {
+        userId: identity.userId,
+        orgId: identity.orgId,
+        email: identity.email,
+        displayName: identity.displayName,
+      },
+      replyTo: fromNumber,
+    });
+  } catch (err) {
+    logger.error("[webhook/sendblue] Gateway handler error", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }
