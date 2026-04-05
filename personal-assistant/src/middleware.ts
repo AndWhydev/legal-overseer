@@ -237,10 +237,17 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/monitoring/') ||
     pathname.startsWith('/api/health') ||
     pathname.startsWith('/api/webhooks/') ||
+    pathname.startsWith('/api/connections/') ||
     pathname.startsWith('/api/portal/') ||
     pathname.startsWith('/portal/') ||
     pathname === '/api/agent/invoices/dispatch' // Fly.io worker callback (WORKER_AUTH_TOKEN)
   ) {
+    return applySecurityHeaders(NextResponse.next())
+  }
+
+  // CLI clients send Bearer tokens — let them through, routes validate the token themselves
+  const authHeader = request.headers.get('authorization')
+  if (authHeader?.startsWith('Bearer ') && isApiRoute) {
     return applySecurityHeaders(NextResponse.next())
   }
 

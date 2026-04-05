@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthContext } from '@/lib/supabase/auth-context'
 import { queryInbox, getActiveThreads, type InboxFilters, type PriorityLevel, type MessageCategory, type ThreadStatus } from '@/lib/agent/channel-triage'
-
-async function getOrgContext() {
-  const supabase = await createClient()
-  if (!supabase) return null
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-  const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
-  if (!profile) return null
-  return { supabase, orgId: profile.org_id }
-}
 
 /**
  * GET /api/agent/inbox — query unified inbox with filters
  * Query params: channel, priority, category, status, threadStatus, limit, offset
  */
 export async function GET(request: NextRequest) {
-  const ctx = await getOrgContext()
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>
+  try {
+    ctx = await getAuthContext(request)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const params = request.nextUrl.searchParams
@@ -38,8 +34,14 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/agent/inbox/threads — get active conversation threads
  */
-export async function POST() {
-  const ctx = await getOrgContext()
+export async function POST(request: NextRequest) {
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>
+  try {
+    ctx = await getAuthContext(request)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const threads = await getActiveThreads(ctx.supabase, ctx.orgId)

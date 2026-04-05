@@ -71,6 +71,12 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
     return null
   }
 
+  // CLI and API clients send Bearer tokens — not vulnerable to CSRF (no cookies)
+  const authHeader = request.headers.get('authorization')
+  if (authHeader?.startsWith('Bearer ')) {
+    return null
+  }
+
   const origin = request.headers.get('origin')
 
   // No Origin header: could be a same-origin request from older browsers,
