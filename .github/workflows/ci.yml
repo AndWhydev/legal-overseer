@@ -37,6 +37,8 @@ jobs:
       - name: TypeScript type check
         working-directory: personal-assistant
         run: npx tsc --noEmit
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: ESLint
         working-directory: personal-assistant
