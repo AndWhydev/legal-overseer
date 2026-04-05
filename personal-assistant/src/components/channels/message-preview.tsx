@@ -27,6 +27,7 @@ const channelIcons: Record<ChannelType, React.ComponentType<{ className?: string
   xero: IconChartBar,
   instagram: IconMessage,
   sms: IconMessage,
+  sendblue: IconMessage,
 }
 
 interface MessagePreviewProps {
