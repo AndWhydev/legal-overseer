@@ -67,10 +67,10 @@ export const KanbanColumn = memo(function KanbanColumn({
       {/* Column header */}
       <div className="px-1.5 pb-1">
         <div className="flex items-center gap-2 pb-2">
-          <h3 className="text-sm font-medium text-muted-foreground">
+          <h3 className="text-base font-medium text-muted-foreground">
             {column.title}
           </h3>
-          <Badge variant="secondary" className="font-mono text-sm">
+          <Badge variant="secondary" className="tabular-nums text-base">
             {tasks.length}
           </Badge>
         </div>
@@ -145,10 +145,10 @@ export const KanbanColumn = memo(function KanbanColumn({
                   }
                 }}
                 placeholder="Task title..."
-                className="h-auto border-0 bg-transparent p-0 text-sm font-medium shadow-none focus-visible:ring-0"
+                className="h-auto border-0 bg-transparent p-0 text-base font-medium shadow-none focus-visible:ring-0"
               />
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-base text-muted-foreground">
               Enter create / Tab priority / Esc close
             </p>
           </div>

@@ -24,11 +24,11 @@ function loadTimeColor(ms: number | null | undefined): string {
 
 function WebsiteSignalsPanelInner({ signals }: WebsiteSignalsPanelProps) {
   const items = [
-    { label: 'CMS', content: <span className="text-sm font-medium text-foreground">{signals.cms ?? '--'}</span> },
+    { label: 'CMS', content: <span className="text-base font-medium text-foreground">{signals.cms ?? '--'}</span> },
     { label: 'Analytics', content: <SignalValue value={signals.has_google_analytics} label="Analytics" /> },
     { label: 'Pixel', content: <SignalValue value={signals.has_facebook_pixel} label="Facebook Pixel" /> },
     { label: 'Booking', content: <SignalValue value={signals.has_booking_system} label="Booking system" /> },
-    { label: 'Load Time', content: <span className={cn('text-sm font-medium tabular-nums', loadTimeColor(signals.load_time_ms))}>{signals.load_time_ms != null ? `${signals.load_time_ms}ms` : '--'}</span> },
+    { label: 'Load Time', content: <span className={cn('text-base font-medium tabular-nums', loadTimeColor(signals.load_time_ms))}>{signals.load_time_ms != null ? `${signals.load_time_ms}ms` : '--'}</span> },
     { label: 'Reachable', content: <SignalValue value={signals.reachable} label="Reachable" /> },
   ]
 

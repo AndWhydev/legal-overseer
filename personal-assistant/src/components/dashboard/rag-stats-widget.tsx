@@ -64,7 +64,7 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
   }, [target])
 
   return (
-    <span className="font-mono font-medium">
+    <span className="tabular-nums font-medium">
       {value.toLocaleString()}{suffix}
     </span>
   )
@@ -124,7 +124,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
     return (
       <div className={`flex items-center gap-2 rounded-xl border border-border bg-card p-4 ${className}`}>
         <IconLoader2 size={16} className="shrink-0 animate-spin text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Loading vector stats...</span>
+        <span className="text-base text-muted-foreground">Loading vector stats...</span>
       </div>
     )
   }
@@ -142,13 +142,13 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
     <div className={`rounded-xl border border-border bg-card p-4 ${className}`}>
       <div className="mb-3 flex items-center gap-2 border-b border-border pb-3">
         <IconDatabase size={16} className="text-foreground" />
-        <h3 className="text-sm font-medium text-foreground">Vector Index</h3>
+        <h3 className="text-base font-medium text-foreground">Vector Index</h3>
       </div>
 
       <div className="flex flex-col gap-3">
         {/* Total vectors */}
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm font-medium text-muted-foreground">Total Vectors</span>
+          <span className="text-base font-medium text-muted-foreground">Total Vectors</span>
           <span className="text-base font-medium text-foreground">
             {loading ? '\u2013' : <CountUp target={stats?.totalVectors ?? 0} />}
           </span>
@@ -156,7 +156,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
 
         {/* Index fullness */}
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm font-medium text-muted-foreground">Index Capacity</span>
+          <span className="text-base font-medium text-muted-foreground">Index Capacity</span>
           <span className={`text-base font-medium ${
             stats && stats.indexFullness >= 90 ? 'text-red-500' :
             stats && stats.indexFullness >= 70 ? 'text-amber-500' :
@@ -169,7 +169,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         {/* Monthly cost estimate */}
         {costs && (
           <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-medium text-muted-foreground">Est. Monthly Cost</span>
+            <span className="text-base font-medium text-muted-foreground">Est. Monthly Cost</span>
             <span className="flex items-center gap-1 text-base font-medium text-foreground">
               <IconCurrencyDollar size={14} className="text-emerald-500" />
               {costs.monthlyCost.toFixed(2)}
@@ -181,7 +181,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         {criticalAlerts.length > 0 && (
           <div className="flex gap-2 rounded-lg border border-red-900/30 bg-red-950/20 p-2">
             <IconAlertTriangle size={14} className="mt-1 shrink-0 text-red-500" />
-            <span className="text-sm leading-snug text-red-300">
+            <span className="text-base leading-snug text-red-300">
               {criticalAlerts[0].message}
             </span>
           </div>
@@ -191,7 +191,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         {!criticalAlerts.length && warningAlerts.length > 0 && (
           <div className="flex gap-2 rounded-lg border border-amber-900/30 bg-amber-950/20 p-2">
             <IconAlertCircle size={14} className="mt-1 shrink-0 text-amber-500" />
-            <span className="text-sm leading-snug text-amber-300">
+            <span className="text-base leading-snug text-amber-300">
               {warningAlerts[0].message}
             </span>
           </div>
@@ -201,16 +201,16 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         {showDetails && topChannels.length > 0 && (
           <>
             <div className="mt-2 border-t border-border pt-2" />
-            <div className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            <div className="mb-2 text-base font-medium uppercase tracking-wider text-muted-foreground">
               TOP CHANNELS
             </div>
             <div className="flex flex-col gap-2">
               {topChannels.map(([channel, count]) => (
                 <div key={channel} className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-medium text-muted-foreground">
+                  <span className="text-base font-medium text-muted-foreground">
                     {channel}
                   </span>
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-base font-medium text-foreground">
                     {(count ?? 0).toLocaleString()}
                   </span>
                 </div>
@@ -220,7 +220,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         )}
 
         {/* Last updated */}
-        <div className="mt-2 text-right text-sm text-muted-foreground">
+        <div className="mt-2 text-right text-base text-muted-foreground">
           {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString() : 'Loading...'}
         </div>
       </div>

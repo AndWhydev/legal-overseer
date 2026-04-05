@@ -261,7 +261,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
               ) : (
                 <div className="h-full overflow-auto bg-muted">
                   <div className="p-4">
-                    <pre className="m-0 text-sm leading-relaxed font-mono text-foreground whitespace-pre-wrap break-words">
+                    <pre className="m-0 text-sm leading-relaxed tabular-nums text-foreground whitespace-pre-wrap break-words">
                       <code>{artifact.content}</code>
                     </pre>
                   </div>

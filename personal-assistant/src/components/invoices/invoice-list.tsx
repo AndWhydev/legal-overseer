@@ -539,7 +539,7 @@ function InvoiceDetailPanel({
             fontSize: 16,
             fontWeight: 500,
             color: 'var(--text-primary)',
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--tabular-nums)',
             letterSpacing: '-0.02em',
             lineHeight: 1,
           }}>
@@ -615,7 +615,7 @@ function InvoiceDetailPanel({
                   </div>
                 </div>
                 <span style={{
-                  fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)',
+                  fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--tabular-nums)',
                 }}>
                   {formatMoney(item.total, invoice.currency)}
                 </span>
@@ -633,13 +633,13 @@ function InvoiceDetailPanel({
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', fontSize: 14 }}>
                     <span style={{ color: 'var(--text-dim)' }}>Subtotal</span>
-                    <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--tabular-nums)' }}>
                       {formatMoney(invoice.subtotal ?? invoice.line_items!.reduce((s, i) => s + i.total, 0), invoice.currency)}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', fontSize: 14 }}>
                     <span style={{ color: 'var(--text-dim)' }}>GST (10%)</span>
-                    <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--tabular-nums)' }}>
                       {formatMoney(invoice.tax ?? 0, invoice.currency)}
                     </span>
                   </div>
@@ -647,7 +647,7 @@ function InvoiceDetailPanel({
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 12px', fontSize: 14, fontWeight: 500, borderTop: (invoice.subtotal != null || invoice.tax != null) ? '1px solid var(--border)' : 'none' }}>
                 <span style={{ color: 'var(--text-dim)' }}>Total</span>
-                <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--tabular-nums)' }}>
                   {formatMoney(invoice.total, invoice.currency)}
                 </span>
               </div>
@@ -862,7 +862,7 @@ function InvoiceRowContent({
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{
             fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
-            fontFamily: 'var(--font-mono)', letterSpacing: '-0.01em',
+            fontFamily: 'var(--tabular-nums)', letterSpacing: '-0.01em',
           }}>
             {formatMoney(invoice.total, invoice.currency)}
           </div>
@@ -946,7 +946,7 @@ function InvoiceSection({
         <span style={{ fontSize: 14, fontWeight: 500, color: accent || 'var(--text-secondary)', letterSpacing: '0.01em' }}>
           {label}
         </span>
-        <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+        <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--tabular-nums)' }}>
           {invoices.length}
         </span>
         <div style={{ flex: 1 }} />
@@ -1040,12 +1040,12 @@ function ClientGroupSection({
       >
         <InvoiceAvatar name={name} email={invoices[0]?.client_email} size={28} />
         <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{name}</span>
-        <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+        <span style={{ fontSize: 14, color: 'var(--text-dim)', fontFamily: 'var(--tabular-nums)' }}>
           {invoices.length}
         </span>
         <div style={{ flex: 1 }} />
         {outstandingTotal > 0 && (
-          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'var(--tabular-nums)' }}>
             {formatMoney(outstandingTotal, invoices[0]?.currency || 'AUD')}
           </span>
         )}
@@ -1110,7 +1110,7 @@ function DragGhost({ invoice }: { invoice: InvoiceRow }) {
       </div>
       <div style={{
         fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
-        fontFamily: 'var(--font-mono)', flexShrink: 0,
+        fontFamily: 'var(--tabular-nums)', flexShrink: 0,
       }}>
         {formatMoney(invoice.total, invoice.currency)}
       </div>

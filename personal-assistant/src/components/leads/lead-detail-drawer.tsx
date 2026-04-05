@@ -82,13 +82,13 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
             href={lead.prospect_website.startsWith('http') ? lead.prospect_website : `https://${lead.prospect_website}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-w-0 flex-1 items-center gap-1.5 text-sm font-medium text-foreground hover:underline"
+            className="inline-flex min-w-0 flex-1 items-center gap-1.5 text-base font-medium text-foreground hover:underline"
           >
             <span className="truncate">{displayName}</span>
             <IconExternalLink size={14} className="shrink-0" />
           </a>
         ) : (
-          <h2 className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{displayName}</h2>
+          <h2 className="min-w-0 flex-1 truncate text-base font-medium text-foreground">{displayName}</h2>
         )}
 
         <Badge variant={SCORE_VARIANT[lead.score] ?? 'secondary'} className="shrink-0 text-[12px]">
@@ -107,15 +107,15 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
         <div className="grid grid-cols-3 gap-3">
           <div>
             <div className="text-[12px] text-muted-foreground">Value</div>
-            <div className="text-sm font-medium text-foreground">{formatCurrency(lead.estimated_value)}</div>
+            <div className="text-base font-medium text-foreground">{formatCurrency(lead.estimated_value)}</div>
           </div>
           <div>
             <div className="text-[12px] text-muted-foreground">Speed</div>
-            <div className="text-sm font-medium text-foreground">{formatSpeedToLead(lead.created_at, lead.first_ack_at)}</div>
+            <div className="text-base font-medium text-foreground">{formatSpeedToLead(lead.created_at, lead.first_ack_at)}</div>
           </div>
           <div>
             <div className="text-[12px] text-muted-foreground">Activity</div>
-            <div className="text-sm font-medium text-foreground">{lead.last_activity_at ? relativeTime(lead.last_activity_at) : '--'}</div>
+            <div className="text-base font-medium text-foreground">{lead.last_activity_at ? relativeTime(lead.last_activity_at) : '--'}</div>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
         {lead.outreach_angle && (
           <div className="rounded-[var(--radius-md)] bg-secondary p-3">
             <div className="text-[12px] text-muted-foreground">Suggested approach</div>
-            <div className="text-sm text-foreground">{lead.outreach_angle}</div>
+            <div className="text-base text-foreground">{lead.outreach_angle}</div>
           </div>
         )}
 
@@ -182,14 +182,14 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
                 <div className="flex-1 space-y-1.5">
                   <div className="flex items-baseline justify-between">
                     <span className="text-[12px] text-muted-foreground">Fit</span>
-                    <span className="text-sm font-medium text-foreground">{lead.fit_score}</span>
+                    <span className="text-base font-medium text-foreground">{lead.fit_score}</span>
                   </div>
                   <Progress value={Math.min(lead.fit_score!, 100)} className="h-1" />
                 </div>
                 <div className="flex-1 space-y-1.5">
                   <div className="flex items-baseline justify-between">
                     <span className="text-[12px] text-muted-foreground">Opportunity</span>
-                    <span className="text-sm font-medium text-foreground">{lead.opportunity_score}</span>
+                    <span className="text-base font-medium text-foreground">{lead.opportunity_score}</span>
                   </div>
                   <Progress value={Math.min(lead.opportunity_score!, 100)} className="h-1" />
                 </div>
@@ -201,7 +201,7 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
                   <div className="text-[12px] text-muted-foreground">Fit factors</div>
                   {lead.fit_breakdown.components.map((c, i) => (
                     <div key={i} className="flex items-center justify-between py-0.5">
-                      <span className="text-sm text-muted-foreground">{c.factor}</span>
+                      <span className="text-base text-muted-foreground">{c.factor}</span>
                       <Badge variant="secondary" className="text-[12px] tabular-nums">
                         {c.points > 0 ? '+' : ''}{c.points}
                       </Badge>
@@ -215,7 +215,7 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
                   <div className="text-[12px] text-muted-foreground">Opportunity factors</div>
                   {lead.opportunity_breakdown.components.map((c, i) => (
                     <div key={i} className="flex items-center justify-between py-0.5">
-                      <span className="text-sm text-muted-foreground">{c.factor}</span>
+                      <span className="text-base text-muted-foreground">{c.factor}</span>
                       <Badge variant="secondary" className="text-[12px] tabular-nums">
                         {c.points > 0 ? '+' : ''}{c.points}
                       </Badge>
@@ -234,7 +234,7 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
                     return (
                       <div key={i} className="flex items-start gap-2">
                         {category && <Badge variant="secondary" className="mt-0.5 shrink-0 text-[12px]">{category}</Badge>}
-                        <span className="text-sm text-muted-foreground">{note}</span>
+                        <span className="text-base text-muted-foreground">{note}</span>
                       </div>
                     )
                   })}
@@ -285,19 +285,19 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
           {hasContact && (
             <div className="space-y-1">
               {lead.prospect_emails?.map((email) => (
-                <div key={email} className="flex items-center gap-2 text-sm">
+                <div key={email} className="flex items-center gap-2 text-base">
                   <IconMail size={14} className="shrink-0 text-muted-foreground" />
                   <span className="text-foreground">{email}</span>
                 </div>
               ))}
               {lead.prospect_phone && (
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-base">
                   <IconPhone size={14} className="shrink-0 text-muted-foreground" />
                   <span className="text-foreground">{lead.prospect_phone}</span>
                 </div>
               )}
               {lead.prospect_address && (
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-base">
                   <IconMapPin size={14} className="shrink-0 text-muted-foreground" />
                   <span className="text-foreground">{lead.prospect_address}</span>
                 </div>
@@ -307,7 +307,7 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
 
           {/* Notes */}
           {lead.notes && (
-            <div className="whitespace-pre-wrap rounded-[var(--radius-md)] bg-secondary p-3 text-sm text-muted-foreground leading-relaxed">
+            <div className="whitespace-pre-wrap rounded-[var(--radius-md)] bg-secondary p-3 text-base text-muted-foreground leading-relaxed">
               {lead.notes}
             </div>
           )}
@@ -324,18 +324,18 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
           {/* Timeline */}
           <div className="space-y-1 border-l-2 border-border pl-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-sm text-muted-foreground">Created</span>
+              <span className="text-base text-muted-foreground">Created</span>
               <span className="text-[12px] text-muted-foreground">{relativeTime(lead.created_at)}</span>
             </div>
             {lead.first_ack_at && (
               <div className="flex items-baseline gap-2">
-                <span className="text-sm text-muted-foreground">Acknowledged</span>
+                <span className="text-base text-muted-foreground">Acknowledged</span>
                 <span className="text-[12px] text-muted-foreground">{relativeTime(lead.first_ack_at)}</span>
               </div>
             )}
             {lead.last_activity_at && lead.last_activity_at !== lead.created_at && (
               <div className="flex items-baseline gap-2">
-                <span className="text-sm text-muted-foreground">Last activity</span>
+                <span className="text-base text-muted-foreground">Last activity</span>
                 <span className="text-[12px] text-muted-foreground">{relativeTime(lead.last_activity_at)}</span>
               </div>
             )}

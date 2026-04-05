@@ -90,13 +90,13 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
           <h2 className="text-base font-medium text-foreground">
             Meetings
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-base text-muted-foreground">
             {total} meeting{total !== 1 ? 's' : ''} recorded
           </p>
         </div>
         <button
           onClick={onUpload}
-          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -111,7 +111,7 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
           <button
             key={type || 'all'}
             onClick={() => setTypeFilter(type as MeetingType | '')}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-full px-4 py-2 text-base font-medium transition-colors ${
               typeFilter === type
                 ? 'border border-ring bg-secondary text-foreground'
                 : 'border border-border bg-background text-muted-foreground hover:text-foreground'
@@ -125,7 +125,7 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
       {/* Meeting rows */}
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         {loading ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">
+          <div className="p-10 text-center text-base text-muted-foreground">
             Loading meetings...
           </div>
         ) : meetings.length === 0 ? (
@@ -142,13 +142,13 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
             <div className="flex gap-2">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                className="rounded-lg bg-primary px-4 py-2 text-base font-medium text-primary-foreground"
               >
                 Connect calendar
               </button>
               <button
                 onClick={onUpload}
-                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground"
+                className="rounded-lg border border-border px-4 py-2 text-base font-medium text-foreground"
               >
                 Upload a recording
               </button>
@@ -178,17 +178,17 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
 
                   {/* Content */}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-foreground">
+                    <div className="truncate text-base font-medium text-foreground">
                       {meeting.title}
                     </div>
-                    <div className="mt-0.5 text-sm text-muted-foreground">
+                    <div className="mt-0.5 text-base text-muted-foreground">
                       {TYPE_LABELS[meeting.meeting_type]} &middot; {formatDuration(meeting.duration_seconds)} &middot; {formatDate(meeting.created_at)}
                     </div>
                   </div>
 
                   {/* Status badge */}
                   <span
-                    className="shrink-0 rounded-xl px-3 py-1 text-sm font-medium"
+                    className="shrink-0 rounded-xl px-3 py-1 text-base font-medium"
                     style={{ background: statusColor.bg, color: statusColor.text }}
                   >
                     {meeting.status}

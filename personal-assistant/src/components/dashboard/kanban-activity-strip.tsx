@@ -27,14 +27,14 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">
+          <p className="text-base font-medium uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">
             BitBit in motion
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             Active agent sessions stay visible without crowding the board itself.
           </p>
         </div>
-        <Badge variant="outline" className="w-fit border-emerald-500/30 bg-background font-mono">
+        <Badge variant="outline" className="w-fit border-emerald-500/30 bg-background tabular-nums">
           {activeTasks.length}
         </Badge>
       </div>
@@ -50,10 +50,10 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
             </span>
 
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground">
+              <p className="truncate text-base font-medium text-foreground">
                 {truncateTitle(task.title)}
               </p>
-              <p className="truncate text-sm text-muted-foreground">
+              <p className="truncate text-base text-muted-foreground">
                 {task.assigned_to} is working on this now
               </p>
             </div>

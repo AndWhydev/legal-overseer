@@ -29,10 +29,10 @@ export function AttentionQueue() {
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">Needs Attention</CardTitle>
-          {items.length > 0 && <Badge variant="outline" className="text-sm font-mono">{items.length}</Badge>}
+          <CardTitle className="text-base font-medium">Needs Attention</CardTitle>
+          {items.length > 0 && <Badge variant="outline" className="text-base tabular-nums">{items.length}</Badge>}
         </div>
-        <CardDescription className="text-sm">Prioritised by urgency</CardDescription>
+        <CardDescription className="text-base">Prioritised by urgency</CardDescription>
       </CardHeader>
       <CardContent className="space-y-0">
         {isLoading ? (
@@ -43,16 +43,16 @@ export function AttentionQueue() {
             </div>
           ))
         ) : items.length === 0 ? (
-          <div className="text-sm text-muted-foreground py-4">Nothing urgent</div>
+          <div className="text-base text-muted-foreground py-4">Nothing urgent</div>
         ) : (
           items.map((item, i) => (
             <div key={i} className="flex gap-3 py-2 border-b border-border last:border-0 items-start">
-              <span className="text-sm text-muted-foreground font-mono shrink-0 w-4 pt-0.5">{TYPE_ICON[item.type] || '·'}</span>
+              <span className="text-base text-muted-foreground tabular-nums shrink-0 w-4 pt-0.5">{TYPE_ICON[item.type] || '·'}</span>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-foreground truncate">{item.label}</div>
-                <div className="text-sm text-muted-foreground truncate">{item.detail}</div>
+                <div className="text-base font-medium text-foreground truncate">{item.label}</div>
+                <div className="text-base text-muted-foreground truncate">{item.detail}</div>
               </div>
-              {item.age && <span className="text-sm tabular-nums text-muted-foreground shrink-0 pt-0.5">{item.age}</span>}
+              {item.age && <span className="text-base tabular-nums text-muted-foreground shrink-0 pt-0.5">{item.age}</span>}
             </div>
           ))
         )}

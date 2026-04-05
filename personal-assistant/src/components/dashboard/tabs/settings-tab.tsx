@@ -129,7 +129,7 @@ function WhatsAppWizardModal({ onClose, onConnected }: { onClose: () => void; on
           <h3 className="text-base font-medium text-foreground">
             {alreadyConnected ? 'WhatsApp Connected' : 'Connect WhatsApp'}
           </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-base text-muted-foreground">
             {alreadyConnected ? 'Connected and receiving messages' : 'Link WhatsApp to start receiving messages'}
           </p>
 
@@ -183,7 +183,7 @@ function SaveIndicator({ visible }: { visible: boolean }) {
   return (
     <div
       className={cn(
-        'fixed right-6 top-20 z-50 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-500 transition-all duration-300 pointer-events-none',
+        'fixed right-6 top-20 z-50 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-4 py-2 text-base font-medium text-emerald-500 transition-all duration-300 pointer-events-none',
         visible ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
       )}
     >
@@ -234,7 +234,7 @@ export function SettingsConnectionsTab() {
       {/* RAG Stats Widget */}
       <div>
         <h3 className="text-base font-medium text-foreground">Data & Synchronization</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Vector index and channel sync status</p>
+        <p className="mt-1 text-base text-muted-foreground">Vector index and channel sync status</p>
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3">
         <RagStatsWidget showDetails={true} />
@@ -243,7 +243,7 @@ export function SettingsConnectionsTab() {
       {/* Connections Grid */}
       <div>
         <h3 className="text-base font-medium text-foreground">Integrations</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Connect communication channels</p>
+        <p className="mt-1 text-base text-muted-foreground">Connect communication channels</p>
       </div>
       <div>
         <ConnectionsGrid
@@ -350,7 +350,7 @@ export function SettingsAutomationsTab() {
       <SaveIndicator visible={saveIndicatorVisible} />
       <div>
         <h3 className="text-base font-medium text-foreground">Plugins</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Choose what BitBit handles for you.</p>
+        <p className="mt-1 text-base text-muted-foreground">Choose what BitBit handles for you.</p>
       </div>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-2">
         {AUTOMATION_TYPES.map(a => {
@@ -359,8 +359,8 @@ export function SettingsAutomationsTab() {
             <Card key={a.id} className="py-0">
               <CardContent className="flex items-center justify-between gap-3 py-3.5 px-4">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground">{a.label}</p>
-                  <p className="text-sm text-muted-foreground">{a.description}</p>
+                  <p className="text-base font-medium text-foreground">{a.label}</p>
+                  <p className="text-base text-muted-foreground">{a.description}</p>
                 </div>
                 <Switch
                   checked={isEnabled}
@@ -392,7 +392,7 @@ export function SettingsAppearanceTab() {
     <div className="flex h-full flex-col gap-5 overflow-auto p-6">
       <div>
         <h3 className="text-base font-medium text-foreground">Theme</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Choose a visual style.</p>
+        <p className="mt-1 text-base text-muted-foreground">Choose a visual style.</p>
       </div>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
         {themes.map(t => {
@@ -414,8 +414,8 @@ export function SettingsAppearanceTab() {
                 {t.icon}
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-foreground">{t.label}</p>
-                <p className="mt-0.5 text-sm text-muted-foreground">{t.desc}</p>
+                <p className="text-base font-medium text-foreground">{t.label}</p>
+                <p className="mt-0.5 text-base text-muted-foreground">{t.desc}</p>
               </div>
               {active && (
                 <div className="absolute right-2.5 top-2.5 flex size-5 items-center justify-center rounded-full bg-emerald-500">

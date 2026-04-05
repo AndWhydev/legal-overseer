@@ -53,8 +53,8 @@ interface StatCellProps {
 function StatCell({ icon, label, value }: StatCellProps) {
   return (
     <div className="flex flex-1 flex-col items-center gap-1 px-3 py-4">
-      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">{icon} {label}</span>
-      <span className="text-base font-medium font-mono text-foreground">{value}</span>
+      <span className="flex items-center gap-1.5 text-base text-muted-foreground">{icon} {label}</span>
+      <span className="text-base font-medium tabular-nums text-foreground">{value}</span>
     </div>
   )
 }
@@ -135,7 +135,7 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
       {/* Campaigns Section */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Campaigns</h3>
+          <h3 className="text-base font-medium uppercase tracking-wider text-muted-foreground">Campaigns</h3>
           <Button onClick={() => setCampaignCreateOpen(true)}>
             <IconPlus data-icon /> New Campaign
           </Button>
@@ -177,12 +177,12 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
                   key={campaign.id}
                   className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted"
                 >
-                  <span className="flex-1 text-sm font-medium text-foreground">{campaign.name}</span>
+                  <span className="flex-1 text-base font-medium text-foreground">{campaign.name}</span>
                   <Badge variant={(CAMPAIGN_STATUS_VARIANT as Record<string, 'default' | 'secondary' | 'destructive' | 'outline'>)[campaign.status] ?? 'secondary'}>
                     {campaign.status}
                   </Badge>
-                  <span className="text-sm font-mono text-muted-foreground">{campaign.sent_count} sent</span>
-                  <span className="text-sm text-muted-foreground">{formatDate(campaign.created_at)}</span>
+                  <span className="text-base tabular-nums text-muted-foreground">{campaign.sent_count} sent</span>
+                  <span className="text-base text-muted-foreground">{formatDate(campaign.created_at)}</span>
                   {(campaign.status === 'draft' || campaign.status === 'active') && (
                     <Button
                       size="sm"
@@ -204,7 +204,7 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
       {/* Templates Section */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Templates</h3>
+          <h3 className="text-base font-medium uppercase tracking-wider text-muted-foreground">Templates</h3>
           <Button variant="outline" onClick={() => setTemplateEditorOpen(true)}>
             <IconPlus data-icon /> New Template
           </Button>
@@ -238,11 +238,11 @@ function OutreachDashboardInner({ leads }: OutreachDashboardProps) {
                   className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted"
                 >
                   <IconFileText data-icon className="shrink-0 text-muted-foreground" />
-                  <span className="flex-1 text-sm font-medium text-foreground">{template.name}</span>
+                  <span className="flex-1 text-base font-medium text-foreground">{template.name}</span>
                   {template.category && (
                     <Badge variant="secondary">{template.category}</Badge>
                   )}
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-base text-muted-foreground">
                     {template.variables?.length ?? 0} vars
                   </span>
                 </div>

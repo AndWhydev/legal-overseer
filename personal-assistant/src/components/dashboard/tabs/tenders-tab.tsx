@@ -236,8 +236,8 @@ function TendersTab() {
           {pipelineGroups.map((stage) => (
             <div key={stage.key} className="flex flex-col gap-3">
               <div className="flex items-center justify-between rounded-lg bg-muted px-4 py-2.5">
-                <span className="text-sm font-medium text-foreground">{stage.label}</span>
-                <Badge variant="secondary" className="text-sm">{stage.tenders.length}</Badge>
+                <span className="text-base font-medium text-foreground">{stage.label}</span>
+                <Badge variant="secondary" className="text-base">{stage.tenders.length}</Badge>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -248,17 +248,17 @@ function TendersTab() {
                     onClick={() => setSelectedTender(tender)}
                   >
                     <CardContent className="flex flex-col gap-2 px-4">
-                      <p className="text-sm font-medium leading-snug text-foreground">
+                      <p className="text-base font-medium leading-snug text-foreground">
                         {tender.title}
                       </p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2 text-base text-muted-foreground">
                         <span>{sourceLabel(tender.source)}</span>
                         {tender.value && (
-                          <span className="font-mono font-medium">{formatMoney(tender.value)}</span>
+                          <span className="tabular-nums font-medium">{formatMoney(tender.value)}</span>
                         )}
                       </div>
                       {tender.fit_score !== null && (
-                        <Badge variant={fitScoreBadgeVariant(tender.fit_score)} className="w-fit text-sm">
+                        <Badge variant={fitScoreBadgeVariant(tender.fit_score)} className="w-fit text-base">
                           Fit: {tender.fit_score}%
                         </Badge>
                       )}
@@ -267,7 +267,7 @@ function TendersTab() {
                 ))}
 
                 {stage.tenders.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
+                  <div className="rounded-lg border border-dashed border-border p-5 text-center text-base text-muted-foreground">
                     No tenders
                   </div>
                 )}
@@ -301,12 +301,12 @@ function TendersTab() {
                   >
                     <TableCell>
                       <p className="font-medium text-foreground">{tender.title}</p>
-                      <p className="text-sm text-muted-foreground">{tender.tender_number}</p>
+                      <p className="text-base text-muted-foreground">{tender.tender_number}</p>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {sourceLabel(tender.source)}
                     </TableCell>
-                    <TableCell className="text-right font-mono font-medium text-muted-foreground">
+                    <TableCell className="text-right tabular-nums font-medium text-muted-foreground">
                       {tender.value ? formatMoney(tender.value) : '--'}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
@@ -318,11 +318,11 @@ function TendersTab() {
                     </TableCell>
                     <TableCell>
                       {tender.fit_score !== null ? (
-                        <Badge variant={fitScoreBadgeVariant(tender.fit_score)} className="text-sm">
+                        <Badge variant={fitScoreBadgeVariant(tender.fit_score)} className="text-base">
                           {tender.fit_score}%
                         </Badge>
                       ) : (
-                        <span className="text-sm text-muted-foreground">--</span>
+                        <span className="text-base text-muted-foreground">--</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -378,35 +378,35 @@ function TendersTab() {
               {profiles.map((profile) => (
                 <Card key={profile.id}>
                   <CardHeader>
-                    <CardTitle className="text-sm">{profile.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{profile.service_category}</p>
+                    <CardTitle className="text-base">{profile.name}</CardTitle>
+                    <p className="text-base text-muted-foreground">{profile.service_category}</p>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-3">
                     {profile.skills.length > 0 && (
                       <div>
-                        <p className="mb-2 text-sm font-medium uppercase tracking-wide text-muted-foreground">Skills</p>
+                        <p className="mb-2 text-base font-medium uppercase tracking-wide text-muted-foreground">Skills</p>
                         <div className="flex flex-wrap gap-1.5">
                           {profile.skills.map((skill) => (
-                            <Badge key={skill} variant="secondary" className="text-sm">{skill}</Badge>
+                            <Badge key={skill} variant="secondary" className="text-base">{skill}</Badge>
                           ))}
                         </div>
                       </div>
                     )}
                     {profile.certifications.length > 0 && (
                       <div>
-                        <p className="mb-2 text-sm font-medium uppercase tracking-wide text-muted-foreground">Certifications</p>
+                        <p className="mb-2 text-base font-medium uppercase tracking-wide text-muted-foreground">Certifications</p>
                         <div className="flex flex-wrap gap-1.5">
                           {profile.certifications.map((cert) => (
-                            <Badge key={cert} variant="secondary" className="text-sm">{cert}</Badge>
+                            <Badge key={cert} variant="secondary" className="text-base">{cert}</Badge>
                           ))}
                         </div>
                       </div>
                     )}
                     {profile.max_contract_value && (
                       <div className="border-t border-border pt-3">
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-base text-muted-foreground">
                           Max contract:{' '}
-                          <span className="font-mono font-medium text-foreground">
+                          <span className="tabular-nums font-medium text-foreground">
                             {formatMoney(profile.max_contract_value)}
                           </span>
                         </p>
@@ -437,29 +437,29 @@ function TendersTab() {
               <div className="grid grid-cols-3 gap-3 px-4">
                 <Card className="py-3">
                   <CardContent className="px-3 text-center">
-                    <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Value</p>
-                    <p className="mt-1 font-mono text-sm font-medium text-foreground">
+                    <p className="text-base font-medium uppercase tracking-wide text-muted-foreground">Value</p>
+                    <p className="mt-1 tabular-nums text-base font-medium text-foreground">
                       {selectedTender.value ? formatMoney(selectedTender.value) : '--'}
                     </p>
                   </CardContent>
                 </Card>
                 <Card className="py-3">
                   <CardContent className="px-3 text-center">
-                    <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Closing</p>
-                    <p className="mt-1 text-sm font-medium text-foreground">
+                    <p className="text-base font-medium uppercase tracking-wide text-muted-foreground">Closing</p>
+                    <p className="mt-1 text-base font-medium text-foreground">
                       {selectedTender.deadline ? formatDate(selectedTender.deadline) : '--'}
                     </p>
                   </CardContent>
                 </Card>
                 <Card className="py-3">
                   <CardContent className="px-3 text-center">
-                    <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Fit Score</p>
+                    <p className="text-base font-medium uppercase tracking-wide text-muted-foreground">Fit Score</p>
                     {selectedTender.fit_score !== null ? (
-                      <Badge variant={fitScoreBadgeVariant(selectedTender.fit_score)} className="mt-1 text-sm">
+                      <Badge variant={fitScoreBadgeVariant(selectedTender.fit_score)} className="mt-1 text-base">
                         {selectedTender.fit_score}%
                       </Badge>
                     ) : (
-                      <p className="mt-1 text-sm text-muted-foreground">--</p>
+                      <p className="mt-1 text-base text-muted-foreground">--</p>
                     )}
                   </CardContent>
                 </Card>
@@ -502,7 +502,7 @@ function TendersTab() {
                     href={selectedTender.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    className="inline-flex items-center gap-1.5 text-base text-muted-foreground transition-colors hover:text-foreground"
                   >
                     View on {sourceLabel(selectedTender.source)}
                     <IconChevronRight size={14} />
@@ -513,12 +513,12 @@ function TendersTab() {
               {/* Response sections */}
               {selectedResponse?.content?.sections && selectedResponse.content.sections.length > 0 && (
                 <div className="flex flex-col gap-3 px-4">
-                  <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Draft Response</h3>
+                  <h3 className="text-base font-medium uppercase tracking-wide text-muted-foreground">Draft Response</h3>
                   {selectedResponse.content.sections.map((section, i) => (
                     <Card key={i} className="py-3">
                       <CardContent className="px-4">
-                        <h4 className="mb-2 text-sm font-medium text-foreground">{section.title}</h4>
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{section.content}</p>
+                        <h4 className="mb-2 text-base font-medium text-foreground">{section.title}</h4>
+                        <p className="whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">{section.content}</p>
                       </CardContent>
                     </Card>
                   ))}
@@ -529,9 +529,9 @@ function TendersTab() {
               {selectedResponse?.content?.compliance_matrix && selectedResponse.content.compliance_matrix.length > 0 && (
                 <div className="flex flex-col gap-3 px-4">
                   <div>
-                    <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Compliance Check</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Score: <span className="font-mono font-medium text-foreground">{selectedResponse.compliance_score ?? '--'}%</span>
+                    <h3 className="text-base font-medium uppercase tracking-wide text-muted-foreground">Compliance Check</h3>
+                    <p className="mt-1 text-base text-muted-foreground">
+                      Score: <span className="tabular-nums font-medium text-foreground">{selectedResponse.compliance_score ?? '--'}%</span>
                     </p>
                   </div>
                   {selectedResponse.content.compliance_matrix.map((item, i) => (
@@ -541,8 +541,8 @@ function TendersTab() {
                         {item.status === 'partially_met' && <IconAlertCircle size={18} className="mt-0.5 shrink-0 text-amber-500" />}
                         {item.status === 'not_met' && <IconCircleMinus size={18} className="mt-0.5 shrink-0 text-destructive" />}
                         <div>
-                          <p className="text-sm text-foreground">{item.requirement}</p>
-                          <p className="text-sm text-muted-foreground">{item.evidence}</p>
+                          <p className="text-base text-foreground">{item.requirement}</p>
+                          <p className="text-base text-muted-foreground">{item.evidence}</p>
                         </div>
                       </CardContent>
                     </Card>

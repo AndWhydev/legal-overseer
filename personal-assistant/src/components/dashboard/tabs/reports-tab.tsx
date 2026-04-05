@@ -170,7 +170,7 @@ export default function ReportsTab() {
       {previewHtml && (
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Report Preview</h2>
+            <h2 className="text-base font-medium uppercase tracking-wider text-muted-foreground">Report Preview</h2>
             <Button variant="outline" size="sm" onClick={handlePrintPreview} className="gap-1.5">
               <IconDownload className="size-3.5" /> Download PDF
             </Button>
@@ -190,7 +190,7 @@ export default function ReportsTab() {
       {/* History */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Generated Reports</h2>
+          <h2 className="text-base font-medium uppercase tracking-wider text-muted-foreground">Generated Reports</h2>
           <Button variant="ghost" size="icon-sm" onClick={() => fetchReports()} aria-label="Refresh">
             <IconRefresh className="size-4" />
           </Button>
@@ -200,7 +200,7 @@ export default function ReportsTab() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center gap-3 py-16">
               <IconLoader2 className="size-8 animate-spin text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Loading reports...</span>
+              <span className="text-base text-muted-foreground">Loading reports...</span>
             </CardContent>
           </Card>
         ) : reports.length === 0 ? (
@@ -217,10 +217,10 @@ export default function ReportsTab() {
               <Card key={r.id} className="py-3">
                 <CardContent className="flex items-center justify-between py-0">
                   <div>
-                    <div className="text-sm font-medium">
+                    <div className="text-base font-medium">
                       {REPORT_LABELS[r.report_type as ReportType] ?? r.report_type}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-base text-muted-foreground">
                       Period: {r.period_from ?? '-'} &middot; Generated: {new Date(r.created_at).toLocaleDateString('en-AU')}
                     </div>
                   </div>

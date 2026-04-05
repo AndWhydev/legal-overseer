@@ -150,7 +150,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <IconActivity size={14} className="text-foreground" />
-            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Role Activity</CardTitle>
+            <CardTitle className="text-base font-medium uppercase tracking-wider text-muted-foreground">Role Activity</CardTitle>
           </div>
           <IconFilter size={12} className="text-muted-foreground" />
         </div>
@@ -225,7 +225,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
                     <Icon size={14} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-foreground leading-snug">
+                    <div className="text-base font-medium text-foreground leading-snug">
                       {item.summary}
                     </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -235,11 +235,11 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
                         </Badge>
                       )}
                       {item.confidence != null && (
-                        <span className="text-sm text-muted-foreground font-mono">
+                        <span className="text-base text-muted-foreground tabular-nums">
                           {Math.round(item.confidence * 100)}%
                         </span>
                       )}
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-base text-muted-foreground">
                         {timeAgo(item.created_at)}
                       </span>
                     </div>

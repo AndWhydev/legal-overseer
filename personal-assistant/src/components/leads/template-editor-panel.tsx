@@ -157,7 +157,7 @@ function TemplateEditorPanelInner({ open, onClose, onSave, initial }: TemplateEd
               value={body}
               onChange={e => setBody(e.target.value)}
               placeholder={`Hi {{firstName}},\n\nI noticed {{company}} doesn't have...\n\nWould you be open to a quick chat?\n\nBest regards`}
-              className="min-h-60 font-mono text-sm"
+              className="min-h-60 tabular-nums text-base"
             />
           </div>
         </div>

@@ -94,9 +94,9 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
         {entry.action}
       </Badge>
       <div className="min-w-0 flex-1">
-        <div className="text-sm">{formatAction(entry)}</div>
+        <div className="text-base">{formatAction(entry)}</div>
         {entry.metadata && Object.keys(entry.metadata).length > 0 && (
-          <div className="mt-1 truncate text-sm text-muted-foreground">
+          <div className="mt-1 truncate text-base text-muted-foreground">
             {Object.entries(entry.metadata)
               .slice(0, 3)
               .map(([k, v]) => `${k}: ${String(v)}`)
@@ -104,7 +104,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
           </div>
         )}
       </div>
-      <span className="shrink-0 text-sm text-muted-foreground">{formatTimestamp(entry.created_at)}</span>
+      <span className="shrink-0 text-base text-muted-foreground">{formatTimestamp(entry.created_at)}</span>
     </div>
   );
 }
@@ -222,7 +222,7 @@ function ActivityTab() {
   return (
     <div className="flex flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{total} total events</span>
+        <span className="text-base text-muted-foreground">{total} total events</span>
       </div>
 
       {/* Filters */}
@@ -266,7 +266,7 @@ function ActivityTab() {
         <div ref={sentinelRef} className="h-1" />
 
         {loadingMore && (
-          <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 py-4 text-base text-muted-foreground">
             <IconLoader2 className="size-4 animate-spin" />
             Loading more...
           </div>

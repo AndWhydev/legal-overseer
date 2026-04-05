@@ -182,7 +182,7 @@ function TrendChart({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm">{label}</CardTitle>
+          <CardTitle className="text-base">{label}</CardTitle>
           <Badge
             variant={series.trend === 'up' ? 'secondary' : series.trend === 'down' ? 'destructive' : 'outline'}
           >
@@ -303,7 +303,7 @@ function LegendItem({
   circle?: boolean
 }) {
   return (
-    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+    <div className="flex items-center gap-1 text-base text-muted-foreground">
       {circle ? (
         <svg width={10} height={10} viewBox="0 0 10 10">
           <circle cx={5} cy={5} r={4} fill="none" stroke={color} strokeWidth={1.5} />
@@ -342,7 +342,7 @@ function AnomalyDigest({ anomalies }: { anomalies: AnomalySummary[] }) {
   return (
     <Card className="border-destructive/20 bg-destructive/5">
       <CardContent className="flex flex-col gap-2 py-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-destructive">
+        <div className="flex items-center gap-2 text-base font-medium text-destructive">
           <IconAlertTriangle className="size-4" />
           {anomalies.length} anomal{anomalies.length !== 1 ? 'ies' : 'y'} detected
         </div>
@@ -370,7 +370,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
   if (matrix.cohorts.length === 0) {
     return (
       <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
+        <CardContent className="py-10 text-center text-base text-muted-foreground">
           Not enough data to compute cohort retention yet.
         </CardContent>
       </Card>
@@ -390,13 +390,13 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
             className="mb-1 grid gap-1"
             style={{ gridTemplateColumns: `120px repeat(${weekHeaders.length}, 1fr)` }}
           >
-            <div className="py-1 text-sm font-medium text-muted-foreground">
+            <div className="py-1 text-base font-medium text-muted-foreground">
               Cohort
             </div>
             {weekHeaders.map((w) => (
               <div
                 key={w}
-                className="py-1 text-center text-sm font-medium text-muted-foreground"
+                className="py-1 text-center text-base font-medium text-muted-foreground"
               >
                 {w}
               </div>
@@ -411,8 +411,8 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
               style={{ gridTemplateColumns: `120px repeat(${weekHeaders.length}, 1fr)` }}
             >
               <div className="flex flex-col gap-0.5 px-1 py-2">
-                <span className="text-sm font-medium text-foreground">{cohort.cohortLabel}</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-base font-medium text-foreground">{cohort.cohortLabel}</span>
+                <span className="text-base text-muted-foreground">
                   {cohort.orgCount} org{cohort.orgCount !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -422,7 +422,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                   <div
                     key={wi}
                     title={pct !== null ? `${pct}%` : 'N/A'}
-                    className="flex h-8 items-center justify-center rounded-lg font-mono text-sm font-medium"
+                    className="flex h-8 items-center justify-center rounded-lg tabular-nums text-base font-medium"
                     style={{
                       backgroundColor: pct !== null ? retentionColor(pct) : undefined,
                       color: pct !== null && pct >= 40 ? 'hsl(var(--foreground))' : undefined,
@@ -441,7 +441,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
 
           {/* Colour scale legend */}
           <div className="mt-3 flex items-center gap-2 border-t pt-3">
-            <span className="text-sm text-muted-foreground">Retention:</span>
+            <span className="text-base text-muted-foreground">Retention:</span>
             {[
               { pct: 0, label: '0%' },
               { pct: 25, label: '25%' },
@@ -454,7 +454,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                   className="size-4 rounded-lg border"
                   style={{ backgroundColor: retentionColor(pct) }}
                 />
-                <span className="text-sm text-muted-foreground">{label}</span>
+                <span className="text-base text-muted-foreground">{label}</span>
               </div>
             ))}
           </div>
@@ -539,7 +539,7 @@ function AnalyticsTab() {
 
         {/* MRR Stats */}
         <section className="flex flex-col gap-4">
-          <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
+          <h3 className="text-base font-medium uppercase tracking-widest text-muted-foreground">
             Monthly Recurring Revenue
           </h3>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
@@ -552,18 +552,18 @@ function AnalyticsTab() {
           {/* MRR by Tier */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Revenue by Tier</CardTitle>
+              <CardTitle className="text-base">Revenue by Tier</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               {Object.entries(mrr.byTier).map(([tier, info]) => {
                 const pct = mrr.totalMRR > 0 ? (info.mrr / mrr.totalMRR) * 100 : 0
                 return (
                   <div key={tier} className="flex items-center gap-3">
-                    <span className="min-w-20 text-sm capitalize text-foreground">
+                    <span className="min-w-20 text-base capitalize text-foreground">
                       {tier}
                     </span>
                     <Progress value={pct} className="h-2 flex-1" />
-                    <span className="min-w-24 text-right text-sm text-muted-foreground">
+                    <span className="min-w-24 text-right text-base text-muted-foreground">
                       ${info.mrr} ({info.count})
                     </span>
                   </div>
@@ -575,7 +575,7 @@ function AnalyticsTab() {
 
         {/* Trend Forecasting */}
         <section className="flex flex-col gap-4">
-          <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
+          <h3 className="text-base font-medium uppercase tracking-widest text-muted-foreground">
             Activity Trends &amp; Forecasting
           </h3>
           {trendsLoading ? (
@@ -602,7 +602,7 @@ function AnalyticsTab() {
             </div>
           ) : (
             <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              <CardContent className="py-8 text-center text-base text-muted-foreground">
                 Trend data unavailable
               </CardContent>
             </Card>
@@ -612,10 +612,10 @@ function AnalyticsTab() {
         {/* Cohort Retention */}
         <section className="flex flex-col gap-4">
           <div>
-            <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
+            <h3 className="text-base font-medium uppercase tracking-widest text-muted-foreground">
               Cohort Retention
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-base text-muted-foreground">
               Weekly cohorts -- % of orgs still active N weeks after signup
             </p>
           </div>
@@ -631,7 +631,7 @@ function AnalyticsTab() {
             <CohortHeatmap matrix={cohortData} />
           ) : (
             <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              <CardContent className="py-8 text-center text-base text-muted-foreground">
                 Cohort data unavailable
               </CardContent>
             </Card>
@@ -641,7 +641,7 @@ function AnalyticsTab() {
         {/* Token Usage */}
         {usage && (
           <section className="flex flex-col gap-4">
-            <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
+            <h3 className="text-base font-medium uppercase tracking-widest text-muted-foreground">
               Token Usage &amp; Costs
             </h3>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
@@ -666,10 +666,10 @@ function AnalyticsTab() {
                       <TableRow key={a.agentType}>
                         <TableCell className="capitalize">{a.agentType.replace(/-/g, ' ')}</TableCell>
                         <TableCell className="text-right">{a.invocations}</TableCell>
-                        <TableCell className="text-right font-mono">
+                        <TableCell className="text-right tabular-nums">
                           {formatTokens(a.inputTokens + a.outputTokens)}
                         </TableCell>
-                        <TableCell className="text-right font-mono">
+                        <TableCell className="text-right tabular-nums">
                           ${a.costUSD.toFixed(2)}
                         </TableCell>
                       </TableRow>
@@ -682,7 +682,7 @@ function AnalyticsTab() {
             {/* By Client */}
             {usage.byClient.length > 0 && (
               <div className="flex flex-col gap-3">
-                <h4 className="text-sm font-medium text-foreground">
+                <h4 className="text-base font-medium text-foreground">
                   Cost per Client
                 </h4>
                 <div className="flex flex-col gap-2">
@@ -692,10 +692,10 @@ function AnalyticsTab() {
                     .map((c) => (
                       <Card key={c.clientName} size="sm">
                         <CardContent className="flex items-center justify-between">
-                          <span className="text-sm text-foreground">
+                          <span className="text-base text-foreground">
                             {c.clientName}
                           </span>
-                          <span className="font-mono text-sm text-muted-foreground">
+                          <span className="tabular-nums text-base text-muted-foreground">
                             ${c.costUSD.toFixed(2)} ({c.actions} actions)
                           </span>
                         </CardContent>
@@ -710,7 +710,7 @@ function AnalyticsTab() {
         {/* Churn Risk */}
         {churn && churn.risks.length > 0 && (
           <section className="flex flex-col gap-4">
-            <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
+            <h3 className="text-base font-medium uppercase tracking-widest text-muted-foreground">
               Churn Risk ({churn.atRiskOrgs} orgs)
             </h3>
             <div className="flex flex-col gap-3">
@@ -725,7 +725,7 @@ function AnalyticsTab() {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-foreground">
+                        <span className="text-base font-medium text-foreground">
                           {r.orgName}
                         </span>
                         <Badge
@@ -739,7 +739,7 @@ function AnalyticsTab() {
                           {r.signals.map((s, idx) => (
                             <div
                               key={idx}
-                              className="flex items-center gap-2 text-sm text-muted-foreground"
+                              className="flex items-center gap-2 text-base text-muted-foreground"
                             >
                               <span className="inline-block size-1 shrink-0 rounded-full bg-border" />
                               {s.description}
@@ -757,7 +757,7 @@ function AnalyticsTab() {
 
         {/* ROI Metrics */}
         <section className="flex flex-col gap-4">
-          <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
+          <h3 className="text-base font-medium uppercase tracking-widest text-muted-foreground">
             ROI Metrics
           </h3>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
@@ -911,11 +911,11 @@ function StatCard({
   return (
     <Card>
       <CardContent className="flex flex-col gap-2 pt-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-base text-muted-foreground">
           <Icon className="size-3.5" />
           {label}
         </div>
-        <div className={`font-mono text-base font-medium leading-none tracking-tight ${
+        <div className={`tabular-nums text-base font-medium leading-none tracking-tight ${
           alert ? 'text-destructive' : 'text-foreground'
         }`}>
           {value}
@@ -929,10 +929,10 @@ function MetricCard({ label, value }: { label: string; value: string }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-3 pt-4 text-center">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-base text-muted-foreground">
           {label}
         </div>
-        <div className="font-mono text-base font-medium text-foreground">
+        <div className="tabular-nums text-base font-medium text-foreground">
           {value}
         </div>
       </CardContent>

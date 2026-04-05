@@ -48,7 +48,7 @@ export function MeetingsTab({ initialMeetingId }: MeetingsTabProps) {
         <div className="flex self-start gap-1 rounded-xl bg-muted p-1">
           <button
             onClick={() => { setActiveSection('meetings'); setView('list') }}
-            className={`flex cursor-pointer items-center gap-2 rounded-lg border-none px-4 py-2 text-sm font-medium transition-all ${activeSection === 'meetings' ? 'bg-muted text-foreground' : 'bg-transparent text-muted-foreground'}`}
+            className={`flex cursor-pointer items-center gap-2 rounded-lg border-none px-4 py-2 text-base font-medium transition-all ${activeSection === 'meetings' ? 'bg-muted text-foreground' : 'bg-transparent text-muted-foreground'}`}
           >
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
@@ -57,7 +57,7 @@ export function MeetingsTab({ initialMeetingId }: MeetingsTabProps) {
           </button>
           <button
             onClick={() => { setActiveSection('search'); setView('search') }}
-            className={`flex cursor-pointer items-center gap-2 rounded-lg border-none px-4 py-2 text-sm font-medium transition-all ${activeSection === 'search' ? 'bg-muted text-foreground' : 'bg-transparent text-muted-foreground'}`}
+            className={`flex cursor-pointer items-center gap-2 rounded-lg border-none px-4 py-2 text-base font-medium transition-all ${activeSection === 'search' ? 'bg-muted text-foreground' : 'bg-transparent text-muted-foreground'}`}
           >
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

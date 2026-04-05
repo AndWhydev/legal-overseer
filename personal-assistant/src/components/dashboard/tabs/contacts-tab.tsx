@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   IconSearch,
-  IconChevronRight,
   IconChevronDown,
   IconMail,
   IconPhone,
@@ -22,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { TabSkeleton } from './tab-skeleton'
@@ -42,7 +40,8 @@ import {
   CollapsibleContent,
 } from '@/components/ui/collapsible'
 import { useDevOverrides } from '@/lib/dev/dev-overrides'
-import { EntityDetailDrawer } from '@/components/dashboard/entity-detail-drawer'
+import { useDrawer } from '@/components/dashboard/drawer-context'
+import { ContactDetailPanel } from '@/components/contacts/contact-detail-panel'
 import { ContactsPageTooltip } from '@/components/onboarding/first-run-guide'
 import { logger } from '@/lib/core/logger'
 
@@ -135,6 +134,7 @@ function ContactsTab() {
 
   const devOverrides = useDevOverrides()
   const useSeeded = devOverrides?.seed_data?.contacts ?? false
+  const { setDrawer, closeDrawer } = useDrawer()
 
   const loadContacts = useCallback(async () => {
     if (useSeeded) return
@@ -199,6 +199,18 @@ function ContactsTab() {
     }
   }, [error, loadContacts])
 
+  // Push contact detail into drawer
+  useEffect(() => {
+    if (selectedContactId) {
+      setDrawer(
+        <ContactDetailPanel
+          entityId={selectedContactId}
+          onClose={() => { setSelectedContactId(null); closeDrawer() }}
+        />
+      )
+    }
+  }, [selectedContactId, setDrawer, closeDrawer])
+
   const filtered = useMemo(() => {
     let result = contacts
     if (search) {
@@ -229,6 +241,7 @@ function ContactsTab() {
           <Button
             variant="outline"
             size="sm"
+            className="text-base"
             onClick={() => { setError(null); setLoading(true); loadContacts().catch(() => setError('Failed to load contacts')).finally(() => setLoading(false)) }}
           >
             Retry
@@ -259,6 +272,7 @@ function ContactsTab() {
         <Button
           variant="outline"
           size="sm"
+          className="text-base"
           onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))}
         >
           Connect email
@@ -268,108 +282,95 @@ function ContactsTab() {
   }
 
   return (
-    <>
-      <ContactsPageTooltip>
-        <div className="flex flex-col gap-5">
-          {/* Inline Stats */}
-          <div className="flex items-center gap-3 text-sm">
-            <StatPill value={contacts.length} label="total" active={contacts.length > 0} />
-            <Separator orientation="vertical" className="h-4" />
-            <StatPill value={clientCount} label="clients" active={clientCount > 0} />
-            <Separator orientation="vertical" className="h-4" />
-            <StatPill value={leadCount} label="leads" active={leadCount > 0} />
-            <Separator orientation="vertical" className="h-4" />
-            <StatPill value={partnerCount} label="partners" />
-          </div>
-
-          {/* Search + Sort */}
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-              <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-              <Input
-                type="text"
-                placeholder="Search contacts..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger className="w-28">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="az">A &rarr; Z</SelectItem>
-                <SelectItem value="za">Z &rarr; A</SelectItem>
-                <SelectItem value="recent">Recent</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Grouped Contacts */}
-          {filtered.length === 0 ? (
-            <Empty className="py-8">
-              <EmptyHeader>
-                <EmptyTitle>No matches</EmptyTitle>
-                <EmptyDescription>No contacts matching &ldquo;{search}&rdquo;</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {CONTACT_TYPE_GROUPS.map((group) => {
-                const groupContacts = filtered.filter(
-                  (c) => (c.type ?? 'client') === group.key,
-                )
-                if (groupContacts.length === 0) return null
-                return (
-                  <ContactGroup
-                    key={group.key}
-                    group={group}
-                    contacts={groupContacts}
-                    onOpenContact={(id) => setSelectedContactId(id)}
-                  />
-                )
-              })}
-              {/* Ungrouped contacts (types not in CONTACT_TYPE_GROUPS) */}
-              {(() => {
-                const knownTypes = new Set(CONTACT_TYPE_GROUPS.map((g) => g.key))
-                const ungrouped = filtered.filter(
-                  (c) => !knownTypes.has(c.type ?? 'client'),
-                )
-                if (ungrouped.length === 0) return null
-                return (
-                  <ContactGroup
-                    group={{ key: 'other', label: 'Other', icon: IconUsers }}
-                    contacts={ungrouped}
-                    onOpenContact={(id) => setSelectedContactId(id)}
-                  />
-                )
-              })()}
-            </div>
-          )}
+    <ContactsPageTooltip>
+      <div className="flex flex-col gap-5 p-6">
+        {/* Stat Bar */}
+        <div className="flex flex-wrap rounded-[var(--radius-container)] border border-border bg-card">
+          {[
+            { label: 'Total', value: contacts.length, active: contacts.length > 0 },
+            { label: 'Clients', value: clientCount, active: clientCount > 0 },
+            { label: 'Leads', value: leadCount, active: leadCount > 0 },
+            { label: 'Partners', value: partnerCount, active: partnerCount > 0 },
+          ].map((stat, i, arr) => (
+            <React.Fragment key={stat.label}>
+              <div className="flex flex-1 flex-col items-center gap-1 px-3 py-3">
+                <span className="text-[12px] font-medium tracking-wide text-muted-foreground">{stat.label}</span>
+                <span className={`text-base font-semibold tabular-nums ${stat.active ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+                  {stat.value}
+                </span>
+              </div>
+              {i < arr.length - 1 && <Separator orientation="vertical" className="self-stretch" />}
+            </React.Fragment>
+          ))}
         </div>
-      </ContactsPageTooltip>
 
-      <EntityDetailDrawer
-        open={selectedContactId !== null}
-        onClose={() => setSelectedContactId(null)}
-        entityType="contact"
-        entityId={selectedContactId ?? ''}
-      />
-    </>
-  )
-}
+        {/* Search + Sort */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search contacts..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          <Select value={sort} onValueChange={setSort}>
+            <SelectTrigger size="sm" className="w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="az">A &rarr; Z</SelectItem>
+              <SelectItem value="za">Z &rarr; A</SelectItem>
+              <SelectItem value="recent">Recent</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-// Stat Pill
-
-function StatPill({ value, label, active }: { value: number | string; label: string; active?: boolean }) {
-  return (
-    <span className="inline-flex items-baseline gap-1">
-      <span className={`text-sm font-medium tabular-nums ${active ? 'text-foreground' : 'text-muted-foreground'}`}>
-        {value}
-      </span>
-      <span className="text-sm text-muted-foreground">{label}</span>
-    </span>
+        {/* Grouped Contacts */}
+        {filtered.length === 0 ? (
+          <Empty className="py-8">
+            <EmptyHeader>
+              <EmptyTitle>No matches</EmptyTitle>
+              <EmptyDescription>No contacts matching &ldquo;{search}&rdquo;</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {CONTACT_TYPE_GROUPS.map((group) => {
+              const groupContacts = filtered.filter(
+                (c) => (c.type ?? 'client') === group.key,
+              )
+              if (groupContacts.length === 0) return null
+              return (
+                <ContactGroup
+                  key={group.key}
+                  group={group}
+                  contacts={groupContacts}
+                  onOpenContact={(id) => setSelectedContactId(id)}
+                />
+              )
+            })}
+            {/* Ungrouped contacts (types not in CONTACT_TYPE_GROUPS) */}
+            {(() => {
+              const knownTypes = new Set(CONTACT_TYPE_GROUPS.map((g) => g.key))
+              const ungrouped = filtered.filter(
+                (c) => !knownTypes.has(c.type ?? 'client'),
+              )
+              if (ungrouped.length === 0) return null
+              return (
+                <ContactGroup
+                  group={{ key: 'other', label: 'Other', icon: IconUsers }}
+                  contacts={ungrouped}
+                  onOpenContact={(id) => setSelectedContactId(id)}
+                />
+              )
+            })()}
+          </div>
+        )}
+      </div>
+    </ContactsPageTooltip>
   )
 }
 
@@ -390,10 +391,10 @@ function ContactGroup({
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger asChild>
-        <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+        <button className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
           <Icon size={15} className="shrink-0" />
           <span>{group.label}</span>
-          <Badge variant="secondary" className="ml-0.5 text-sm px-1.5 py-0 tabular-nums">
+          <Badge variant="secondary" className="ml-0.5 text-[12px] px-1.5 py-0 tabular-nums">
             {contacts.length}
           </Badge>
           <IconChevronDown
@@ -403,9 +404,9 @@ function ContactGroup({
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="flex flex-col gap-1.5 pt-1">
+        <div className="divide-y divide-border rounded-[var(--radius-container)] border border-border bg-card mt-1.5">
           {contacts.map((contact, index) => (
-            <ContactCard
+            <ContactRow
               key={String(contact.id ?? `${contact.name ?? 'contact'}-${index}`)}
               contact={contact}
               onOpen={() => {
@@ -419,14 +420,17 @@ function ContactGroup({
   )
 }
 
-// Contact Card
+// Contact Row (replaces ContactCard)
 
-function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void }) {
+function ContactRow({ contact, onOpen }: { contact: Contact; onOpen: () => void }) {
   const email = contact.email ?? contact.emails?.[0]
   const phone = contact.phone ?? contact.phones?.[0]
   const contactType = contact.type ?? 'client'
-  const tags: string[] = contact.tags ??
+  const rawTags: string[] = contact.tags ??
     ((contact.profile_data as Record<string, unknown>)?.tags as string[] ?? [])
+  // Filter out the contact type from tags — it's already shown as a badge
+  const knownTypes = new Set(['client', 'lead', 'partner', 'vendor', 'business', 'other'])
+  const tags = rawTags.filter(t => !knownTypes.has(t.toLowerCase()))
   const canOpen = contact.id != null
 
   const initials = (contact.name || 'U')
@@ -439,64 +443,60 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
   const badgeVariant = CONTACT_TYPE_VARIANT[contactType] || 'outline'
 
   return (
-    <Card
-      className="py-0 gap-0 cursor-pointer transition-all hover:bg-accent/50 hover:-translate-y-px active:translate-y-0"
+    <div
+      className="flex items-center gap-3.5 px-3 py-2.5 cursor-pointer transition-colors hover:bg-secondary"
       onClick={canOpen ? onOpen : undefined}
       role={canOpen ? 'button' : undefined}
       tabIndex={canOpen ? 0 : undefined}
       aria-label={canOpen ? `Open details for ${contact.name ?? 'contact'}` : `${contact.name ?? 'Contact'} has no detail view`}
-      onKeyDown={(e) => { if (canOpen && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onOpen(); } }}
+      onKeyDown={(e) => { if (canOpen && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onOpen() } }}
     >
-      <CardContent className="flex items-center gap-3.5 py-3.5">
-        <Avatar size="lg">
-          {contact.avatar_url && <AvatarImage src={contact.avatar_url} alt={contact.name ?? 'Contact'} />}
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
+      <Avatar size="lg">
+        {contact.avatar_url && <AvatarImage src={contact.avatar_url} alt={contact.name ?? 'Contact'} />}
+        <AvatarFallback>{initials}</AvatarFallback>
+      </Avatar>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-sm font-medium text-foreground truncate">
-              {contact.name ?? 'Unnamed contact'}
-            </span>
-            <Badge variant={badgeVariant} className="capitalize shrink-0">
-              {contactType}
-            </Badge>
-          </div>
-
-          <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
-            {email && (
-              <span className="inline-flex items-center gap-1 truncate">
-                <IconMail className="size-3 shrink-0" />
-                {email}
-              </span>
-            )}
-            {phone && (
-              <span className="inline-flex items-center gap-1 truncate">
-                <IconPhone className="size-3 shrink-0" />
-                {phone}
-              </span>
-            )}
-          </div>
-
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {tags.slice(0, 3).map(tag => (
-                <Badge key={tag} variant="secondary" className="text-sm px-1.5 py-0">
-                  {tag}
-                </Badge>
-              ))}
-              {tags.length > 3 && (
-                <Badge variant="secondary" className="text-sm px-1.5 py-0">
-                  +{tags.length - 3}
-                </Badge>
-              )}
-            </div>
-          )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-base font-medium text-foreground truncate">
+            {contact.name ?? 'Unnamed contact'}
+          </span>
+          <Badge variant={badgeVariant} className="capitalize shrink-0 text-[12px]">
+            {contactType}
+          </Badge>
         </div>
 
-        <IconChevronRight className="size-4 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-50 transition-opacity" />
-      </CardContent>
-    </Card>
+        <div className="flex items-center gap-3 text-[12px] text-muted-foreground flex-wrap">
+          {email && (
+            <span className="inline-flex items-center gap-1 truncate">
+              <IconMail className="size-3 shrink-0" />
+              {email}
+            </span>
+          )}
+          {phone && (
+            <span className="inline-flex items-center gap-1 truncate">
+              <IconPhone className="size-3 shrink-0" />
+              {phone}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 shrink-0">
+          {tags.slice(0, 3).map(tag => (
+            <Badge key={tag} variant="secondary" className="text-[12px] px-1.5 py-0">
+              {tag}
+            </Badge>
+          ))}
+          {tags.length > 3 && (
+            <Badge variant="secondary" className="text-[12px] px-1.5 py-0">
+              +{tags.length - 3}
+            </Badge>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

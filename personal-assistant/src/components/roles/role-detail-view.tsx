@@ -162,7 +162,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
           <div className="text-base font-medium text-foreground tracking-tight">
             {meta.label} Role
           </div>
-          <div className="text-sm text-muted-foreground mt-0.5">
+          <div className="text-base text-muted-foreground mt-0.5">
             Full activity history and configuration
           </div>
         </div>
@@ -173,7 +173,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
         <div className="grid grid-cols-2 gap-3">
           {/* Status card */}
           <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <div className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-3">Status</div>
+            <div className="text-base font-medium uppercase tracking-wider text-muted-foreground mb-3">Status</div>
             <div className="grid grid-cols-2 gap-3">
               <StatCell label="Last tick" value={timeAgo(status.last_tick_at)} />
               <StatCell label="Active workflows" value={String(status.active_workflows)} mono />
@@ -186,7 +186,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 
           {/* Autonomy card */}
           <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground mb-3">
+            <div className="flex items-center gap-2 text-base font-medium uppercase tracking-wider text-muted-foreground mb-3">
               <IconSettings size={11} />
               Autonomy Level
             </div>
@@ -204,8 +204,8 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <IconActivity size={14} style={{ color: meta.color }} />
-          <span className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Activity Timeline</span>
-          <span className="text-sm text-muted-foreground ml-auto">
+          <span className="text-base font-medium uppercase tracking-wider text-muted-foreground">Activity Timeline</span>
+          <span className="text-base text-muted-foreground ml-auto">
             {activities.length} events
           </span>
         </div>
@@ -224,7 +224,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
           ) : activities.length === 0 ? (
             <div className="py-10 text-center">
               <IconActivity size={28} className="text-muted-foreground mx-auto mb-2" />
-              <div className="text-sm text-muted-foreground">No activity yet</div>
+              <div className="text-base text-muted-foreground">No activity yet</div>
             </div>
           ) : (
             activities.map(item => {
@@ -253,22 +253,22 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-foreground leading-relaxed">
+                      <div className="text-base font-medium text-foreground leading-relaxed">
                         {item.summary}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span
-                          className="text-sm font-medium px-2 py-0.5 rounded-lg capitalize"
+                          className="text-base font-medium px-2 py-0.5 rounded-lg capitalize"
                           style={{ background: `${color}15`, color }}
                         >
                           {item.activity_type.replace('_', ' ')}
                         </span>
                         {item.confidence != null && (
-                          <span className="text-sm text-muted-foreground font-mono">
+                          <span className="text-base text-muted-foreground tabular-nums">
                             {Math.round(item.confidence * 100)}%
                           </span>
                         )}
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-base text-muted-foreground">
                           {timeAgo(item.created_at)}
                         </span>
                       </div>
@@ -277,7 +277,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 
                   {/* Expanded detail */}
                   {isExpanded && (
-                    <div className="mt-0.5 ml-9 p-3 rounded-xl bg-muted border border-border text-sm text-muted-foreground leading-relaxed">
+                    <div className="mt-0.5 ml-9 p-3 rounded-xl bg-muted border border-border text-base text-muted-foreground leading-relaxed">
                       {item.reasoning && (
                         <div className="mb-2">
                           <span className="font-medium text-foreground">Reasoning: </span>
@@ -297,7 +297,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                       {Object.keys(item.details).length > 0 && (
                         <div>
                           <span className="font-medium">Details:</span>
-                          <pre className="mt-1 p-2 rounded-lg bg-muted text-sm font-mono text-muted-foreground overflow-auto max-h-[200px] whitespace-pre-wrap break-words">
+                          <pre className="mt-1 p-2 rounded-lg bg-muted text-base tabular-nums text-muted-foreground overflow-auto max-h-[200px] whitespace-pre-wrap break-words">
                             {JSON.stringify(item.details, null, 2)}
                           </pre>
                         </div>
@@ -321,8 +321,8 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 function StatCell({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <div className="text-sm text-muted-foreground mb-1">{label}</div>
-      <div className={`text-sm font-medium text-foreground ${mono ? 'font-mono' : ''}`}>
+      <div className="text-base text-muted-foreground mb-1">{label}</div>
+      <div className={`text-base font-medium text-foreground ${mono ? 'tabular-nums' : ''}`}>
         {value}
       </div>
     </div>

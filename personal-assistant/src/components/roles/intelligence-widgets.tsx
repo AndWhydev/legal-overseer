@@ -175,7 +175,7 @@ export function IntelligenceWidgets() {
 
   return (
     <div>
-      <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-3">Intelligence</h3>
+      <h3 className="text-base font-medium uppercase tracking-wider text-muted-foreground mb-3">Intelligence</h3>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {WIDGET_DEFS.map(widget => {
           const widgetData = widget.extract(data)
@@ -190,7 +190,7 @@ export function IntelligenceWidgets() {
                   <div className={`w-6.5 h-6.5 rounded-lg flex items-center justify-center ${widget.colorClass}`}>
                     <Icon size={13} />
                   </div>
-                  <span className="text-sm font-medium text-muted-foreground">{widget.label}</span>
+                  <span className="text-base font-medium text-muted-foreground">{widget.label}</span>
                   {formatted?.alert && (
                     <IconAlertTriangle size={11} className="text-amber-500 ml-auto" />
                   )}
@@ -200,14 +200,14 @@ export function IntelligenceWidgets() {
                 {loading || !formatted ? (
                   <Skeleton className="h-7 w-1/2 mb-2" />
                 ) : (
-                  <div className="text-xl font-medium text-foreground font-mono tracking-tight leading-none mb-2">
+                  <div className="text-xl font-medium text-foreground tabular-nums tracking-tight leading-none mb-2">
                     {formatted.value}
                   </div>
                 )}
 
                 {/* Subtitle */}
                 {formatted && (
-                  <p className="text-sm text-muted-foreground">{formatted.subtitle}</p>
+                  <p className="text-base text-muted-foreground">{formatted.subtitle}</p>
                 )}
               </CardContent>
             </Card>

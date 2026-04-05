@@ -47,7 +47,7 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
 
   return (
     <div className="relative">
-      <div className="text-sm text-muted-foreground mb-2 font-medium uppercase tracking-widest">Command your team</div>
+      <div className="text-base text-muted-foreground mb-2 font-medium uppercase tracking-widest">Command your team</div>
       <div
         className={`flex items-center gap-3 rounded-xl bg-card px-4 py-3 border transition-colors ${
           focused ? 'border-ring' : 'border-border'
@@ -55,7 +55,7 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
       >
         <input
           ref={inputRef}
-          className="flex-1 bg-transparent border-none outline-none text-foreground text-sm tracking-tight"
+          className="flex-1 bg-transparent border-none outline-none text-foreground text-base tracking-tight"
           placeholder='Try "Prepare pitch for Thomson" or "Run end of month"'
           value={value}
           onChange={e => setValue(e.target.value)}
@@ -65,7 +65,7 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
           disabled={submitting}
         />
         <button
-          className={`px-4 py-2 rounded-lg text-sm font-medium border-none whitespace-nowrap transition-all ${
+          className={`px-4 py-2 rounded-lg text-base font-medium border-none whitespace-nowrap transition-all ${
             !value.trim() || submitting
               ? 'bg-primary/40 text-primary-foreground cursor-not-allowed opacity-40'
               : 'bg-primary text-primary-foreground cursor-pointer hover:opacity-90'
@@ -82,7 +82,7 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
         {BUILTIN_TEMPLATES.map(template => (
           <button
             key={template.slug}
-            className={`px-3 py-1 rounded-lg text-sm font-medium border cursor-pointer transition-all ${
+            className={`px-3 py-1 rounded-lg text-base font-medium border cursor-pointer transition-all ${
               hoveredTemplate === template.slug
                 ? 'bg-muted text-foreground border-border'
                 : 'bg-muted text-muted-foreground border-border hover:bg-muted hover:text-foreground'

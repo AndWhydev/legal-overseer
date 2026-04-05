@@ -53,7 +53,7 @@ export function SwarmRunCard({ run, onClick }: SwarmRunCardProps) {
             {isActive && (
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             )}
-            <span className="text-sm font-medium text-foreground">
+            <span className="text-base font-medium text-foreground">
               {run.template_slug
                 ? run.template_slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
                 : 'Custom Swarm'}
@@ -64,15 +64,15 @@ export function SwarmRunCard({ run, onClick }: SwarmRunCardProps) {
           </Badge>
         </div>
 
-        <p className="text-sm text-muted-foreground truncate">
+        <p className="text-base text-muted-foreground truncate">
           {run.trigger_input}
         </p>
 
-        <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+        <div className="flex items-center gap-4 mt-3 text-base text-muted-foreground">
           <span>{timeAgo}</span>
           {durationLabel && <span>{durationLabel}</span>}
           {run.total_cost > 0 && (
-            <span className="font-mono">${run.total_cost.toFixed(4)}</span>
+            <span className="tabular-nums">${run.total_cost.toFixed(4)}</span>
           )}
           {run.result_summary && (
             <span className="truncate">

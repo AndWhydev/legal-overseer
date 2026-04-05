@@ -178,7 +178,7 @@ export function LeadsPage() {
 
           {empty ? (
             activeView !== 'all' ? (
-              <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+              <div className="flex flex-1 items-center justify-center text-base text-muted-foreground">
                 {msg.desc}
               </div>
             ) : (

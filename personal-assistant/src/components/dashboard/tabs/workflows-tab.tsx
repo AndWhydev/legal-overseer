@@ -141,14 +141,14 @@ function RuleCard({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <CardTitle className="text-sm font-medium truncate">{rule.name}</CardTitle>
+              <CardTitle className="text-base font-medium truncate">{rule.name}</CardTitle>
               <Badge variant={triggerBadgeVariant(triggerType)} className="shrink-0 gap-1">
                 {triggerIcon(triggerType)}
                 {triggerType}
               </Badge>
             </div>
             <div className="flex items-center gap-3 shrink-0 ml-3">
-              <span className="text-sm text-muted-foreground tabular-nums">
+              <span className="text-base text-muted-foreground tabular-nums">
                 {rule.trigger_count ?? 0} runs
               </span>
               <Switch
@@ -161,11 +161,11 @@ function RuleCard({
               />
             </div>
           </div>
-          <CardDescription className="line-clamp-2 text-sm">
+          <CardDescription className="line-clamp-2 text-base">
             {rule.description}
           </CardDescription>
           {rule.last_triggered_at && (
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-base text-muted-foreground mt-1">
               Last triggered {relativeTime(rule.last_triggered_at)}
             </p>
           )}
@@ -177,43 +177,43 @@ function RuleCard({
 
             {/* Actions list */}
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Actions</h4>
+              <h4 className="text-base font-medium text-muted-foreground mb-2">Actions</h4>
               <div className="space-y-1.5">
                 {(rule.actions as WorkflowAction[] ?? []).map((action, i) => (
-                  <div key={action.step_id ?? i} className="flex items-center gap-2 text-sm">
-                    <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-muted text-sm font-medium">
+                  <div key={action.step_id ?? i} className="flex items-center gap-2 text-base">
+                    <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-muted text-base font-medium">
                       {i + 1}
                     </span>
                     <span className="truncate">{action.name}</span>
-                    <Badge variant="outline" className="text-sm shrink-0">
+                    <Badge variant="outline" className="text-base shrink-0">
                       {action.tool_group}
                     </Badge>
                   </div>
                 ))}
                 {(!rule.actions || (rule.actions as WorkflowAction[]).length === 0) && (
-                  <p className="text-sm text-muted-foreground">No actions configured</p>
+                  <p className="text-base text-muted-foreground">No actions configured</p>
                 )}
               </div>
             </div>
 
             {/* Run history */}
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Recent Runs</h4>
+              <h4 className="text-base font-medium text-muted-foreground mb-2">Recent Runs</h4>
               {loadingRuns ? (
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-3/4" />
                 </div>
               ) : runs.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No runs yet</p>
+                <p className="text-base text-muted-foreground">No runs yet</p>
               ) : (
                 <div className="space-y-1.5 max-h-40 overflow-y-auto">
                   {runs.slice(0, 10).map(run => (
-                    <div key={run.id} className="flex items-center justify-between text-sm">
+                    <div key={run.id} className="flex items-center justify-between text-base">
                       <div className="flex items-center gap-2">
                         <Badge
                           variant={run.status === 'completed' ? 'default' : run.status === 'failed' ? 'destructive' : 'secondary'}
-                          className="text-sm"
+                          className="text-base"
                         >
                           {run.status}
                         </Badge>
@@ -287,7 +287,7 @@ function TemplateGallery({
 }) {
   return (
     <div>
-      <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+      <h3 className="text-base font-medium mb-3 flex items-center gap-2">
         <IconTemplate size={16} />
         Template Gallery
       </h3>
@@ -295,11 +295,11 @@ function TemplateGallery({
         {WORKFLOW_TEMPLATES.map(tpl => (
           <Card key={tpl.id} className="cursor-pointer transition-colors hover:bg-accent/50" onClick={() => onSelect(tpl.naturalLanguage)}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">{tpl.label}</CardTitle>
+              <CardTitle className="text-base font-medium">{tpl.label}</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{tpl.description}</p>
-              <Button size="sm" variant="outline" className="w-full text-sm" onClick={(e) => { e.stopPropagation(); onSelect(tpl.naturalLanguage); }}>
+              <p className="text-base text-muted-foreground line-clamp-2 mb-3">{tpl.description}</p>
+              <Button size="sm" variant="outline" className="w-full text-base" onClick={(e) => { e.stopPropagation(); onSelect(tpl.naturalLanguage); }}>
                 Use Template
               </Button>
             </CardContent>
@@ -405,7 +405,7 @@ function WorkflowsTab() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-medium">Workflow Rules</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             Automate actions with natural language rules
           </p>
         </div>
@@ -562,11 +562,11 @@ function NLCreatorWithTemplate({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="text-base font-medium flex items-center gap-2">
           <IconPlus size={16} />
           New Workflow Rule
         </CardTitle>
-        <CardDescription className="text-sm">
+        <CardDescription className="text-base">
           Describe your automation in plain English
         </CardDescription>
       </CardHeader>
@@ -584,7 +584,7 @@ function NLCreatorWithTemplate({
         />
 
         {error && (
-          <p className="text-sm text-destructive flex items-center gap-1">
+          <p className="text-base text-destructive flex items-center gap-1">
             <IconAlertCircle size={12} />
             {error}
           </p>
@@ -594,27 +594,27 @@ function NLCreatorWithTemplate({
           <Card className="bg-muted">
             <CardContent className="pt-4 space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">{parseResult.rule.name}</p>
-                <Badge variant="secondary" className="text-sm">
+                <p className="text-base font-medium">{parseResult.rule.name}</p>
+                <Badge variant="secondary" className="text-base">
                   Confidence: {Math.round((parseResult.confidence ?? 0) * 100)}%
                 </Badge>
               </div>
 
               {parseResult.rule.trigger && (
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-base text-muted-foreground">
                   {triggerIcon(parseResult.rule.trigger.type)}
                   <span>Trigger: {parseResult.rule.trigger.type}</span>
                   {parseResult.rule.trigger.event && (
-                    <Badge variant="outline" className="text-sm">{parseResult.rule.trigger.event}</Badge>
+                    <Badge variant="outline" className="text-base">{parseResult.rule.trigger.event}</Badge>
                   )}
                 </div>
               )}
 
               {parseResult.rule.actions && (parseResult.rule.actions as WorkflowAction[]).length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Actions:</p>
+                  <p className="text-base font-medium text-muted-foreground">Actions:</p>
                   {(parseResult.rule.actions as WorkflowAction[]).map((a, i) => (
-                    <p key={a.step_id ?? i} className="text-sm pl-3">
+                    <p key={a.step_id ?? i} className="text-base pl-3">
                       {i + 1}. {a.name}
                     </p>
                   ))}
@@ -639,7 +639,7 @@ function NLCreatorWithTemplate({
         )}
 
         {parseResult && !parseResult.needsReview && (
-          <p className="text-sm text-green-600 flex items-center gap-1">
+          <p className="text-base text-green-600 flex items-center gap-1">
             <IconCheck size={12} />
             Workflow created and activated
           </p>

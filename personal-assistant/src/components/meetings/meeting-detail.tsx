@@ -122,7 +122,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary"
+          className="rounded-lg border border-border bg-transparent px-3 py-2 text-base text-muted-foreground transition-colors hover:bg-secondary"
         >
           <IconArrowLeft className="inline h-4 w-4 mr-1" />
           Back
@@ -131,7 +131,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
           <h2 className="text-base font-medium text-foreground">
             {meeting.title}
           </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <p className="mt-0.5 text-base text-muted-foreground">
             {meeting.meeting_type} &middot;
             {meeting.duration_seconds ? ` ${Math.floor(meeting.duration_seconds / 60)}m` : ''} &middot;
             {' '}{new Date(meeting.created_at).toLocaleDateString()}
@@ -141,7 +141,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
           <button
             onClick={handleProcess}
             disabled={processing}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-wait disabled:opacity-70"
+            className="rounded-xl bg-primary px-4 py-2 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-wait disabled:opacity-70"
           >
             {processing ? 'Processing...' : 'Process Recording'}
           </button>
@@ -151,23 +151,23 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
       {/* Summary card (if completed) */}
       {meeting.summary && (
         <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-          <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+          <h3 className="mb-3 flex items-center gap-2 text-base font-medium text-foreground">
             <IconFileText className="h-4 w-4" />
             Summary
           </h3>
-          <p className="text-sm leading-relaxed text-foreground">
+          <p className="text-base leading-relaxed text-foreground">
             {meeting.summary}
           </p>
 
           {/* Key decisions */}
           {Array.isArray(meeting.key_decisions) && meeting.key_decisions.length > 0 && (
             <div className="mt-4">
-              <h4 className="mb-1 text-sm font-medium text-muted-foreground">
+              <h4 className="mb-1 text-base font-medium text-muted-foreground">
                 Key Decisions
               </h4>
               <ul className="flex flex-col gap-2 pl-5">
                 {meeting.key_decisions.map((decision, i) => (
-                  <li key={i} className="text-sm text-foreground">
+                  <li key={i} className="text-base text-foreground">
                     {decision}
                   </li>
                 ))}
@@ -188,7 +188,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
                       : '#eab308',
                 }}
               />
-              <span className="text-sm text-muted-foreground">
+              <span className="text-base text-muted-foreground">
                 Sentiment: {meeting.sentiment_label.replace('_', ' ')}
               </span>
             </div>
@@ -258,7 +258,7 @@ export function MeetingDetail({ meetingId, onBack }: MeetingDetailProps) {
 function TranscriptView({ segments }: { segments: TranscriptSegment[] }) {
   if (segments.length === 0) {
     return (
-      <p className="p-5 text-center text-sm text-muted-foreground">
+      <p className="p-5 text-center text-base text-muted-foreground">
         No transcript available. Process the recording to generate the transcript.
       </p>
     )
@@ -296,18 +296,18 @@ function TranscriptView({ segments }: { segments: TranscriptSegment[] }) {
       {grouped.map((group, i) => (
         <div key={i} className="flex gap-3">
           {/* Time */}
-          <span className="min-w-[40px] pt-0.5 font-mono text-sm text-muted-foreground">
+          <span className="min-w-[40px] pt-0.5 tabular-nums text-base text-muted-foreground">
             {formatTime(group.startTime)}
           </span>
 
           {/* Content */}
           <div className="flex-1">
             {group.speaker && (
-              <span className="mb-1 block text-sm font-medium text-foreground">
+              <span className="mb-1 block text-base font-medium text-foreground">
                 {group.speaker}
               </span>
             )}
-            <p className="text-sm leading-relaxed text-foreground">
+            <p className="text-base leading-relaxed text-foreground">
               {group.segments.map(s => s.text).join(' ')}
             </p>
           </div>
@@ -328,7 +328,7 @@ function ActionItemsView({
 }) {
   if (items.length === 0) {
     return (
-      <p className="p-5 text-center text-sm text-muted-foreground">
+      <p className="p-5 text-center text-base text-muted-foreground">
         No action items extracted yet.
       </p>
     )
@@ -342,7 +342,7 @@ function ActionItemsView({
         <div className="flex justify-end">
           <button
             onClick={onConvertToTasks}
-            className="rounded-lg border border-ring bg-secondary px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+            className="rounded-lg border border-ring bg-secondary px-4 py-2 text-base font-medium text-foreground transition-colors hover:bg-secondary"
           >
             Convert {pendingCount} to Kanban Tasks
           </button>
@@ -361,27 +361,27 @@ function ActionItemsView({
               style={{ background: PRIORITY_COLORS[item.priority] || PRIORITY_COLORS.medium }}
             />
             <div className="flex-1">
-              <div className="text-sm font-medium text-foreground">
+              <div className="text-base font-medium text-foreground">
                 {item.title}
               </div>
               {item.description && (
-                <p className="mt-1 text-sm leading-normal text-muted-foreground">
+                <p className="mt-1 text-base leading-normal text-muted-foreground">
                   {item.description}
                 </p>
               )}
               <div className="mt-1 flex flex-wrap gap-3">
                 {item.assigned_to && (
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-base text-muted-foreground">
                     Assigned: {item.assigned_to}
                   </span>
                 )}
                 {item.due_date && (
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-base text-muted-foreground">
                     Due: {new Date(item.due_date).toLocaleDateString()}
                   </span>
                 )}
                 {item.task_id && (
-                  <span className="flex items-center gap-1 text-sm text-green-500">
+                  <span className="flex items-center gap-1 text-base text-green-500">
                     <IconCheck className="h-3 w-3" />
                     Task created
                   </span>
@@ -391,7 +391,7 @@ function ActionItemsView({
           </div>
 
           {item.source_quote && (
-            <div className="ml-2 border-l-2 border-border pl-5 text-sm italic text-muted-foreground">
+            <div className="ml-2 border-l-2 border-border pl-5 text-base italic text-muted-foreground">
               &ldquo;{item.source_quote}&rdquo;
             </div>
           )}
@@ -412,7 +412,7 @@ function FollowUpView({
 }) {
   if (followUps.length === 0) {
     return (
-      <p className="p-5 text-center text-sm text-muted-foreground">
+      <p className="p-5 text-center text-base text-muted-foreground">
         No follow-up emails drafted yet.
       </p>
     )
@@ -429,12 +429,12 @@ function FollowUpView({
           <div className="mb-3 flex items-center justify-between">
             <div>
               {fu.subject && (
-                <div className="text-sm font-medium text-foreground">
+                <div className="text-base font-medium text-foreground">
                   {fu.subject}
                 </div>
               )}
               {fu.recipient_name && (
-                <div className="mt-0.5 text-sm text-muted-foreground">
+                <div className="mt-0.5 text-base text-muted-foreground">
                   To: {fu.recipient_name} {fu.recipient_email && `<${fu.recipient_email}>`}
                 </div>
               )}
@@ -447,7 +447,7 @@ function FollowUpView({
           </div>
 
           {/* Body */}
-          <div className="whitespace-pre-wrap rounded-lg bg-background p-3 text-sm leading-relaxed text-foreground">
+          <div className="whitespace-pre-wrap rounded-lg bg-background p-3 text-base leading-relaxed text-foreground">
             {fu.body}
           </div>
 
@@ -456,7 +456,7 @@ function FollowUpView({
             <div className="mt-3 flex justify-end gap-2">
               <button
                 onClick={() => onApprove(fu.id)}
-                className="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-green-400"
+                className="rounded-lg bg-green-500 px-4 py-2 text-base font-medium text-black transition-colors hover:bg-green-400"
               >
                 Approve & Send
               </button>

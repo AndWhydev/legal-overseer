@@ -225,8 +225,8 @@ function KnowledgeTab() {
                         <Icon className="size-5 text-primary" />
                       </div>
                       <div>
-                        <div className="text-sm font-medium">{root.label}</div>
-                        <div className="text-sm capitalize text-muted-foreground">{root.type}</div>
+                        <div className="text-base font-medium">{root.label}</div>
+                        <div className="text-base capitalize text-muted-foreground">{root.type}</div>
                       </div>
                     </div>
                   );
@@ -235,7 +235,7 @@ function KnowledgeTab() {
                 {/* Connected Entities */}
                 {graph.nodes.length > 1 && (
                   <div>
-                    <h3 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Connected Entities</h3>
+                    <h3 className="mb-2 text-base font-medium uppercase tracking-wider text-muted-foreground">Connected Entities</h3>
                     <div className="flex flex-wrap gap-2">
                       {graph.nodes.slice(1).map((node) => {
                         const Icon = TYPE_ICON[node.type] ?? IconBriefcase;
@@ -259,7 +259,7 @@ function KnowledgeTab() {
                 {/* Relationships List */}
                 {graph.edges.length > 0 && (
                   <div>
-                    <h3 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Relationships</h3>
+                    <h3 className="mb-2 text-base font-medium uppercase tracking-wider text-muted-foreground">Relationships</h3>
                     <div className="flex flex-col gap-2">
                       {graph.edges.map((edge, idx) => {
                         const sourceNode = graph.nodes.find((n) => n.id === edge.source);
@@ -267,12 +267,12 @@ function KnowledgeTab() {
                         return (
                           <div key={idx} className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted">
                             <div>
-                              <div className="text-sm font-medium">{sourceNode?.label ?? edge.source}</div>
-                              <div className="text-sm capitalize text-muted-foreground">
+                              <div className="text-base font-medium">{sourceNode?.label ?? edge.source}</div>
+                              <div className="text-base capitalize text-muted-foreground">
                                 {edge.relationshipType?.replace(/_/g, ' ') ?? 'Related'} (strength: {(edge.strength * 100).toFixed(0)}%)
                               </div>
                             </div>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-base text-muted-foreground">
                               &rarr; {targetNode?.label ?? edge.target}
                             </span>
                           </div>
@@ -306,7 +306,7 @@ function KnowledgeTab() {
       {/* Search Results */}
       {!selectedEntity && results.length > 0 && (
         <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">Search Results</h2>
+          <h2 className="mb-3 text-base font-medium uppercase tracking-wider text-muted-foreground">Search Results</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {results.map((result) => {
               const Icon = TYPE_ICON[result.type] ?? IconBriefcase;
@@ -321,10 +321,10 @@ function KnowledgeTab() {
                       <Icon className="size-4 text-primary" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">{result.label}</div>
+                      <div className="truncate text-base font-medium">{result.label}</div>
                       <Badge variant={TYPE_BADGE_VARIANT[result.type]} className="mt-1">{result.type}</Badge>
                       {result.snippet && (
-                        <p className="mt-2 truncate text-sm text-muted-foreground">{result.snippet}</p>
+                        <p className="mt-2 truncate text-base text-muted-foreground">{result.snippet}</p>
                       )}
                     </div>
                   </CardContent>

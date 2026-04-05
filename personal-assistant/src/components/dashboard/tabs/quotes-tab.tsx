@@ -66,7 +66,7 @@ function QuotesTab() {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <IconClipboardList className="size-10 text-muted-foreground mb-3" />
           <h3 className="text-lg font-medium">No quotes yet</h3>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-base text-muted-foreground mt-1">
             Quotes are drafted automatically from enquiries or you can create them manually.
           </p>
         </div>
@@ -98,7 +98,7 @@ function QuotesTab() {
                     {selected.contact?.name ?? 'Unknown Customer'}
                   </h3>
                   {selected.lead?.title && (
-                    <p className="text-sm text-muted-foreground">{selected.lead.title}</p>
+                    <p className="text-base text-muted-foreground">{selected.lead.title}</p>
                   )}
                 </div>
                 <Badge variant={variant}>{label}</Badge>
@@ -107,7 +107,7 @@ function QuotesTab() {
 
             <CardContent>
               {/* Line items */}
-              <table className="w-full text-sm mb-4">
+              <table className="w-full text-base mb-4">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="pb-2">Description</th>
@@ -129,7 +129,7 @@ function QuotesTab() {
               </table>
 
               {/* Totals */}
-              <div className="flex flex-col items-end gap-1 text-sm">
+              <div className="flex flex-col items-end gap-1 text-base">
                 <p>Labour: <span className="font-medium">${Number(selected.labor_total).toLocaleString('en-AU')}</span></p>
                 <p>Materials: <span className="font-medium">${Number(selected.materials_total).toLocaleString('en-AU')}</span></p>
                 <p>GST: <span className="font-medium">${Number(selected.gst_total).toLocaleString('en-AU')}</span></p>
@@ -139,7 +139,7 @@ function QuotesTab() {
               </div>
 
               {selected.notes && (
-                <p className="text-sm text-muted-foreground mt-4">{selected.notes}</p>
+                <p className="text-base text-muted-foreground mt-4">{selected.notes}</p>
               )}
             </CardContent>
           </Card>
@@ -161,13 +161,13 @@ function QuotesTab() {
               className="w-full flex items-center justify-between rounded-lg border border-border bg-card p-4 text-left hover:bg-muted transition-colors"
             >
               <div>
-                <p className="font-medium text-sm">{q.contact?.name ?? 'Unknown Customer'}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-medium text-base">{q.contact?.name ?? 'Unknown Customer'}</p>
+                <p className="text-base text-muted-foreground">
                   {new Date(q.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium">${Number(q.grand_total).toLocaleString('en-AU')}</span>
+                <span className="text-base font-medium">${Number(q.grand_total).toLocaleString('en-AU')}</span>
                 <Badge variant={variant}>{label}</Badge>
               </div>
             </button>

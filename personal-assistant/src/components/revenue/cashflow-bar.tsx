@@ -43,7 +43,7 @@ const barContainerStyle: React.CSSProperties = {
 const valueStyle: React.CSSProperties = {
   fontSize: 16,
   fontWeight: 500,
-  fontFamily: 'var(--font-mono)',
+  fontFamily: 'var(--tabular-nums)',
   color: 'var(--text-primary)',
   letterSpacing: '-0.02em',
 }
@@ -51,7 +51,7 @@ const valueStyle: React.CSSProperties = {
 const rangeStyle: React.CSSProperties = {
   fontSize: 14,
   color: 'var(--text-secondary)',
-  fontFamily: 'var(--font-mono)',
+  fontFamily: 'var(--tabular-nums)',
   opacity: 0.6,
 }
 

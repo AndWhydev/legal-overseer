@@ -22,15 +22,15 @@ function ProspectCardInner({ prospect, onImport }: ProspectCardProps) {
     <div className="space-y-2.5 rounded-[var(--radius-md)] bg-secondary p-3">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-medium text-foreground">{prospect.name}</h3>
+        <h3 className="text-base font-medium text-foreground">{prospect.name}</h3>
         <div className="flex shrink-0 gap-3">
           <div className="flex items-baseline gap-1">
             <span className="text-[12px] text-muted-foreground">Fit</span>
-            <span className="text-sm font-medium text-foreground">{prospect.fit_score}</span>
+            <span className="text-base font-medium text-foreground">{prospect.fit_score}</span>
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-[12px] text-muted-foreground">Opp</span>
-            <span className="text-sm font-medium text-foreground">{prospect.opportunity_score}</span>
+            <span className="text-base font-medium text-foreground">{prospect.opportunity_score}</span>
           </div>
         </div>
       </div>

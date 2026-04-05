@@ -90,20 +90,20 @@ function TasksTab() {
         <div className="border-b border-border bg-linear-to-br from-background via-background to-primary/5 px-6 py-6">
           <a
             href="#tasks-board"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-4 focus:z-10 focus:rounded-lg focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:text-foreground focus:shadow-md"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-6 focus:top-4 focus:z-10 focus:rounded-lg focus:bg-background focus:px-3 focus:py-2 focus:text-base focus:text-foreground focus:shadow-md"
           >
             Skip to task board
           </a>
 
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-2xl space-y-2">
-              <p className="text-sm font-medium uppercase tracking-[0.22em] text-muted-foreground">
+              <p className="text-base font-medium uppercase tracking-[0.22em] text-muted-foreground">
                 Tasks
               </p>
               <h1 className="text-3xl font-medium tracking-tight text-foreground">
                 Shape the day around the work that matters.
               </h1>
-              <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+              <p className="max-w-xl text-base leading-6 text-muted-foreground">
                 Plan across columns, keep urgent items visible, and let BitBit support the busy work without
                 overwhelming the board.
               </p>
@@ -115,7 +115,7 @@ function TasksTab() {
                   <CardDescription>Open</CardDescription>
                   <CardTitle>{openTasks}</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 text-sm text-muted-foreground">
+                <CardContent className="pt-0 text-base text-muted-foreground">
                   Still in motion across the board.
                 </CardContent>
               </Card>
@@ -125,7 +125,7 @@ function TasksTab() {
                   <CardDescription>Overdue</CardDescription>
                   <CardTitle>{overdueTasks}</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 text-sm text-muted-foreground">
+                <CardContent className="pt-0 text-base text-muted-foreground">
                   Tasks with a passed deadline.
                 </CardContent>
               </Card>
@@ -135,7 +135,7 @@ function TasksTab() {
                   <CardDescription>BitBit Active</CardDescription>
                   <CardTitle>{aiActiveTasks}</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 text-sm text-muted-foreground">
+                <CardContent className="pt-0 text-base text-muted-foreground">
                   Work currently being handled by agents.
                 </CardContent>
               </Card>
@@ -145,7 +145,7 @@ function TasksTab() {
                   <CardDescription>Completion</CardDescription>
                   <CardTitle>{completionRate}%</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 text-sm text-muted-foreground">
+                <CardContent className="pt-0 text-base text-muted-foreground">
                   Based on tasks already in the done column.
                 </CardContent>
               </Card>

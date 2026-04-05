@@ -73,7 +73,7 @@ export function ClientLeaderboard({ clients, atRisk = [] }: ClientLeaderboardPro
   return (
     <div className="rounded-xl bg-card overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-[32px_1fr_90px_70px_70px_60px] items-center gap-2 px-4 py-2 text-sm text-muted-foreground uppercase tracking-wider font-medium bg-muted">
+      <div className="grid grid-cols-[32px_1fr_90px_70px_70px_60px] items-center gap-2 px-4 py-2 text-base text-muted-foreground uppercase tracking-wider font-medium bg-muted">
         <span>Score</span>
         <span>Client</span>
         <span>Revenue</span>
@@ -93,7 +93,7 @@ export function ClientLeaderboard({ clients, atRisk = [] }: ClientLeaderboardPro
         return (
           <div
             key={client.contact_id}
-            className={`grid grid-cols-[32px_1fr_90px_70px_70px_60px] items-center gap-2 px-4 py-3 text-sm transition-colors cursor-default ${
+            className={`grid grid-cols-[32px_1fr_90px_70px_70px_60px] items-center gap-2 px-4 py-3 text-base transition-colors cursor-default ${
               isHovered ? 'bg-accent' : isAtRisk ? 'bg-red-500/[0.04]' : 'bg-transparent'
             }`}
             onMouseEnter={() => setHoveredRow(client.contact_id)}
@@ -101,7 +101,7 @@ export function ClientLeaderboard({ clients, atRisk = [] }: ClientLeaderboardPro
           >
             {/* Score circle */}
             <div
-              className="flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium font-mono"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-base font-medium tabular-nums"
               style={{
                 background: `hsla(${hue}, 70%, 45%, 0.15)`,
                 color: `hsl(${hue}, 70%, 55%)`,
@@ -114,22 +114,22 @@ export function ClientLeaderboard({ clients, atRisk = [] }: ClientLeaderboardPro
             <span className="font-medium text-foreground truncate">{name}</span>
 
             {/* Revenue */}
-            <span className="font-mono font-medium text-sm text-foreground">
+            <span className="tabular-nums font-medium text-base text-foreground">
               {formatCents(client.total_revenue_cents)}
             </span>
 
             {/* Trend */}
-            <span className={`font-medium text-sm ${TREND_COLORS[client.trend_direction ?? client.trend ?? 'stable']}`}>
+            <span className={`font-medium text-base ${TREND_COLORS[client.trend_direction ?? client.trend ?? 'stable']}`}>
               {TREND_ICONS[client.trend_direction ?? client.trend ?? 'stable']} {client.trend_direction ?? client.trend ?? 'stable'}
             </span>
 
             {/* Avg days to pay */}
-            <span className={`font-mono font-medium text-sm ${(client.avg_days_to_pay ?? 0) > 14 ? 'text-amber-500' : 'text-muted-foreground'}`}>
+            <span className={`tabular-nums font-medium text-base ${(client.avg_days_to_pay ?? 0) > 14 ? 'text-amber-500' : 'text-muted-foreground'}`}>
               {client.avg_days_to_pay ?? 0}d
             </span>
 
             {/* Risk level */}
-            <span className={`text-sm font-medium uppercase ${RISK_COLORS[client.risk_level ?? 'low']}`}>
+            <span className={`text-base font-medium uppercase ${RISK_COLORS[client.risk_level ?? 'low']}`}>
               {client.risk_level}
             </span>
           </div>

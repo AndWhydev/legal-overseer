@@ -31,17 +31,17 @@ export function ChannelActivityWidget() {
             <div key={(item.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-border last:border-0">
               <div className="w-2 h-2 rounded-full bg-accent mt-2 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
+                <p className="text-base font-medium truncate">
                   {(item.sender_name || item.content || item.message || 'Activity Update') as string}
                 </p>
-                <p className="text-sm text-muted-foreground truncate">
+                <p className="text-base text-muted-foreground truncate">
                   {item.subject ? `${item.subject}` : (item.body as string || '').slice(0, 80)}
                 </p>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="text-base text-muted-foreground mt-0.5">
                   {item.received_at || item.created_at ? (
                     new Date((item.received_at || item.created_at) as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                   ) : 'Just now'}
-                  {item.channel_type ? <span className="ml-2 text-sm opacity-60">via {String(item.channel_type)}</span> : null}
+                  {item.channel_type ? <span className="ml-2 text-base opacity-60">via {String(item.channel_type)}</span> : null}
                 </p>
               </div>
             </div>

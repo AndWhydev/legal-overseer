@@ -81,38 +81,38 @@ export function RevenueInsightCard({ insight, onAction }: InsightCardProps) {
       onMouseLeave={() => setHovering(false)}
     >
       {/* Severity Icon */}
-      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-medium ${SEVERITY_BG[insight.severity]} ${SEVERITY_COLORS[insight.severity]}`}>
+      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg tabular-nums text-base font-medium ${SEVERITY_BG[insight.severity]} ${SEVERITY_COLORS[insight.severity]}`}>
         {TYPE_ICONS[insight.insight_type] ?? '?'}
       </div>
 
       {/* Body */}
       <div className="flex flex-1 flex-col gap-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground truncate">{insight.title}</span>
-          <Badge variant={SEVERITY_VARIANTS[insight.severity]} className="shrink-0 uppercase text-sm tracking-wide">
+          <span className="text-base font-medium text-foreground truncate">{insight.title}</span>
+          <Badge variant={SEVERITY_VARIANTS[insight.severity]} className="shrink-0 uppercase text-base tracking-wide">
             {TYPE_LABELS[insight.insight_type] ?? insight.insight_type}
           </Badge>
         </div>
 
-        <div className="text-sm text-muted-foreground line-clamp-2">{insight.description}</div>
+        <div className="text-base text-muted-foreground line-clamp-2">{insight.description}</div>
 
         {/* Expanded: show recommended action + action buttons */}
         {expanded && (
           <>
             {insight.recommended_action && (
-              <div className="text-sm text-green-500 mt-1 font-medium">
+              <div className="text-base text-green-500 mt-1 font-medium">
                 Recommended: {insight.recommended_action}
               </div>
             )}
             <div className="flex items-center gap-2 mt-1">
               <button
-                className="text-sm font-medium px-3 py-1 rounded-lg bg-green-500 text-black border-none cursor-pointer transition-opacity hover:opacity-80"
+                className="text-base font-medium px-3 py-1 rounded-lg bg-green-500 text-black border-none cursor-pointer transition-opacity hover:opacity-80"
                 onClick={(e) => { e.stopPropagation(); onAction(insight.id, 'actioned') }}
               >
                 Mark Done
               </button>
               <button
-                className="text-sm font-medium px-3 py-1 rounded-lg bg-accent text-muted-foreground border-none cursor-pointer transition-opacity hover:opacity-80"
+                className="text-base font-medium px-3 py-1 rounded-lg bg-accent text-muted-foreground border-none cursor-pointer transition-opacity hover:opacity-80"
                 onClick={(e) => { e.stopPropagation(); onAction(insight.id, 'dismissed') }}
               >
                 Dismiss
@@ -124,7 +124,7 @@ export function RevenueInsightCard({ insight, onAction }: InsightCardProps) {
 
       {/* Amount */}
       {insight.amount_cents > 0 && (
-        <span className="shrink-0 font-mono font-medium text-sm text-foreground">{formatCents(insight.amount_cents)}</span>
+        <span className="shrink-0 tabular-nums font-medium text-base text-foreground">{formatCents(insight.amount_cents)}</span>
       )}
     </div>
   )

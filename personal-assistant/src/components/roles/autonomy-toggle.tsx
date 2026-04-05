@@ -88,7 +88,7 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
               onMouseEnter={() => setHoveredLevel(lvl.level)}
               onMouseLeave={() => setHoveredLevel(null)}
               disabled={saving}
-              className={`flex flex-1 items-center justify-center gap-2 px-3 py-2 rounded-xl border-none text-sm font-medium transition-all ${
+              className={`flex flex-1 items-center justify-center gap-2 px-3 py-2 rounded-xl border-none text-base font-medium transition-all ${
                 saving ? 'cursor-wait' : 'cursor-pointer'
               }`}
               style={{
@@ -113,7 +113,7 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
 
       {/* Description */}
       {(hoveredLevel || optimisticLevel) && (
-        <div className="text-sm text-muted-foreground pl-1">
+        <div className="text-base text-muted-foreground pl-1">
           {LEVELS.find(l => l.level === (hoveredLevel ?? optimisticLevel))?.description}
         </div>
       )}

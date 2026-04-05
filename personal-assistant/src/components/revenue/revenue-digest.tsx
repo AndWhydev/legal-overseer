@@ -77,7 +77,7 @@ export function RevenueDigestCard() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <IconCalendar size={14} className="text-foreground" />
-            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <span className="text-base font-medium text-muted-foreground uppercase tracking-wider">
               Revenue Digest
             </span>
           </div>
@@ -86,7 +86,7 @@ export function RevenueDigestCard() {
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`text-sm font-medium px-3 py-1 rounded-lg border-none cursor-pointer transition-colors ${
+                className={`text-base font-medium px-3 py-1 rounded-lg border-none cursor-pointer transition-colors ${
                   period === p
                     ? 'bg-muted text-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted'
@@ -106,24 +106,24 @@ export function RevenueDigestCard() {
         </div>
 
         {loading ? (
-          <div className="text-center text-muted-foreground text-sm py-5">
+          <div className="text-center text-muted-foreground text-base py-5">
             Loading...
           </div>
         ) : !latest ? (
           <div className="text-center py-5">
-            <div className="text-muted-foreground text-sm mb-2">
+            <div className="text-muted-foreground text-base mb-2">
               No {period} digest yet
             </div>
             <button
               onClick={generate}
-              className="bg-primary text-primary-foreground border-none rounded-lg px-4 py-2 text-sm font-medium cursor-pointer hover:opacity-90 transition-opacity"
+              className="bg-primary text-primary-foreground border-none rounded-lg px-4 py-2 text-base font-medium cursor-pointer hover:opacity-90 transition-opacity"
             >
               Generate Now
             </button>
           </div>
         ) : (
           <>
-            <div className="text-sm text-muted-foreground mb-3">
+            <div className="text-base text-muted-foreground mb-3">
               {latest.period_start} — {latest.period_end}
             </div>
 
@@ -135,11 +135,11 @@ export function RevenueDigestCard() {
                 { label: '30d Outlook', value: fmt(latest.projected_30d_cents) },
               ].map(m => (
                 <div key={m.label} className="p-3 rounded-lg bg-muted">
-                  <div className="text-sm text-muted-foreground mb-1">{m.label}</div>
-                  <div className={`text-base font-medium font-mono tracking-tight ${m.color ?? 'text-foreground'}`}>
+                  <div className="text-base text-muted-foreground mb-1">{m.label}</div>
+                  <div className={`text-base font-medium tabular-nums tracking-tight ${m.color ?? 'text-foreground'}`}>
                     {m.value}
                   </div>
-                  {m.sub && <div className="text-sm text-muted-foreground">{m.sub}</div>}
+                  {m.sub && <div className="text-base text-muted-foreground">{m.sub}</div>}
                 </div>
               ))}
             </div>
@@ -152,7 +152,7 @@ export function RevenueDigestCard() {
                   return (
                     <div key={i} className="flex items-center gap-2 py-2">
                       <Icon size={12} className={highlightColors[h.type]} />
-                      <span className="text-sm text-foreground">{h.text}</span>
+                      <span className="text-base text-foreground">{h.text}</span>
                     </div>
                   )
                 })}

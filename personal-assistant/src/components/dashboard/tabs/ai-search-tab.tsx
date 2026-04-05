@@ -58,7 +58,7 @@ const POSITION_LABELS: Record<string, string> = {
 
 function ScoreBadge({ score }: { score: number }) {
   const variant = score >= 60 ? 'default' : score >= 30 ? 'secondary' : 'destructive'
-  return <Badge variant={variant} className="text-base font-mono px-3 py-1">{score}</Badge>
+  return <Badge variant={variant} className="text-base tabular-nums px-3 py-1">{score}</Badge>
 }
 
 function TrendArrow({ current, previous }: { current: number; previous: number | null }) {
@@ -203,8 +203,8 @@ function CompetitorTable({ scores, myScore }: { scores: Record<string, number>; 
               return (
                 <TableRow key={name}>
                   <TableCell className="font-medium">{name}</TableCell>
-                  <TableCell className="font-mono">{score}</TableCell>
-                  <TableCell className={`font-mono ${diff > 0 ? 'text-red-600' : diff < 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                  <TableCell className="tabular-nums">{score}</TableCell>
+                  <TableCell className={`tabular-nums ${diff > 0 ? 'text-red-600' : diff < 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
                     {diff > 0 ? '+' : ''}{diff}
                   </TableCell>
                 </TableRow>
@@ -297,14 +297,14 @@ function SchemaGenerator() {
       {result && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">{result.schemaType} JSON-LD</span>
+            <span className="text-base font-medium">{result.schemaType} JSON-LD</span>
             <CopyButton text={result.htmlSnippet} />
           </div>
-          <pre className="max-h-96 overflow-auto rounded-lg border bg-muted p-4 font-mono text-sm leading-relaxed">
+          <pre className="max-h-96 overflow-auto rounded-lg border bg-muted p-4 tabular-nums text-base leading-relaxed">
             {result.htmlSnippet}
           </pre>
           {result.validationNotes.length > 0 && (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-base text-muted-foreground">
               {result.validationNotes.map((note, i) => (
                 <div key={i}>- {note}</div>
               ))}
@@ -379,19 +379,19 @@ function AISearchTab() {
             <CardContent className="flex items-center gap-3">
               <ScoreBadge score={auditResult.overallScore} />
               <TrendArrow current={auditResult.overallScore} previous={previousScore} />
-              <span className="text-sm text-muted-foreground">/100</span>
+              <span className="text-base text-muted-foreground">/100</span>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardDescription>Queries Tracked</CardDescription></CardHeader>
             <CardContent>
-              <span className="font-mono text-lg font-medium">{new Set(auditResult.queryResults.map((r) => r.query)).size}</span>
+              <span className="tabular-nums text-lg font-medium">{new Set(auditResult.queryResults.map((r) => r.query)).size}</span>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardDescription>Mentioned</CardDescription></CardHeader>
             <CardContent>
-              <span className="font-mono text-lg font-medium text-green-600">
+              <span className="tabular-nums text-lg font-medium text-green-600">
                 {auditResult.queryResults.filter((r) => r.position === 'mentioned').length}
               </span>
             </CardContent>
@@ -399,7 +399,7 @@ function AISearchTab() {
           <Card>
             <CardHeader className="pb-2"><CardDescription>Absent</CardDescription></CardHeader>
             <CardContent>
-              <span className="font-mono text-lg font-medium text-red-600">
+              <span className="tabular-nums text-lg font-medium text-red-600">
                 {auditResult.queryResults.filter((r) => r.position === 'absent').length}
               </span>
             </CardContent>
@@ -426,24 +426,24 @@ function AISearchTab() {
           {auditResult && (
             <>
               <div>
-                <h3 className="mb-3 text-sm font-medium">Query Breakdown</h3>
+                <h3 className="mb-3 text-base font-medium">Query Breakdown</h3>
                 <QueryBreakdown results={auditResult.queryResults} />
               </div>
 
               {Object.keys(auditResult.competitorScores).length > 0 && (
                 <div>
-                  <h3 className="mb-3 text-sm font-medium">Competitor Comparison</h3>
+                  <h3 className="mb-3 text-base font-medium">Competitor Comparison</h3>
                   <CompetitorTable scores={auditResult.competitorScores} myScore={auditResult.overallScore} />
                 </div>
               )}
 
               <div>
-                <h3 className="mb-3 text-sm font-medium">Recommendations</h3>
+                <h3 className="mb-3 text-base font-medium">Recommendations</h3>
                 <div className="flex flex-col gap-2">
                   {auditResult.recommendations.map((rec, i) => (
                     <Card key={i} className="border-l-4 border-l-primary py-3">
                       <CardContent className="py-0">
-                        <span className="text-sm text-muted-foreground leading-relaxed">{rec}</span>
+                        <span className="text-base text-muted-foreground leading-relaxed">{rec}</span>
                       </CardContent>
                     </Card>
                   ))}
@@ -465,13 +465,13 @@ function AISearchTab() {
             <CardContent>
               {auditResult ? (
                 <div className="flex flex-col gap-3">
-                  <p className="text-sm text-muted-foreground">Based on the audit, focus content on these absent/partial queries:</p>
+                  <p className="text-base text-muted-foreground">Based on the audit, focus content on these absent/partial queries:</p>
                   {auditResult.queryResults
                     .filter((r) => r.position !== 'mentioned')
                     .reduce<string[]>((acc, r) => { if (!acc.includes(r.query)) acc.push(r.query); return acc }, [])
                     .slice(0, 5)
                     .map((query) => (
-                      <div key={query} className="rounded-lg border bg-muted p-3 text-sm text-muted-foreground transition-colors hover:bg-muted">
+                      <div key={query} className="rounded-lg border bg-muted p-3 text-base text-muted-foreground transition-colors hover:bg-muted">
                         Create a dedicated FAQ page for: <strong>&quot;{query}&quot;</strong>
                       </div>
                     ))}

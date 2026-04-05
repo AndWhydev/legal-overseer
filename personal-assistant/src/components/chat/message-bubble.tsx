@@ -122,7 +122,7 @@ export function MessageBubble({ message, citations, onRegenerate, onFeedback, on
 
       if (isInline) {
         return (
-          <code className="bg-muted px-1.5 py-0.5 rounded-lg text-[0.9em] font-mono whitespace-pre-wrap break-words">
+          <code className="bg-muted px-1.5 py-0.5 rounded-lg text-[0.9em] tabular-nums whitespace-pre-wrap break-words">
             {children}
           </code>
         )

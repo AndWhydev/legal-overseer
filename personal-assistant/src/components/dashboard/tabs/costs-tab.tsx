@@ -153,16 +153,16 @@ function CostsTab() {
               <div className="flex flex-col gap-2">
                 {summary.by_agent.map((entry) => (
                   <div key={entry.agent_type} className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted">
-                    <span className="text-sm">{entry.agent_type}</span>
-                    <div className="flex items-center gap-6 text-sm">
+                    <span className="text-base">{entry.agent_type}</span>
+                    <div className="flex items-center gap-6 text-base">
                       <span className="text-muted-foreground">{entry.run_count} runs</span>
                       <span className="text-muted-foreground">{formatTokens(entry.input_tokens + entry.output_tokens)} tok</span>
-                      <span className="font-mono font-medium">{formatUSD(entry.cost_usd)}</span>
+                      <span className="tabular-nums font-medium">{formatUSD(entry.cost_usd)}</span>
                     </div>
                   </div>
                 ))}
                 {summary.by_agent.length === 0 && (
-                  <p className="py-3 text-sm text-muted-foreground">No data for this period</p>
+                  <p className="py-3 text-base text-muted-foreground">No data for this period</p>
                 )}
               </div>
             </CardContent>
@@ -180,12 +180,12 @@ function CostsTab() {
                     const maxCost = Math.max(...summary.daily_trend.map((d) => d.cost_usd), 0.01);
                     const pct = (day.cost_usd / maxCost) * 100;
                     return (
-                      <div key={day.date} className="flex items-center gap-4 text-sm">
+                      <div key={day.date} className="flex items-center gap-4 text-base">
                         <span className="w-20 shrink-0 text-muted-foreground">{day.date.slice(5)}</span>
                         <div className="flex-1">
                           <Progress value={pct} className="h-2" />
                         </div>
-                        <span className="w-16 shrink-0 text-right font-mono font-medium">{formatUSD(day.cost_usd)}</span>
+                        <span className="w-16 shrink-0 text-right tabular-nums font-medium">{formatUSD(day.cost_usd)}</span>
                       </div>
                     );
                   })}
@@ -203,11 +203,11 @@ function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: str
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="mb-3 flex items-center gap-2 text-base text-muted-foreground">
           {icon}
           <span>{label}</span>
         </div>
-        <p className="font-mono text-lg font-medium">{value}</p>
+        <p className="tabular-nums text-lg font-medium">{value}</p>
       </CardContent>
     </Card>
   );

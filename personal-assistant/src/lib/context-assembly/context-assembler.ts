@@ -444,7 +444,7 @@ export class ContextAssembler {
     const [systemPromptResult, recentMsgsResult, approvalsResult, summariesResult, ragResult] =
       await Promise.all([
         timedFetch('system_prompt', () =>
-          buildEntityAwarePrompt(supabase, orgId, currentMessage, this.userProfile, this.channel),
+          buildEntityAwarePrompt(supabase, orgId, currentMessage, this.userProfile),
         ),
         timedFetch('recent_messages', () =>
           loadRecentMessages(supabase, threadId, this.config.maxRecentTurns),

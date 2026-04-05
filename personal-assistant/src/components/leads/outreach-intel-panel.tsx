@@ -32,7 +32,7 @@ function OutreachIntelPanelInner({ opportunityNotes, outreachAngle, priorityServ
       {outreachAngle && (
         <div className="rounded-[var(--radius-md)] bg-secondary p-3">
           <div className="text-[12px] text-muted-foreground">Suggested Angle</div>
-          <div className="text-sm font-medium text-foreground">{outreachAngle}</div>
+          <div className="text-base font-medium text-foreground">{outreachAngle}</div>
         </div>
       )}
 
@@ -43,7 +43,7 @@ function OutreachIntelPanelInner({ opportunityNotes, outreachAngle, priorityServ
               <Badge variant="secondary" className="mt-0.5 shrink-0 text-[12px]">
                 {n.category}
               </Badge>
-              <span className="text-sm text-muted-foreground">{n.note}</span>
+              <span className="text-base text-muted-foreground">{n.note}</span>
             </div>
           ))}
         </div>

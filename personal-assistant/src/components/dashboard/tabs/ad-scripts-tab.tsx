@@ -135,15 +135,15 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
           {shots.map((shot) => (
             <div key={shot.shotNumber} className="rounded-lg border bg-muted p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Shot {shot.shotNumber}</span>
-                <span className="text-sm text-muted-foreground">{shot.startTime}s - {shot.endTime}s ({shot.duration}s)</span>
+                <span className="text-base font-medium text-muted-foreground">Shot {shot.shotNumber}</span>
+                <span className="text-base text-muted-foreground">{shot.startTime}s - {shot.endTime}s ({shot.duration}s)</span>
               </div>
-              <p className="mb-2 text-sm">{shot.visual}</p>
+              <p className="mb-2 text-base">{shot.visual}</p>
               {shot.textOverlay && (
-                <p className="text-sm text-muted-foreground">Text: <span className="text-foreground">{shot.textOverlay}</span></p>
+                <p className="text-base text-muted-foreground">Text: <span className="text-foreground">{shot.textOverlay}</span></p>
               )}
               {shot.audio && (
-                <p className="text-sm text-muted-foreground">Audio: <span className="text-foreground">{shot.audio}</span></p>
+                <p className="text-base text-muted-foreground">Audio: <span className="text-foreground">{shot.audio}</span></p>
               )}
             </div>
           ))}
@@ -167,13 +167,13 @@ function ScriptCard({ script }: { script: AdScript }) {
               {PLATFORM_LABELS[script.platform]}
             </Badge>
             <Badge variant="outline">{HOOK_LABELS[script.hookType]}</Badge>
-            <span className="text-sm text-muted-foreground">{script.duration}s</span>
+            <span className="text-base text-muted-foreground">{script.duration}s</span>
           </div>
           <CopyButton text={script.script} />
         </div>
       </CardHeader>
       <CardContent>
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{script.script}</pre>
+        <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">{script.script}</pre>
         {script.storyboard?.length > 0 && <StoryboardView shots={script.storyboard} />}
       </CardContent>
     </Card>
@@ -190,14 +190,14 @@ function VariationCard({ variation }: { variation: AdScriptVariation }) {
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{variation.variantLabel}</span>
+            <span className="text-base font-medium">{variation.variantLabel}</span>
             <Badge variant={TONE_VARIANT[variation.tone] ?? 'outline'}>{variation.tone}</Badge>
           </div>
           <CopyButton text={variation.script} />
         </div>
       </CardHeader>
       <CardContent>
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{variation.script}</pre>
+        <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">{variation.script}</pre>
       </CardContent>
     </Card>
   )
@@ -340,7 +340,7 @@ function HistorySection({ batches, onSelect }: { batches: SavedBatch[]; onSelect
 
   return (
     <div>
-      <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">History</h2>
+      <h2 className="mb-3 text-base font-medium uppercase tracking-wider text-muted-foreground">History</h2>
       <div className="flex flex-col gap-2">
         {batches.map((b) => (
           <button
@@ -349,10 +349,10 @@ function HistorySection({ batches, onSelect }: { batches: SavedBatch[]; onSelect
             className="w-full rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted"
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{b.offer_name}</span>
-              <span className="text-sm text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</span>
+              <span className="text-base font-medium">{b.offer_name}</span>
+              <span className="text-base text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</span>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-base text-muted-foreground">
               {b.scripts.length} script{b.scripts.length !== 1 ? 's' : ''}
               {b.variations.length > 0 ? ` + ${b.variations.length} variations` : ''}
             </p>

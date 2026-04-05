@@ -324,7 +324,7 @@ export function ChannelConfigDrawer({
                           }}
                           className="h-4 w-4 rounded-lg border-border text-primary focus:ring-ring"
                         />
-                        <span className="font-mono text-sm text-foreground">{evt}</span>
+                        <span className="tabular-nums text-sm text-foreground">{evt}</span>
                       </label>
                     )
                   })}

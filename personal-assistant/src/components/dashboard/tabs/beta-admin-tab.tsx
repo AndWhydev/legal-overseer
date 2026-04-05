@@ -264,7 +264,7 @@ export default function BetaAdminTab() {
           <AlertBanner variant="error">
             <div>
               <h2 className="text-base font-medium text-foreground">Access Denied</h2>
-              <p className="text-sm text-muted-foreground">Admin role required.</p>
+              <p className="text-base text-muted-foreground">Admin role required.</p>
             </div>
           </AlertBanner>
         </div>
@@ -291,7 +291,7 @@ export default function BetaAdminTab() {
                 <CardContent className="flex flex-col gap-1">
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <stat.icon className="size-3.5" />
-                    <span className="text-sm">{stat.label}</span>
+                    <span className="text-base">{stat.label}</span>
                   </div>
                   <div className={cn(
                     'text-2xl font-medium tabular-nums',
@@ -299,7 +299,7 @@ export default function BetaAdminTab() {
                   )}>
                     {stat.value}
                   </div>
-                  <div className="text-sm text-muted-foreground">{stat.sub}</div>
+                  <div className="text-base text-muted-foreground">{stat.sub}</div>
                 </CardContent>
               </Card>
             ))}
@@ -329,7 +329,7 @@ export default function BetaAdminTab() {
             {inviteResult && (
               <div className="flex items-center gap-2 border-b border-border bg-emerald-500/10 px-5 py-3">
                 <IconCheck className="size-4 text-emerald-500" />
-                <span className="text-sm text-foreground">
+                <span className="text-base text-foreground">
                   {inviteResult.sent} invite(s) sent{inviteResult.errors > 0 ? `, ${inviteResult.errors} error(s)` : ''}
                 </span>
               </div>
@@ -361,7 +361,7 @@ export default function BetaAdminTab() {
                         />
                       )}
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{entry.email}</TableCell>
+                    <TableCell className="tabular-nums text-base">{entry.email}</TableCell>
                     <TableCell>{entry.referral_source}</TableCell>
                     <TableCell>
                       <Badge variant={STATUS_VARIANT[entry.status] ?? 'secondary'}>
@@ -424,10 +424,10 @@ export default function BetaAdminTab() {
                     <TableCell className="text-right">{m.active_days_7d}/7</TableCell>
                     <TableCell className="text-right">{m.total_messages_7d}</TableCell>
                     <TableCell className="text-right">{m.total_agent_runs_7d}</TableCell>
-                    <TableCell className="text-right font-mono text-sm">
+                    <TableCell className="text-right tabular-nums text-base">
                       {m.total_tokens_7d.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
+                    <TableCell className="text-right tabular-nums text-base">
                       {formatCost(m.total_cost_7d)}
                     </TableCell>
                     <TableCell className={cn('text-right', m.error_count_7d > 0 && 'text-destructive')}>
@@ -486,7 +486,7 @@ export default function BetaAdminTab() {
                     <TableCell>
                       <Badge variant={f.status === 'resolved' ? 'default' : 'secondary'}>{f.status}</Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{f.page_url ?? '--'}</TableCell>
+                    <TableCell className="text-base text-muted-foreground">{f.page_url ?? '--'}</TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(f.created_at)}</TableCell>
                   </TableRow>
                 ))}

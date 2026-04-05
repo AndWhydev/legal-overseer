@@ -18,7 +18,7 @@ function ScoreGauge({ label, score }: { label: string; score: number }) {
     <div className="flex-1 space-y-1.5">
       <div className="flex items-baseline justify-between">
         <span className="text-[12px] text-muted-foreground">{label}</span>
-        <span className="text-sm font-medium font-mono text-foreground" aria-label={`${label} score: ${score}`}>
+        <span className="text-base font-medium tabular-nums text-foreground" aria-label={`${label} score: ${score}`}>
           {score}
         </span>
       </div>
@@ -34,8 +34,8 @@ function FactorList({ title, breakdown }: { title: string; breakdown: ScoreBreak
       <div className="text-[12px] font-medium text-muted-foreground">{title}</div>
       {breakdown.components.map((c, i) => (
         <div key={i} className="flex items-center justify-between py-0.5">
-          <span className="text-sm text-muted-foreground">{c.factor}</span>
-          <Badge variant="secondary" className="font-mono text-[12px] tabular-nums">
+          <span className="text-base text-muted-foreground">{c.factor}</span>
+          <Badge variant="secondary" className="tabular-nums text-[12px] tabular-nums">
             {c.points > 0 ? '+' : ''}{c.points}
           </Badge>
         </div>

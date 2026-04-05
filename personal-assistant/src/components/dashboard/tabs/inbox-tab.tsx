@@ -920,7 +920,7 @@ function InboxTab() {
                 </TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
               </TooltipProvider>
 
-              <div className="ml-auto hidden text-sm text-muted-foreground sm:block">
+              <div className="ml-auto hidden text-base text-muted-foreground sm:block">
                 {displayed.length} messages
               </div>
             </div>
@@ -1093,7 +1093,7 @@ function UndoToastStack({
           key={toast.id}
           className="pointer-events-auto flex items-center gap-3 rounded-xl border border-border bg-popover px-4 py-3 shadow-lg animate-in slide-in-from-bottom-2 fade-in-0 duration-150"
         >
-          <span className="text-sm text-foreground">{toast.message}</span>
+          <span className="text-base text-foreground">{toast.message}</span>
           <Button variant="outline" size="xs" onClick={() => onUndo(toast)}>
             Undo
           </Button>
@@ -1114,20 +1114,20 @@ function SnoozePickerContent({ onSnooze }: { onSnooze: (time: string) => void })
   const options = getSnoozeOptions();
   return (
     <div className="flex flex-col">
-      <span className="px-3 py-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+      <span className="px-3 py-2 text-base font-medium uppercase tracking-wider text-muted-foreground">
         Snooze until
       </span>
       {options.map((opt) => (
         <button
           key={opt.value}
           onClick={() => onSnooze(opt.value)}
-          className="flex items-center justify-between gap-4 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
+          className="flex items-center justify-between gap-4 rounded-lg px-3 py-2 text-base text-foreground hover:bg-accent hover:text-accent-foreground transition-colors text-left"
         >
           <span className="flex items-center gap-2">
             <IconClock size={13} className="text-muted-foreground shrink-0" />
             {opt.label}
           </span>
-          <span className="text-sm text-muted-foreground shrink-0">{opt.sublabel}</span>
+          <span className="text-base text-muted-foreground shrink-0">{opt.sublabel}</span>
         </button>
       ))}
     </div>
@@ -1191,7 +1191,7 @@ function GroupRow({
         <ChannelIcon size={14} />
       </span>
 
-      <div className="min-w-0 flex-1 truncate text-sm">
+      <div className="min-w-0 flex-1 truncate text-base">
         <span className="text-foreground">{item.label}</span>
         <span className="ml-2 inline-flex rounded-full border border-border px-1.5 py-0 text-[12px] text-muted-foreground tabular-nums align-middle">
           {item.messages.length}
@@ -1263,10 +1263,10 @@ function MessageRow({
         <ChannelIcon size={14} />
       </span>
 
-      <div className="min-w-0 flex-1 truncate text-sm">
+      <div className="min-w-0 flex-1 truncate text-base">
         <span className="text-foreground">{subject}</span>
         {message.threadCount && message.threadCount > 1 && (
-          <span className="ml-1 text-sm text-muted-foreground">({message.threadCount})</span>
+          <span className="ml-1 text-base text-muted-foreground">({message.threadCount})</span>
         )}
         <span className="mx-2 text-muted-foreground">&middot;</span>
         <span className="text-muted-foreground">{preview}</span>

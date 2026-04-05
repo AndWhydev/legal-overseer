@@ -315,7 +315,7 @@ export function InvoiceTemplateEditor() {
       {/* Template Library */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
+          <CardTitle className="flex items-center gap-2 text-base">
             <IconTemplate size={16} />
             Template Library
           </CardTitle>
@@ -342,8 +342,8 @@ export function InvoiceTemplateEditor() {
                     className="h-1.5 w-8 rounded-full"
                     style={{ background: tpl.defaults.primary_color }}
                   />
-                  <span className="text-sm font-medium">{tpl.name}</span>
-                  <span className="text-sm text-muted-foreground line-clamp-2">{tpl.description}</span>
+                  <span className="text-base font-medium">{tpl.name}</span>
+                  <span className="text-base text-muted-foreground line-clamp-2">{tpl.description}</span>
                 </button>
               )
             })}
@@ -358,7 +358,7 @@ export function InvoiceTemplateEditor() {
         {/* Logo upload */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Logo</CardTitle>
+            <CardTitle className="text-base">Logo</CardTitle>
           </CardHeader>
           <CardContent>
             {logoPreview ? (
@@ -377,11 +377,11 @@ export function InvoiceTemplateEditor() {
             ) : (
               <button
                 onClick={() => fileRef.current?.click()}
-                className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-muted p-6 text-sm text-muted-foreground transition-colors hover:bg-muted"
+                className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-muted p-6 text-base text-muted-foreground transition-colors hover:bg-muted"
               >
                 <IconUpload className="size-5" />
                 Click to upload logo
-                <span className="text-sm text-muted-foreground">PNG, JPG, SVG -- max 500 KB</span>
+                <span className="text-base text-muted-foreground">PNG, JPG, SVG -- max 500 KB</span>
               </button>
             )}
             <input
@@ -397,7 +397,7 @@ export function InvoiceTemplateEditor() {
         {/* Business details */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Business Details</CardTitle>
+            <CardTitle className="text-base">Business Details</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="space-y-2">
@@ -428,7 +428,7 @@ export function InvoiceTemplateEditor() {
                     checked={template.gst_registered ?? false}
                     onCheckedChange={(v) => setTemplate((prev) => ({ ...prev, gst_registered: v }))}
                   />
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-base text-muted-foreground">
                     {template.gst_registered ? 'Yes' : 'No'}
                   </span>
                 </div>
@@ -445,7 +445,7 @@ export function InvoiceTemplateEditor() {
                 }))}
                 placeholder="e.g. 123 Agency St, Sydney NSW 2000"
               />
-              <p className="text-sm text-muted-foreground">Separate lines with commas</p>
+              <p className="text-base text-muted-foreground">Separate lines with commas</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="bank">Bank Details</Label>
@@ -463,7 +463,7 @@ export function InvoiceTemplateEditor() {
         {/* Color scheme */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Color Scheme</CardTitle>
+            <CardTitle className="text-base">Color Scheme</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="flex flex-wrap gap-2">
@@ -502,7 +502,7 @@ export function InvoiceTemplateEditor() {
                     value={template.primary_color ?? '#334155'}
                     onChange={(e) => setTemplate((prev) => ({ ...prev, primary_color: e.target.value }))}
                     placeholder="#334155"
-                    className="font-mono text-sm"
+                    className="tabular-nums text-base"
                   />
                 </div>
               </div>
@@ -521,7 +521,7 @@ export function InvoiceTemplateEditor() {
                     value={template.accent_color ?? '#1E293B'}
                     onChange={(e) => setTemplate((prev) => ({ ...prev, accent_color: e.target.value }))}
                     placeholder="#1E293B"
-                    className="font-mono text-sm"
+                    className="tabular-nums text-base"
                   />
                 </div>
               </div>
@@ -539,7 +539,7 @@ export function InvoiceTemplateEditor() {
         {/* Footer text */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Footer Text</CardTitle>
+            <CardTitle className="text-base">Footer Text</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Input
@@ -548,7 +548,7 @@ export function InvoiceTemplateEditor() {
               placeholder="e.g. Payment due within 14 days. BSB: 062-000 Account: 1234 5678"
               maxLength={500}
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               {(template.footer_text ?? '').length}/500 characters
             </p>
           </CardContent>
@@ -557,7 +557,7 @@ export function InvoiceTemplateEditor() {
         {/* Terms */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Terms & Conditions</CardTitle>
+            <CardTitle className="text-base">Terms & Conditions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Textarea
@@ -567,7 +567,7 @@ export function InvoiceTemplateEditor() {
               maxLength={5000}
               className="min-h-[100px]"
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               {(template.terms ?? '').length}/5,000 characters
             </p>
           </CardContent>

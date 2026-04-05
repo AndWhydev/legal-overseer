@@ -84,7 +84,7 @@ export function KanbanToolbar({
             <h2 className="text-lg font-medium tracking-tight text-foreground">
               Task board
             </h2>
-            <Badge variant="outline" className="bg-background font-mono">
+            <Badge variant="outline" className="bg-background tabular-nums">
               {hasAnyFilters ? `${visibleCount}/${totalCount}` : totalCount}
             </Badge>
             {overdueCount > 0 && (
@@ -99,7 +99,7 @@ export function KanbanToolbar({
                 Overdue
                 <Badge
                   variant={filters.overdueOnly ? 'secondary' : 'outline'}
-                  className="bg-transparent px-1.5 text-sm"
+                  className="bg-transparent px-1.5 text-base"
                 >
                   {overdueCount}
                 </Badge>
@@ -107,12 +107,12 @@ export function KanbanToolbar({
             )}
           </div>
 
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+          <p className="max-w-2xl text-base leading-6 text-muted-foreground">
             Move work with confidence, filter down to what needs attention, and keep creation quick
             without turning the board into visual noise.
           </p>
 
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             {hasAnyFilters
               ? `Showing ${visibleCount} of ${totalCount} tasks.`
               : 'Showing the full board.'}
@@ -152,7 +152,7 @@ export function KanbanToolbar({
                     <DropdownMenuRadioItem key={option.value} value={option.value}>
                       {option.label}
                       {option.value !== 'all' && (
-                        <span className="ml-auto font-mono text-sm text-muted-foreground">
+                        <span className="ml-auto tabular-nums text-base text-muted-foreground">
                           {priorityCounts[option.value] ?? 0}
                         </span>
                       )}

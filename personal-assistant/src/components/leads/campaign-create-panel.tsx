@@ -125,7 +125,7 @@ function CampaignCreatePanelInner({
                 </SelectContent>
               </Select>
             ) : (
-              <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              <div className="rounded-xl border border-dashed border-border p-6 text-center text-base text-muted-foreground">
                 No templates yet. Create one first.
               </div>
             )}
@@ -147,14 +147,14 @@ function CampaignCreatePanelInner({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label>Select Leads ({emailableLeads.length} with email)</Label>
-              <Button variant="link" size="sm" onClick={selectAll} className="h-auto p-0 text-sm">
+              <Button variant="link" size="sm" onClick={selectAll} className="h-auto p-0 text-base">
                 {selectedLeadIds.size === emailableLeads.length ? 'Deselect All' : 'Select All'}
               </Button>
             </div>
 
             <div className="max-h-72 overflow-y-auto rounded-xl border">
               {emailableLeads.length === 0 ? (
-                <div className="p-6 text-center text-sm text-muted-foreground">
+                <div className="p-6 text-center text-base text-muted-foreground">
                   No leads with email addresses found. Import prospects first.
                 </div>
               ) : (
@@ -174,8 +174,8 @@ function CampaignCreatePanelInner({
                         checked={selected}
                         onCheckedChange={() => toggleLead(lead.id)}
                       />
-                      <span className="flex-1 text-sm font-medium text-foreground">{displayName}</span>
-                      <span className="text-sm text-muted-foreground">{lead.prospect_emails?.[0]}</span>
+                      <span className="flex-1 text-base font-medium text-foreground">{displayName}</span>
+                      <span className="text-base text-muted-foreground">{lead.prospect_emails?.[0]}</span>
                     </div>
                   )
                 })
@@ -185,7 +185,7 @@ function CampaignCreatePanelInner({
         </div>
 
         <SheetFooter className="flex-row items-center justify-between border-t">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-base text-muted-foreground">
             <IconUsers data-icon />
             {selectedLeadIds.size} recipients
             {templateId && (

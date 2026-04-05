@@ -253,7 +253,7 @@ export default function MonitoringTab() {
           <AlertBanner variant="error">
             <div>
               <h2 className="text-base font-medium text-foreground">Access Denied</h2>
-              <p className="text-sm text-muted-foreground">Admin role required to access the monitoring dashboard.</p>
+              <p className="text-base text-muted-foreground">Admin role required to access the monitoring dashboard.</p>
             </div>
           </AlertBanner>
         </div>
@@ -288,50 +288,50 @@ export default function MonitoringTab() {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
           <Card className="py-4">
             <CardContent className="flex flex-col gap-1">
-              <div className="text-sm text-muted-foreground">Cron Success Rate</div>
+              <div className="text-base text-muted-foreground">Cron Success Rate</div>
               <div className={cn(
                 'text-3xl font-medium tabular-nums',
                 cronSuccessRate >= 90 ? 'text-emerald-500' : cronSuccessRate >= 70 ? 'text-amber-500' : 'text-destructive'
               )}>
                 {loading ? '--' : `${cronSuccessRate}%`}
               </div>
-              <div className="text-sm text-muted-foreground">{data?.cron_stats.length ?? 0} routes monitored</div>
+              <div className="text-base text-muted-foreground">{data?.cron_stats.length ?? 0} routes monitored</div>
             </CardContent>
           </Card>
 
           <Card className="py-4">
             <CardContent className="flex flex-col gap-1">
-              <div className="text-sm text-muted-foreground">Agent p95 Latency</div>
+              <div className="text-base text-muted-foreground">Agent p95 Latency</div>
               <div className="text-3xl font-medium tabular-nums text-foreground">
                 {loading ? '--' : `${(data?.agent_latency.p95_ms ?? 0).toLocaleString()}ms`}
               </div>
-              <div className="text-sm text-muted-foreground">{data?.agent_latency.total_runs ?? 0} runs (24h)</div>
+              <div className="text-base text-muted-foreground">{data?.agent_latency.total_runs ?? 0} runs (24h)</div>
             </CardContent>
           </Card>
 
           <Card className="py-4">
             <CardContent className="flex flex-col gap-1">
-              <div className="text-sm text-muted-foreground">Active Channels</div>
+              <div className="text-base text-muted-foreground">Active Channels</div>
               <div className={cn(
                 'text-3xl font-medium tabular-nums',
                 activeChannels > 0 ? 'text-emerald-500' : 'text-foreground'
               )}>
                 {loading ? '--' : activeChannels}
               </div>
-              <div className="text-sm text-muted-foreground">of {data?.channel_health?.length ?? 0} configured</div>
+              <div className="text-base text-muted-foreground">of {data?.channel_health?.length ?? 0} configured</div>
             </CardContent>
           </Card>
 
           <Card className="py-4">
             <CardContent className="flex flex-col gap-1">
-              <div className="text-sm text-muted-foreground">DLQ Items</div>
+              <div className="text-base text-muted-foreground">DLQ Items</div>
               <div className={cn(
                 'text-3xl font-medium tabular-nums',
                 dlqCount > 0 ? 'text-destructive' : 'text-emerald-500'
               )}>
                 {loading ? '--' : dlqCount}
               </div>
-              <div className="text-sm text-muted-foreground">unresolved errors</div>
+              <div className="text-base text-muted-foreground">unresolved errors</div>
             </CardContent>
           </Card>
         </div>
@@ -340,7 +340,7 @@ export default function MonitoringTab() {
         <Card className="py-0">
           <CardHeader className="flex-row items-center justify-between border-b border-border py-4">
             <CardTitle className="text-base">Cron Route Status</CardTitle>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-base text-muted-foreground">
               {data ? `Updated ${relativeTime(data.generated_at)}` : ''}
             </span>
           </CardHeader>
@@ -364,7 +364,7 @@ export default function MonitoringTab() {
                     const status = cron.error_count_24h > 0 ? 'down' : cron.success_rate_24h >= 90 ? 'healthy' : cron.success_rate_24h > 0 ? 'degraded' : 'down';
                     return (
                       <TableRow key={cron.route}>
-                        <TableCell className="font-mono text-sm">{cron.route}</TableCell>
+                        <TableCell className="tabular-nums text-base">{cron.route}</TableCell>
                         <TableCell className="text-muted-foreground">{relativeTime(cron.last_run)}</TableCell>
                         <TableCell className={cn(
                           'text-right tabular-nums',
@@ -437,7 +437,7 @@ export default function MonitoringTab() {
 
                 if (channels.length === 0 && !loading) {
                   return (
-                    <div className="col-span-full text-sm text-muted-foreground">
+                    <div className="col-span-full text-base text-muted-foreground">
                       No channel health data. Run smoke tests to check channel status.
                     </div>
                   );
@@ -447,18 +447,18 @@ export default function MonitoringTab() {
                   <div key={ch.channel} className="rounded-xl border border-border bg-muted p-4">
                     <div className="mb-2 flex items-center gap-2">
                       <StatusDot status={ch.status} />
-                      <span className="text-sm font-medium capitalize text-foreground">
+                      <span className="text-base font-medium capitalize text-foreground">
                         {ch.channel}
                       </span>
                       <Badge variant={statusVariant(ch.status)} className="ml-auto uppercase">
                         {ch.status}
                       </Badge>
                     </div>
-                    <div className="flex flex-col gap-0.5 text-sm text-muted-foreground">
+                    <div className="flex flex-col gap-0.5 text-base text-muted-foreground">
                       <div>Latency: {ch.latency_ms}ms</div>
                       <div>Last check: {relativeTime(ch.last_sync)}</div>
-                      {ch.message && <div className="mt-1 text-sm">{ch.message}</div>}
-                      {ch.error && <div className="mt-1 text-sm text-destructive">{ch.error}</div>}
+                      {ch.message && <div className="mt-1 text-base">{ch.message}</div>}
+                      {ch.error && <div className="mt-1 text-base text-destructive">{ch.error}</div>}
                     </div>
                   </div>
                 ));
@@ -468,7 +468,7 @@ export default function MonitoringTab() {
             {/* Smoke test summary */}
             {smokeReport && (
               <div className={cn(
-                'mt-4 flex items-center justify-between rounded-lg border p-3 text-sm text-muted-foreground',
+                'mt-4 flex items-center justify-between rounded-lg border p-3 text-base text-muted-foreground',
                 smokeReport.overall === 'pass' && 'border-emerald-500/30 bg-emerald-500/10',
                 smokeReport.overall === 'partial' && 'border-amber-500/30 bg-amber-500/10',
                 smokeReport.overall === 'fail' && 'border-destructive/30 bg-destructive/10',
@@ -496,7 +496,7 @@ export default function MonitoringTab() {
           <CardHeader className="flex-row items-center justify-between border-b border-border py-4">
             <CardTitle className="text-base">Error Log (DLQ)</CardTitle>
             <span className={cn(
-              'text-sm',
+              'text-base',
               dlqCount > 0 ? 'font-medium text-destructive' : 'text-muted-foreground'
             )}>
               {dlqCount} unresolved
@@ -504,7 +504,7 @@ export default function MonitoringTab() {
           </CardHeader>
           <CardContent className="p-0">
             {(data?.error_summary ?? []).length === 0 && !loading ? (
-              <div className="p-5 text-center text-sm text-muted-foreground">
+              <div className="p-5 text-center text-base text-muted-foreground">
                 No errors in the last 24 hours
               </div>
             ) : (
@@ -519,15 +519,15 @@ export default function MonitoringTab() {
                       <Badge variant="destructive" className="shrink-0">
                         {entry.count}x
                       </Badge>
-                      <span className="font-mono text-sm font-medium text-foreground">
+                      <span className="tabular-nums text-base font-medium text-foreground">
                         {entry.agent_type}
                       </span>
-                      <span className="ml-auto shrink-0 text-sm text-muted-foreground">
+                      <span className="ml-auto shrink-0 text-base text-muted-foreground">
                         {relativeTime(entry.latest_at)}
                       </span>
                     </div>
                     <div className={cn(
-                      'mt-1 text-sm text-muted-foreground',
+                      'mt-1 text-base text-muted-foreground',
                       expandedErrors.has(idx) ? 'whitespace-pre-wrap' : 'truncate'
                     )}>
                       {entry.latest_error}
@@ -546,7 +546,7 @@ export default function MonitoringTab() {
           </CardHeader>
           <CardContent className="p-0">
             {(data?.token_spend ?? []).length === 0 && !loading ? (
-              <div className="p-5 text-center text-sm text-muted-foreground">
+              <div className="p-5 text-center text-base text-muted-foreground">
                 No token usage in the last 24 hours
               </div>
             ) : (
@@ -565,7 +565,7 @@ export default function MonitoringTab() {
                     const barWidth = Math.round((org.total_cost_24h / maxCost) * 100);
                     return (
                       <TableRow key={org.org_id}>
-                        <TableCell className="font-mono text-sm">{org.org_name}</TableCell>
+                        <TableCell className="tabular-nums text-base">{org.org_name}</TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">
                           {formatTokenCount(org.total_tokens_24h)}
                         </TableCell>
@@ -589,7 +589,7 @@ export default function MonitoringTab() {
 
             {/* Total cost */}
             {(data?.token_spend ?? []).length > 0 && (
-              <div className="flex justify-end border-t border-border px-4 py-3 text-sm">
+              <div className="flex justify-end border-t border-border px-4 py-3 text-base">
                 <span className="text-muted-foreground">
                   Total: <strong className="text-foreground">
                     ${(data?.token_spend ?? []).reduce((sum, o) => sum + o.total_cost_24h, 0).toFixed(4)}

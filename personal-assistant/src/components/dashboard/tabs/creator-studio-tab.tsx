@@ -109,8 +109,8 @@ function TemplateCard({
       )}
     >
       <div className="mb-2 text-base">{template.icon}</div>
-      <div className="text-sm font-medium text-foreground">{template.label}</div>
-      <div className="mt-1 text-sm leading-relaxed text-muted-foreground">
+      <div className="text-base font-medium text-foreground">{template.label}</div>
+      <div className="mt-1 text-base leading-relaxed text-muted-foreground">
         {template.description}
       </div>
     </button>
@@ -191,7 +191,7 @@ function CalendarView({
         <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}>
           Prev
         </Button>
-        <span className="text-sm font-medium text-foreground">{monthLabel}</span>
+        <span className="text-base font-medium text-foreground">{monthLabel}</span>
         <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}>
           Next
         </Button>
@@ -200,7 +200,7 @@ function CalendarView({
       {/* Day headers */}
       <div className="mb-1 grid grid-cols-7 gap-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-          <div key={d} className="py-2 text-center text-sm font-medium uppercase tracking-wide text-muted-foreground">
+          <div key={d} className="py-2 text-center text-base font-medium uppercase tracking-wide text-muted-foreground">
             {d}
           </div>
         ))}
@@ -226,7 +226,7 @@ function CalendarView({
               )}
             >
               <div className={cn(
-                'mb-1 text-sm font-medium',
+                'mb-1 text-base font-medium',
                 isToday ? 'text-foreground' : 'text-muted-foreground'
               )}>
                 {day}
@@ -236,20 +236,20 @@ function CalendarView({
                   <button
                     key={item.id}
                     title={`${TEMPLATE_LABELS[item.template_type]}: ${item.inputs.product_name}`}
-                    className="cursor-pointer truncate rounded-lg px-1.5 py-0.5 text-sm transition-colors"
+                    className="cursor-pointer truncate rounded-lg px-1.5 py-0.5 text-base transition-colors"
                     onClick={() => {
                       const next: ContentStatus =
                         item.status === 'scheduled' ? 'published' : item.status === 'draft' ? 'scheduled' : 'draft'
                       onStatusChange(item.id, next)
                     }}
                   >
-                    <Badge variant={STATUS_VARIANT[item.status]} className="text-sm">
+                    <Badge variant={STATUS_VARIANT[item.status]} className="text-base">
                       {item.inputs.product_name || TEMPLATE_LABELS[item.template_type]}
                     </Badge>
                   </button>
                 ))}
                 {dayItems.length > 3 && (
-                  <span className="text-sm text-muted-foreground">+{dayItems.length - 3} more</span>
+                  <span className="text-base text-muted-foreground">+{dayItems.length - 3} more</span>
                 )}
               </div>
             </div>
@@ -260,7 +260,7 @@ function CalendarView({
       {/* Legend */}
       <div className="mt-4 flex justify-end gap-4">
         {(['draft', 'scheduled', 'published'] as ContentStatus[]).map((s) => (
-          <div key={s} className="flex items-center gap-2 text-sm">
+          <div key={s} className="flex items-center gap-2 text-base">
             <Badge variant={STATUS_VARIANT[s]} className="size-2 rounded-full p-0" />
             <span className="capitalize text-muted-foreground">{s}</span>
           </div>
@@ -302,10 +302,10 @@ function HistoryItem({
           <CardContent className="flex cursor-pointer items-center gap-3 py-3 px-4">
             <span className="text-base">{template?.icon ?? '📄'}</span>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium text-foreground">
+              <div className="truncate text-base font-medium text-foreground">
                 {TEMPLATE_LABELS[item.template_type]} — {item.inputs.product_name}
               </div>
-              <div className="mt-1 text-sm text-muted-foreground">
+              <div className="mt-1 text-base text-muted-foreground">
                 {created} · {item.inputs.tone} · {item.inputs.length}
               </div>
             </div>
@@ -319,7 +319,7 @@ function HistoryItem({
 
         <CollapsibleContent>
           <div className="border-t border-border px-4 pb-4">
-            <pre className="mt-3 whitespace-pre-wrap rounded-xl border border-border bg-muted p-3 font-sans text-sm leading-relaxed text-muted-foreground">
+            <pre className="mt-3 whitespace-pre-wrap rounded-xl border border-border bg-muted p-3 font-sans text-base leading-relaxed text-muted-foreground">
               {item.output}
             </pre>
 
@@ -364,7 +364,7 @@ function HistoryItem({
                     type="datetime-local"
                     value={dateValue}
                     onChange={(e) => setDateValue(e.target.value)}
-                    className="w-auto text-sm"
+                    className="w-auto text-base"
                   />
                   <Button
                     size="sm"
@@ -385,7 +385,7 @@ function HistoryItem({
             </div>
 
             {item.scheduled_for && (
-              <div className="mt-3 text-sm text-muted-foreground">
+              <div className="mt-3 text-base text-muted-foreground">
                 Scheduled for{' '}
                 {new Date(item.scheduled_for).toLocaleString('en', {
                   weekday: 'short',
@@ -533,7 +533,7 @@ export default function CreatorStudioTab() {
           {/* Header */}
           <div className="mb-7">
             <h1 className="text-lg font-medium text-foreground">Creator Studio</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-base text-muted-foreground">
               Generate marketing content using AI — ad scripts, social posts, emails, and blogs.
             </p>
           </div>
@@ -668,7 +668,7 @@ export default function CreatorStudioTab() {
                     </div>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-4">
-                    <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-muted p-4 font-sans text-sm leading-relaxed text-muted-foreground">
+                    <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-muted p-4 font-sans text-base leading-relaxed text-muted-foreground">
                       {generatedOutput.output}
                     </pre>
 

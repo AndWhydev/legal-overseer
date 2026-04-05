@@ -34,11 +34,11 @@ export function TodaysPrioritiesWidget() {
             <div key={task.id} className="flex items-center gap-3 p-2 rounded-xl bg-muted border border-border">
               <Badge
                 variant={task.priority === 'critical' ? 'destructive' : 'secondary'}
-                className="text-sm"
+                className="text-base"
               >
                 {task.priority}
               </Badge>
-              <p className="text-sm font-medium truncate flex-1">{task.title}</p>
+              <p className="text-base font-medium truncate flex-1">{task.title}</p>
             </div>
           ))
         )}

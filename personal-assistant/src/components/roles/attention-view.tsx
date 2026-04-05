@@ -131,7 +131,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <IconBell size={14} className="text-foreground" />
-            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            <CardTitle className="text-base font-medium uppercase tracking-wider text-muted-foreground">
               Needs Your Attention
             </CardTitle>
             {counts.total > 0 && (
@@ -156,8 +156,8 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
           ) : items.length === 0 ? (
             <div className="py-10 text-center">
               <IconCircleCheck size={28} className="text-emerald-500 mx-auto mb-2" />
-              <p className="text-sm font-medium text-foreground">All clear</p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-base font-medium text-foreground">All clear</p>
+              <p className="text-base text-muted-foreground mt-1">
                 No items need your attention right now
               </p>
             </div>
@@ -188,7 +188,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground leading-snug">
+                    <p className="text-base font-medium text-foreground leading-snug">
                       {item.summary}
                     </p>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -200,7 +200,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
                           {ROLE_LABELS[item.role_type] ?? item.role_type}
                         </Badge>
                       )}
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-base text-muted-foreground">
                         {timeAgo(item.created_at)}
                       </span>
                     </div>

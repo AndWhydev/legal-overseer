@@ -39,7 +39,7 @@ function ProspectDiscoveryPanelInner({ open, onClose }: ProspectDiscoveryPanelPr
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
-          <h2 className="text-sm font-medium text-foreground">Discover Prospects</h2>
+          <h2 className="text-base font-medium text-foreground">Discover Prospects</h2>
           <p className="text-[12px] text-muted-foreground">Search for businesses in your target market.</p>
         </div>
         <button onClick={handleClose} className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-md)] text-muted-foreground hover:bg-secondary hover:text-foreground">
@@ -104,7 +104,7 @@ function ProspectDiscoveryPanelInner({ open, onClose }: ProspectDiscoveryPanelPr
           <div className="flex flex-col items-center gap-4 py-10">
             <Spinner className="size-5" />
             <div className="text-center">
-              <div className="text-sm font-medium text-foreground">
+              <div className="text-base font-medium text-foreground">
                 {job.status === 'searching' ? 'Searching...' : job.status === 'enriching' ? 'Enriching...' : 'Scoring...'}
               </div>
               <div className="text-[12px] text-muted-foreground">{job.message}</div>
@@ -129,7 +129,7 @@ function ProspectDiscoveryPanelInner({ open, onClose }: ProspectDiscoveryPanelPr
         {job?.status === 'complete' && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-base font-medium text-foreground">
                 {job.results.length} prospects found
               </span>
               <Button variant="ghost" size="sm" onClick={reset}>

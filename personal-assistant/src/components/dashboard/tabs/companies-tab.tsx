@@ -147,7 +147,7 @@ function CompaniesTab() {
   return (
     <div className="flex flex-col gap-5">
       {/* Stats */}
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex items-center gap-3 text-base">
         <StatPill value={companies.length} label="total" active />
         <Separator orientation="vertical" className="h-4" />
         <StatPill value={icpCount} label="ICP" active={icpCount > 0} />
@@ -199,10 +199,10 @@ function CompaniesTab() {
 function StatPill({ value, label, active }: { value: number | string; label: string; active?: boolean }) {
   return (
     <span className="inline-flex items-baseline gap-1">
-      <span className={`text-sm font-medium tabular-nums ${active ? 'text-foreground' : 'text-muted-foreground'}`}>
+      <span className={`text-base font-medium tabular-nums ${active ? 'text-foreground' : 'text-muted-foreground'}`}>
         {value}
       </span>
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-base text-muted-foreground">{label}</span>
     </span>
   )
 }
@@ -226,7 +226,7 @@ function CompanyCard({ company }: { company: Company }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-sm font-medium text-foreground truncate">
+            <span className="text-base font-medium text-foreground truncate">
               {company.name}
             </span>
             {company.idealCustomerProfile && (
@@ -234,7 +234,7 @@ function CompanyCard({ company }: { company: Company }) {
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+          <div className="flex items-center gap-3 text-base text-muted-foreground flex-wrap">
             {domain && (
               <span className="inline-flex items-center gap-1 truncate">
                 <IconWorld className="size-3 shrink-0" />

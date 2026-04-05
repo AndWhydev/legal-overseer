@@ -65,10 +65,10 @@ export function ScenarioPlanner() {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-xl bg-card shadow-sm p-5">
-        <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+        <div className="text-base font-medium text-muted-foreground uppercase tracking-wider mb-3">
           Scenario Planner
         </div>
-        <div className="text-sm text-muted-foreground mb-3">
+        <div className="text-base text-muted-foreground mb-3">
           Run "what-if" simulations using Monte Carlo analysis with client-specific churn probability.
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -77,7 +77,7 @@ export function ScenarioPlanner() {
               key={preset.name}
               onClick={() => runScenario(preset.name, preset.type, preset.params)}
               disabled={running}
-              className={`flex items-center gap-2 px-4 py-3 rounded-lg border border-border text-sm font-medium text-foreground text-left transition-all ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-lg border border-border text-base font-medium text-foreground text-left transition-all ${
                 activePreset === preset.name
                   ? 'bg-muted'
                   : 'bg-muted hover:bg-muted'
@@ -99,16 +99,16 @@ export function ScenarioPlanner() {
           <div key={result.id} className="rounded-xl bg-card shadow-sm p-5">
             <div className="flex items-center justify-between mb-2">
               <div>
-                <div className="text-sm font-medium text-foreground">
+                <div className="text-base font-medium text-foreground">
                   {result.name}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-base text-muted-foreground">
                   1,000 simulations • {new Date(result.computed_at).toLocaleString()}
                 </div>
               </div>
               <div className={`flex items-center gap-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                 {isPositive ? <IconTrendingUp size={16} /> : <IconTrendingDown size={16} />}
-                <span className="text-base font-medium font-mono">
+                <span className="text-base font-medium tabular-nums">
                   {isPositive ? '+' : ''}{fmt(result.delta_cents ?? 0)}
                 </span>
               </div>
@@ -116,20 +116,20 @@ export function ScenarioPlanner() {
 
             <div className="grid grid-cols-3 gap-3 mb-2">
               <div>
-                <div className="text-sm text-muted-foreground">Current Annual</div>
-                <div className="text-base font-medium font-mono text-foreground">
+                <div className="text-base text-muted-foreground">Current Annual</div>
+                <div className="text-base font-medium tabular-nums text-foreground">
                   {fmt(result.current_annual_cents ?? 0)}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Projected Annual</div>
-                <div className={`text-base font-medium font-mono ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                <div className="text-base text-muted-foreground">Projected Annual</div>
+                <div className={`text-base font-medium tabular-nums ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                   {fmt(result.projected_annual_cents ?? 0)}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Positive Outcome</div>
-                <div className="text-base font-medium font-mono text-foreground">
+                <div className="text-base text-muted-foreground">Positive Outcome</div>
+                <div className="text-base font-medium tabular-nums text-foreground">
                   {Math.round((result.probability_positive ?? 0) * 100)}%
                 </div>
               </div>
@@ -138,7 +138,7 @@ export function ScenarioPlanner() {
             {/* Percentile distribution bar */}
             {p && (
               <div>
-                <div className="text-sm text-muted-foreground mb-2">
+                <div className="text-base text-muted-foreground mb-2">
                   Distribution (P10 → P90)
                 </div>
                 <div className="flex items-center gap-0.5 h-6 rounded-lg overflow-hidden bg-muted">
@@ -150,7 +150,7 @@ export function ScenarioPlanner() {
                     { label: 'P90', value: p.p90, color: 'bg-green-500/40' },
                   ].map(({ label, value, color }) => (
                     <div key={label} className={`flex flex-1 h-full items-center justify-center ${color}`}>
-                      <span className="text-sm text-muted-foreground font-mono">
+                      <span className="text-base text-muted-foreground tabular-nums">
                         {fmt(value)}
                       </span>
                     </div>

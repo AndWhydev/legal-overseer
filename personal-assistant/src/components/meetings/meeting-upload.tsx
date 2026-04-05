@@ -122,20 +122,20 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
           {file ? (
             <div>
               <IconFileMusic className="mx-auto mb-2 h-8 w-8 text-foreground" />
-              <div className="text-sm font-medium text-foreground">
+              <div className="text-base font-medium text-foreground">
                 {file.name}
               </div>
-              <div className="mt-1 text-sm text-muted-foreground">
+              <div className="mt-1 text-base text-muted-foreground">
                 {(file.size / (1024 * 1024)).toFixed(1)}MB
               </div>
             </div>
           ) : (
             <div>
               <IconUpload className="mx-auto mb-2 h-8 w-8 text-muted-foreground opacity-50" />
-              <div className="text-sm text-muted-foreground">
+              <div className="text-base text-muted-foreground">
                 Drop audio/video file here or click to browse
               </div>
-              <div className="mt-1 text-sm text-muted-foreground">
+              <div className="mt-1 text-base text-muted-foreground">
                 MP3, WAV, M4A, MP4, WebM, OGG, FLAC (max 500MB)
               </div>
             </div>
@@ -144,7 +144,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
 
         {/* Title input */}
         <div className="mb-3">
-          <label className="mb-1 block text-sm text-muted-foreground">
+          <label className="mb-1 block text-base text-muted-foreground">
             Meeting Title
           </label>
           <input
@@ -152,13 +152,13 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="e.g., Client Strategy Meeting"
-            className="w-full rounded-lg border-none bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+            className="w-full rounded-lg border-none bg-background px-3 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
 
         {/* Participants input */}
         <div className="mb-4">
-          <label className="mb-1 block text-sm text-muted-foreground">
+          <label className="mb-1 block text-base text-muted-foreground">
             Participants (comma-separated, optional)
           </label>
           <input
@@ -166,13 +166,13 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
             value={participants}
             onChange={e => setParticipants(e.target.value)}
             placeholder="e.g., Andy, Sarah, Mike"
-            className="w-full rounded-lg border-none bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+            className="w-full rounded-lg border-none bg-background px-3 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
 
         {/* Error */}
         {error && (
-          <div className="mb-3 rounded-lg bg-destructive/10 p-2 text-sm text-destructive">
+          <div className="mb-3 rounded-lg bg-destructive/10 p-2 text-base text-destructive">
             {error}
           </div>
         )}
@@ -181,14 +181,14 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
         <div className="flex justify-end gap-2">
           <button
             onClick={onCancel}
-            className="rounded-lg bg-secondary px-4 py-2 text-sm text-muted-foreground"
+            className="rounded-lg bg-secondary px-4 py-2 text-base text-muted-foreground"
           >
             Cancel
           </button>
           <button
             onClick={handleUpload}
             disabled={!file || uploading}
-            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-base font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             {uploading ? (
               <>

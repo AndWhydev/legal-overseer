@@ -42,7 +42,7 @@ export function RevenueRadar() {
       <div className="flex items-center justify-between mb-1">
         <span className="text-base font-medium text-[var(--text-primary)] tracking-tight">Revenue Radar</span>
         {recoverable > 0 && (
-          <span className="text-sm font-medium text-[var(--text-primary)] bg-[var(--bg-card)] px-3 py-1 rounded-full border border-[var(--border)]">
+          <span className="text-base font-medium text-[var(--text-primary)] bg-[var(--bg-card)] px-3 py-1 rounded-full border border-[var(--border)]">
             {formatCents(recoverable)} recoverable
           </span>
         )}
@@ -51,44 +51,44 @@ export function RevenueRadar() {
       {/* KPI Row */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
         <div className="flex flex-col gap-2 px-5 py-4 rounded-[var(--radius-xl)] bg-[var(--bg-card)]">
-          <span className="text-sm text-[var(--text-secondary)] uppercase tracking-wide">Invoiced (Month)</span>
-          <span className="text-base font-medium font-mono tracking-tight leading-none text-[var(--bb-blue)]">
+          <span className="text-base text-[var(--text-secondary)] uppercase tracking-wide">Invoiced (Month)</span>
+          <span className="text-base font-medium tabular-nums tracking-tight leading-none text-[var(--bb-blue)]">
             {snapshot ? formatCents(snapshot.total_invoiced_cents) : '$0.00'}
           </span>
-          <span className="text-sm text-[var(--text-secondary)] opacity-70">
+          <span className="text-base text-[var(--text-secondary)] opacity-70">
             {snapshot?.invoices_sent ?? 0} invoices sent
           </span>
         </div>
 
         <div className="flex flex-col gap-2 px-5 py-4 rounded-[var(--radius-xl)] bg-[var(--bg-card)]">
-          <span className="text-sm text-[var(--text-secondary)] uppercase tracking-wide">Collected</span>
-          <span className="text-base font-medium font-mono tracking-tight leading-none text-[var(--bb-green)]">
+          <span className="text-base text-[var(--text-secondary)] uppercase tracking-wide">Collected</span>
+          <span className="text-base font-medium tabular-nums tracking-tight leading-none text-[var(--bb-green)]">
             {snapshot ? formatCents(snapshot.total_collected_cents) : '$0.00'}
           </span>
-          <span className="text-sm text-[var(--text-secondary)] opacity-70">
+          <span className="text-base text-[var(--text-secondary)] opacity-70">
             {Math.round(collectionRate)}% collection rate
           </span>
         </div>
 
         <div className="flex flex-col gap-2 px-5 py-4 rounded-[var(--radius-xl)] bg-[var(--bg-card)]">
-          <span className="text-sm text-[var(--text-secondary)] uppercase tracking-wide">Outstanding</span>
-          <span className="text-base font-medium font-mono tracking-tight leading-none text-[var(--text-primary)]">
+          <span className="text-base text-[var(--text-secondary)] uppercase tracking-wide">Outstanding</span>
+          <span className="text-base font-medium tabular-nums tracking-tight leading-none text-[var(--text-primary)]">
             {snapshot ? formatCents(snapshot.total_outstanding_cents) : '$0.00'}
           </span>
-          <span className="text-sm text-[var(--text-secondary)] opacity-70">
+          <span className="text-base text-[var(--text-secondary)] opacity-70">
             {overdue} overdue
           </span>
         </div>
 
         <div className="flex flex-col gap-2 px-5 py-4 rounded-[var(--radius-xl)] bg-[var(--bg-card)]">
-          <span className="text-sm text-[var(--text-secondary)] uppercase tracking-wide">At Risk</span>
+          <span className="text-base text-[var(--text-secondary)] uppercase tracking-wide">At Risk</span>
           <span
-            className="text-base font-medium font-mono tracking-tight leading-none"
+            className="text-base font-medium tabular-nums tracking-tight leading-none"
             style={{ color: atRiskCount > 0 ? 'var(--bb-red)' : 'var(--bb-green)' }}
           >
             {atRiskCount}
           </span>
-          <span className="text-sm text-[var(--text-secondary)] opacity-70">
+          <span className="text-base text-[var(--text-secondary)] opacity-70">
             client{atRiskCount !== 1 ? 's' : ''} flagged
           </span>
         </div>
@@ -97,7 +97,7 @@ export function RevenueRadar() {
       {/* Cash Flow Projections */}
       {(health?.cash_flow_30d || health?.cash_flow_60d || health?.cash_flow_90d) && (
         <div className="flex flex-col gap-3">
-          <span className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wide">Cash Flow Projection</span>
+          <span className="text-base font-medium text-[var(--text-secondary)] uppercase tracking-wide">Cash Flow Projection</span>
           <CashFlowBar
             cf30={health?.cash_flow_30d ?? null}
             cf60={health?.cash_flow_60d ?? null}
@@ -108,16 +108,16 @@ export function RevenueRadar() {
 
       {/* Actionable Insights */}
       <div className="flex flex-col gap-3">
-        <span className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wide">
+        <span className="text-base font-medium text-[var(--text-secondary)] uppercase tracking-wide">
           Action Items ({insights.length})
           {totalAmountCents > 0 && (
-            <span className="font-normal ml-2 text-sm">
+            <span className="font-normal ml-2 text-base">
               {formatCents(totalAmountCents)} total
             </span>
           )}
         </span>
         {insights.length === 0 ? (
-          <div className="px-6 py-8 text-center text-[var(--text-secondary)] text-sm rounded-[var(--radius-lg)] bg-[var(--bg-card)]">
+          <div className="px-6 py-8 text-center text-[var(--text-secondary)] text-base rounded-[var(--radius-lg)] bg-[var(--bg-card)]">
             No active revenue insights. Revenue intelligence is running in the background.
           </div>
         ) : (
@@ -136,7 +136,7 @@ export function RevenueRadar() {
       {/* Client Leaderboard */}
       {(health?.top_clients && health.top_clients.length > 0) && (
         <div className="flex flex-col gap-3">
-          <span className="text-sm font-medium text-[var(--text-secondary)] uppercase tracking-wide">Top Clients</span>
+          <span className="text-base font-medium text-[var(--text-secondary)] uppercase tracking-wide">Top Clients</span>
           <ClientLeaderboard
             clients={health.top_clients}
             atRisk={health.at_risk_clients ?? []}

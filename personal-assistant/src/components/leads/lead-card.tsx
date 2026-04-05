@@ -55,7 +55,7 @@ function LeadCardInner({ lead, onClick }: LeadCardProps) {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-1">
-          <span className="truncate text-sm font-medium text-foreground">{displayName}</span>
+          <span className="truncate text-base font-medium text-foreground">{displayName}</span>
           <span className="shrink-0 text-[12px] text-muted-foreground">{relativeTime(lead.updated_at)}</span>
         </div>
         {lead.outreach_angle && (

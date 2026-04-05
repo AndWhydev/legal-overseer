@@ -463,15 +463,15 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
                       <div className="border-b border-border px-4 pb-4 pt-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
-                            <h3 id={columnHeadingId} className="text-sm font-medium text-foreground">
+                            <h3 id={columnHeadingId} className="text-base font-medium text-foreground">
                               {column.title}
                             </h3>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-base text-muted-foreground">
                               {getColumnSummary(columnTasks.length)}
                             </p>
                           </div>
 
-                          <Badge variant="outline" className="bg-background font-mono">
+                          <Badge variant="outline" className="bg-background tabular-nums">
                             {columnTasks.length}
                           </Badge>
                         </div>
@@ -481,7 +481,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
 
                       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3 pt-3">
                         {columnTasks.length === 0 && (
-                          <div className="rounded-2xl border border-dashed border-border bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+                          <div className="rounded-2xl border border-dashed border-border bg-muted px-4 py-6 text-center text-base text-muted-foreground">
                             Nothing here yet. Add a task or drop one into this column.
                           </div>
                         )}
@@ -534,7 +534,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
           aria-live="polite"
           className="fixed bottom-6 left-1/2 z-50 flex min-w-[18rem] -translate-x-1/2 items-center gap-3 rounded-2xl border border-border bg-background p-3 shadow-lg"
         >
-          <span className="flex-1 text-sm font-medium text-foreground">
+          <span className="flex-1 text-base font-medium text-foreground">
             {undoToast.message}
           </span>
           <Button type="button" variant="secondary" size="sm" onClick={handleUndoArchive}>
@@ -626,7 +626,7 @@ function QuickAddInline({
           </div>
         </div>
 
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           Press Enter to create quickly, or use the priority toggle before saving.
         </p>
       </div>

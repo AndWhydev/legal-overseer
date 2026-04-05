@@ -47,24 +47,24 @@ function statusBadgeClass(s: string): string {
 function JobCard({ job }: { job: Job }) {
   return (
     <div className="rounded-lg border border-border bg-card p-3 hover:bg-muted transition-colors">
-      <p className="font-medium text-sm truncate">{job.title}</p>
+      <p className="font-medium text-base truncate">{job.title}</p>
       {job.contact?.name && (
-        <p className="text-sm text-muted-foreground mt-1">{job.contact.name}</p>
+        <p className="text-base text-muted-foreground mt-1">{job.contact.name}</p>
       )}
       {job.job_type && (
-        <p className="text-sm text-muted-foreground">{job.job_type}</p>
+        <p className="text-base text-muted-foreground">{job.job_type}</p>
       )}
       {job.address && (
-        <p className="text-sm text-muted-foreground truncate">{job.address}</p>
+        <p className="text-base text-muted-foreground truncate">{job.address}</p>
       )}
       <div className="flex items-center justify-between mt-2">
         {job.scheduled_at && (
-          <span className="text-sm text-muted-foreground">
+          <span className="text-base text-muted-foreground">
             {new Date(job.scheduled_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
           </span>
         )}
         {job.value != null && (
-          <span className="text-sm font-medium">
+          <span className="text-base font-medium">
             ${Number(job.value).toLocaleString('en-AU')}
           </span>
         )}
@@ -102,7 +102,7 @@ function JobsTab() {
           <EmptyTitle>No active jobs</EmptyTitle>
           <EmptyDescription>Jobs track ongoing work for your clients. They appear here as BitBit identifies active projects from your communications.</EmptyDescription>
           <EmptyContent>
-            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Connect email to start</button>
+            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))} className="mt-2 rounded-lg bg-primary px-4 py-2 text-base font-medium text-primary-foreground hover:opacity-90 transition-opacity">Connect email to start</button>
           </EmptyContent>
         </Empty>
       </TabShell>
@@ -117,10 +117,10 @@ function JobsTab() {
           return (
             <div key={status}>
               <div className="flex items-center gap-2 mb-3">
-                <Badge className={`text-sm px-2 py-0.5 ${statusBadgeClass(status)}`}>
+                <Badge className={`text-base px-2 py-0.5 ${statusBadgeClass(status)}`}>
                   {statusLabel(status)}
                 </Badge>
-                <span className="text-sm text-muted-foreground">{col.length}</span>
+                <span className="text-base text-muted-foreground">{col.length}</span>
               </div>
               <div className="flex flex-col gap-2">
                 {col.map((job) => (

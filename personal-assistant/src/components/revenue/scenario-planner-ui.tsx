@@ -72,21 +72,21 @@ export function ScenarioPlannerUI() {
       {/* Create button / form */}
       {!formOpen ? (
         <button
-          className="self-start px-5 py-3 rounded-lg border-none bg-primary text-primary-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
+          className="self-start px-5 py-3 rounded-lg border-none bg-primary text-primary-foreground text-base font-medium cursor-pointer transition-opacity hover:opacity-80"
           onClick={() => setFormOpen(true)}
         >
           + New Scenario
         </button>
       ) : (
         <div className="flex flex-col gap-3 rounded-xl bg-card p-5">
-          <span className="text-sm font-medium text-foreground">
+          <span className="text-base font-medium text-foreground">
             Create What-If Scenario
           </span>
 
           <div>
-            <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Scenario Name</span>
+            <span className="text-base text-muted-foreground uppercase tracking-wider font-medium">Scenario Name</span>
             <input
-              className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
+              className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-base outline-none"
               placeholder="What if I raise rates 15%?"
               value={name}
               onChange={e => setName(e.target.value)}
@@ -94,7 +94,7 @@ export function ScenarioPlannerUI() {
           </div>
 
           <div>
-            <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Type</span>
+            <span className="text-base text-muted-foreground uppercase tracking-wider font-medium">Type</span>
             <Select value={type} onValueChange={v => setType(v)}>
               <SelectTrigger className="mt-1 w-full">
                 <SelectValue />
@@ -112,9 +112,9 @@ export function ScenarioPlannerUI() {
           {/* Type-specific fields */}
           {type === 'rate_change' && (
             <div>
-              <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Rate Change %</span>
+              <span className="text-base text-muted-foreground uppercase tracking-wider font-medium">Rate Change %</span>
               <input
-                className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
+                className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-base outline-none"
                 type="number"
                 value={rateChangePct}
                 onChange={e => setRateChangePct(Number(e.target.value))}
@@ -126,18 +126,18 @@ export function ScenarioPlannerUI() {
           {type === 'new_client' && (
             <>
               <div>
-                <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Est. Monthly Revenue ($)</span>
+                <span className="text-base text-muted-foreground uppercase tracking-wider font-medium">Est. Monthly Revenue ($)</span>
                 <input
-                  className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-base outline-none"
                   type="number"
                   value={monthlyRevenue}
                   onChange={e => setMonthlyRevenue(Number(e.target.value))}
                 />
               </div>
               <div>
-                <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Probability (0-1)</span>
+                <span className="text-base text-muted-foreground uppercase tracking-wider font-medium">Probability (0-1)</span>
                 <input
-                  className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
+                  className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-base outline-none"
                   type="number"
                   step="0.1"
                   min="0"
@@ -151,9 +151,9 @@ export function ScenarioPlannerUI() {
 
           {type === 'capacity_change' && (
             <div>
-              <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Hours Delta (per week)</span>
+              <span className="text-base text-muted-foreground uppercase tracking-wider font-medium">Hours Delta (per week)</span>
               <input
-                className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
+                className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-base outline-none"
                 type="number"
                 value={hoursDelta}
                 onChange={e => setHoursDelta(Number(e.target.value))}
@@ -163,9 +163,9 @@ export function ScenarioPlannerUI() {
 
           {type === 'custom' && (
             <div>
-              <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Revenue Impact ($)</span>
+              <span className="text-base text-muted-foreground uppercase tracking-wider font-medium">Revenue Impact ($)</span>
               <input
-                className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
+                className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-base outline-none"
                 type="number"
                 value={revenueImpact}
                 onChange={e => setRevenueImpact(Number(e.target.value))}
@@ -175,14 +175,14 @@ export function ScenarioPlannerUI() {
 
           <div className="flex gap-2">
             <button
-              className="px-5 py-3 rounded-lg border-none bg-primary text-primary-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-60"
+              className="px-5 py-3 rounded-lg border-none bg-primary text-primary-foreground text-base font-medium cursor-pointer transition-opacity hover:opacity-80 disabled:opacity-60"
               onClick={handleSubmit}
               disabled={creating || !name.trim()}
             >
               {creating ? 'Computing...' : 'Run Simulation'}
             </button>
             <button
-              className="px-5 py-3 rounded-lg border-none bg-input text-muted-foreground text-sm font-medium cursor-pointer transition-opacity hover:opacity-80"
+              className="px-5 py-3 rounded-lg border-none bg-input text-muted-foreground text-base font-medium cursor-pointer transition-opacity hover:opacity-80"
               onClick={() => setFormOpen(false)}
             >
               Cancel
@@ -193,9 +193,9 @@ export function ScenarioPlannerUI() {
 
       {/* Existing Scenarios */}
       {loading ? (
-        <div className="text-muted-foreground text-sm">Loading scenarios...</div>
+        <div className="text-muted-foreground text-base">Loading scenarios...</div>
       ) : scenarios.length === 0 ? (
-        <div className="p-6 text-center text-muted-foreground text-sm rounded-lg bg-card">
+        <div className="p-6 text-center text-muted-foreground text-base rounded-lg bg-card">
           No scenarios yet. Create one to model what-if revenue impacts.
         </div>
       ) : (
@@ -218,17 +218,17 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
     <div className="flex flex-col gap-3 rounded-lg bg-card p-4">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <span className="text-sm font-medium text-foreground">
+        <span className="text-base font-medium text-foreground">
           {scenario.name}
         </span>
-        <span className={`text-sm font-medium px-2 py-0.5 rounded-lg uppercase ${deltaBg} ${deltaColor}`}>
+        <span className={`text-base font-medium px-2 py-0.5 rounded-lg uppercase ${deltaBg} ${deltaColor}`}>
           {isPositive ? '+' : ''}{scenario.revenue_delta_pct}%
         </span>
       </div>
 
       {/* Impact summary */}
       {scenario.impact_summary && (
-        <div className="text-sm text-muted-foreground leading-relaxed">
+        <div className="text-base text-muted-foreground leading-relaxed">
           {scenario.impact_summary}
         </div>
       )}
@@ -236,27 +236,27 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
       {/* Results grid */}
       <div className="grid grid-cols-3 gap-4 mt-1">
         <div className="flex flex-col gap-0.5">
-          <span className="text-sm text-muted-foreground uppercase tracking-wider">Baseline</span>
-          <span className="text-base font-medium font-mono tracking-tight text-muted-foreground">
+          <span className="text-base text-muted-foreground uppercase tracking-wider">Baseline</span>
+          <span className="text-base font-medium tabular-nums tracking-tight text-muted-foreground">
             {formatCents(scenario.baseline_revenue_cents ?? 0)}
           </span>
         </div>
         <div className="flex flex-col gap-0.5">
-          <span className="text-sm text-muted-foreground uppercase tracking-wider">Projected (P50)</span>
-          <span className={`text-base font-medium font-mono tracking-tight ${deltaColor}`}>
+          <span className="text-base text-muted-foreground uppercase tracking-wider">Projected (P50)</span>
+          <span className={`text-base font-medium tabular-nums tracking-tight ${deltaColor}`}>
             {formatCents(scenario.p50_revenue_cents ?? 0)}
           </span>
         </div>
         <div className="flex flex-col gap-0.5">
-          <span className="text-sm text-muted-foreground uppercase tracking-wider">Delta</span>
-          <span className={`text-base font-medium font-mono tracking-tight ${deltaColor}`}>
+          <span className="text-base text-muted-foreground uppercase tracking-wider">Delta</span>
+          <span className={`text-base font-medium tabular-nums tracking-tight ${deltaColor}`}>
             {isPositive ? '+' : ''}{formatCents(scenario.revenue_delta_cents ?? 0)}
           </span>
         </div>
       </div>
 
       {/* P10/P90 range */}
-      <div className="flex gap-3 text-sm text-muted-foreground font-mono">
+      <div className="flex gap-3 text-base text-muted-foreground tabular-nums">
         <span>P10: {formatCents(scenario.p10_revenue_cents ?? 0)}</span>
         <span>P90: {formatCents(scenario.p90_revenue_cents ?? 0)}</span>
         <span>{scenario.simulation_runs} runs</span>
@@ -266,7 +266,7 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
       {scenario.risk_factors && scenario.risk_factors.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {scenario.risk_factors.map((rf, i) => (
-            <span key={i} className="text-sm px-2 py-0.5 rounded-lg bg-red-500/10 text-red-500">
+            <span key={i} className="text-base px-2 py-0.5 rounded-lg bg-red-500/10 text-red-500">
               {rf}
             </span>
           ))}

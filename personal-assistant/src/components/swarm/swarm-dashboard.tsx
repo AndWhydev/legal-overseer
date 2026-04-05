@@ -100,7 +100,7 @@ export function SwarmDashboard() {
         <h2 className="text-base font-medium text-foreground tracking-tight">
           Agent Swarms
         </h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="text-base text-muted-foreground mt-0.5">
           Coordinate multi-agent teams for complex operations
         </p>
       </div>
@@ -126,7 +126,7 @@ export function SwarmDashboard() {
       {/* Runs List */}
       <div className="flex flex-col gap-3">
         {loading ? (
-          <div className="text-center py-16 text-muted-foreground text-sm">
+          <div className="text-center py-16 text-muted-foreground text-base">
             Loading swarms...
           </div>
         ) : runs.length === 0 ? (
@@ -135,7 +135,7 @@ export function SwarmDashboard() {
             <EmptyTitle>No swarm activity</EmptyTitle>
             <EmptyDescription>Lead Swarm automatically qualifies and routes incoming leads. Activity appears here as leads come in.</EmptyDescription>
             <EmptyContent>
-              <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))} className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Connect email</button>
+              <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('bb-navigate', { detail: { tab: 'settings-connections' } }))} className="mt-2 rounded-lg bg-primary px-4 py-2 text-base font-medium text-primary-foreground hover:opacity-90 transition-opacity">Connect email</button>
             </EmptyContent>
           </Empty>
         ) : (

@@ -176,16 +176,16 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
               </svg>
               <div className="flex-1 text-left">
-                <div className="text-sm font-medium text-foreground">
+                <div className="text-base font-medium text-foreground">
                   {file.name}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-base text-muted-foreground">
                   {formatFileSize(file.size)} &middot; {file.type || 'audio'}
                 </div>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); setFile(null) }}
-                className="rounded-lg border border-border bg-transparent px-2 py-1 text-sm text-muted-foreground hover:text-foreground"
+                className="rounded-lg border border-border bg-transparent px-2 py-1 text-base text-muted-foreground hover:text-foreground"
               >
                 Remove
               </button>
@@ -195,10 +195,10 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} className="mx-auto mb-3 text-muted-foreground">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
               </svg>
-              <p className="mb-1 text-sm text-muted-foreground">
+              <p className="mb-1 text-base text-muted-foreground">
                 Drop audio or video file here
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 MP3, WAV, M4A, OGG, MP4, WebM (up to 500MB)
               </p>
             </div>
@@ -208,17 +208,17 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
         {/* Form fields */}
         <div className="flex flex-col gap-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-muted-foreground">Meeting Title *</label>
+            <label className="mb-2 block text-base font-medium text-muted-foreground">Meeting Title *</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Client Review -- AWU Homepage"
-              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
+              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-muted-foreground">Meeting Type</label>
+            <label className="mb-2 block text-base font-medium text-muted-foreground">Meeting Type</label>
             <Select value={meetingType} onValueChange={v => setMeetingType(v as MeetingType)}>
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -234,29 +234,29 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-muted-foreground">Description (optional)</label>
+            <label className="mb-2 block text-base font-medium text-muted-foreground">Description (optional)</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief context about the meeting..."
-              className="min-h-[60px] w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
+              className="min-h-[60px] w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
             />
           </div>
 
           {/* Participants */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-muted-foreground">Participants (optional)</label>
+            <label className="mb-2 block text-base font-medium text-muted-foreground">Participants (optional)</label>
             {participants.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-2">
                 {participants.map((p, i) => (
                   <span
                     key={i}
-                    className="flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-sm text-muted-foreground"
+                    className="flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-base text-muted-foreground"
                   >
                     {p.name}
                     <button
                       onClick={() => handleRemoveParticipant(i)}
-                      className="text-sm leading-none text-muted-foreground hover:text-foreground"
+                      className="text-base leading-none text-muted-foreground hover:text-foreground"
                     >
                       &times;
                     </button>
@@ -269,14 +269,14 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                 value={newParticipant.name}
                 onChange={(e) => setNewParticipant(p => ({ ...p, name: e.target.value }))}
                 placeholder="Name"
-                className="flex-1 rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
+                className="flex-1 rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddParticipant() }}
               />
               <input
                 value={newParticipant.email}
                 onChange={(e) => setNewParticipant(p => ({ ...p, email: e.target.value }))}
                 placeholder="Email (optional)"
-                className="flex-1 rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
+                className="flex-1 rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddParticipant() }}
               />
               <button
@@ -291,14 +291,14 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
 
         {/* Error */}
         {error && (
-          <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-base text-destructive">
             {error}
           </div>
         )}
 
         {/* Progress */}
         {uploading && uploadProgress && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-sm text-blue-500">
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-base text-blue-500">
             <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-500/30 border-t-blue-500" />
             {uploadProgress}
           </div>
@@ -309,14 +309,14 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           <button
             onClick={onClose}
             disabled={uploading}
-            className="rounded-xl border border-border bg-transparent px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed"
+            className="rounded-xl border border-border bg-transparent px-5 py-3 text-base font-medium text-muted-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed"
           >
             Cancel
           </button>
           <button
             onClick={handleUpload}
             disabled={uploading || !file || !title.trim()}
-            className="rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-primary px-5 py-3 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {uploading ? 'Processing...' : 'Upload & Process'}
           </button>

@@ -188,7 +188,7 @@ export default function AdminTab() {
             <button
               onClick={runHealthCheck}
               disabled={healthLoading}
-              className="cursor-pointer rounded-lg border border-border bg-muted px-4 py-2 text-sm text-foreground"
+              className="cursor-pointer rounded-lg border border-border bg-muted px-4 py-2 text-base text-foreground"
             >
               {healthLoading ? 'Checking...' : 'Refresh'}
             </button>
@@ -203,18 +203,18 @@ export default function AdminTab() {
                     className="size-3 rounded-full"
                     style={{ background: STATUS_COLORS[h.status] || '#888' }}
                   />
-                  <span className="text-sm font-medium capitalize text-foreground">
+                  <span className="text-base font-medium capitalize text-foreground">
                     {h.service}
                   </span>
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-base text-muted-foreground">
                   {h.status} &middot; {h.latency_ms}ms
                 </div>
-                {h.error && <div className="mt-1 text-sm text-destructive">{h.error}</div>}
+                {h.error && <div className="mt-1 text-base text-destructive">{h.error}</div>}
               </div>
             ))}
             {health.length === 0 && !healthLoading && (
-              <div className="text-sm text-muted-foreground">No data yet</div>
+              <div className="text-base text-muted-foreground">No data yet</div>
             )}
           </div>
         </div>
@@ -237,31 +237,31 @@ export default function AdminTab() {
                 ))}
               </SelectContent>
             </Select>
-            <input type="file" accept=".json" onChange={handleFileUpload} className="text-sm" />
+            <input type="file" accept=".json" onChange={handleFileUpload} className="text-base" />
           </div>
           <textarea
             value={importText}
             onChange={e => setImportText(e.target.value)}
             placeholder='Paste JSON array, e.g. [{"name":"Acme","email":"a@b.com"}]'
             rows={6}
-            className="w-full resize-y rounded-lg border border-border bg-muted p-3 font-mono text-sm text-foreground"
+            className="w-full resize-y rounded-lg border border-border bg-muted p-3 tabular-nums text-base text-foreground"
           />
           <div className="mt-3 flex items-center gap-3">
             <button
               onClick={handleImport}
               disabled={importing || !importText.trim()}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border-none bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border-none bg-primary px-5 py-2 text-base font-medium text-primary-foreground disabled:opacity-50"
             >
               {importing ? 'Importing...' : 'Import'}
             </button>
             {importResult && (
-              <span className="text-sm text-muted-foreground">
+              <span className="text-base text-muted-foreground">
                 {importResult.imported} imported, {importResult.skipped} skipped, {importResult.errors.length} errors
               </span>
             )}
           </div>
           {importResult && importResult.errors.length > 0 && (
-            <div className="mt-2 max-h-[120px] overflow-auto text-sm text-destructive">
+            <div className="mt-2 max-h-[120px] overflow-auto text-base text-destructive">
               {importResult.errors.map((e, i) => <div key={i}>Row {e.row}: {e.message}</div>)}
             </div>
           )}
@@ -290,7 +290,7 @@ export default function AdminTab() {
                 <button
                   key={f}
                   onClick={() => setExportFormat(f)}
-                  className={`cursor-pointer rounded-lg border border-border px-4 py-2 text-sm ${exportFormat === f ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}
+                  className={`cursor-pointer rounded-lg border border-border px-4 py-2 text-base ${exportFormat === f ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}
                 >
                   {f.toUpperCase()}
                 </button>
@@ -299,7 +299,7 @@ export default function AdminTab() {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border-none bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border-none bg-primary px-5 py-2 text-base font-medium text-primary-foreground disabled:opacity-50"
             >
               {exporting ? 'Exporting...' : 'Download'}
             </button>

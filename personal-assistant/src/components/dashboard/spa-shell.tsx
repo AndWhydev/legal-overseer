@@ -522,7 +522,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
           <Sheet open={devToolsOpen} onOpenChange={setDevToolsOpen}>
             <SheetContent side="right" className="w-80 overflow-y-auto p-0">
               <SheetHeader className="px-4 py-3 border-b border-sidebar-border">
-                <SheetTitle className="text-sm font-medium font-mono">Dev Tools</SheetTitle>
+                <SheetTitle className="text-sm font-medium tabular-nums">Dev Tools</SheetTitle>
               </SheetHeader>
               <Suspense fallback={null}>
                 <DevToolbar />

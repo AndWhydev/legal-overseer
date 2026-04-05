@@ -65,13 +65,13 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
             placeholder="Search across all meeting transcripts..."
-            className="w-full rounded-lg border border-border bg-background py-3 pl-9 pr-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
+            className="w-full rounded-lg border border-border bg-background py-3 pl-9 pr-4 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring"
           />
         </div>
         <button
           onClick={handleSearch}
           disabled={!query.trim() || searching}
-          className="rounded-lg bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-primary px-5 py-3 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Search
         </button>
@@ -79,20 +79,20 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
 
       {/* Results */}
       {searching && (
-        <div className="p-5 text-center text-sm text-muted-foreground">
+        <div className="p-5 text-center text-base text-muted-foreground">
           Searching transcripts...
         </div>
       )}
 
       {!searching && searched && results.length === 0 && (
-        <div className="p-5 text-center text-sm text-muted-foreground">
+        <div className="p-5 text-center text-base text-muted-foreground">
           No results found for &ldquo;{query}&rdquo;
         </div>
       )}
 
       {!searching && results.length > 0 && (
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-          <div className="border-b border-border px-4 py-3 text-sm text-muted-foreground">
+          <div className="border-b border-border px-4 py-3 text-base text-muted-foreground">
             {results.length} result{results.length !== 1 ? 's' : ''} across transcripts
           </div>
           {results.map((result, i) => (
@@ -104,19 +104,19 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
               }`}
             >
               <div className="mb-1 flex items-center gap-2">
-                <span className="text-sm font-medium text-foreground">
+                <span className="text-base font-medium text-foreground">
                   {result.meeting_title}
                 </span>
-                <span className="font-mono text-sm text-muted-foreground">
+                <span className="tabular-nums text-base text-muted-foreground">
                   {formatTime(result.start_time_ms)}
                 </span>
                 {result.speaker_label && (
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-base text-muted-foreground">
                     &middot; {result.speaker_label}
                   </span>
                 )}
               </div>
-              <p className="text-sm leading-normal text-foreground">
+              <p className="text-base leading-normal text-foreground">
                 {highlightText(result.segment_text, query)}
               </p>
             </div>

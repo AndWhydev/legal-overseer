@@ -196,16 +196,16 @@ function DayHeader({ date, isToday }: { date: Date; isToday: boolean }) {
   return (
     <div className="flex flex-col items-center gap-1 py-3">
       <span
-        className={`text-sm font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}
+        className={`text-base font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}
       >
         {dayLabel}
       </span>
       {isToday ? (
-        <span className="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">
+        <span className="flex size-8 items-center justify-center rounded-full bg-primary text-base font-medium text-primary-foreground">
           {dateNum}
         </span>
       ) : (
-        <span className="flex size-8 items-center justify-center text-sm font-medium text-foreground">
+        <span className="flex size-8 items-center justify-center text-base font-medium text-foreground">
           {dateNum}
         </span>
       )}
@@ -233,15 +233,15 @@ function EventBlock({ event }: { event: PositionedEvent }) {
       title={`${event.title}\n${formatTime(startDate)} - ${formatTime(endDate)}`}
     >
       {isCompact ? (
-        <p className="truncate text-sm font-medium leading-tight">
+        <p className="truncate text-base font-medium leading-tight">
           {event.title}
         </p>
       ) : (
         <>
-          <p className="truncate text-sm font-medium leading-tight">
+          <p className="truncate text-base font-medium leading-tight">
             {event.title}
           </p>
-          <p className="truncate text-sm leading-tight opacity-70">
+          <p className="truncate text-base leading-tight opacity-70">
             {formatTime(startDate)} - {formatTime(endDate)}
           </p>
         </>
@@ -335,7 +335,7 @@ function MeetingsTabCalendar() {
             </button>
             <button
               onClick={() => setWeekOffset(0)}
-              className="cursor-pointer rounded-lg border-none bg-transparent px-3 py-1 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              className="cursor-pointer rounded-lg border-none bg-transparent px-3 py-1 text-base font-medium text-foreground transition-colors hover:bg-muted"
             >
               Today
             </button>
@@ -347,7 +347,7 @@ function MeetingsTabCalendar() {
               <IconChevronRight size={16} />
             </button>
           </div>
-          <span className="text-sm font-medium text-muted-foreground">
+          <span className="text-base font-medium text-muted-foreground">
             {weekRangeLabel}
           </span>
         </div>
@@ -372,7 +372,7 @@ function MeetingsTabCalendar() {
               return (
                 <React.Fragment key={hour}>
                   <div
-                    className="pointer-events-none absolute left-0 w-[60px] pr-3 text-right text-sm text-muted-foreground"
+                    className="pointer-events-none absolute left-0 w-[60px] pr-3 text-right text-base text-muted-foreground"
                     style={{ top: `${top - 6}px` }}
                   >
                     {formatHour(hour)}

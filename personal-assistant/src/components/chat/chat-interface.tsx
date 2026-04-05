@@ -2015,7 +2015,7 @@ export function ChatInterface() {
                                   stage.status === 'error' ? 'text-red-500' : 'text-muted-foreground'
                                 return (
                                   <div key={stage.id} className="flex items-start gap-2 text-sm">
-                                    <span className={`shrink-0 font-mono ${statusColor}`}>{statusIcon}</span>
+                                    <span className={`shrink-0 tabular-nums ${statusColor}`}>{statusIcon}</span>
                                     <div>
                                       <div className="font-medium">{stage.title}</div>
                                       {stage.description && (

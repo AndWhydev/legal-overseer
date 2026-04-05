@@ -41,13 +41,13 @@ export function TodaysJobsWidget() {
           jobs.map(job => (
             <div key={job.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted border border-border">
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{(job.title || job.description || 'Untitled Job') as string}</p>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="font-medium text-base truncate">{(job.title || job.description || 'Untitled Job') as string}</p>
+                <p className="text-base text-muted-foreground mt-0.5">
                   {job.scheduled_at ? new Date(job.scheduled_at as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
                   {job.address ? ` · ${(job.address as string).slice(0, 30)}` : ''}
                 </p>
               </div>
-              <Badge variant="default" className="text-sm">
+              <Badge variant="default" className="text-base">
                 {(job.status as string) || 'booked'}
               </Badge>
             </div>

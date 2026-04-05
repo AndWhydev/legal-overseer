@@ -296,7 +296,7 @@ export function WatchManager() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Create watch</CardTitle>
-            <span className="text-sm text-muted-foreground">{watches.length} watches configured</span>
+            <span className="text-base text-muted-foreground">{watches.length} watches configured</span>
           </div>
         </CardHeader>
         <CardContent>
@@ -338,7 +338,7 @@ export function WatchManager() {
               <Label htmlFor="watch-conditions">Conditions (JSON)</Label>
               <Textarea
                 id="watch-conditions"
-                className="font-mono text-sm"
+                className="tabular-nums text-base"
                 value={form.conditions}
                 onChange={(e) => setForm((prev) => ({ ...prev, conditions: e.target.value }))}
               />
@@ -398,7 +398,7 @@ export function WatchManager() {
                 <Card key={watch.id} className="gap-3 py-4">
                   <CardHeader className="pb-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                      <span className="text-base font-medium uppercase tracking-wider text-muted-foreground">
                         {WATCH_LABEL[watch.watch_type]}
                       </span>
                       <Badge variant={watch.status === 'active' ? 'default' : 'secondary'}>
@@ -407,12 +407,12 @@ export function WatchManager() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <p className="text-sm">{watch.description}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base">{watch.description}</p>
+                    <p className="text-base text-muted-foreground">
                       Every {watch.interval_seconds}s, escalate after {watch.escalation_minutes}m, last checked{' '}
                       {toLocalDate(watch.last_checked_at)}
                     </p>
-                    <pre className="overflow-x-auto rounded-lg bg-muted p-3 font-mono text-sm text-muted-foreground">
+                    <pre className="overflow-x-auto rounded-lg bg-muted p-3 tabular-nums text-base text-muted-foreground">
                       {JSON.stringify(watch.conditions, null, 2)}
                     </pre>
                     <div className="flex gap-2">
@@ -448,7 +448,7 @@ export function WatchManager() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Active alerts</CardTitle>
-            <span className="text-sm text-muted-foreground">{activeAlertCount} pending/escalated</span>
+            <span className="text-base text-muted-foreground">{activeAlertCount} pending/escalated</span>
           </div>
         </CardHeader>
         <CardContent>
@@ -470,7 +470,7 @@ export function WatchManager() {
                 <Card key={alert.id} className="gap-3 py-4">
                   <CardHeader className="pb-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                      <span className="text-base font-medium uppercase tracking-wider text-muted-foreground">
                         Alert {alert.id.slice(0, 8)}
                       </span>
                       <Badge variant={alert.status === 'escalated' ? 'destructive' : 'secondary'}>
@@ -479,9 +479,9 @@ export function WatchManager() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <p className="text-sm">{alert.evidence ?? 'No evidence text provided'}</p>
-                    <p className="text-sm text-muted-foreground">Suggested fix: {alert.remediation_suggestion ?? 'None'}</p>
-                    <p className="text-sm text-muted-foreground">Created {toLocalDate(alert.created_at)}</p>
+                    <p className="text-base">{alert.evidence ?? 'No evidence text provided'}</p>
+                    <p className="text-base text-muted-foreground">Suggested fix: {alert.remediation_suggestion ?? 'None'}</p>
+                    <p className="text-base text-muted-foreground">Created {toLocalDate(alert.created_at)}</p>
                     <Button
                       variant="outline"
                       size="sm"

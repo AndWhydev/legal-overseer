@@ -73,8 +73,8 @@ function UsageBar({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <span className="font-mono text-sm text-muted-foreground">
+        <span className="text-base text-muted-foreground">{label}</span>
+        <span className="tabular-nums text-base text-muted-foreground">
           {formatNumber(used)} / {formatNumber(limit)} {unit}
         </span>
       </div>
@@ -170,7 +170,7 @@ export function BillingSettings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <span className="text-sm text-muted-foreground">Loading billing information...</span>
+        <span className="text-base text-muted-foreground">Loading billing information...</span>
       </div>
     )
   }
@@ -192,8 +192,8 @@ export function BillingSettings() {
           <CardContent className="flex items-center gap-3 px-5 py-4">
             <IconAlertTriangle className="size-5 shrink-0 text-destructive" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-destructive">Payment past due</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-base font-medium text-destructive">Payment past due</p>
+              <p className="mt-1 text-base text-muted-foreground">
                 Last payment failed. Update the payment method to avoid service interruption.
               </p>
             </div>
@@ -223,9 +223,9 @@ export function BillingSettings() {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="font-mono text-lg font-medium capitalize">{plan}</p>
+          <p className="tabular-nums text-lg font-medium capitalize">{plan}</p>
           {subscription?.currentPeriodEnd && (
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-2 text-base text-muted-foreground">
               {isTrialing ? 'Trial ends' : 'Billing period ends'}:{' '}
               {new Date(subscription.currentPeriodEnd).toLocaleDateString('en-AU', {
                 day: 'numeric',
@@ -243,8 +243,8 @@ export function BillingSettings() {
           <CardContent className="flex items-start gap-3 px-5 py-4">
             <IconClock className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium text-foreground">Trial Period</p>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              <p className="text-base font-medium text-foreground">Trial Period</p>
+              <p className="mt-1 text-base leading-relaxed text-muted-foreground">
                 {subscription?.daysRemaining != null && subscription.daysRemaining > 0 ? (
                   <>
                     <strong className="text-foreground">
@@ -292,7 +292,7 @@ export function BillingSettings() {
           />
 
           {usage?.estimatedCostUSD != null && usage.estimatedCostUSD > 0 && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Estimated AI cost this period: ${usage.estimatedCostUSD.toFixed(2)} USD
             </p>
           )}
@@ -324,7 +324,7 @@ export function BillingSettings() {
       {error && (
         <Card className="border-destructive/20 bg-destructive/5">
           <CardContent className="px-4 py-3">
-            <p className="text-sm text-destructive">{error}</p>
+            <p className="text-base text-destructive">{error}</p>
           </CardContent>
         </Card>
       )}
