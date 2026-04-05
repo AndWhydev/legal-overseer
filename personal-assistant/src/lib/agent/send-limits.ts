@@ -23,11 +23,11 @@ export async function checkSendLimit(
 
   const { data } = await supabase
     .from('rate_limit_buckets')
-    .select('token_count')
-    .eq('key', bucketKey)
+    .select('tokens')
+    .eq('bucket_key', bucketKey)
     .single()
 
-  const used = data?.token_count ?? 0
+  const used = data?.tokens ?? 0
   return { allowed: used < limit, remaining: Math.max(0, limit - used), limit }
 }
 
@@ -54,19 +54,19 @@ export async function incrementSendCount(
     logger.warn('[send-limits] RPC increment failed, using manual upsert:', error.message)
     const { data: existing } = await supabase
       .from('rate_limit_buckets')
-      .select('token_count')
-      .eq('key', bucketKey)
+      .select('tokens')
+      .eq('bucket_key', bucketKey)
       .single()
 
     if (existing) {
       await supabase
         .from('rate_limit_buckets')
-        .update({ token_count: existing.token_count + 1 })
-        .eq('key', bucketKey)
+        .update({ tokens: existing.tokens + 1 })
+        .eq('bucket_key', bucketKey)
     } else {
       await supabase
         .from('rate_limit_buckets')
-        .insert({ key: bucketKey, token_count: 1 })
+        .insert({ bucket_key: bucketKey, tokens: 1, max_tokens: 100, refill_rate: 0 })
     }
   }
 }

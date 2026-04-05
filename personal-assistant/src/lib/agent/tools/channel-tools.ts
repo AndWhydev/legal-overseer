@@ -1237,7 +1237,12 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     const recipientName = input.recipient_name as string | undefined
 
     // Strip + prefix if provided (normalise to digits-only with country code)
-    const normalised = recipient.replace(/^\+/, '').replace(/[\s\-()]/g, '')
+    let normalised = recipient.replace(/^\+/, '').replace(/[\s\-()]/g, '')
+
+    // Convert AU local numbers (04xx) to international format (614xx)
+    if (normalised.startsWith('04') && normalised.length === 10) {
+      normalised = '61' + normalised.slice(1)
+    }
 
     if (!/^\d{7,15}$/.test(normalised)) {
       return {
