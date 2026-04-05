@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { filterNavByVisibility } from "@/lib/docs-visibility"
 import { LogOut, ChevronsUpDown } from "lucide-react"
 import {
   DropdownMenu,
@@ -187,6 +188,14 @@ function AccountSelector() {
 
 export function Sidebar({ navigation }: SidebarProps) {
   const pathname = usePathname()
+  const [isAuthed, setIsAuthed] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => setIsAuthed(!!data.user))
+  }, [])
+
+  const filteredNav = filterNavByVisibility(navigation as any, isAuthed)
 
   return (
     <aside
@@ -210,7 +219,7 @@ export function Sidebar({ navigation }: SidebarProps) {
       {/* Scrollable nav */}
       <div style={{ flex: 1, overflowY: "auto", padding: "0 12px 20px 20px" }}>
         <nav>
-          {navigation.map((section) => (
+          {filteredNav.map((section) => (
             <FlatSection
               key={section.title}
               section={section}
