@@ -117,7 +117,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
               onInfoClick={
                 onConnectionInfoClick && orgConnections
                   ? (() => {
-                      const conn = orgConnections.find(c => c.provider === integration.id);
+                      const conn = orgConnections.find(c => c.provider === integration.id && c.transport === 'bridge');
                       if (conn) onConnectionInfoClick(conn);
                     })
                   : undefined

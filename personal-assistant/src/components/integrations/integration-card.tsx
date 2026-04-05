@@ -187,7 +187,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
             )}
             <SuccessTick visible={showTick} />
             {isComingSoon && (
-              <Badge variant="secondary">Soon</Badge>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Soon</Badge>
             )}
           </div>
           <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
