@@ -5,17 +5,17 @@ description: "Pre-configured connection templates for common data sources"
 
 # Connection Templates
 
-Templates provide a quick-start configuration for common connection types. Select a template when creating a custom connection, and BitBit pre-configures the expected data shape and transport.
+Templates give you a quick-start configuration for common connection types. Select a template when creating a custom connection. BitBit pre-configures the expected data shape and transport.
 
 ## Available templates
 
 | Template | Transport | Description |
 |----------|-----------|-------------|
-| **Email Provider** | Bridge | Email services — expects sender, subject, body fields |
-| **CRM** | Bridge | Customer relationship tools — expects contact and deal data |
-| **Task Tracker** | Bridge | Project management tools — expects task and status data |
-| **Webhook Receiver** | Webhook | Event-driven services — accepts any JSON payload |
-| **Custom / Raw** | Bridge | Fully custom — you define the data shape |
+| **Email Provider** | Bridge | Email services. Expects sender, subject, body fields |
+| **CRM** | Bridge | Customer relationship tools. Expects contact and deal data |
+| **Task Tracker** | Bridge | Project management tools. Expects task and status data |
+| **Webhook Receiver** | Webhook | Event-driven services. Accepts any JSON payload |
+| **Custom / Raw** | Bridge | Fully custom. You define the data shape |
 
 ## Envelope format by template
 
@@ -36,7 +36,7 @@ All templates use the same base envelope format. The template determines which f
 
 ### CRM / Task Tracker / Custom
 
-Same base format — use `metadata` for domain-specific fields:
+Same base format. Use `metadata` for domain-specific fields:
 
 ```json
 {
@@ -52,7 +52,7 @@ Same base format — use `metadata` for domain-specific fields:
 }
 ```
 
-## Listing templates via API
+## List templates via API
 
 ```bash
 curl https://app.bitbit.chat/api/connections/templates

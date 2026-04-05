@@ -5,7 +5,7 @@ description: "Push data to BitBit from any external script or service"
 
 # Bridge Transport
 
-The bridge transport lets external scripts push data to BitBit. This is the most flexible transport — any language, any platform, any data source. Just POST JSON to the ingest endpoint.
+Push data to BitBit from any script. Any language, any platform, any data source. POST JSON to the ingest endpoint.
 
 ## When to use bridge
 
@@ -22,7 +22,7 @@ Each bridge connection gets a unique bearer token when created. Include it in th
 Authorization: Bearer {bridge_token}
 ```
 
-The token is generated automatically when you create a bridge connection. You can view it in the connection detail drawer in the dashboard.
+The token is generated automatically when you create a bridge connection. View it in the connection detail drawer in the dashboard.
 
 ## Endpoint
 
@@ -81,7 +81,7 @@ POST /api/connections/{connection_id}/ingest
 
 ## Deduplication
 
-Messages are deduplicated by `id` (external ID) and content hash. If you push the same message twice, the second push is silently skipped. This makes it safe to run bridge scripts on a schedule without worrying about duplicates.
+BitBit deduplicates messages by `id` and content hash. A duplicate push is silently skipped. Run bridge scripts on a schedule without worrying about duplicates.
 
 ## Batch limits
 

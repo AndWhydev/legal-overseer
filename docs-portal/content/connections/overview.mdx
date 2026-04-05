@@ -5,7 +5,7 @@ description: "Connect any data source to BitBit's intelligence pipeline"
 
 # Connections
 
-BitBit Connections let you pipe data from any source into BitBit's intelligence pipeline. Whether it's email from Outlook, messages from iMessage, events from Stripe, or data from your custom CRM — everything flows through the same normalised pipeline for classification, enrichment, and routing.
+BitBit Connections pipe data from any source into BitBit's intelligence pipeline. Email from Outlook, messages from iMessage, events from Stripe, data from your custom CRM. Everything flows through the same normalised pipeline for classification, enrichment, and routing.
 
 ## How it works
 
@@ -17,15 +17,15 @@ Every connection uses one of three transport methods:
 | **Poll** | BitBit pulls data on a schedule | Gmail, Asana, Google Calendar |
 | **Webhook** | External service sends events to BitBit | Stripe, Calendly, custom CRMs |
 
-All transports normalise data into the same **Envelope** format before it enters the pipeline. The pipeline handles deduplication, AI classification, contact resolution, and action routing automatically.
+All transports normalise data into the same **Envelope** format before entering the pipeline. The pipeline handles deduplication, AI classification, contact resolution, and action routing automatically.
 
-## Getting started
+## Get started
 
 1. Go to **Settings > Connections** in the BitBit dashboard
 2. Click **Connect** on a built-in provider, or click **Custom** to connect any data source
 3. Follow the setup guide for your chosen transport
 
-For a quick walkthrough, see the [Quickstart](/docs/connections/quickstart) guide.
+For a quick walkthrough, see the [Quickstart →](/docs/connections/quickstart).
 
 ## Envelope format
 
@@ -47,4 +47,4 @@ Every message entering BitBit follows this structure:
 }
 ```
 
-BitBit handles the rest — classification, urgency scoring, contact matching, and routing to the right inbox, task board, or approval queue.
+BitBit handles classification, urgency scoring, contact matching, and routing to the right inbox, task board, or approval queue.
