@@ -8,6 +8,7 @@ export interface PlanOutput {
   stages: PlanStage[]
   toolGroups: ToolGroup[]
   complexity: 'low' | 'medium' | 'high'
+  skills: string[]
 }
 
 const VALID_TOOL_GROUPS = new Set<ToolGroup>(['core', 'memory', 'channel', 'web', 'comms', 'agentic'])
@@ -76,6 +77,8 @@ const PlanOutputSchema = z.object({
     .describe('Tool groups needed (do NOT include "core" — it is always added). Available: memory, channel, web, comms, agentic'),
   complexity: z.enum(['low', 'medium', 'high'])
     .describe('Overall request complexity: low=greeting/simple lookup, medium=standard 1-2 step, high=multi-step research/financial/cross-entity'),
+  skills: z.array(z.string())
+    .describe('Skill IDs to activate from candidates, 0-2 max. Select [] if no skill candidates provided or none apply.'),
 })
 
 export { PlanOutputSchema }
@@ -103,10 +106,15 @@ Also classify the overall complexity of this request:
 - "medium": standard query, 1-2 step operation, routine tool use
 - "high": multi-step research, cross-entity reasoning, financial/scheduling decisions, temporal reasoning ("last time", "compared to"), conflict resolution, 3+ stages needed
 
-Output a JSON object (not array) with three fields:
+Also select which skills to activate for this request.
+You may be given a list of candidate skills with descriptions.
+Select 0-2 skills that are most relevant. Select [] if no candidates provided or none apply.
+
+Output a JSON object (not array) with four fields:
 - "stages": the array of stage objects as described above
 - "toolGroups": array of group names (do NOT include "core" — it is always added)
 - "complexity": one of "low", "medium", "high"
+- "skills": array of skill IDs from the candidates (e.g., ["seo-audit"]). Use [] if none.
 
 Examples of toolGroups selection:
 - "Send Sezer a WhatsApp" -> ["channel", "comms"]
@@ -128,12 +136,13 @@ Output ONLY the JSON object, no markdown fences or explanation.`
 export async function generatePlan(
   message: string,
   entityContext: string,
-  toolNames: string[]
+  toolNames: string[],
+  skillCandidates?: Array<{ id: string; description: string }>,
 ): Promise<PlanOutput> {
   if (USE_STRUCTURED_PLANNER) {
-    return generatePlanStructured(message, entityContext, toolNames)
+    return generatePlanStructured(message, entityContext, toolNames, skillCandidates)
   }
-  return generatePlanLegacy(message, entityContext, toolNames)
+  return generatePlanLegacy(message, entityContext, toolNames, skillCandidates)
 }
 
 /**
@@ -143,12 +152,19 @@ export async function generatePlan(
 async function generatePlanStructured(
   message: string,
   entityContext: string,
-  toolNames: string[]
+  toolNames: string[],
+  skillCandidates?: Array<{ id: string; description: string }>,
 ): Promise<PlanOutput> {
   const systemPrompt = PLANNER_SYSTEM.replace('TOOL_NAMES', toolNames.join(', '))
-  const userPrompt = entityContext
+  let userPrompt = entityContext
     ? `User request: "${message}"\n\nKnown context:\n${entityContext}`
     : `User request: "${message}"`
+
+  if (skillCandidates && skillCandidates.length > 0) {
+    userPrompt += '\n\nCandidate skills:\n' + skillCandidates
+      .map(s => `- ${s.id}: ${s.description}`)
+      .join('\n')
+  }
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 3000)
@@ -184,10 +200,10 @@ async function generatePlanStructured(
       toolGroups,
     })
 
-    return { stages, toolGroups, complexity: data.complexity ?? 'medium' }
+    return { stages, toolGroups, complexity: data.complexity ?? 'medium', skills: data.skills ?? [] }
   } catch {
     clearTimeout(timeout)
-    return { stages: [], toolGroups: [], complexity: 'medium' as const }
+    return { stages: [], toolGroups: [], complexity: 'medium' as const, skills: [] }
   }
 }
 
@@ -198,12 +214,19 @@ async function generatePlanStructured(
 async function generatePlanLegacy(
   message: string,
   entityContext: string,
-  toolNames: string[]
+  toolNames: string[],
+  skillCandidates?: Array<{ id: string; description: string }>,
 ): Promise<PlanOutput> {
   const systemPrompt = PLANNER_SYSTEM.replace('TOOL_NAMES', toolNames.join(', '))
-  const userPrompt = entityContext
+  let userPrompt = entityContext
     ? `User request: "${message}"\n\nKnown context:\n${entityContext}`
     : `User request: "${message}"`
+
+  if (skillCandidates && skillCandidates.length > 0) {
+    userPrompt += '\n\nCandidate skills:\n' + skillCandidates
+      .map(s => `- ${s.id}: ${s.description}`)
+      .join('\n')
+  }
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 3000)
@@ -237,10 +260,10 @@ async function generatePlanLegacy(
         rawToolGroups = parsed.toolGroups
       }
     } else {
-      return { stages: [], toolGroups: [], complexity: 'medium' as const }
+      return { stages: [], toolGroups: [], complexity: 'medium' as const, skills: [] }
     }
 
-    if (rawStages.length === 0) return { stages: [], toolGroups: [], complexity: 'medium' as const }
+    if (rawStages.length === 0) return { stages: [], toolGroups: [], complexity: 'medium' as const, skills: [] }
 
     const stages = rawStages.slice(0, 4).map((s: any) => ({
       id: String(s.id || ''),
@@ -263,10 +286,14 @@ async function generatePlanLegacy(
         ? rawComplexity
         : 'medium'
 
-    return { stages, toolGroups, complexity }
+    const rawSkills = typeof parsed === 'object' && parsed !== null && Array.isArray((parsed as Record<string, unknown>).skills)
+      ? ((parsed as Record<string, unknown>).skills as unknown[]).filter((s): s is string => typeof s === 'string')
+      : []
+
+    return { stages, toolGroups, complexity, skills: rawSkills }
   } catch {
     clearTimeout(timeout)
-    return { stages: [], toolGroups: [], complexity: 'medium' as const }
+    return { stages: [], toolGroups: [], complexity: 'medium' as const, skills: [] }
   }
 }
 
