@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuthContext } from '@/lib/supabase/auth-context'
 import { getActiveOrgId } from '@/lib/tenancy'
 import { generateBridgeToken, generateWebhookSecret } from '@/lib/connections'
 
@@ -9,14 +9,18 @@ export const dynamic = 'force-dynamic'
  * GET /api/connections
  * List connections for the active org.
  */
-export async function GET() {
-  const supabase = await createClient()
-  if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
+export async function GET(request: NextRequest) {
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>
+  try {
+    ctx = await getAuthContext(request)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const orgId = await getActiveOrgId(supabase, user.id)
+  const { supabase } = ctx
+  const orgId = ctx.orgId
 
   const { data: connections, error } = await supabase
     .from('org_connections')
@@ -35,14 +39,18 @@ export async function GET() {
  * POST /api/connections
  * Create a new connection for the active org.
  */
-export async function POST(request: Request) {
-  const supabase = await createClient()
-  if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
+export async function POST(request: NextRequest) {
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>
+  try {
+    ctx = await getAuthContext(request)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const activeOrgId = await getActiveOrgId(supabase, user.id)
+  const { supabase } = ctx
+  const activeOrgId = ctx.orgId
 
   let body: {
     provider: string

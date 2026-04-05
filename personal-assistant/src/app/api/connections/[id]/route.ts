@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { getActiveOrgId } from '@/lib/tenancy'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuthContext } from '@/lib/supabase/auth-context'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,24 +8,25 @@ export const dynamic = 'force-dynamic'
  * Get connection details, verified to belong to the user's org.
  */
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
 
-  const supabase = await createClient()
-  if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>
+  try {
+    ctx = await getAuthContext(request)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const orgId = await getActiveOrgId(supabase, user.id)
-
-  const { data: connection, error } = await supabase
+  const { data: connection, error } = await ctx.supabase
     .from('org_connections')
     .select('*')
     .eq('id', id)
-    .eq('org_id', orgId)
+    .eq('org_id', ctx.orgId)
     .single()
 
   if (error || !connection) {
@@ -41,25 +41,26 @@ export async function GET(
  * Update connection fields.
  */
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
 
-  const supabase = await createClient()
-  if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const orgId = await getActiveOrgId(supabase, user.id)
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>
+  try {
+    ctx = await getAuthContext(request)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Verify ownership
-  const { data: existing } = await supabase
+  const { data: existing } = await ctx.supabase
     .from('org_connections')
     .select('id')
     .eq('id', id)
-    .eq('org_id', orgId)
+    .eq('org_id', ctx.orgId)
     .single()
 
   if (!existing) {
@@ -73,7 +74,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { data: connection, error } = await supabase
+  const { data: connection, error } = await ctx.supabase
     .from('org_connections')
     .update({ ...body, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -92,31 +93,32 @@ export async function PATCH(
  * Soft delete — sets status to 'disabled'.
  */
 export async function DELETE(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
 
-  const supabase = await createClient()
-  if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>
+  try {
+    ctx = await getAuthContext(request)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const orgId = await getActiveOrgId(supabase, user.id)
-
-  const { data: existing } = await supabase
+  const { data: existing } = await ctx.supabase
     .from('org_connections')
     .select('id')
     .eq('id', id)
-    .eq('org_id', orgId)
+    .eq('org_id', ctx.orgId)
     .single()
 
   if (!existing) {
     return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
   }
 
-  const { error } = await supabase
+  const { error } = await ctx.supabase
     .from('org_connections')
     .update({ status: 'disabled', updated_at: new Date().toISOString() })
     .eq('id', id)

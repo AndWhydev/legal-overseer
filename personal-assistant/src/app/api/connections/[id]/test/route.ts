@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { getActiveOrgId } from '@/lib/tenancy'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuthContext } from '@/lib/supabase/auth-context'
 import { logger } from '@/lib/core/logger'
 
 export const dynamic = 'force-dynamic'
@@ -10,24 +9,25 @@ export const dynamic = 'force-dynamic'
  * Test a connection by inserting and immediately deleting a test message.
  */
 export async function POST(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
 
-  const supabase = await createClient()
-  if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>
+  try {
+    ctx = await getAuthContext(request)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const orgId = await getActiveOrgId(supabase, user.id)
-
-  const { data: conn } = await supabase
+  const { data: conn } = await ctx.supabase
     .from('org_connections')
     .select('*')
     .eq('id', id)
-    .eq('org_id', orgId)
+    .eq('org_id', ctx.orgId)
     .single()
 
   if (!conn) {
@@ -38,10 +38,10 @@ export async function POST(
 
   // Insert a test message
   const testExternalId = `_test_${Date.now()}`
-  const { data: inserted, error: insertErr } = await supabase
+  const { data: inserted, error: insertErr } = await ctx.supabase
     .from('channel_messages')
     .insert({
-      org_id: orgId,
+      org_id: ctx.orgId,
       channel: conn.provider,
       external_id: testExternalId,
       sender: 'Connection Test',
@@ -61,12 +61,12 @@ export async function POST(
   }
 
   // Delete the test message
-  await supabase.from('channel_messages').delete().eq('id', inserted.id)
+  await ctx.supabase.from('channel_messages').delete().eq('id', inserted.id)
 
   const durationMs = Date.now() - start
 
   // Log success
-  await supabase.from('connection_sync_logs').insert({
+  await ctx.supabase.from('connection_sync_logs').insert({
     connection_id: id,
     status: 'success',
     messages_found: 1,

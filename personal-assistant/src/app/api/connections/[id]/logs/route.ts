@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { getActiveOrgId } from '@/lib/tenancy'
+import { NextRequest, NextResponse } from 'next/server'
+import { getAuthContext } from '@/lib/supabase/auth-context'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,36 +9,36 @@ export const dynamic = 'force-dynamic'
  * Supports ?limit=20&offset=0 pagination.
  */
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
 
-  const supabase = await createClient()
-  if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const orgId = await getActiveOrgId(supabase, user.id)
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>
+  try {
+    ctx = await getAuthContext(request)
+  } catch (err) {
+    if (err instanceof Response) return err
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Verify connection belongs to user's org
-  const { data: conn } = await supabase
+  const { data: conn } = await ctx.supabase
     .from('org_connections')
     .select('id')
     .eq('id', id)
-    .eq('org_id', orgId)
+    .eq('org_id', ctx.orgId)
     .single()
 
   if (!conn) {
     return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
   }
 
-  const url = new URL(request.url)
-  const limit = Math.min(Number(url.searchParams.get('limit') ?? '20'), 100)
-  const offset = Number(url.searchParams.get('offset') ?? '0')
+  const limit = Math.min(Number(request.nextUrl.searchParams.get('limit') ?? '20'), 100)
+  const offset = Number(request.nextUrl.searchParams.get('offset') ?? '0')
 
-  const { data: logs, error } = await supabase
+  const { data: logs, error } = await ctx.supabase
     .from('connection_sync_logs')
     .select('*')
     .eq('connection_id', id)
