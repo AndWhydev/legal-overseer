@@ -77,6 +77,7 @@ import type { ToolGroup } from '@/lib/agent/tools'
  */
 export interface CapabilityBoundary {
   allowedToolGroups: ToolGroup[]
+  allowedSkills?: string[]          // skill IDs this role can activate
   deniedTools?: string[]         // specific tool names to block
   requiresApproval?: string[]    // tools that need approval even if auto-execute would normally apply
 }
@@ -84,28 +85,34 @@ export interface CapabilityBoundary {
 export const DEFAULT_CAPABILITIES: Record<AgentRole, CapabilityBoundary> = {
   sales: {
     allowedToolGroups: ['core', 'memory', 'channel'],
+    allowedSkills: [],
     deniedTools: ['generate_invoice', 'send_email'],
   },
   finance: {
     allowedToolGroups: ['core', 'memory'],
+    allowedSkills: [],
     deniedTools: ['send_email', 'send_sms', 'send_whatsapp'],
     requiresApproval: ['generate_invoice'],
   },
   comms: {
     allowedToolGroups: ['core', 'memory', 'channel', 'comms'],
+    allowedSkills: [],
     deniedTools: ['generate_invoice'],
     requiresApproval: ['send_email', 'send_sms', 'send_whatsapp'],
   },
   operations: {
     allowedToolGroups: ['core', 'memory', 'channel'],
+    allowedSkills: [],
     deniedTools: ['send_email', 'generate_invoice'],
   },
   research: {
     allowedToolGroups: ['core', 'memory', 'web'],
+    allowedSkills: [],
     deniedTools: ['send_email', 'send_sms', 'generate_invoice', 'create_task'],
   },
   coordinator: {
     allowedToolGroups: ['core', 'memory'],
+    allowedSkills: [],
     deniedTools: [],
   },
 }
