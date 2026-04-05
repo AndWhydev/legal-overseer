@@ -157,6 +157,7 @@ import { getPendingApprovals } from './approval-queue'
 import { getActiveOrders, formatOrdersForPrompt } from '@/lib/intelligence/standing-orders'
 import { logger } from '@/lib/core/logger'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { buildMessagingPersona } from './persona/messaging-persona'
 
 interface CachedEvent {
   title: string
@@ -371,7 +372,7 @@ async function loadConnectedEmails(supabase: SupabaseClient, orgId: string): Pro
   return emails
 }
 
-export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string, industry?: string, userProfile?: UserProfile): Promise<string> {
+export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string, industry?: string, userProfile?: UserProfile, channel?: 'web' | 'sendblue' | 'telegram' | 'whatsapp'): Promise<string> {
   // Only load deployment-specific policies for matching orgs.
   // Don't hardcode 'awu' — personal orgs shouldn't get AWU policies.
   const deploymentSlug = process.env.BITBIT_DEPLOYMENT || ''
@@ -450,7 +451,15 @@ export async function buildSystemPrompt(supabase: SupabaseClient, orgId: string,
 
   const availableColumns = ctx.columns.map(c => c.title).join(', ')
 
-  let prompt = BITBIT_IDENTITY_PREAMBLE + `You are ${pack.persona.name}, an intelligent personal assistant for ${pack.persona.context}. You help manage tasks, communications, and schedule across multiple channels.
+  // Messaging persona injection (channel-aware)
+  const messagingPersona = (channel && channel !== 'web')
+    ? buildMessagingPersona({
+        channel: channel as 'sendblue' | 'telegram' | 'whatsapp',
+        displayName: userProfile?.displayName,
+      })
+    : ""
+
+  let prompt = BITBIT_IDENTITY_PREAMBLE + messagingPersona + `You are ${pack.persona.name}, an intelligent personal assistant for ${pack.persona.context}. You help manage tasks, communications, and schedule across multiple channels.
 
 ## Identity
 Concise, proactive, and action-oriented. We manage the kanban board, contacts, memory, activity feed, and communication channels (Gmail, Outlook, WhatsApp, iMessage, Calendar, Reminders).
@@ -785,10 +794,11 @@ export async function buildEntityAwarePrompt(
   supabase: SupabaseClient,
   orgId: string,
   userMessage: string,
-  userProfile?: UserProfile
+  userProfile?: UserProfile,
+  channel?: 'web' | 'sendblue' | 'telegram' | 'whatsapp'
 ): Promise<string> {
   const [basePrompt, scanContacts, projectsSection] = await Promise.all([
-    buildSystemPrompt(supabase, orgId, undefined, userProfile),
+    buildSystemPrompt(supabase, orgId, undefined, userProfile, channel),
     supabase ? loadContactsForScanning(supabase, orgId) : Promise.resolve([]),
     supabase ? loadActiveProjects(supabase, orgId) : Promise.resolve(''),
   ])

@@ -92,7 +92,7 @@ export async function* runTAORLoop(
   let systemPrompt: string
   if (config.threadId && config.userId) {
     try {
-      const assembler = new ContextAssembler({ userProfile })
+      const assembler = new ContextAssembler({ userProfile, channel: config.channel })
       const ctx = await assembler.assemble(config.supabase, config.userId, config.orgId, config.threadId, message)
       systemPrompt = ctx.systemPrompt
       config.history = ctx.messageHistory

@@ -412,12 +412,14 @@ export class ContextAssembler {
   private config: AssemblerConfig
   private budgetManager: TokenBudgetManager
   private userProfile?: UserProfile
+  private channel?: 'web' | 'sendblue' | 'telegram' | 'whatsapp'
 
-  constructor(config?: Partial<AssemblerConfig> & { userProfile?: UserProfile }) {
-    const { userProfile, ...assemblerConfig } = config ?? {}
+  constructor(config?: Partial<AssemblerConfig> & { userProfile?: UserProfile; channel?: 'web' | 'sendblue' | 'telegram' | 'whatsapp' }) {
+    const { userProfile, channel, ...assemblerConfig } = config ?? {}
     this.config = { ...DEFAULT_ASSEMBLER_CONFIG, ...assemblerConfig }
     this.budgetManager = new TokenBudgetManager(this.config.tokenBudget)
     this.userProfile = userProfile
+    this.channel = channel
   }
 
   /**
@@ -442,7 +444,7 @@ export class ContextAssembler {
     const [systemPromptResult, recentMsgsResult, approvalsResult, summariesResult, ragResult] =
       await Promise.all([
         timedFetch('system_prompt', () =>
-          buildEntityAwarePrompt(supabase, orgId, currentMessage, this.userProfile),
+          buildEntityAwarePrompt(supabase, orgId, currentMessage, this.userProfile, this.channel),
         ),
         timedFetch('recent_messages', () =>
           loadRecentMessages(supabase, threadId, this.config.maxRecentTurns),
