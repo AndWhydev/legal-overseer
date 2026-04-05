@@ -71,7 +71,7 @@ export const AVAILABLE_INTEGRATIONS: Integration[] = [
     description: 'Send and receive iMessages',
     icon: 'MessageCircle',
     category: 'communication',
-    status: 'coming_soon',
+    status: 'available',
     color: '#34C759',
     authMethod: 'guided',
   },

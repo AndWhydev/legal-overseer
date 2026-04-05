@@ -14,9 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { BillingSettings } from '@/components/settings/billing-settings';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
-import { ConnectionsGrid } from '@/components/connections/connections-grid';
-import { ConnectionDetailDrawer } from '@/components/connections/connection-detail-drawer';
-import type { OrgConnection } from '@/lib/connections';
+import { ConnectionsGrid } from '@/components/integrations/integration-grid';
 import { RagStatsWidget } from '@/components/dashboard/rag-stats-widget';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -24,32 +22,6 @@ import { logger } from '@/lib/core/logger';
 import { useTheme, type ThemeName } from '@/lib/theme/theme-provider';
 
 // ---- Plugin types ----
-
-function ConnectionsGridWithDrawer() {
-  const [selectedConnection, setSelectedConnection] = React.useState<OrgConnection | null>(null)
-  const [drawerOpen, setDrawerOpen] = React.useState(false)
-
-  return (
-    <>
-      <ConnectionsGrid
-        showHeader={false}
-        onConnectionClick={(conn: OrgConnection) => {
-          setSelectedConnection(conn)
-          setDrawerOpen(true)
-        }}
-      />
-      <ConnectionDetailDrawer
-        connection={selectedConnection}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-        onDisconnect={() => {
-          setDrawerOpen(false)
-          setSelectedConnection(null)
-        }}
-      />
-    </>
-  )
-}
 
 const AUTOMATION_TYPES = [
   { id: 'lead_swarm', label: 'Lead Generation', description: 'Automatically find and score new leads' },
@@ -260,7 +232,12 @@ export function SettingsConnectionsTab() {
         <p className="mt-1 text-sm text-muted-foreground">Connect communication channels</p>
       </div>
       <div>
-        <ConnectionsGridWithDrawer />
+        <ConnectionsGrid
+          integrations={integrations}
+          isLoading={integrationsLoading}
+          onStatusChange={fetchIntegrations}
+          onWhatsAppConnect={() => setWhatsappModalOpen(true)}
+        />
       </div>
 
       {whatsappModalOpen && (

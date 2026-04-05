@@ -45,7 +45,26 @@ export async function GET() {
 
     const integrations = await getOrgIntegrations(supabase, profile.org_id)
 
-    return NextResponse.json({ integrations })
+    // Also include bridge connections from org_connections
+    const { data: bridgeConns } = await supabase
+      .from("org_connections")
+      .select("id, provider, status, last_sync_at, config, created_at")
+      .eq("org_id", profile.org_id)
+      .eq("status", "connected")
+
+    // Merge: org_connections entries not already in integrations
+    const existingProviders = new Set(integrations.map((i: { provider: string }) => i.provider))
+    const bridgeIntegrations = (bridgeConns || [])
+      .filter((c: { provider: string }) => !existingProviders.has(c.provider))
+      .map((c: { id: string; provider: string; config: unknown; created_at: string }) => ({
+        id: c.id,
+        provider: c.provider,
+        status: "connected",
+        connected_at: c.created_at,
+        metadata: c.config || {},
+      }))
+
+    return NextResponse.json({ integrations: [...integrations, ...bridgeIntegrations] })
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Unknown error occurred'
