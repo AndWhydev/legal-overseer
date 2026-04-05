@@ -265,6 +265,8 @@ export class UnifiedConversationPipeline {
       userDisplayName: identity.displayName,
       // Multimodal content blocks from file attachments
       contentBlocks: config.contentBlocks,
+      // Channel the message arrived from
+      channel: inbound.channel as EngineConfig["channel"],
       ...config.engineOverrides,
     }
 

@@ -39,6 +39,8 @@ export interface EngineConfig {
   userEmail?: string
   /** User's display name for identity anchoring in the system prompt. */
   userDisplayName?: string
+  /** Channel the message arrived from (web, sendblue, telegram, whatsapp). */
+  channel?: 'web' | 'sendblue' | 'telegram' | 'whatsapp'
   /** Multimodal content blocks from file attachments (images, PDFs, documents).
    *  When present, the user message is sent as ContentBlockParam[] instead of string. */
   contentBlocks?: Anthropic.ContentBlockParam[]

@@ -7,7 +7,7 @@ import { resolveModel } from '@/lib/agent/model-registry'
 
 // ─── Channel & Identity ─────────────────────────────────────────────────────
 
-export type Channel = 'web' | 'whatsapp' | 'sms' | 'email' | 'slack' | 'imessage' | 'api'
+export type Channel = 'web' | 'whatsapp' | 'sms' | 'email' | 'slack' | 'imessage' | 'api' | 'sendblue' | 'telegram'
 
 export interface ChannelIdentifier {
   channelType: Exclude<Channel, 'api'>
