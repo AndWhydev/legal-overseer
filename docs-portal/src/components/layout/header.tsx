@@ -3,18 +3,20 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { navigation } from "@/docs.config"
 import { SidebarContent } from "@/components/layout/sidebar"
 
 const tabs = [
-  { label: "Getting Started", prefix: "/docs/getting-started", fallback: "/docs/overview" },
-  { label: "Intelligence", prefix: "/docs/intelligence" },
-  { label: "Knowledge Graph", prefix: "/docs/knowledge-graph" },
-  { label: "Memory", prefix: "/docs/memory" },
-  { label: "Autonomy", prefix: "/docs/autonomy" },
-  { label: "Tools", prefix: "/docs/tools" },
-  { label: "API", prefix: "/docs/api" },
-  { label: "Decisions", prefix: "/docs/decisions" },
+  { label: "Connections", prefix: "/docs/connections", fallback: "/docs/connections/overview", visibility: "public" as const },
+  { label: "Getting Started", prefix: "/docs/getting-started", fallback: "/docs/overview", visibility: "public" as const },
+  { label: "Intelligence", prefix: "/docs/intelligence", visibility: "internal" as const },
+  { label: "Knowledge Graph", prefix: "/docs/knowledge-graph", visibility: "internal" as const },
+  { label: "Memory", prefix: "/docs/memory", visibility: "internal" as const },
+  { label: "Autonomy", prefix: "/docs/autonomy", visibility: "internal" as const },
+  { label: "Tools", prefix: "/docs/tools", visibility: "internal" as const },
+  { label: "API", prefix: "/docs/api", visibility: "internal" as const },
+  { label: "Decisions", prefix: "/docs/decisions", visibility: "internal" as const },
 ]
 
 function getFirstHref(prefix: string): string {
@@ -77,6 +79,14 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 export function Header() {
   const pathname = usePathname()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [isAuthed, setIsAuthed] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => setIsAuthed(!!data.user))
+  }, [])
+
+  const visibleTabs = tabs.filter(t => t.visibility === "public" || isAuthed)
 
   const isTabActive = (tab: typeof tabs[number]) => {
     if (tab.fallback && (pathname === tab.fallback || pathname === "/docs/overview")) return true
@@ -109,7 +119,7 @@ export function Header() {
 
           {/* Tab navigation - visible only on lg+ */}
           <nav className="hidden lg:flex" style={{ alignItems: "center", gap: "4px", overflow: "hidden", flex: 1, minWidth: 0 }}>
-            {tabs.map((tab) => {
+            {visibleTabs.map((tab) => {
               const active = isTabActive(tab)
               const href = tab.fallback || getFirstHref(tab.prefix)
               return (

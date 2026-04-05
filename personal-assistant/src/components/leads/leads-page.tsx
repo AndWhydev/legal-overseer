@@ -99,6 +99,23 @@ export function LeadsPage() {
     }
   }, [selectedLead, setDrawer, closeDrawerSlot, setSelectedLeadId, updateLead, handleAdvance])
 
+  // Push discovery panel into the layout drawer
+  useEffect(() => {
+    if (discoveryOpen) {
+      setDrawer(
+        <ProspectDiscoveryPanel open={true} onClose={() => { setDiscoveryOpen(false); closeDrawerSlot() }} />
+      )
+    }
+    // Don't close drawer here — the lead detail useEffect handles closing
+  }, [discoveryOpen, setDrawer, closeDrawerSlot])
+
+  // Listen for sidebar CTA "discover-leads" custom event
+  useEffect(() => {
+    function onDiscover() { setDiscoveryOpen(true) }
+    window.addEventListener('discover-leads', onDiscover)
+    return () => window.removeEventListener('discover-leads', onDiscover)
+  }, [])
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -137,7 +154,7 @@ export function LeadsPage() {
     <div className="flex h-full flex-col gap-3">
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'campaigns')}>
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="leads">
             <IconHeartHandshake data-icon />
             Leads Pipeline
@@ -156,8 +173,7 @@ export function LeadsPage() {
             onDiscoverClick={() => setDiscoveryOpen(true)}
             searchQuery={searchQuery} onSearchChange={setSearchQuery}
             analytics={analytics} searchInputRef={searchInputRef}
-
-
+            leadCount={leads.length}
           />
 
           {empty ? (
@@ -180,7 +196,8 @@ export function LeadsPage() {
               </Empty>
             )
           ) : (
-            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-[24px] border border-border bg-card p-3 shadow-sm" role="tabpanel">
+            <div className="min-h-0 flex-1 overflow-hidden rounded-[var(--radius-container-lg)] border border-border bg-card shadow-sm" role="tabpanel">
+              <div className="h-full overflow-y-auto overflow-x-hidden overscroll-contain p-2">
               {viewMode === 'kanban' ? (
                 <LeadsKanbanView
                   grouped={grouped} onMoveLead={moveLead}
@@ -192,8 +209,11 @@ export function LeadsPage() {
                   leads={leads}
                   onSelectLead={(lead) => setSelectedLeadId(lead.id)}
                   onAdvanceStage={handleAdvance}
+                  selectedLeadId={selectedLead?.id}
+                  onDeselectLead={() => setSelectedLeadId(null)}
                 />
               )}
+              </div>
             </div>
           )}
         </TabsContent>
@@ -204,7 +224,6 @@ export function LeadsPage() {
         </TabsContent>
       </Tabs>
 
-      <ProspectDiscoveryPanel open={discoveryOpen} onClose={() => setDiscoveryOpen(false)} />
       <CompletionAnimation trigger={winTrigger} onComplete={() => setWinTrigger(false)} variant="confetti" x={winPos.x} y={winPos.y} />
     </div>
   )

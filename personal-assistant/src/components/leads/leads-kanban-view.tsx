@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useState, useMemo, memo } from 'react'
+import React, { useCallback, useMemo, memo } from 'react'
 import type { UniqueIdentifier } from '@dnd-kit/core'
 import {
   Kanban,
@@ -9,6 +9,7 @@ import {
   KanbanItem,
   KanbanOverlay,
 } from '@/components/ui/kanban'
+import { Badge } from '@/components/ui/badge'
 import type { EnhancedLeadData, LeadStatus } from '@/lib/leads/types'
 import { LeadCard } from './lead-card'
 
@@ -37,7 +38,6 @@ function LeadsKanbanViewInner({
   onAdvanceStage,
   movingLeadId: _movingLeadId,
 }: LeadsKanbanViewProps) {
-  // Build the kanban value: Record<UniqueIdentifier, EnhancedLeadData[]>
   const kanbanValue = useMemo(() => {
     const record: Record<UniqueIdentifier, EnhancedLeadData[]> = {}
     for (const col of BOARD_COLUMNS) {
@@ -46,14 +46,8 @@ function LeadsKanbanViewInner({
     return record
   }, [grouped])
 
-  const totalLeads = useMemo(
-    () => BOARD_COLUMNS.reduce((sum, col) => sum + (grouped.get(col.id)?.length ?? 0), 0),
-    [grouped],
-  )
-
   const handleValueChange = useCallback(
     (newValue: Record<UniqueIdentifier, EnhancedLeadData[]>) => {
-      // Detect which lead moved to which column
       for (const [colId, leads] of Object.entries(newValue)) {
         for (const lead of leads) {
           const originalCol = BOARD_COLUMNS.find((c) =>
@@ -76,7 +70,7 @@ function LeadsKanbanViewInner({
       flatCursor
     >
       <KanbanBoard
-        className="grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-2 lg:grid-cols-3"
+        className="grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-3 overflow-x-auto sm:grid-cols-2 lg:grid-cols-3"
         role="application"
         aria-label="Lead pipeline kanban board"
         aria-roledescription="kanban board"
@@ -88,23 +82,23 @@ function LeadsKanbanViewInner({
             <KanbanColumn
               key={column.id}
               value={column.id}
-              className="flex h-full flex-col"
+              className="flex h-full min-w-[250px] flex-col"
               role="region"
               aria-label={`${column.label} column, ${leads.length} leads`}
             >
               {/* Column header */}
               <div className="flex items-center gap-2 px-1 pb-2">
-                <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground">
                   {column.label}
                 </h3>
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-lg bg-secondary px-1 font-mono text-sm text-muted-foreground">
+                <Badge variant="secondary" className="text-[12px] tabular-nums">
                   {leads.length}
-                </span>
+                </Badge>
               </div>
 
               {/* Drop zone */}
               <div
-                className="flex min-h-[120px] flex-1 flex-col gap-2 rounded-xl border border-dashed border-transparent p-2 transition-colors"
+                className="flex min-h-[120px] flex-1 flex-col gap-0.5 rounded-[var(--radius-md)] border border-dashed border-transparent p-1 transition-colors"
                 aria-label={`Drop zone for ${column.label}`}
               >
                 {leads.map((lead) => (
@@ -114,7 +108,7 @@ function LeadsKanbanViewInner({
                 ))}
 
                 {leads.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                  <div className="rounded-[var(--radius-md)] border border-dashed border-border p-6 text-center text-[12px] text-muted-foreground">
                     {column.emptyText}
                   </div>
                 )}

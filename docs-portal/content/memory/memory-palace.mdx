@@ -48,14 +48,7 @@ interface MemoryPalaceEntry {
 
 ## Consolidation Lifecycle
 
-<Mermaid chart={`flowchart LR
-    A[Ingest] --> B[Store with\nConfidence]
-    B --> C[Active\nMemory]
-    C -->|referenced| D[Reinforce]
-    D --> C
-    C -->|conf < 0.3| E[Prune]
-    C -->|sleep cycle| F[Consolidate]
-    F --> C`} caption="Memory lifecycle: ingest, store, reinforce on access, prune on decay, consolidate nightly" />
+<Mermaid chart="Zmxvd2NoYXJ0IExSCiAgICBBW0luZ2VzdF0gLS0+IEJbU3RvcmUgd2l0aFxuQ29uZmlkZW5jZV0KICAgIEIgLS0+IENbQWN0aXZlXG5NZW1vcnldCiAgICBDIC0tPnxyZWZlcmVuY2VkfCBEW1JlaW5mb3JjZV0KICAgIEQgLS0+IEMKICAgIEMgLS0+fGNvbmYgPCAwLjN8IEVbUHJ1bmVdCiAgICBDIC0tPnxzbGVlcCBjeWNsZXwgRltDb25zb2xpZGF0ZV0KICAgIEYgLS0+IEM=" caption="Memory lifecycle: ingest, store, reinforce on access, prune on decay, consolidate nightly" />
 
 Memories flow through a lifecycle:
 

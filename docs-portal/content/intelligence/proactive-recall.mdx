@@ -18,17 +18,7 @@ Proactive Recall (`src/lib/memory-palace/proactive-recall.ts`) surfaces relevant
 
 ## Recall Pipeline
 
-<Mermaid chart={`flowchart LR
-    A[Message] --> B[Extract\nEntities]
-    B --> C[Graph Walk]
-    B --> D[Vector Search]
-    B --> E[Event Lookup]
-    C --> F[Blend + Score\n0.4r + 0.3c + 0.2rec + 0.1ew]
-    D --> F
-    E --> F
-    F --> G[Inject into\nSystem Prompt]
-    B -->|no entities| H[Legacy\nFallback]
-    H --> G`} caption="Graph-aware recall: parallel fetch from 3 sources, blended scoring, 1500-token budget" />
+<Mermaid chart="Zmxvd2NoYXJ0IExSCiAgICBBW01lc3NhZ2VdIC0tPiBCW0V4dHJhY3RcbkVudGl0aWVzXQogICAgQiAtLT4gQ1tHcmFwaCBXYWxrXQogICAgQiAtLT4gRFtWZWN0b3IgU2VhcmNoXQogICAgQiAtLT4gRVtFdmVudCBMb29rdXBdCiAgICBDIC0tPiBGW0JsZW5kICsgU2NvcmVcbjAuNHIgKyAwLjNjICsgMC4ycmVjICsgMC4xZXddCiAgICBEIC0tPiBGCiAgICBFIC0tPiBGCiAgICBGIC0tPiBHW0luamVjdCBpbnRvXG5TeXN0ZW0gUHJvbXB0XQogICAgQiAtLT58bm8gZW50aXRpZXN8IEhbTGVnYWN5XG5GYWxsYmFja10KICAgIEggLS0+IEc=" caption="Graph-aware recall: parallel fetch from 3 sources, blended scoring, 1500-token budget" />
 
 When a conversation turn arrives:
 

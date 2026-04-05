@@ -43,17 +43,7 @@ The `getAutonomyLevel()` function checks org overrides first, falling back to th
 
 ## Integration with Confidence Router
 
-<Mermaid chart={`flowchart LR
-    A[Tool Call] --> B[Get Level]
-    B --> C[L4: Silent]
-    B --> D[L3: Notify]
-    B --> E[L2/L1]
-    C --> F[Execute + Log]
-    D --> G[Execute + Notify]
-    E --> H[Confidence\nRouter]
-    H -->|high| I[Act]
-    H -->|medium| J[Ask]
-    H -->|low| K[Escalate]`} caption="Autonomy routing: L4/L3 bypass approval, L2/L1 enter confidence router" />
+<Mermaid chart="Zmxvd2NoYXJ0IExSCiAgICBBW1Rvb2wgQ2FsbF0gLS0+IEJbR2V0IExldmVsXQogICAgQiAtLT4gQ1tMNDogU2lsZW50XQogICAgQiAtLT4gRFtMMzogTm90aWZ5XQogICAgQiAtLT4gRVtMMi9MMV0KICAgIEMgLS0+IEZbRXhlY3V0ZSArIExvZ10KICAgIEQgLS0+IEdbRXhlY3V0ZSArIE5vdGlmeV0KICAgIEUgLS0+IEhbQ29uZmlkZW5jZVxuUm91dGVyXQogICAgSCAtLT58aGlnaHwgSVtBY3RdCiAgICBIIC0tPnxtZWRpdW18IEpbQXNrXQogICAgSCAtLT58bG93fCBLW0VzY2FsYXRlXQ==" caption="Autonomy routing: L4/L3 bypass approval, L2/L1 enter confidence router" />
 
 Autonomy levels act as a **pre-filter** before confidence routing:
 

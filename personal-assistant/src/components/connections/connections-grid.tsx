@@ -263,8 +263,8 @@ interface ConnectionCardProps {
   onConnectionClick?: (connection: OrgConnection) => void
 }
 
-const BTN_BASE = 'inline-flex min-w-[5.5rem] items-center justify-center rounded-[10px] px-4 py-2 text-base font-medium transition'
-const BTN_COMPACT = 'inline-flex min-w-[5rem] items-center justify-center rounded-[10px] px-3.5 py-2 text-base font-medium transition'
+const BTN_BASE = 'inline-flex min-w-[5.5rem] items-center justify-center rounded-lg px-4 py-2 text-base font-medium transition'
+const BTN_COMPACT = 'inline-flex min-w-[5rem] items-center justify-center rounded-lg px-3.5 py-2 text-base font-medium transition'
 
 function ConnectionCard({
   connection,
@@ -286,7 +286,7 @@ function ConnectionCard({
 
   if (variant === 'onboarding') {
     return (
-      <article className="flex items-center gap-3.5 rounded-[10px] border border-black/[0.06] bg-white/76 px-5 py-4 shadow-sm transition duration-200 hover:shadow-md">
+      <article className="flex items-center gap-3.5 rounded-lg border border-black/[0.06] bg-white/76 px-5 py-4 shadow-sm transition duration-200 hover:shadow-md">
         <AppIcon id={connection.id} size={40} />
         <span className="flex-1 text-base font-medium text-foreground">{connection.name}</span>
         {connection.comingSoon ? (
@@ -315,7 +315,7 @@ function ConnectionCard({
   }
 
   return (
-    <article className="flex flex-col gap-3 rounded-[10px] border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition duration-300 hover:translate-y-[-1px] hover:shadow-md">
+    <article className="flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition duration-300 hover:translate-y-[-1px] hover:shadow-md">
       <div className="flex items-center gap-3">
         <AppIcon id={connection.id} size={40} />
         <div className="min-w-0">
@@ -356,12 +356,12 @@ function ConnectionCard({
 function CustomConnectionCard({ variant }: { variant: 'dashboard' | 'onboarding' }) {
   if (variant === 'onboarding') {
     return (
-      <article className="flex items-center gap-3.5 rounded-[10px] border border-dashed border-black/[0.12] bg-white/40 px-5 py-4 shadow-sm transition duration-200 hover:shadow-md">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] border border-dashed border-black/[0.12] bg-muted text-xl text-muted-foreground">+</div>
+      <article className="flex items-center gap-3.5 rounded-lg border border-dashed border-black/[0.12] bg-white/40 px-5 py-4 shadow-sm transition duration-200 hover:shadow-md">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-black/[0.12] bg-muted text-xl text-muted-foreground">+</div>
         <span className="flex-1 text-base font-medium text-foreground">Custom</span>
         <a
           href="/docs/connections/bridge"
-          className="inline-flex min-w-[5rem] items-center justify-center rounded-[10px] px-3.5 py-2 text-base font-medium transition border border-black/[0.06] bg-muted text-muted-foreground hover:text-foreground"
+          className="inline-flex min-w-[5rem] items-center justify-center rounded-lg px-3.5 py-2 text-base font-medium transition border border-black/[0.06] bg-muted text-muted-foreground hover:text-foreground"
         >
           Setup guide →
         </a>
@@ -370,9 +370,9 @@ function CustomConnectionCard({ variant }: { variant: 'dashboard' | 'onboarding'
   }
 
   return (
-    <article className="flex flex-col gap-3 rounded-[10px] border border-dashed border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition duration-300 hover:translate-y-[-1px] hover:shadow-md">
+    <article className="flex flex-col gap-3 rounded-lg border border-dashed border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition duration-300 hover:translate-y-[-1px] hover:shadow-md">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] border border-dashed border-black/[0.12] bg-muted text-xl text-muted-foreground">+</div>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-black/[0.12] bg-muted text-xl text-muted-foreground">+</div>
         <div className="min-w-0">
           <h3 className="text-base font-medium leading-tight text-foreground">Custom</h3>
           <p className="mt-0.5 text-base leading-tight text-muted-foreground">Connect any data source</p>

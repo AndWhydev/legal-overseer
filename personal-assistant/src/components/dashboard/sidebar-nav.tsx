@@ -216,7 +216,7 @@ function getContextConfig(tabId: string): ContextConfig | null {
       };
     case 'leads':
       return {
-        cta: { label: 'New Lead', icon: IconPlus },
+        cta: { label: 'Discover Leads', icon: IconPlus },
         items: [
           { label: 'All Leads' },
           { label: 'New' },
@@ -515,7 +515,7 @@ export function SidebarNav({
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <PixelWordmark className="truncate font-medium text-sm" style={{ WebkitTextStroke: '0.5px currentColor' }}>BitBit</PixelWordmark>
-                    <span className="truncate text-sm text-muted-foreground">
+                    <span className="truncate text-[12px] text-muted-foreground">
                       {activeOrg?.name ?? 'Personal'}
                     </span>
                   </div>
@@ -583,7 +583,7 @@ export function SidebarNav({
                       </SidebarMenuButton>
                       {badgeCount > 0 && (
                         <SidebarMenuBadge>
-                          <Badge variant="destructive" className="text-sm px-1.5 py-0">
+                          <Badge variant="destructive" className="text-[12px] px-1.5 py-0">
                             {badgeCount}
                           </Badge>
                         </SidebarMenuBadge>
@@ -609,7 +609,7 @@ export function SidebarNav({
                 ) : (
                   <div className="flex h-full min-h-0 flex-col gap-2.5 pt-1">
                     {ctx.cta && (
-                      <Button variant="default" size="default" className="h-8 w-full justify-start rounded-xl bg-foreground px-3 text-sm font-medium text-background shadow-sm hover:bg-foreground/90 gap-2">
+                      <Button variant="default" size="default" className="h-8 w-full justify-start rounded-xl bg-foreground px-3 text-sm font-medium text-background shadow-sm hover:bg-foreground/90 gap-2" onClick={() => window.dispatchEvent(new CustomEvent(activeTabId === "leads" ? "discover-leads" : "sidebar-cta-" + activeTabId))}>
                         <ctx.cta.icon className="size-4" />
                         {ctx.cta.label}
                       </Button>
@@ -627,7 +627,7 @@ export function SidebarNav({
                             {item.icon && <item.icon className="size-4 shrink-0" />}
                             <span>{item.label}</span>
                             {item.count !== undefined && (
-                              <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-sm text-muted-foreground">
+                              <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-[12px] text-muted-foreground">
                                 {item.count}
                               </SidebarMenuBadge>
                             )}
@@ -684,7 +684,7 @@ export function SidebarNav({
                     <span className="truncate font-medium">
                       {displayName || 'User'}
                     </span>
-                    <span className="truncate text-sm text-muted-foreground">
+                    <span className="truncate text-[12px] text-muted-foreground">
                       {activeOrg?.plan ?? 'Free'} plan
                     </span>
                   </div>
@@ -707,7 +707,7 @@ export function SidebarNav({
                       <span className="truncate font-medium">
                         {displayName || 'User'}
                       </span>
-                      <span className="truncate text-sm text-muted-foreground">
+                      <span className="truncate text-[12px] text-muted-foreground">
                         {activeOrg?.plan ?? 'Free'} plan
                       </span>
                     </div>

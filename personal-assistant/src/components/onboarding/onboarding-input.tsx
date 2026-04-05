@@ -58,7 +58,7 @@ export function OnboardingInput({
         className={cn(
           'flex flex-col items-stretch',
           'w-full max-w-[860px] mx-auto',
-          'rounded-[22px] border',
+          'rounded-[var(--radius-container)] border',
           'shadow-sm',
           'min-h-[120px] px-5 pt-3.5 pb-3',
         )}

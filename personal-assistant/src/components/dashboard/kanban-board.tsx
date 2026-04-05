@@ -458,7 +458,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
                   <KanbanColumn key={column.id} value={column.id} className="flex h-full min-w-[18rem] max-w-[24rem] flex-1">
                     <section
                       aria-labelledby={columnHeadingId}
-                      className="flex h-full min-h-0 w-full flex-col rounded-[24px] border border-border bg-background shadow-lg"
+                      className="flex h-full min-h-0 w-full flex-col rounded-[var(--radius-container-lg)] border border-border bg-background shadow-lg"
                     >
                       <div className="border-b border-border px-4 pb-4 pt-4">
                         <div className="flex items-start justify-between gap-3">

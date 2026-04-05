@@ -7,15 +7,7 @@ description: "The 5-stage nightly pipeline that summarizes, resolves, discovers,
 
 Sleep Consolidation (`src/lib/memory-palace/sleep-consolidation.ts`) is a nightly pipeline that mimics cognitive sleep processes. It runs as a daily cron job and processes the day's knowledge into a consolidated state.
 
-<Mermaid chart={`flowchart LR
-    A[Cron 3am] --> B[Summarize\nEntities]
-    B --> C[Resolve\nConflicts]
-    C --> D[Discover\nRelations]
-    D --> E[Prune\nLow-Quality]
-    E --> F[Morning\nBriefing]
-    B -.->|Haiku| B
-    D -.->|Haiku| D
-    F -.->|Haiku| F`} caption="The 5-stage nightly pipeline: summarize, resolve, discover, prune, brief" />
+<Mermaid chart="Zmxvd2NoYXJ0IExSCiAgICBBW0Nyb24gM2FtXSAtLT4gQltTdW1tYXJpemVcbkVudGl0aWVzXQogICAgQiAtLT4gQ1tSZXNvbHZlXG5Db25mbGljdHNdCiAgICBDIC0tPiBEW0Rpc2NvdmVyXG5SZWxhdGlvbnNdCiAgICBEIC0tPiBFW1BydW5lXG5Mb3ctUXVhbGl0eV0KICAgIEUgLS0+IEZbTW9ybmluZ1xuQnJpZWZpbmddCiAgICBCIC0uLT58SGFpa3V8IEIKICAgIEQgLS4tPnxIYWlrdXwgRAogICAgRiAtLi0+fEhhaWt1fCBG" caption="The 5-stage nightly pipeline: summarize, resolve, discover, prune, brief" />
 
 ## The 5 Stages
 
@@ -60,13 +52,7 @@ Sleep Consolidation (`src/lib/memory-palace/sleep-consolidation.ts`) is a nightl
 - **Consolidation creates new data** (edges, tuples, summaries) but never mutates source memories
 - **Total cost**: ~$0.10-0.50 per night
 
-<Mermaid chart={`flowchart LR
-    A[Deadlines] --> G[Morning\nBriefing]
-    B[Overdue Actions] --> G
-    C[Unread Messages] --> G
-    D[New Relations] --> G
-    E[Pending Approvals] --> G
-    F[Project Lifecycle] --> G`} caption="Morning briefing aggregates 6 signal sources into a structured daily summary" />ly run at current volume
+<Mermaid chart="Zmxvd2NoYXJ0IExSCiAgICBBW0RlYWRsaW5lc10gLS0+IEdbTW9ybmluZ1xuQnJpZWZpbmddCiAgICBCW092ZXJkdWUgQWN0aW9uc10gLS0+IEcKICAgIENbVW5yZWFkIE1lc3NhZ2VzXSAtLT4gRwogICAgRFtOZXcgUmVsYXRpb25zXSAtLT4gRwogICAgRVtQZW5kaW5nIEFwcHJvdmFsc10gLS0+IEcKICAgIEZbUHJvamVjdCBMaWZlY3ljbGVdIC0tPiBH" caption="Morning briefing aggregates 6 signal sources into a structured daily summary" />ly run at current volume
 
 <Warning>
 Relationship discovery (Stage 3) is limited to `MAX_DISCOVERY_PAIRS = 5` per run to prevent runaway Haiku calls. The confidence threshold of 0.7 prevents low-quality edges from polluting the graph.

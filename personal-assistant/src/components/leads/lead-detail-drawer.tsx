@@ -7,7 +7,9 @@ import {
   IconMail,
   IconCalendar,
   IconCircleX,
-  IconX,
+  IconLayoutSidebarRight,
+  IconPhone,
+  IconMapPin,
 } from '@tabler/icons-react'
 import {
   Select,
@@ -18,13 +20,10 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
+import { Progress } from '@/components/ui/progress'
 import type { EnhancedLeadData, LeadStatus } from '@/lib/leads/types'
 import { formatCurrency, formatSpeedToLead, relativeTime } from '@/lib/leads/utils'
-import { ScoreBreakdownPanel } from './score-breakdown-panel'
-import { OutreachIntelPanel } from './outreach-intel-panel'
 import { WebsiteSignalsPanel } from './website-signals-panel'
 import { NextActionPanel } from './next-action-panel'
 
@@ -44,153 +43,225 @@ const SCORE_VARIANT = {
 
 const STATUS_OPTIONS: LeadStatus[] = ['new', 'qualified', 'booked', 'converted', 'lost']
 
-const PROGRESS_STAGES: Array<{ status: LeadStatus; label: string }> = [
-  { status: 'new', label: 'New' },
-  { status: 'qualified', label: 'Qualified' },
-  { status: 'booked', label: 'Booked' },
-  { status: 'converted', label: 'Won' },
-]
-
-const TimelineEntry = memo(function TimelineEntry({ label, date }: { label: string; date: string }) {
-  return (
-    <div className="flex items-baseline gap-2">
-      <div className="mt-1 size-2 shrink-0 rounded-full bg-border" />
-      <div>
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <span className="ml-2 text-sm text-muted-foreground">{relativeTime(date)}</span>
-      </div>
-    </div>
-  )
-})
+function getDomain(url?: string | null): string | null {
+  if (!url) return null
+  try {
+    const u = new URL(url.startsWith("http") ? url : `https://${url}`)
+    return u.hostname
+  } catch {
+    return null
+  }
+}
 
 function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: LeadDetailDrawerProps) {
   if (!lead) return null
 
   const displayName = lead.prospect_name ?? lead.source_detail ?? `Lead ${lead.id.slice(0, 8)}`
   const hasDiscoveryData = lead.fit_score != null
-  const stageIdx = PROGRESS_STAGES.findIndex(s => s.status === lead.status)
-  const isLost = lead.status === 'lost'
+  const domain = getDomain(lead.prospect_website) ?? lead.prospect_domain
+  const hasContact = lead.prospect_phone || (lead.prospect_emails && lead.prospect_emails.length > 0) || lead.prospect_address
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
+    <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="text-base font-medium text-foreground">{displayName}</h2>
-        <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground">
-          <IconX size={16} />
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+        {domain ? (
+          <img
+            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
+            alt=""
+            className="h-6 w-6 shrink-0 rounded"
+          />
+        ) : (
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-secondary text-[10px] font-medium text-muted-foreground">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+        )}
+
+        {lead.prospect_website ? (
+          <a
+            href={lead.prospect_website.startsWith('http') ? lead.prospect_website : `https://${lead.prospect_website}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-w-0 flex-1 items-center gap-1.5 text-sm font-medium text-foreground hover:underline"
+          >
+            <span className="truncate">{displayName}</span>
+            <IconExternalLink size={14} className="shrink-0" />
+          </a>
+        ) : (
+          <h2 className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{displayName}</h2>
+        )}
+
+        <Badge variant={SCORE_VARIANT[lead.score] ?? 'secondary'} className="shrink-0 text-[12px]">
+          {lead.score}
+        </Badge>
+
+        <button onClick={onClose} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-muted-foreground hover:bg-secondary hover:text-foreground">
+          <IconLayoutSidebarRight size={16} />
         </button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Status & Meta */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={lead.status}
-            onValueChange={(val) => onUpdate(lead.id, { status: val })}
-          >
-            <SelectTrigger size="sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
 
-          <Badge variant={SCORE_VARIANT[lead.score] ?? 'secondary'}>
-            {lead.score}
-          </Badge>
-
-          {lead.prospect_website && (
-            <a
-              href={lead.prospect_website.startsWith('http') ? lead.prospect_website : `https://${lead.prospect_website}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-foreground hover:underline"
-            >
-              <IconExternalLink data-icon />
-              {lead.prospect_domain ?? 'Website'}
-            </a>
-          )}
+        {/* At a glance */}
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <div className="text-[12px] text-muted-foreground">Value</div>
+            <div className="text-sm font-medium text-foreground">{formatCurrency(lead.estimated_value)}</div>
+          </div>
+          <div>
+            <div className="text-[12px] text-muted-foreground">Speed</div>
+            <div className="text-sm font-medium text-foreground">{formatSpeedToLead(lead.created_at, lead.first_ack_at)}</div>
+          </div>
+          <div>
+            <div className="text-[12px] text-muted-foreground">Activity</div>
+            <div className="text-sm font-medium text-foreground">{lead.last_activity_at ? relativeTime(lead.last_activity_at) : '--'}</div>
+          </div>
         </div>
 
-        {/* Quick stats */}
-        <div className="flex gap-4 text-sm text-muted-foreground">
-          <span>Value: <strong className="font-medium text-foreground">{formatCurrency(lead.estimated_value)}</strong></span>
-          <span>Speed: <strong className="font-medium text-foreground">{formatSpeedToLead(lead.created_at, lead.first_ack_at)}</strong></span>
-          <span>Activity: <strong className="font-medium text-foreground">{lead.last_activity_at ? relativeTime(lead.last_activity_at) : '--'}</strong></span>
-        </div>
+        {/* Outreach angle — key actionable insight */}
+        {lead.outreach_angle && (
+          <div className="rounded-[var(--radius-md)] bg-secondary p-3">
+            <div className="text-[12px] text-muted-foreground">Suggested approach</div>
+            <div className="text-sm text-foreground">{lead.outreach_angle}</div>
+          </div>
+        )}
 
-        {/* Quick Action Bar */}
-        <div className="flex flex-wrap gap-2">
+        {/* Status */}
+        <Select
+          value={lead.status}
+          onValueChange={(val) => onUpdate(lead.id, { status: val })}
+        >
+          <SelectTrigger size="sm" className="h-8 w-auto">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Actions */}
+        <div className="flex flex-wrap gap-1.5">
           {lead.status !== 'converted' && lead.status !== 'lost' && (
-            <Button onClick={(e) => onAdvanceStage?.(lead.id, e)}>
-              <IconArrowRight data-icon /> Advance Stage
+            <Button size="sm" onClick={(e) => onAdvanceStage?.(lead.id, e)}>
+              <IconArrowRight data-icon /> Advance
             </Button>
           )}
-          <Button variant="outline">
+          <Button size="sm" variant="outline">
             <IconMail data-icon /> Email
           </Button>
-          <Button variant="outline">
+          <Button size="sm" variant="outline">
             <IconCalendar data-icon /> Schedule
           </Button>
           {lead.status !== 'converted' && lead.status !== 'lost' && (
             <Button
-              variant="destructive"
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
               onClick={() => onUpdate(lead.id, { status: 'lost' })}
             >
-              <IconCircleX data-icon /> Mark Lost
+              <IconCircleX data-icon /> Lost
             </Button>
           )}
         </div>
 
-        {/* Status Progress Bar */}
-        <div className="flex items-center gap-1" role="progressbar" aria-label="Pipeline progress">
-          {PROGRESS_STAGES.map((stage, i) => (
-            <div key={stage.status} className="flex flex-1 flex-col items-center gap-1">
-              <Progress
-                value={isLost ? 100 : (i <= stageIdx ? 100 : 0)}
-                className={cn('h-0.5', isLost && '[&>[data-slot=progress-indicator]]:bg-muted-foreground')}
-              />
-              <span className={cn(
-                'text-sm font-medium',
-                i <= stageIdx ? 'text-foreground' : 'text-muted-foreground'
-              )}>
-                {stage.label}
-              </span>
+        <Separator />
+
+        {/* Intelligence — scores + signals combined */}
+        {hasDiscoveryData && (
+          <>
+            <div className="space-y-3">
+              <h4 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground">Intelligence</h4>
+
+              {/* Score gauges */}
+              <div className="flex gap-4">
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[12px] text-muted-foreground">Fit</span>
+                    <span className="text-sm font-medium text-foreground">{lead.fit_score}</span>
+                  </div>
+                  <Progress value={Math.min(lead.fit_score!, 100)} className="h-1" />
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[12px] text-muted-foreground">Opportunity</span>
+                    <span className="text-sm font-medium text-foreground">{lead.opportunity_score}</span>
+                  </div>
+                  <Progress value={Math.min(lead.opportunity_score!, 100)} className="h-1" />
+                </div>
+              </div>
+
+              {/* Factor breakdown — compact */}
+              {lead.fit_breakdown?.components?.length ? (
+                <div className="space-y-0.5">
+                  <div className="text-[12px] text-muted-foreground">Fit factors</div>
+                  {lead.fit_breakdown.components.map((c, i) => (
+                    <div key={i} className="flex items-center justify-between py-0.5">
+                      <span className="text-sm text-muted-foreground">{c.factor}</span>
+                      <Badge variant="secondary" className="text-[12px] tabular-nums">
+                        {c.points > 0 ? '+' : ''}{c.points}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {lead.opportunity_breakdown?.components?.length ? (
+                <div className="space-y-0.5">
+                  <div className="text-[12px] text-muted-foreground">Opportunity factors</div>
+                  {lead.opportunity_breakdown.components.map((c, i) => (
+                    <div key={i} className="flex items-center justify-between py-0.5">
+                      <span className="text-sm text-muted-foreground">{c.factor}</span>
+                      <Badge variant="secondary" className="text-[12px] tabular-nums">
+                        {c.points > 0 ? '+' : ''}{c.points}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {/* Opportunity notes inline */}
+              {lead.opportunity_notes && (
+                <div className="space-y-1.5">
+                  {lead.opportunity_notes.split(';').map((n) => n.trim()).filter(Boolean).map((n, i) => {
+                    const colonIdx = n.indexOf(':')
+                    const category = colonIdx > 0 && colonIdx < 20 ? n.substring(0, colonIdx).trim() : null
+                    const note = category ? n.substring(colonIdx + 1).trim() : n
+                    return (
+                      <div key={i} className="flex items-start gap-2">
+                        {category && <Badge variant="secondary" className="mt-0.5 shrink-0 text-[12px]">{category}</Badge>}
+                        <span className="text-sm text-muted-foreground">{note}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Priority services */}
+              {lead.priority_services && lead.priority_services.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {lead.priority_services.map((s) => (
+                    <Badge key={s} variant="outline" className="text-[12px]">{s}</Badge>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
 
-        {/* Score Breakdown */}
-        {hasDiscoveryData && (
-          <ScoreBreakdownPanel
-            fitScore={lead.fit_score!}
-            opportunityScore={lead.opportunity_score!}
-            fitBreakdown={lead.fit_breakdown}
-            opportunityBreakdown={lead.opportunity_breakdown}
-          />
-        )}
-
-        {/* Outreach Intelligence */}
-        {hasDiscoveryData && (
-          <OutreachIntelPanel
-            opportunityNotes={lead.opportunity_notes}
-            outreachAngle={lead.outreach_angle}
-            priorityServices={lead.priority_services}
-          />
+            <Separator />
+          </>
         )}
 
         {/* Website Signals */}
         {lead.website_signals && (
-          <WebsiteSignalsPanel signals={lead.website_signals} />
+          <>
+            <WebsiteSignalsPanel signals={lead.website_signals} />
+            <Separator />
+          </>
         )}
-
-        <Separator />
 
         {/* Next Action */}
         <NextActionPanel
@@ -204,65 +275,76 @@ function LeadDetailDrawerInner({ lead, onClose, onUpdate, onAdvanceStage }: Lead
           }}
         />
 
-        {/* Contact Info */}
-        {(lead.prospect_phone || (lead.prospect_emails && lead.prospect_emails.length > 0)) && (
-          <div>
-            <h4 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Contact</h4>
-            {lead.prospect_phone && (
-              <div className="text-sm text-muted-foreground">
-                Phone: <span className="text-foreground">{lead.prospect_phone}</span>
-              </div>
-            )}
-            {lead.prospect_emails?.map((email) => (
-              <div key={email} className="text-sm text-muted-foreground">
-                Email: <span className="text-foreground">{email}</span>
-              </div>
-            ))}
-            {lead.prospect_address && (
-              <div className="text-sm text-muted-foreground">
-                Address: <span className="text-foreground">{lead.prospect_address}</span>
-              </div>
-            )}
-          </div>
-        )}
+        <Separator />
 
-        {/* Notes */}
-        {lead.notes && (
-          <div>
-            <h4 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Notes</h4>
-            <div className="whitespace-pre-wrap rounded-lg bg-muted p-3 text-sm text-muted-foreground leading-relaxed">
+        {/* Details — contact + notes + services + timeline merged */}
+        <div className="space-y-3">
+          <h4 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground">Details</h4>
+
+          {/* Contact */}
+          {hasContact && (
+            <div className="space-y-1">
+              {lead.prospect_emails?.map((email) => (
+                <div key={email} className="flex items-center gap-2 text-sm">
+                  <IconMail size={14} className="shrink-0 text-muted-foreground" />
+                  <span className="text-foreground">{email}</span>
+                </div>
+              ))}
+              {lead.prospect_phone && (
+                <div className="flex items-center gap-2 text-sm">
+                  <IconPhone size={14} className="shrink-0 text-muted-foreground" />
+                  <span className="text-foreground">{lead.prospect_phone}</span>
+                </div>
+              )}
+              {lead.prospect_address && (
+                <div className="flex items-center gap-2 text-sm">
+                  <IconMapPin size={14} className="shrink-0 text-muted-foreground" />
+                  <span className="text-foreground">{lead.prospect_address}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Notes */}
+          {lead.notes && (
+            <div className="whitespace-pre-wrap rounded-[var(--radius-md)] bg-secondary p-3 text-sm text-muted-foreground leading-relaxed">
               {lead.notes}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Service Interest */}
-        {lead.service_interest && lead.service_interest.length > 0 && (
-          <div>
-            <h4 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Services</h4>
+          {/* Services */}
+          {lead.service_interest && lead.service_interest.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {lead.service_interest.map((s) => (
-                <Badge key={s} variant="outline">{s}</Badge>
+                <Badge key={s} variant="outline" className="text-[12px]">{s}</Badge>
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Activity Timeline */}
-        <div>
-          <h4 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Timeline</h4>
-          <div className="space-y-2 border-l-2 border-border pl-3">
-            <TimelineEntry label="Created" date={lead.created_at} />
-            {lead.first_ack_at && <TimelineEntry label="First acknowledged" date={lead.first_ack_at} />}
+          {/* Timeline */}
+          <div className="space-y-1 border-l-2 border-border pl-3">
+            <div className="flex items-baseline gap-2">
+              <span className="text-sm text-muted-foreground">Created</span>
+              <span className="text-[12px] text-muted-foreground">{relativeTime(lead.created_at)}</span>
+            </div>
+            {lead.first_ack_at && (
+              <div className="flex items-baseline gap-2">
+                <span className="text-sm text-muted-foreground">Acknowledged</span>
+                <span className="text-[12px] text-muted-foreground">{relativeTime(lead.first_ack_at)}</span>
+              </div>
+            )}
             {lead.last_activity_at && lead.last_activity_at !== lead.created_at && (
-              <TimelineEntry label="Last activity" date={lead.last_activity_at} />
+              <div className="flex items-baseline gap-2">
+                <span className="text-sm text-muted-foreground">Last activity</span>
+                <span className="text-[12px] text-muted-foreground">{relativeTime(lead.last_activity_at)}</span>
+              </div>
             )}
           </div>
         </div>
 
         {/* Lead ID */}
-        <div className="pt-2 text-sm text-muted-foreground">
-          ID: {lead.id}
+        <div className="text-[12px] text-muted-foreground">
+          {lead.id}
         </div>
       </div>
     </div>

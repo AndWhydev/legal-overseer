@@ -177,7 +177,7 @@ export async function POST(
       // RAG embedding (fire-and-forget)
       if (process.env.PINECONE_API_KEY) {
         import('@/lib/rag/embedding-queue').then(({ enqueueEmbedding }) => {
-          enqueueEmbedding(supabase as any, orgId, msg.externalId, msg.bodyFull || msg.body, {
+          enqueueEmbedding(supabase as any, orgId, msg.externalId, msg.bodyFull || msg.body, ({
             message_id: msg.externalId,
             org_id: orgId,
             channel: channelType,
@@ -187,7 +187,7 @@ export async function POST(
             received_at: msg.receivedAt.toISOString(),
             chunk_index: 0,
             total_chunks: 1,
-          }).catch(() => {})
+          }) as any).catch(() => {})
         }).catch(() => {})
       }
     }

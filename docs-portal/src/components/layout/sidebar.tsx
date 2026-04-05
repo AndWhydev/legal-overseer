@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { filterNavByVisibility } from "@/lib/docs-visibility"
-import { LogOut, ChevronsUpDown } from "lucide-react"
+import { LogIn, LogOut, ChevronsUpDown } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -134,7 +134,14 @@ function AccountSelector() {
     router.push("/login")
   }
 
-  if (!user) return null
+  if (!user) return (
+    <div style={{ borderTop: "1px solid #e5e7eb", padding: "12px 16px" }}>
+      <a href="/login" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "7px 12px", borderRadius: "6px", textDecoration: "none", color: "#6b7280", fontSize: "14px", fontWeight: 500 }}>
+        <LogIn size={16} />
+        <span>Sign in</span>
+      </a>
+    </div>
+  )
 
   const email = user.email || ""
   const displayName = email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)

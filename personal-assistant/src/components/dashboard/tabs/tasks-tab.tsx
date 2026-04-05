@@ -157,7 +157,7 @@ function TasksTab() {
           <section
             id="tasks-board"
             aria-labelledby="tasks-board-title"
-            className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-border bg-linear-to-b from-background via-background to-muted/40 shadow-lg"
+            className="flex h-full min-h-0 flex-col overflow-hidden rounded-[var(--radius-container-lg)] border border-border bg-linear-to-b from-background via-background to-muted/40 shadow-lg"
           >
             <h2 id="tasks-board-title" className="sr-only">
               Task board

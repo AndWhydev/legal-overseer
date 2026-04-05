@@ -62,24 +62,7 @@ All tiers fetch in parallel. If a tier fails, others continue. The system degrad
 
 ## Data Flow
 
-<Mermaid chart={`flowchart LR
-    subgraph API[API Layer]
-        A[Chat Endpoint] --> B[Auth + Security]
-    end
-    subgraph Intelligence
-        C[Model Router] --> D[Context Assembly]
-        D --> E[Autonomy + Confidence]
-    end
-    subgraph Data[Data Layer]
-        F[Memory Palace]
-        G[Knowledge Graph]
-        H[Action Outcomes]
-    end
-    B --> C
-    E --> I[TAOR Loop]
-    I <--> Data
-    I --> J[SSE Stream]
-    J --> K[React UI]`} caption="Three-layer architecture: API handles auth, Intelligence routes and assembles context, Data stores graph and memories" />
+<Mermaid chart="Zmxvd2NoYXJ0IExSCiAgICBzdWJncmFwaCBBUElbQVBJIExheWVyXQogICAgICAgIEFbQ2hhdCBFbmRwb2ludF0gLS0+IEJbQXV0aCArIFNlY3VyaXR5XQogICAgZW5kCiAgICBzdWJncmFwaCBJbnRlbGxpZ2VuY2UKICAgICAgICBDW01vZGVsIFJvdXRlcl0gLS0+IERbQ29udGV4dCBBc3NlbWJseV0KICAgICAgICBEIC0tPiBFW0F1dG9ub215ICsgQ29uZmlkZW5jZV0KICAgIGVuZAogICAgc3ViZ3JhcGggRGF0YVtEYXRhIExheWVyXQogICAgICAgIEZbTWVtb3J5IFBhbGFjZV0KICAgICAgICBHW0tub3dsZWRnZSBHcmFwaF0KICAgICAgICBIW0FjdGlvbiBPdXRjb21lc10KICAgIGVuZAogICAgQiAtLT4gQwogICAgRSAtLT4gSVtUQU9SIExvb3BdCiAgICBJIDwtLT4gRGF0YQogICAgSSAtLT4gSltTU0UgU3RyZWFtXQogICAgSiAtLT4gS1tSZWFjdCBVSV0=" caption="Three-layer architecture: API handles auth, Intelligence routes and assembles context, Data stores graph and memories" />
 
 <Tip>
 The Supabase Realtime subscription means the kanban board, activity feed, and contact directory all update instantly when the agent creates or modifies data. No polling required.

@@ -13,18 +13,7 @@ The key insight: chunks lose context when split from their source document. "He 
 
 ## How It Works
 
-<Mermaid chart={`flowchart LR
-    subgraph Old[Old Path]
-        A1[Chunk] --> A2[Embed Raw]
-        A2 --> A3[Store]
-    end
-    subgraph New[New Path]
-        B1[Chunk] --> B2[Haiku Enrich\nwho/what/when]
-        B2 --> B3[Embed Enriched]
-        B3 --> B4[Store]
-        B2 -->|fails| B5[Use Raw]
-        B5 --> B3
-    end`} caption="Before vs after: raw embedding loses context, Haiku enrichment adds who/what/when at ingestion time" />
+<Mermaid chart="Zmxvd2NoYXJ0IExSCiAgICBzdWJncmFwaCBPbGRbT2xkIFBhdGhdCiAgICAgICAgQTFbQ2h1bmtdIC0tPiBBMltFbWJlZCBSYXddCiAgICAgICAgQTIgLS0+IEEzW1N0b3JlXQogICAgZW5kCiAgICBzdWJncmFwaCBOZXdbTmV3IFBhdGhdCiAgICAgICAgQjFbQ2h1bmtdIC0tPiBCMltIYWlrdSBFbnJpY2hcbndoby93aGF0L3doZW5dCiAgICAgICAgQjIgLS0+IEIzW0VtYmVkIEVucmljaGVkXQogICAgICAgIEIzIC0tPiBCNFtTdG9yZV0KICAgICAgICBCMiAtLT58ZmFpbHN8IEI1W1VzZSBSYXddCiAgICAgICAgQjUgLS0+IEIzCiAgICBlbmQ=" caption="Before vs after: raw embedding loses context, Haiku enrichment adds who/what/when at ingestion time" />
 
 At ingestion time (not query time), each chunk is enriched:
 

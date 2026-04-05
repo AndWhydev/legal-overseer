@@ -9,15 +9,7 @@ The Confidence Calibrator (`src/lib/intelligence/confidence-calibrator.ts`) runs
 
 ## How It Works
 
-<Mermaid chart={`flowchart LR
-    A[Tool Outcome] --> B[Record in\naction_outcomes]
-    B --> C[Nightly\nAnalysis]
-    C -->|20+ samples| D[Calculate\nBand Rates]
-    D --> E[New\nThresholds]
-    E --> F[Confidence\nRouter]
-    F --> A
-    C -->|insufficient| G[Keep Static\nThresholds]
-    G --> F`} caption="Calibration feedback loop: outcomes drive nightly threshold adjustment" />
+<Mermaid chart="Zmxvd2NoYXJ0IExSCiAgICBBW1Rvb2wgT3V0Y29tZV0gLS0+IEJbUmVjb3JkIGluXG5hY3Rpb25fb3V0Y29tZXNdCiAgICBCIC0tPiBDW05pZ2h0bHlcbkFuYWx5c2lzXQogICAgQyAtLT58MjArIHNhbXBsZXN8IERbQ2FsY3VsYXRlXG5CYW5kIFJhdGVzXQogICAgRCAtLT4gRVtOZXdcblRocmVzaG9sZHNdCiAgICBFIC0tPiBGW0NvbmZpZGVuY2VcblJvdXRlcl0KICAgIEYgLS0+IEEKICAgIEMgLS0+fGluc3VmZmljaWVudHwgR1tLZWVwIFN0YXRpY1xuVGhyZXNob2xkc10KICAgIEcgLS0+IEY=" caption="Calibration feedback loop: outcomes drive nightly threshold adjustment" />
 
 The calibrator analyzes the `action_outcomes` table, which records every agent action along with whether it was approved and whether it was correct:
 

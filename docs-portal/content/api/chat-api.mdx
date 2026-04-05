@@ -40,25 +40,7 @@ In development, set `DEV_BYPASS=true` to skip authentication.
 
 ## Response (SSE Stream)
 
-<Mermaid chart={`sequenceDiagram
-    participant C as Client
-    participant API as Chat API
-    participant CTX as Context Assembly
-    participant TAOR as TAOR Loop
-    participant Tools as Tools
-
-    C->>API: POST /api/agent/chat
-    API->>API: Auth + Security
-    API->>CTX: Build Context (48K budget)
-    CTX-->>API: Assembled Context
-    loop TAOR Loop
-        API->>TAOR: Think
-        TAOR->>Tools: tool_call
-        Tools-->>TAOR: tool_result
-        API-->>C: SSE events
-    end
-    TAOR-->>API: Final Response
-    API-->>C: SSE done`} caption="Chat API sequence: authenticate, assemble context, TAOR loop streams tool calls and results as SSE" />
+<Mermaid chart="c2VxdWVuY2VEaWFncmFtCiAgICBwYXJ0aWNpcGFudCBDIGFzIENsaWVudAogICAgcGFydGljaXBhbnQgQVBJIGFzIENoYXQgQVBJCiAgICBwYXJ0aWNpcGFudCBDVFggYXMgQ29udGV4dCBBc3NlbWJseQogICAgcGFydGljaXBhbnQgVEFPUiBhcyBUQU9SIExvb3AKICAgIHBhcnRpY2lwYW50IFRvb2xzIGFzIFRvb2xzCgogICAgQy0+PkFQSTogUE9TVCAvYXBpL2FnZW50L2NoYXQKICAgIEFQSS0+PkFQSTogQXV0aCArIFNlY3VyaXR5CiAgICBBUEktPj5DVFg6IEJ1aWxkIENvbnRleHQgKDQ4SyBidWRnZXQpCiAgICBDVFgtLT4+QVBJOiBBc3NlbWJsZWQgQ29udGV4dAogICAgbG9vcCBUQU9SIExvb3AKICAgICAgICBBUEktPj5UQU9SOiBUaGluawogICAgICAgIFRBT1ItPj5Ub29sczogdG9vbF9jYWxsCiAgICAgICAgVG9vbHMtLT4+VEFPUjogdG9vbF9yZXN1bHQKICAgICAgICBBUEktLT4+QzogU1NFIGV2ZW50cwogICAgZW5kCiAgICBUQU9SLS0+PkFQSTogRmluYWwgUmVzcG9uc2UKICAgIEFQSS0tPj5DOiBTU0UgZG9uZQ==" caption="Chat API sequence: authenticate, assemble context, TAOR loop streams tool calls and results as SSE" />
 
 The response is a `text/event-stream` with events:
 

@@ -198,7 +198,7 @@ function TaskDialogPanel({
   return (
     <DialogContent
       showCloseButton
-      className="max-h-[min(86vh,48rem)] max-w-2xl gap-0 overflow-hidden rounded-[28px] border border-border bg-background p-0 shadow-lg"
+      className="max-h-[min(86vh,48rem)] max-w-2xl gap-0 overflow-hidden rounded-[var(--radius-container-lg)] border border-border bg-background p-0 shadow-lg"
     >
       {editMode ? (
         <form onSubmit={handleSubmit} className="flex max-h-[inherit] flex-col">

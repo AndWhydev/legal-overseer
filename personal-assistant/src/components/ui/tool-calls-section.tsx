@@ -255,7 +255,7 @@ export function ToolCallsSection({
                 exit={{ opacity: 0, scale: 0.74, y: 6 }}
                 transition={{ duration: 0.32, ease: [0.2, 0.9, 0.2, 1] }}
                 className={cn(
-                  "inline-flex size-10 items-center justify-center rounded-[18px] border border-border bg-background shadow-lg",
+                  "inline-flex size-10 items-center justify-center rounded-xl border border-border bg-background shadow-lg",
                   index > 0 && "-ml-3.5"
                 )}
                 style={{

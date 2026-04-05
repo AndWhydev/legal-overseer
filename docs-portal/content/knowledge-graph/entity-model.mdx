@@ -7,13 +7,7 @@ description: "The knowledge graph schema: entity nodes with dual vectors, bi-tem
 
 BitBit's knowledge graph lives in Supabase via pgvector. It stores entities, their relationships, and temporal events across three tables designed for co-located graph+vector queries in a single SQL statement.
 
-<Mermaid chart={`flowchart LR
-    EN[entity_nodes\n768d + 1024d vectors] -->|source_id| EE[entity_edges\nbi-temporal]
-    EN -->|target_id| EE
-    EN -->|subject_id| ET[event_tuples\nSVO decomposition]
-    EN -->|object_id| ET
-    MP[memory_palace\nentries] -.->|provenance| EE
-    MP -.->|provenance| ET`} caption="Knowledge graph schema: entity nodes with dual vectors, bi-temporal edges, and SVO event tuples" />
+<Mermaid chart="Zmxvd2NoYXJ0IExSCiAgICBFTltlbnRpdHlfbm9kZXNcbjc2OGQgKyAxMDI0ZCB2ZWN0b3JzXSAtLT58c291cmNlX2lkfCBFRVtlbnRpdHlfZWRnZXNcbmJpLXRlbXBvcmFsXQogICAgRU4gLS0+fHRhcmdldF9pZHwgRUUKICAgIEVOIC0tPnxzdWJqZWN0X2lkfCBFVFtldmVudF90dXBsZXNcblNWTyBkZWNvbXBvc2l0aW9uXQogICAgRU4gLS0+fG9iamVjdF9pZHwgRVQKICAgIE1QW21lbW9yeV9wYWxhY2VcbmVudHJpZXNdIC0uLT58cHJvdmVuYW5jZXwgRUUKICAgIE1QIC0uLT58cHJvdmVuYW5jZXwgRVQ=" caption="Knowledge graph schema: entity nodes with dual vectors, bi-temporal edges, and SVO event tuples" />
 
 ## entity_nodes
 

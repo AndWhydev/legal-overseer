@@ -9,18 +9,7 @@ The Proactive Intelligence layer (`src/lib/proactive/index.ts`) orchestrates an 
 
 It runs every 15 minutes via a cron route.
 
-<Mermaid chart={`flowchart LR
-    subgraph Sources
-        A[Channels]
-        B[Calendar]
-        C[Tasks]
-        D[Graph Changes]
-    end
-    Sources --> E[Aggregate +\nDeduplicate]
-    E --> F[Classify\nType + Priority]
-    F -->|high conf| G[Auto-Execute]
-    F -->|medium| H[Queue Suggestion]
-    F -->|low| I[Discard]`} caption="Signal-to-action pipeline: gather, classify, and route every 15 minutes" />
+<Mermaid chart="Zmxvd2NoYXJ0IExSCiAgICBzdWJncmFwaCBTb3VyY2VzCiAgICAgICAgQVtDaGFubmVsc10KICAgICAgICBCW0NhbGVuZGFyXQogICAgICAgIENbVGFza3NdCiAgICAgICAgRFtHcmFwaCBDaGFuZ2VzXQogICAgZW5kCiAgICBTb3VyY2VzIC0tPiBFW0FnZ3JlZ2F0ZSArXG5EZWR1cGxpY2F0ZV0KICAgIEUgLS0+IEZbQ2xhc3NpZnlcblR5cGUgKyBQcmlvcml0eV0KICAgIEYgLS0+fGhpZ2ggY29uZnwgR1tBdXRvLUV4ZWN1dGVdCiAgICBGIC0tPnxtZWRpdW18IEhbUXVldWUgU3VnZ2VzdGlvbl0KICAgIEYgLS0+fGxvd3wgSVtEaXNjYXJkXQ==" caption="Signal-to-action pipeline: gather, classify, and route every 15 minutes" />
 
 ## Pipeline
 

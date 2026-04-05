@@ -2,7 +2,6 @@
 
 import React, { memo } from 'react'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
 
 interface OutreachIntelPanelProps {
   opportunityNotes: string | null
@@ -25,25 +24,23 @@ function OutreachIntelPanelInner({ opportunityNotes, outreachAngle, priorityServ
   const parsedNotes = parseNotesByCategory(opportunityNotes ?? '')
 
   return (
-    <div>
-      <h4 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+    <div className="space-y-3">
+      <h4 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground">
         Outreach Intelligence
       </h4>
 
       {outreachAngle && (
-        <Card className="mb-4 gap-1 py-3">
-          <CardContent>
-            <div className="text-sm font-medium uppercase text-muted-foreground">Suggested Angle</div>
-            <div className="text-sm font-medium text-foreground">{outreachAngle}</div>
-          </CardContent>
-        </Card>
+        <div className="rounded-[var(--radius-md)] bg-secondary p-3">
+          <div className="text-[12px] text-muted-foreground">Suggested Angle</div>
+          <div className="text-sm font-medium text-foreground">{outreachAngle}</div>
+        </div>
       )}
 
       {parsedNotes.length > 0 && (
-        <div className="mb-4 space-y-2">
+        <div className="space-y-1.5">
           {parsedNotes.map((n, i) => (
             <div key={i} className="flex items-start gap-2">
-              <Badge variant="secondary" className="mt-0.5 shrink-0">
+              <Badge variant="secondary" className="mt-0.5 shrink-0 text-[12px]">
                 {n.category}
               </Badge>
               <span className="text-sm text-muted-foreground">{n.note}</span>
@@ -54,10 +51,10 @@ function OutreachIntelPanelInner({ opportunityNotes, outreachAngle, priorityServ
 
       {priorityServices && priorityServices.length > 0 && (
         <div>
-          <div className="mb-2 text-sm font-medium text-muted-foreground">Priority Services</div>
+          <div className="mb-1.5 text-[12px] font-medium text-muted-foreground">Priority Services</div>
           <div className="flex flex-wrap gap-1.5">
             {priorityServices.map((s) => (
-              <Badge key={s} variant="outline">{s}</Badge>
+              <Badge key={s} variant="outline" className="text-[12px]">{s}</Badge>
             ))}
           </div>
         </div>

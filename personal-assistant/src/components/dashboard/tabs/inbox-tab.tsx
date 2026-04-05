@@ -878,7 +878,7 @@ function InboxTab() {
               />
             </div>
 
-            <div className="flex items-center gap-1 rounded-[20px] border border-border bg-card px-3 py-1.5 shadow-sm">
+            <div className="flex items-center gap-1 rounded-[var(--radius-container)] border border-border bg-card px-3 py-1 shadow-sm">
               <Checkbox
                 checked={keyboard.selectedIds.size > 0 && keyboard.selectedIds.size === displayed.length}
                 onCheckedChange={(checked) => {
@@ -887,22 +887,22 @@ function InboxTab() {
                 }}
                 aria-label="Select all"
               />
-              <Separator orientation="vertical" className="mx-1 h-4" />
+              <Separator orientation="vertical" className="mx-1 h-5" />
               <TooltipProvider>
                 <Tooltip><TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon-xs" className="rounded-full" onClick={handleBulkArchive} disabled={keyboard.selectedIds.size === 0}><IconArchive size={16} /></Button>
+                  <Button variant="ghost" size="icon" className="rounded-lg h-8 w-8" onClick={handleBulkArchive} disabled={keyboard.selectedIds.size === 0}><IconArchive size={18} /></Button>
                 </TooltipTrigger><TooltipContent>Archive</TooltipContent></Tooltip>
                 <Tooltip><TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon-xs" className="rounded-full" onClick={() => keyboard.selectedIds.forEach(id => handleStar(id))} disabled={keyboard.selectedIds.size === 0}><IconFlag size={16} /></Button>
+                  <Button variant="ghost" size="icon" className="rounded-lg h-8 w-8" onClick={() => keyboard.selectedIds.forEach(id => handleStar(id))} disabled={keyboard.selectedIds.size === 0}><IconFlag size={18} /></Button>
                 </TooltipTrigger><TooltipContent>Flag</TooltipContent></Tooltip>
                 <Tooltip><TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon-xs" className="rounded-full" onClick={() => keyboard.selectedIds.forEach(id => handleDone(id))} disabled={keyboard.selectedIds.size === 0}><IconCircleCheck size={16} /></Button>
+                  <Button variant="ghost" size="icon" className="rounded-lg h-8 w-8" onClick={() => keyboard.selectedIds.forEach(id => handleDone(id))} disabled={keyboard.selectedIds.size === 0}><IconCircleCheck size={18} /></Button>
                 </TooltipTrigger><TooltipContent>Done</TooltipContent></Tooltip>
                 <Tooltip><TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="icon-xs"
-                    className="rounded-full"
+                    size="icon"
+                    className="rounded-lg h-8 w-8"
                     onClick={() => {
                       const firstSelected = Array.from(keyboard.selectedIds)[0];
                       if (firstSelected) {
@@ -912,11 +912,11 @@ function InboxTab() {
                     }}
                     disabled={keyboard.selectedIds.size === 0}
                   >
-                    <IconClock size={16} />
+                    <IconClock size={18} />
                   </Button>
                 </TooltipTrigger><TooltipContent>Snooze</TooltipContent></Tooltip>
                 <Tooltip><TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon-xs" className="rounded-full" onClick={() => keyboard.selectedIds.forEach(id => handleDelete(id))} disabled={keyboard.selectedIds.size === 0}><IconTrash size={16} /></Button>
+                  <Button variant="ghost" size="icon" className="rounded-lg h-8 w-8" onClick={() => keyboard.selectedIds.forEach(id => handleDelete(id))} disabled={keyboard.selectedIds.size === 0}><IconTrash size={18} /></Button>
                 </TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
               </TooltipProvider>
 
@@ -926,7 +926,7 @@ function InboxTab() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 rounded-[24px] border border-border bg-card shadow-sm overflow-hidden">
+          <div className="min-h-0 flex-1 rounded-[var(--radius-container-lg)] border border-border bg-card shadow-sm overflow-hidden">
             <div className="h-full overflow-y-auto overflow-x-hidden overscroll-contain p-2">
               <div className="flex flex-col gap-1 min-w-0">
                   {displayItems.length === 0 ? (
@@ -1015,8 +1015,8 @@ function InboxTab() {
                       })}
                       {hasMore && !useSeeded && displayed.length > 0 && (
                         <Button
-                          variant="ghost"
-                          className="mt-2 w-full rounded-xl"
+                          variant="outline"
+                          size="sm" className="mt-2 w-full"
                           onClick={() => fetchInbox({ loadMore: true })}
                           disabled={loadingMore}
                         >
@@ -1026,7 +1026,7 @@ function InboxTab() {
                               Loading...
                             </>
                           ) : (
-                            <>Load more {total > messages.length ? `(${total - messages.length} remaining)` : ''}</>
+                            <>Load more {total > messages.length && <span className="text-muted-foreground ml-1">{total - messages.length} remaining</span>}</>
                           )}
                         </Button>
                       )}
@@ -1169,10 +1169,10 @@ function GroupRow({
   return (
     <div
       className={cn(
-        'group/row flex items-center gap-3 rounded-[18px] px-3 py-2.5 cursor-pointer transition-colors',
-        'hover:bg-accent/45',
-        (focused || expanded) && 'bg-accent/55',
-        selected && 'bg-primary/5 ring-1 ring-primary/15',
+        'group/row flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer transition-colors',
+        'hover:bg-accent',
+        (focused || expanded) && 'bg-accent',
+        selected && 'bg-secondary ring-1 ring-border',
       )}
       onClick={onClick}
       role="button"
@@ -1193,14 +1193,14 @@ function GroupRow({
 
       <div className="min-w-0 flex-1 truncate text-sm">
         <span className="text-foreground">{item.label}</span>
-        <span className="ml-2 inline-flex rounded-full border border-border px-1.5 py-0 text-sm text-muted-foreground tabular-nums align-middle">
+        <span className="ml-2 inline-flex rounded-full border border-border px-1.5 py-0 text-[12px] text-muted-foreground tabular-nums align-middle">
           {item.messages.length}
         </span>
         <span className="mx-2 text-muted-foreground">&middot;</span>
         <span className="text-muted-foreground">{sanitizeText(String(preview))}</span>
       </div>
 
-      <span className="shrink-0 text-sm text-muted-foreground" title={absTime}>
+      <span className="shrink-0 whitespace-nowrap text-[12px] text-muted-foreground" title={absTime}>
         {relTime}
       </span>
     </div>
@@ -1239,11 +1239,11 @@ function MessageRow({
   return (
     <div
       className={cn(
-        'group/row flex items-center gap-3 rounded-[18px] px-3 py-2.5 cursor-pointer transition-colors',
-        'hover:bg-accent/45',
-        (focused || active) && 'bg-accent/55',
-        selected && 'bg-primary/5 ring-1 ring-primary/15',
-        insideGroup && 'rounded-[16px]',
+        'group/row flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer transition-colors',
+        'hover:bg-accent',
+        (focused || active) && 'bg-accent',
+        selected && 'bg-secondary ring-1 ring-border',
+        insideGroup && 'rounded-xl',
       )}
       onClick={(e) => onRowClick?.(message.id, index, e)}
       role="button"
@@ -1272,7 +1272,7 @@ function MessageRow({
         <span className="text-muted-foreground">{preview}</span>
       </div>
 
-      <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground" title={absTime}>
+      <span className="shrink-0 whitespace-nowrap text-[12px] text-muted-foreground" title={absTime}>
         {timeAgo}
       </span>
     </div>
