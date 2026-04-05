@@ -25,6 +25,7 @@ import { clickupAdapter } from './clickup'
 import { ga4Adapter } from './ga4'
 import { wordpressAdapter } from './wordpress'
 import { cluelyAdapter } from './cluely'
+import { imessageAdapter } from './imessage'
 import { isDuplicate, computeContentHash } from './dedup'
 import { getOrgCredential, storeOrgCredential, storeChannelCredential, encryptCredential } from '@/lib/integrations/credentials'
 import { resolveChannelIdentity } from '@/lib/conversation/identity-resolver'
@@ -77,6 +78,7 @@ export interface PollResult {
 const adapterMap = {
   gmail: gmailAdapter,
   outlook: outlookAdapter,
+  imessage: imessageAdapter,
   asana: asanaAdapter,
   calendly: calendlyAdapter,
   stripe: stripeAdapter,

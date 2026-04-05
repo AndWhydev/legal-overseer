@@ -1,4 +1,5 @@
 import type { ChannelAdapter, ChannelMessage } from './types'
+import { readIMessages, isBridgeAvailable } from './macbook-bridge'
 import { logger } from '@/lib/core/logger'
 
 function appleEpochToDate(appleNanoseconds: number): Date {
@@ -6,24 +7,51 @@ function appleEpochToDate(appleNanoseconds: number): Date {
   return new Date(unixSeconds * 1000)
 }
 
-export const imessageAdapter: ChannelAdapter = {
-  type: 'imessage',
-  name: 'iMessage',
-  description: 'Read messages from Apple iMessage (macOS only)',
-  icon: 'MessageCircle',
+/**
+ * Pull iMessages via SSH bridge to MacBook.
+ * The MacBook runs the imessage.py tool which reads ~/Library/Messages/chat.db.
+ */
+async function pullViaBridge(since?: Date): Promise<ChannelMessage[]> {
+  const hours = since
+    ? Math.max(1, Math.ceil((Date.now() - since.getTime()) / (1000 * 60 * 60)))
+    : 168 // 7 days default
 
-  async pull(_config, since) {
-    const { execSync } = await import('child_process')
-    const { writeFileSync, unlinkSync } = await import('fs')
-    const { tmpdir } = await import('os')
-    const { join } = await import('path')
+  const messages = await readIMessages({ hours, limit: 200 })
 
-    const sinceDate = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const appleEpochNanos = Math.floor((sinceDate.getTime() / 1000 - 978307200) * 1_000_000_000)
+  return messages
+    .filter(m => !m.isFromMe)
+    .map((msg, i): ChannelMessage => ({
+      id: `imessage-bridge-${Date.parse(msg.date) || Date.now()}-${i}`,
+      channel: 'imessage',
+      externalId: `bridge-${Date.parse(msg.date) || Date.now()}-${i}`,
+      sender: msg.sender,
+      subject: undefined,
+      body: msg.text,
+      receivedAt: new Date(msg.date),
+      isActionable: false,
+      priority: 'medium',
+      metadata: {
+        handle: msg.sender,
+        service: 'iMessage',
+        transport: 'macbook-bridge',
+      },
+    }))
+}
 
-    const pythonScript = `
+/**
+ * Pull iMessages directly from local SQLite (macOS only).
+ */
+async function pullDirect(since?: Date): Promise<ChannelMessage[]> {
+  const { execSync } = await import('child_process')
+  const { writeFileSync, unlinkSync } = await import('fs')
+  const { tmpdir } = await import('os')
+  const { join } = await import('path')
+
+  const sinceDate = since || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const appleEpochNanos = Math.floor((sinceDate.getTime() / 1000 - 978307200) * 1_000_000_000)
+
+  const pythonScript = `
 import sqlite3, json, os
-import { logger } from '@/lib/core/logger';
 
 def extract_text(blob):
     if not blob:
@@ -96,53 +124,86 @@ print(json.dumps(results))
 conn.close()
 `
 
-    const scriptPath = join(tmpdir(), `bitbit-imessage-${Date.now()}.py`)
+  const scriptPath = join(tmpdir(), `bitbit-imessage-${Date.now()}.py`)
 
+  try {
+    writeFileSync(scriptPath, pythonScript)
+    const output = execSync(`python3 "${scriptPath}"`, {
+      timeout: 15000,
+      maxBuffer: 5 * 1024 * 1024,
+    }).toString()
+
+    const rows = JSON.parse(output) as Array<{
+      rowid: number
+      text: string
+      date: number
+      sender: string
+      service: string
+      chat_name: string
+    }>
+
+    return rows.map((row): ChannelMessage => ({
+      id: `imessage-${row.rowid}`,
+      channel: 'imessage',
+      externalId: String(row.rowid),
+      sender: row.chat_name || row.sender,
+      subject: undefined,
+      body: row.text,
+      receivedAt: appleEpochToDate(row.date),
+      isActionable: false,
+      priority: 'medium',
+      metadata: {
+        handle: row.sender,
+        service: row.service,
+        chatName: row.chat_name,
+      },
+    }))
+  } catch (err) {
+    logger.error('iMessage direct pull failed:', err)
+    return []
+  } finally {
+    try { unlinkSync(scriptPath) } catch {}
+  }
+}
+
+export const imessageAdapter: ChannelAdapter = {
+  type: 'imessage',
+  name: 'iMessage',
+  description: 'Read messages from Apple iMessage via macOS or MacBook bridge',
+  icon: 'MessageCircle',
+
+  async pull(_config, since) {
+    // On macOS: read SQLite directly
+    if (typeof process !== 'undefined' && process.platform === 'darwin') {
+      const { existsSync } = await import('fs')
+      if (existsSync(`${process.env.HOME}/Library/Messages/chat.db`)) {
+        return pullDirect(since)
+      }
+    }
+
+    // On Linux (studio-server): use MacBook bridge via SSH
     try {
-      writeFileSync(scriptPath, pythonScript)
-      const output = execSync(`python3 "${scriptPath}"`, {
-        timeout: 15000,
-        maxBuffer: 5 * 1024 * 1024,
-      }).toString()
-
-      const rows = JSON.parse(output) as Array<{
-        rowid: number
-        text: string
-        date: number
-        sender: string
-        service: string
-        chat_name: string
-      }>
-
-      return rows.map((row): ChannelMessage => ({
-        id: `imessage-${row.rowid}`,
-        channel: 'imessage',
-        externalId: String(row.rowid),
-        sender: row.chat_name || row.sender,
-        subject: undefined,
-        body: row.text,
-        receivedAt: appleEpochToDate(row.date),
-        isActionable: false,
-        priority: 'medium',
-        metadata: {
-          handle: row.sender,
-          service: row.service,
-          chatName: row.chat_name,
-        },
-      }))
+      return await pullViaBridge(since)
     } catch (err) {
-      logger.error('iMessage pull failed:', err)
+      logger.error('[imessage] Bridge pull failed:', err)
       return []
-    } finally {
-      try { unlinkSync(scriptPath) } catch {}
     }
   },
 
   async isAvailable() {
-    if (typeof process === 'undefined' || process.platform !== 'darwin') return false
+    // On macOS: check for local chat.db
+    if (typeof process !== 'undefined' && process.platform === 'darwin') {
+      try {
+        const { existsSync } = await import('fs')
+        return existsSync(`${process.env.HOME}/Library/Messages/chat.db`)
+      } catch {
+        return false
+      }
+    }
+
+    // On Linux: check if MacBook bridge is reachable
     try {
-      const { existsSync } = await import('fs')
-      return existsSync(`${process.env.HOME}/Library/Messages/chat.db`)
+      return await isBridgeAvailable()
     } catch {
       return false
     }
