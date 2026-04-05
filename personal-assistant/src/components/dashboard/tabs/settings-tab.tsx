@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { BillingSettings } from '@/components/settings/billing-settings';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
-import { ConnectionsGrid } from '@/components/integrations/integration-grid';
+import { ConnectionsGrid } from '@/components/connections/connections-grid';
 import { RagStatsWidget } from '@/components/dashboard/rag-stats-widget';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -232,12 +232,7 @@ export function SettingsConnectionsTab() {
         <p className="mt-1 text-sm text-muted-foreground">Connect communication channels</p>
       </div>
       <div>
-        <ConnectionsGrid
-          integrations={integrations}
-          isLoading={integrationsLoading}
-          onStatusChange={fetchIntegrations}
-          onWhatsAppConnect={() => setWhatsappModalOpen(true)}
-        />
+        <ConnectionsGrid showHeader={false} />
       </div>
 
       {whatsappModalOpen && (
