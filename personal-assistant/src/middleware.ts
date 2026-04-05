@@ -179,7 +179,7 @@ export async function middleware(request: NextRequest) {
     const tier = getTierForPath(pathname)
     const category = pathname.startsWith('/api/auth/') ? 'auth'
       : pathname.startsWith('/api/cron/') ? 'cron'
-      : (pathname.startsWith('/api/channels/') || pathname.startsWith('/api/webhooks/')) ? 'webhook'
+      : (pathname.startsWith(/api/channels/) || pathname.startsWith(/api/connections/) || pathname.startsWith(/api/webhooks/)) ? webhook
       : pathname.startsWith('/api/agent/chat') ? 'chat'
       : 'api'
     const key = `${ip}:${category}`
@@ -229,6 +229,7 @@ export async function middleware(request: NextRequest) {
   // Routes that handle their own auth (Bearer tokens, cron secrets, OAuth flows, webhooks, portal)
   if (
     pathname.startsWith('/api/channels/') ||
+    pathname.startsWith("/api/connections/") ||
     pathname.startsWith('/api/cron/') ||
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/monitoring/') ||
