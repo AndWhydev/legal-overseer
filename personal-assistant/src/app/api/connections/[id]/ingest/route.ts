@@ -167,7 +167,7 @@ export async function POST(
     .eq('id', connectionId)
 
   if (inserted > 0) {
-    await supabase.rpc('increment_message_count', { connection_id: connectionId, delta: inserted })
+    await supabase.from("org_connections").update({ message_count: (conn.message_count || 0) + inserted, updated_at: new Date().toISOString() }).eq("id", connectionId)
   }
 
   // Log sync event
@@ -224,7 +224,7 @@ export async function GET(
 
   const { data: conn, error } = await supabase
     .from('org_connections')
-    .select('id, org_id, channel_type, status, last_sync, message_count')
+    .select('id, org_id, provider, status, last_sync_at, message_count')
     .eq('id', connectionId)
     .single()
 
@@ -234,9 +234,9 @@ export async function GET(
 
   return NextResponse.json({
     id: conn.id,
-    channel: conn.channel_type,
+    channel: conn.provider,
     status: conn.status,
-    last_sync: conn.last_sync,
+    last_sync: conn.last_sync_at,
     message_count: conn.message_count,
   })
 }
