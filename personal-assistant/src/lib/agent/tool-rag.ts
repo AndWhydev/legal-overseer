@@ -55,7 +55,16 @@ const INTENT_KEYWORDS: Record<string, string[]> = {
   schedule_event: ['schedule', 'meeting', 'event', 'book', 'calendar', 'appointment', 'block'],
 
   // Web tools
-  web_search: ['search', 'google', 'look', 'find', 'research', 'web', 'online', 'latest', 'current', 'news'],
+  web_search: [
+    'search', 'google', 'look', 'find', 'research', 'web', 'online', 'latest', 'current', 'news',
+    'near', 'nearby', 'best', 'top', 'review', 'price', 'cost', 'compare', 'weather',
+    'hours', 'address', 'directions', 'who', 'what', 'where', 'when', 'why', 'how',
+    'recipe', 'guide', 'tutorial', 'recommend', 'suggestion', 'alternative',
+    'stock', 'score', 'result', 'update', 'happening', 'trending',
+  ],
+  web_read: ['read', 'article', 'page', 'content', 'extract', 'scrape', 'website', 'blog', 'post', 'url', 'link', 'http', 'https'],
+  web_extract: ['extract', 'data', 'scrape', 'parse', 'selector', 'structured', 'table', 'list', 'field'],
+  web_crawl: ['crawl', 'spider', 'site', 'pages', 'sitemap', 'index', 'links', 'explore'],
   fetch_url: ['url', 'link', 'website', 'page', 'fetch', 'read', 'open', 'http', 'https'],
   browse_website: ['browse', 'website', 'navigate', 'screenshot', 'render', 'page'],
 
