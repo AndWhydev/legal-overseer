@@ -4,7 +4,6 @@ import { createApproval, resolveApproval, getPendingApprovals } from '../approva
 import type { ApprovalRecord } from '../approval-queue'
 import { executeApprovedAction, requeueExpiredAction } from '../action-executor'
 import { checkSendLimit } from '../send-limits'
-import { getDefaultAgentConfigId } from '../agent-config'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -407,16 +406,10 @@ export const superpowerToolHandlers: Record<string, AgentToolHandler> = {
         return { success: false, error: `Daily email limit reached (${limit.limit}/day). Try again tomorrow.` }
       }
 
-      // Resolve agent config ID (required FK on approval_queue)
-      const agentConfigId = await getDefaultAgentConfigId(supabase, orgId)
-      if (!agentConfigId) {
-        return { success: false, error: 'No agent configuration found. Set up an agent config first.' }
-      }
-
       // Queue for human approval instead of sending directly
       const approval = await createApproval(supabase, {
         org_id: orgId,
-        agent_config_id: agentConfigId,
+        agent_config_id: 'system',
         action_type: 'send_email',
         action_payload: { to, subject, body, reply_to: replyTo },
         action_summary: `Send email to ${to}: ${subject}`,
@@ -455,16 +448,10 @@ export const superpowerToolHandlers: Record<string, AgentToolHandler> = {
         return { success: false, error: `Daily SMS limit reached (${limit.limit}/day). Try again tomorrow.` }
       }
 
-      // Resolve agent config ID (required FK on approval_queue)
-      const agentConfigId = await getDefaultAgentConfigId(supabase, orgId)
-      if (!agentConfigId) {
-        return { success: false, error: 'No agent configuration found. Set up an agent config first.' }
-      }
-
       // Queue for human approval instead of sending directly
       const approval = await createApproval(supabase, {
         org_id: orgId,
-        agent_config_id: agentConfigId,
+        agent_config_id: 'system',
         action_type: 'send_sms',
         action_payload: { to, message },
         action_summary: `Send SMS to ${to}: ${message.slice(0, 60)}${message.length > 60 ? '...' : ''}`,
