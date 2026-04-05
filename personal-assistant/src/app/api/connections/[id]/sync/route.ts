@@ -52,7 +52,7 @@ export async function POST(
   // poll transport — run the channel poller
   const { pollChannel } = await import('@/lib/channels/relay-daemon')
 
-  const result = await pollChannel(supabase, conn)
+  const result = await pollChannel(supabase, orgId, conn.provider as any)
 
   logger.info(
     `[manual-sync] connection=${id} found=${result.messagesFound} inserted=${result.messagesInserted}`
