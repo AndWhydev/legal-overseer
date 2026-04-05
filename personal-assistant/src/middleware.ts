@@ -203,7 +203,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── CSRF protection (production only — dev uses Origin allowlist anyway) ──
-  if (isApiRoute && process.env.NODE_ENV === 'production') {
+  // Bridge endpoints use bearer token auth, not cookies — exempt from CSRF
+  const csrfExempt = pathname.startsWith('/api/connections/') || pathname.startsWith('/api/channels/') || pathname.startsWith('/api/webhooks/') || pathname.startsWith('/api/cron/')
+  if (isApiRoute && process.env.NODE_ENV === 'production' && !csrfExempt) {
     const csrfResponse = validateCsrf(request)
     if (csrfResponse) return applySecurityHeaders(csrfResponse)
   }
@@ -246,5 +248,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/:path*', '/dashboard/:path*', '/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/api/:path*', '/dashboard/:path*', '/portal/:path*', '/login', '/onboard'],
 }
