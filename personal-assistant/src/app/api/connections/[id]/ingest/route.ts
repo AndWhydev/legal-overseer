@@ -151,7 +151,7 @@ export async function POST(
         { onConflict: 'org_id,channel,external_id', ignoreDuplicates: true }
       )
       .select('id')
-      .single()
+      .maybeSingle()
 
     if (upsertErr) {
       errors.push(`Failed to insert ${envelope.id}: ${upsertErr.message}`)
