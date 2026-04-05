@@ -87,7 +87,7 @@ export async function POST(
   }
 
   const orgId = conn.org_id as string
-  const channelType = conn.channel_type as string
+  const channelType = conn.provider as string
   let inserted = 0
   let duplicates = 0
   const errors: string[] = []
