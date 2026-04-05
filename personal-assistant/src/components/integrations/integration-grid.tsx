@@ -117,6 +117,32 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
             />
           ))
         )}
+
+        {/* Custom connection card */}
+        {!isLoading && (
+          <a
+            href="/docs/connections/bridge"
+            target="_blank"
+            rel="noopener"
+            className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-card px-4 py-3 transition-colors hover:border-muted-foreground/40"
+            style={{
+              animation: `bb-card-enter 300ms cubic-bezier(0.2, 0.9, 0.3, 1) ${(sorted.length) * 30}ms both`,
+            }}
+          >
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-border text-xl text-muted-foreground">
+              +
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-sm font-medium">Custom</span>
+              <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+                Connect any data source
+              </p>
+            </div>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              Setup guide →
+            </span>
+          </a>
+        )}
       </div>
 
       <style>{`
