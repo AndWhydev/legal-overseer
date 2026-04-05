@@ -28,6 +28,7 @@ import { writeToDeadLetterQueue } from '@/lib/agent/dlq'
 import { detectLeak, scrubLeaks, guardAndHumanize } from '@/lib/agent/response-guard'
 import { logger } from '@/lib/core/logger'
 import { detectTopicShift } from '@/lib/agent/citation-extractor'
+import { evaluateTurnQuality } from './turn-evaluator'
 
 import { MemoryPalaceService } from '@/lib/memory-palace/service'
 
@@ -91,6 +92,7 @@ export async function* runTAORLoop(
   let totalOutputTokens = 0
   let iterationCount = 0
   let toolCallCount = 0
+  const allToolCallNames: string[] = []
   let finalMessage = ''
   const userMessages: string[] = []
   let lastCheckpointAtMessageCount = 0
@@ -617,8 +619,9 @@ export async function* runTAORLoop(
       }
 
       // Log successful run
+      let runResult: { id: string } | null = null
       if (config.agentConfigId) {
-        await logAgentRun(config.supabase, {
+        runResult = await logAgentRun(config.supabase, {
           org_id: config.orgId,
           agent_config_id: config.agentConfigId,
           trigger_type: 'chat',
@@ -636,6 +639,22 @@ export async function* runTAORLoop(
         logger.debug('[taor] Run logging skipped — no agentConfigId', { orgId: config.orgId })
       }
 
+      // Fire-and-forget quality evaluation (Sub-project D)
+      const complexity = planComplexity ?? estimateComplexity(message, 0, planStages.length)
+      if (runResult && complexity !== 'low') {
+        evaluateTurnQuality({
+          run_id: runResult.id,
+          message,
+          tool_calls: allToolCallNames,
+          plan_stages: planStages.length,
+          surfaced_memory_ids: previousSurfacedMemoryIds,
+          response_excerpt: text.slice(0, 500),
+          iteration_count: iterationCount,
+          model_used: model,
+          complexity,
+        }, config.supabase).catch(() => {}) // truly fire-and-forget
+      }
+
       logger.info('ai_response_complete', { model, purpose, tokens: response.usage })
       yield { type: 'done', data: { tokens: response.usage } }
       return
@@ -650,6 +669,7 @@ export async function* runTAORLoop(
     const toolMeta: Array<{ tool: Anthropic.ToolUseBlock; matchedStage: PlanStage | null }> = []
     for (const tool of toolBlocks) {
       toolCallCount++
+      allToolCallNames.push(tool.name)
 
       const matchedStage = planStages.find(s => s.toolHint === tool.name && !activatedStages.has(s.id)) ?? null
       if (matchedStage) {
