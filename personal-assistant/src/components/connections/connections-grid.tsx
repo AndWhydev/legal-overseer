@@ -8,6 +8,8 @@ import { IconAlertCircle } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { logger } from '@/lib/core/logger'
+import { builtInProviders } from '@/lib/connections'
+import type { OrgConnection } from '@/lib/connections'
 
 /* App Store artwork URLs — 512px originals, sized down via query param. */
 const APP_ICONS: Record<string, string> = {
@@ -152,6 +154,13 @@ interface ConnectionStatus {
   connectedAt?: string
 }
 
+/* Bridge-type providers require POST /api/connections instead of OAuth popup */
+const BRIDGE_PROVIDER_IDS = new Set(
+  builtInProviders
+    .filter((p) => p.auth.method === 'bridge')
+    .map((p) => p.id),
+)
+
 interface ChannelStatusResponse {
   type: string
   connected: boolean
@@ -161,22 +170,6 @@ interface ChannelStatusResponse {
 const CONNECTION_STATUS_ALIASES: Record<string, string> = {
   calendar: 'google-calendar',
   'google-calendar': 'google-calendar',
-}
-
-type ConnectionCallbackPayload =
-  | { type: 'bb-connection-callback'; kind: 'success'; provider?: string }
-  | { type: 'bb-connection-callback'; kind: 'error'; error?: string }
-  | { type: 'popup_closed'; provider: string }
-
-export function getConnectionDisplayName(id: string) {
-  return CONNECTIONS.find((connection) => connection.id === id)?.name ?? id
-}
-
-function buildDisconnectedStatuses(): Record<string, ConnectionStatus> {
-  return CONNECTIONS.reduce<Record<string, ConnectionStatus>>((all, connection) => {
-    all[connection.id] = { connected: false }
-    return all
-  }, {})
 }
 
 export function normalizeConnectionStatuses(
@@ -195,11 +188,33 @@ export function normalizeConnectionStatuses(
   return normalized
 }
 
-function mergeConnectionStatuses(channels: ChannelStatusResponse[]) {
-  return {
-    ...buildDisconnectedStatuses(),
-    ...normalizeConnectionStatuses(channels),
+type ConnectionCallbackPayload =
+  | { type: 'bb-connection-callback'; kind: 'success'; provider?: string }
+  | { type: 'bb-connection-callback'; kind: 'error'; error?: string }
+  | { type: 'popup_closed'; provider: string }
+
+export function getConnectionDisplayName(id: string) {
+  return CONNECTIONS.find((connection) => connection.id === id)?.name ?? id
+}
+
+function buildDisconnectedStatuses(): Record<string, ConnectionStatus> {
+  return CONNECTIONS.reduce<Record<string, ConnectionStatus>>((all, connection) => {
+    all[connection.id] = { connected: false }
+    return all
+  }, {})
+}
+
+function orgConnectionsToStatuses(orgConnections: OrgConnection[]): Record<string, ConnectionStatus> {
+  const statuses: Record<string, ConnectionStatus> = buildDisconnectedStatuses()
+
+  for (const conn of orgConnections) {
+    statuses[conn.provider] = {
+      connected: conn.status === 'connected',
+      ...(conn.last_sync_at ? { connectedAt: conn.last_sync_at } : {}),
+    }
   }
+
+  return statuses
 }
 
 function getConnectedIds(statuses: Record<string, ConnectionStatus>) {
@@ -242,8 +257,10 @@ interface ConnectionCardProps {
   status: ConnectionStatus
   isLoading: boolean
   variant: 'dashboard' | 'onboarding'
+  orgConnection?: OrgConnection
   onConnect: (id: string) => void
   onDisconnect: (id: string) => void
+  onConnectionClick?: (connection: OrgConnection) => void
 }
 
 const BTN_BASE = 'inline-flex min-w-[5.5rem] items-center justify-center rounded-[10px] px-4 py-2 text-base font-medium transition'
@@ -254,9 +271,19 @@ function ConnectionCard({
   status,
   isLoading,
   variant,
+  orgConnection,
   onConnect,
   onDisconnect,
+  onConnectionClick,
 }: ConnectionCardProps) {
+  const handleConnectedClick = useCallback(() => {
+    if (orgConnection && onConnectionClick) {
+      onConnectionClick(orgConnection)
+    } else {
+      onDisconnect(connection.id)
+    }
+  }, [orgConnection, onConnectionClick, onDisconnect, connection.id])
+
   if (variant === 'onboarding') {
     return (
       <article className="flex items-center gap-3.5 rounded-[10px] border border-black/[0.06] bg-white/76 px-5 py-4 shadow-sm transition duration-200 hover:shadow-md">
@@ -267,7 +294,7 @@ function ConnectionCard({
         ) : status.connected ? (
           <button
             type="button"
-            onClick={() => onDisconnect(connection.id)}
+            onClick={handleConnectedClick}
             disabled={isLoading}
             className={`${BTN_COMPACT} shrink-0 border border-success bg-success/10 text-success hover:bg-success/15 disabled:opacity-50`}
           >
@@ -305,7 +332,7 @@ function ConnectionCard({
         ) : status.connected ? (
           <button
             type="button"
-            onClick={() => onDisconnect(connection.id)}
+            onClick={handleConnectedClick}
             disabled={isLoading}
             className={`${BTN_BASE} border border-success bg-success/10 text-success hover:bg-success/15 disabled:opacity-50`}
           >
@@ -326,9 +353,48 @@ function ConnectionCard({
   )
 }
 
+function CustomConnectionCard({ variant }: { variant: 'dashboard' | 'onboarding' }) {
+  if (variant === 'onboarding') {
+    return (
+      <article className="flex items-center gap-3.5 rounded-[10px] border border-dashed border-black/[0.12] bg-white/40 px-5 py-4 shadow-sm transition duration-200 hover:shadow-md">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] border border-dashed border-black/[0.12] bg-muted text-xl text-muted-foreground">+</div>
+        <span className="flex-1 text-base font-medium text-foreground">Custom</span>
+        <a
+          href="/docs/connections/bridge"
+          className="inline-flex min-w-[5rem] items-center justify-center rounded-[10px] px-3.5 py-2 text-base font-medium transition border border-black/[0.06] bg-muted text-muted-foreground hover:text-foreground"
+        >
+          Setup guide →
+        </a>
+      </article>
+    )
+  }
+
+  return (
+    <article className="flex flex-col gap-3 rounded-[10px] border border-dashed border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition duration-300 hover:translate-y-[-1px] hover:shadow-md">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[9px] border border-dashed border-black/[0.12] bg-muted text-xl text-muted-foreground">+</div>
+        <div className="min-w-0">
+          <h3 className="text-base font-medium leading-tight text-foreground">Custom</h3>
+          <p className="mt-0.5 text-base leading-tight text-muted-foreground">Connect any data source</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end">
+        <a
+          href="/docs/connections/bridge"
+          className={`${BTN_BASE} border border-black/[0.06] bg-muted text-muted-foreground hover:text-foreground`}
+        >
+          Setup guide →
+        </a>
+      </div>
+    </article>
+  )
+}
+
 interface ConnectionsGridProps {
   onConnectionStateChange?: (hasConnection: boolean) => void
   onConnectedIdsChange?: (connectedIds: string[]) => void
+  onConnectionClick?: (connection: OrgConnection) => void
   variant?: 'dashboard' | 'onboarding'
   showHeader?: boolean
   showCategoryTabs?: boolean
@@ -337,6 +403,7 @@ interface ConnectionsGridProps {
 export function ConnectionsGrid({
   onConnectionStateChange,
   onConnectedIdsChange,
+  onConnectionClick,
   variant = 'dashboard',
   showHeader = true,
   showCategoryTabs = true,
@@ -345,6 +412,7 @@ export function ConnectionsGrid({
   const searchParams = useSearchParams()
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [statuses, setStatuses] = useState<Record<string, ConnectionStatus>>(buildDisconnectedStatuses)
+  const [orgConnections, setOrgConnections] = useState<OrgConnection[]>([])
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -368,22 +436,25 @@ export function ConnectionsGrid({
   const fetchStatuses = useCallback(async () => {
     try {
       setError(null)
-      const response = await fetch('/api/channels/status')
-      if (!response.ok) throw new Error('Failed to fetch status')
+      const response = await fetch('/api/connections')
+      if (!response.ok) throw new Error('Failed to fetch connections')
 
-      const data = (await response.json()) as { channels?: ChannelStatusResponse[] }
-      const nextStatuses = mergeConnectionStatuses(data.channels ?? [])
+      const data = (await response.json()) as { connections?: OrgConnection[] }
+      const fetched = data.connections ?? []
+      const nextStatuses = orgConnectionsToStatuses(fetched)
       const connectedIds = getConnectedIds(nextStatuses)
 
+      setOrgConnections(fetched)
       setStatuses(nextStatuses)
       setLoadingId((current) => reconcileLoadingConnection(current, nextStatuses))
       onConnectionStateChange?.(connectedIds.length > 0)
       onConnectedIdsChange?.(connectedIds)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
       logger.error('Error fetching connection statuses', { error: message })
       toast('error', 'Could not load connections')
       setError('Could not load connections right now')
+      setOrgConnections([])
       setStatuses(buildDisconnectedStatuses())
       onConnectionStateChange?.(false)
       onConnectedIdsChange?.([])
@@ -480,6 +551,22 @@ export function ConnectionsGrid({
     try {
       setLoadingId(id)
 
+      /* Bridge providers: create via POST /api/connections (no OAuth popup) */
+      if (BRIDGE_PROVIDER_IDS.has(id)) {
+        const response = await fetch('/api/connections', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: id }),
+        })
+
+        if (!response.ok) throw new Error('Failed to create connection')
+
+        await fetchStatuses()
+        toast('success', `${connection.name} connected`)
+        setLoadingId(null)
+        return
+      }
+
       if (connection.auth === 'oauth') {
         const response = await fetch('/api/channels/connect', {
           method: 'POST',
@@ -534,8 +621,8 @@ export function ConnectionsGrid({
       logger.info(`Opening API key dialog for ${id}`)
       toast('info', `${connection.name} key setup is next`)
       setLoadingId(null)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
       logger.error(`Error connecting ${id}`, { error: message })
       toast('error', `Could not connect ${connection.name}`)
       setLoadingId(null)
@@ -544,28 +631,38 @@ export function ConnectionsGrid({
 
   const handleDisconnect = useCallback(async (id: string) => {
     const connection = CONNECTIONS.find((candidate) => candidate.id === id)
+    const orgConn = orgConnections.find((c) => c.provider === id)
 
     try {
       setLoadingId(id)
 
-      const response = await fetch('/api/channels/disconnect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel: id }),
-      })
+      if (orgConn) {
+        const response = await fetch(`/api/connections/${orgConn.id}`, {
+          method: 'DELETE',
+        })
 
-      if (!response.ok) throw new Error('Failed to disconnect')
+        if (!response.ok) throw new Error('Failed to disconnect')
+      } else {
+        /* Fallback: legacy disconnect endpoint */
+        const response = await fetch('/api/channels/disconnect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channel: id }),
+        })
+
+        if (!response.ok) throw new Error('Failed to disconnect')
+      }
 
       await fetchStatuses()
       toast('success', `${connection?.name || id} disconnected`)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
       logger.error(`Error disconnecting ${id}`, { error: message })
       toast('error', `Could not disconnect ${connection?.name || id}`)
     } finally {
       setLoadingId(null)
     }
-  }, [fetchStatuses, toast])
+  }, [fetchStatuses, orgConnections, toast])
 
   const containerClassName = variant === 'onboarding'
     ? 'grid gap-3'
@@ -631,10 +728,15 @@ export function ConnectionsGrid({
             status={statuses[connection.id] || { connected: false }}
             variant={variant}
             isLoading={loadingId === connection.id}
+            orgConnection={orgConnections.find((c) => c.provider === connection.id)}
             onConnect={handleConnect}
             onDisconnect={handleDisconnect}
+            onConnectionClick={onConnectionClick}
           />
         ))}
+        {(activeCategory === 'all' || activeCategory === 'communication') ? (
+          <CustomConnectionCard variant={variant} />
+        ) : null}
       </div>
 
       <ConnectModal
