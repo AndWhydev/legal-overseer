@@ -1,4 +1,4 @@
-export type ChannelType = 'gmail' | 'outlook' | 'imessage' | 'calendar' | 'reminders' | 'whatsapp' | 'telegram' | 'asana' | 'calendly' | 'stripe' | 'gsc' | 'clickup' | 'ga4' | 'wordpress' | 'cluely' | 'facebook' | 'slack' | 'xero' | 'instagram' | 'sms'
+export type ChannelType = 'gmail' | 'outlook' | 'imessage' | 'calendar' | 'reminders' | 'whatsapp' | 'telegram' | 'asana' | 'calendly' | 'stripe' | 'gsc' | 'clickup' | 'ga4' | 'wordpress' | 'cluely' | 'facebook' | 'slack' | 'xero' | 'instagram' | 'sms' | 'sendblue'
 
 export interface ChannelMessage {
   id: string
