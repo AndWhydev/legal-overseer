@@ -34,6 +34,25 @@ import { preFlightChecks } from './pre-flight'
 import { executeToolBatchStreaming, type ToolExecutionResult } from './tool-executor'
 
 // ---------------------------------------------------------------------------
+// Complexity estimator (fallback when Haiku planner times out)
+// ---------------------------------------------------------------------------
+
+function estimateComplexity(
+  message: string,
+  entityCount: number,
+  toolGroupCount: number,
+): 'low' | 'medium' | 'high' {
+  if (message.length < 50 && entityCount === 0 && toolGroupCount <= 1) return 'low'
+  const highSignals = [
+    entityCount >= 2,
+    toolGroupCount >= 3,
+    /\b(last time|compared to|previously|invoice|payment|schedule|deadline|budget|proposal)\b/i.test(message),
+  ].filter(Boolean).length
+  if (highSignals >= 2) return 'high'
+  return 'medium'
+}
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
@@ -148,8 +167,10 @@ export async function* runTAORLoop(
   let planPromise: Promise<PlanOutput> | null = null
   if (!isTrivialMessage(message)) {
     planPromise = generatePlan(message, entityContext, toolNames)
-      .catch(() => ({ stages: [], toolGroups: [] }) as PlanOutput)
+      .catch(() => ({ stages: [], toolGroups: [], complexity: 'medium' as const }) as PlanOutput)
   }
+
+  let planComplexity: 'low' | 'medium' | 'high' | null = null
 
   if (planPromise) {
     const raceResult = await Promise.race([
@@ -158,6 +179,7 @@ export async function* runTAORLoop(
     ])
     if (raceResult.ready && raceResult.plan.stages.length > 0) {
       planStages = raceResult.plan.stages
+      planComplexity = raceResult.plan.complexity
       yield { type: 'plan', data: { stages: planStages } }
 
       if (raceResult.plan.toolGroups.length > 0) {
@@ -278,9 +300,16 @@ export async function* runTAORLoop(
           // Compaction (compact-2026-01-12) remains in beta — use client.beta.messages
           // if re-enabling. For now, context overflow is handled by safety ceiling.
 
-          if (purpose === 'synthesis') {
+          // Complexity-gated extended thinking (Sub-project A)
+          const complexity = planComplexity
+            ?? estimateComplexity(message, 0, planStages.length)
+
+          if (complexity === 'high') {
             streamConfig.thinking = { type: 'enabled', budget_tokens: 8192 }
+          } else if (complexity === 'medium') {
+            streamConfig.thinking = { type: 'enabled', budget_tokens: 2048 }
           }
+          // complexity === 'low': no thinking
 
           const stream = client.messages.stream(streamConfig as Parameters<typeof client.messages.stream>[0])
 
