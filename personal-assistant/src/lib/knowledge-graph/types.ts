@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export interface EntityNode {
   id: string
   org_id: string
-  entity_type: 'person' | 'project' | 'company' | 'invoice' | 'channel'
+  entity_type: 'person' | 'project' | 'company' | 'invoice' | 'channel' | 'community'
   name: string
   aliases: string[]
   properties: Record<string, unknown>

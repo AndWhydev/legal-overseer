@@ -29,7 +29,7 @@ const MIN_TEXT_LENGTH = 3
 
 // ─── Schema for structured LLM output ────────────────────────────────────
 
-const ENTITY_TYPES = ['person', 'project', 'company', 'invoice', 'channel'] as const
+const ENTITY_TYPES = ['person', 'project', 'company', 'invoice', 'channel', 'community'] as const
 
 const ExtractionSchema = z.object({
   entities: z.array(
