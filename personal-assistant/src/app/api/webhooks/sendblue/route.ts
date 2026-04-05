@@ -87,10 +87,7 @@ export async function POST(request: NextRequest) {
       ? "hey! I don't recognize this number yet. what's your email so I can link you up?"
       : "hey, I'm not set up for new numbers just yet. check back soon!";
 
-    after(async () => {
-      await sendSendblueMessage(fromNumber, replyText);
-    });
-
+    await sendSendblueMessage(fromNumber, replyText);
     return NextResponse.json({ ok: true });
   }
 
