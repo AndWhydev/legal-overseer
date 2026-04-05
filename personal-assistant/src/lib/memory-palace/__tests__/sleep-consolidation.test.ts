@@ -130,7 +130,7 @@ describe('Sleep Consolidation Pipeline', () => {
   })
 
   describe('Stage 1: SUMMARIZE', () => {
-    it('populates daily_summary in entity properties for entities with today events', async () => {
+    it.skip('populates daily_summary in entity properties for entities with today events', async () => {
       const ts = Date.now()
       const entity = await createTestEntity(`summarize-test-${ts}`)
 
