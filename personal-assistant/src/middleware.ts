@@ -231,13 +231,12 @@ export async function middleware(request: NextRequest) {
   // Routes that handle their own auth (Bearer tokens, cron secrets, OAuth flows, webhooks, portal)
   if (
     pathname.startsWith('/api/channels/') ||
-    pathname.startsWith("/api/connections/") ||
+    pathname.startsWith('/api/connections/') ||
     pathname.startsWith('/api/cron/') ||
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/api/monitoring/') ||
     pathname.startsWith('/api/health') ||
     pathname.startsWith('/api/webhooks/') ||
-    pathname.startsWith('/api/connections/') ||
     pathname.startsWith('/api/portal/') ||
     pathname.startsWith('/portal/') ||
     pathname === '/api/agent/invoices/dispatch' // Fly.io worker callback (WORKER_AUTH_TOKEN)
