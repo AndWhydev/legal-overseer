@@ -1,10 +1,11 @@
 /**
- * Sleep Consolidation Pipeline — 5-stage nightly process that:
+ * Sleep Consolidation Pipeline — 6-stage nightly process that:
  * 1. SUMMARIZE: Per-entity daily digest via Haiku
  * 2. RESOLVE CONFLICTS: Temporal precedence for duplicate edges
  * 3. DISCOVER RELATIONSHIPS: Latent edges from co-occurring events
  * 4. PRUNE: Archive low-confidence entityless memories
  * 5. MORNING BRIEFING: Compile actionable intel for the next day
+ * 6. SYSTEM LEARNING: Analyze quality scores, track precision, tune thresholds (Sub-project D)
  *
  * Designed to run as a daily cron job (e.g. 3am UTC).
  */
@@ -15,6 +16,7 @@ import { models } from '@/lib/ai'
 import { logger } from '@/lib/core/logger'
 import { evaluateProjectLifecycles } from '@/lib/intelligence/project-lifecycle'
 import type { LifecycleAction } from '@/lib/intelligence/project-lifecycle'
+import { MemoryPalaceService } from './service'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -27,6 +29,7 @@ export interface SleepConsolidationReport {
   communitiesDetected: number
   pruned: number
   briefingGenerated: boolean
+  systemLearningInsights: number
   startedAt: string
   completedAt: string
 }
@@ -44,6 +47,20 @@ interface MorningBriefing {
   newDiscoveries: number
   pendingApprovals: number
   lifecycleActions: Array<{ projectName: string; action: string; reason: string; confidence: number }>
+  systemInsights?: {
+    avgToolEfficiency: number | null
+    avgContextUtilisation: number | null
+    consolidationPrecision: number | null
+    totalEvaluatedRuns: number
+    insights: string[]
+  }
+}
+
+// ─── System Learning Types (Sub-project D) ─────────────────────────────────
+
+interface SystemInsight {
+  content: string
+  confidence: number
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -66,6 +83,7 @@ export async function runSleepConsolidation(
     communitiesDetected: 0,
     pruned: 0,
     briefingGenerated: false,
+    systemLearningInsights: 0,
     startedAt: new Date().toISOString(),
     completedAt: '',
   }
@@ -161,6 +179,20 @@ export async function runSleepConsolidation(
     })
   } catch (err) {
     logger.error('[sleep-consolidation] Stage 5 MORNING BRIEFING failed', {
+      orgId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  // Stage 6: SYSTEM LEARNING (Sub-project D)
+  try {
+    report.systemLearningInsights = await stageSystemLearning(supabase, orgId)
+    logger.info('[sleep-consolidation] Stage 6 SYSTEM LEARNING complete', {
+      orgId,
+      systemLearningInsights: report.systemLearningInsights,
+    })
+  } catch (err) {
+    logger.error('[sleep-consolidation] Stage 6 SYSTEM LEARNING failed', {
       orgId,
       error: err instanceof Error ? err.message : String(err),
     })
@@ -424,6 +456,9 @@ async function stageDiscoverRelationships(
   supabase: SupabaseClient,
   orgId: string,
 ): Promise<number> {
+  // Adaptive confidence threshold (Sub-project D)
+  const confidenceThreshold = await getRelationshipDiscoveryThreshold(supabase, orgId)
+
   const todayStart = new Date()
   todayStart.setUTCHours(0, 0, 0, 0)
   const todayISO = todayStart.toISOString()
@@ -521,7 +556,7 @@ async function stageDiscoverRelationships(
           relation_type: relationType,
           properties: { source: 'consolidation' },
           valid_from: new Date().toISOString(),
-          confidence: 0.5,
+          confidence: confidenceThreshold,
           source_memory_id: null,
         })
         .select('id')
@@ -881,6 +916,52 @@ async function stageMorningBriefing(
     })
   }
 
+  // System insights from quality evaluation (Sub-project D — Task 4)
+  let systemInsights: MorningBriefing['systemInsights'] = undefined
+  try {
+    const { data: evaluatedRuns } = await supabase
+      .from('agent_runs')
+      .select('quality_tool_efficiency, quality_context_utilisation, quality_overall')
+      .eq('org_id', orgId)
+      .gte('created_at', todayStart.toISOString())
+      .not('quality_overall', 'is', null)
+
+    if (evaluatedRuns && evaluatedRuns.length > 0) {
+      const avgTool = mean(evaluatedRuns.map(r => r.quality_tool_efficiency).filter(Boolean))
+      const ctxScores = evaluatedRuns.map(r => r.quality_context_utilisation).filter(Boolean)
+      const avgCtx = ctxScores.length > 0 ? mean(ctxScores) : null
+
+      // Get latest consolidation precision
+      const { data: latestPrecision } = await supabase
+        .from('consolidation_metrics')
+        .select('precision')
+        .eq('org_id', orgId)
+        .eq('stage', 'discover_relationships')
+        .order('date', { ascending: false })
+        .limit(1)
+
+      const insightLines: string[] = []
+      if (avgTool < 0.6) insightLines.push(`Tool efficiency averaged ${avgTool.toFixed(2)} — review tool selection patterns`)
+      if (latestPrecision?.[0]) {
+        const p = latestPrecision[0].precision
+        if (p < 0.7) insightLines.push(`Relationship discovery precision: ${(p * 100).toFixed(0)}% — threshold auto-adjusted`)
+      }
+
+      systemInsights = {
+        avgToolEfficiency: avgTool,
+        avgContextUtilisation: avgCtx,
+        consolidationPrecision: latestPrecision?.[0]?.precision ?? null,
+        totalEvaluatedRuns: evaluatedRuns.length,
+        insights: insightLines,
+      }
+    }
+  } catch (err) {
+    logger.warn('[sleep-consolidation] Stage 5 system insights failed', {
+      orgId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
   const briefing: MorningBriefing = {
     generatedAt: now.toISOString(),
     upcomingDeadlines: deadlineItems,
@@ -897,6 +978,7 @@ async function stageMorningBriefing(
       reason: a.reason,
       confidence: a.confidence,
     })),
+    systemInsights,
   }
 
   // Store in organisations.settings via JSONB merge
@@ -920,4 +1002,242 @@ async function stageMorningBriefing(
     .eq('id', orgId)
 
   return !updateErr
+}
+
+// ─── Utility: mean ──────────────────────────────────────────────────────────
+
+function mean(nums: number[]): number {
+  if (nums.length === 0) return 0
+  return nums.reduce((a, b) => a + b, 0) / nums.length
+}
+
+function groupBy<T>(arr: T[], keyFn: (item: T) => string): Record<string, T[]> {
+  const groups: Record<string, T[]> = {}
+  for (const item of arr) {
+    const key = keyFn(item)
+    if (!groups[key]) groups[key] = []
+    groups[key].push(item)
+  }
+  return groups
+}
+
+// ─── Stage 6: SYSTEM LEARNING (Sub-project D) ──────────────────────────────
+
+async function stageSystemLearning(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<number> {
+  const todayStart = new Date()
+  todayStart.setUTCHours(0, 0, 0, 0)
+
+  // 1. Aggregate today's quality scores
+  const { data: todayRuns } = await supabase
+    .from('agent_runs')
+    .select('quality_tool_efficiency, quality_context_utilisation, quality_confidence_calibration, quality_overall, model_used, trigger_payload')
+    .eq('org_id', orgId)
+    .gte('created_at', todayStart.toISOString())
+    .not('quality_overall', 'is', null)
+
+  if (!todayRuns || todayRuns.length < 3) {
+    logger.info('[sleep-consolidation] Stage 6 skipped — insufficient data', {
+      orgId, runCount: todayRuns?.length ?? 0,
+    })
+    return 0
+  }
+
+  const allInsights: SystemInsight[] = []
+
+  // 2. Tool efficiency analysis
+  const toolInsights = analyzeToolEfficiency(todayRuns)
+  allInsights.push(...toolInsights)
+
+  // 3. Consolidation precision
+  const consolidationInsights = await analyzeConsolidationPrecision(supabase, orgId)
+  allInsights.push(...consolidationInsights)
+
+  // 4. Model routing feedback
+  const routingInsights = analyzeModelRouting(todayRuns)
+  allInsights.push(...routingInsights)
+
+  // 5. Write insights as lesson_learned memories
+  const palace = new MemoryPalaceService(supabase, orgId)
+  let written = 0
+
+  for (const insight of allInsights) {
+    try {
+      await palace.createMemory({
+        memoryType: 'lesson_learned',
+        title: `System insight: ${insight.content.slice(0, 60)}`,
+        content: insight.content,
+        typeMetadata: {
+          source_stage: 'system_learning',
+          generated_date: todayStart.toISOString().slice(0, 10),
+          evaluated_run_count: todayRuns.length,
+        },
+        confidence: insight.confidence,
+        decayRate: 'never',
+        sourceType: 'agent_reflection',
+      })
+      written++
+    } catch {
+      // Individual insight failure is non-critical
+    }
+  }
+
+  return written
+}
+
+// ─── Tool Efficiency Analysis ───────────────────────────────────────────────
+
+function analyzeToolEfficiency(
+  runs: Array<{ quality_tool_efficiency: number | null; [key: string]: unknown }>,
+): SystemInsight[] {
+  const insights: SystemInsight[] = []
+  const scores = runs
+    .map(r => r.quality_tool_efficiency)
+    .filter((s): s is number => s !== null)
+
+  if (scores.length === 0) return insights
+
+  const avgEfficiency = mean(scores)
+
+  if (avgEfficiency < 0.6) {
+    insights.push({
+      content: `Tool efficiency averaged ${avgEfficiency.toFixed(2)} today across ${scores.length} evaluated runs. Review tool selection patterns — agents may be making redundant tool calls.`,
+      confidence: 0.7,
+    })
+  }
+
+  return insights
+}
+
+// ─── Consolidation Precision Analysis ───────────────────────────────────────
+
+async function analyzeConsolidationPrecision(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<SystemInsight[]> {
+  const insights: SystemInsight[] = []
+
+  const yesterdayStart = new Date()
+  yesterdayStart.setUTCDate(yesterdayStart.getUTCDate() - 1)
+  yesterdayStart.setUTCHours(0, 0, 0, 0)
+
+  const todayStart = new Date()
+  todayStart.setUTCHours(0, 0, 0, 0)
+
+  // Find edges created by Stage 3 yesterday
+  const { data: inferredEdges } = await supabase
+    .from('entity_edges')
+    .select('id, confidence, relation_type, valid_until')
+    .eq('org_id', orgId)
+    .eq('properties->>source', 'consolidation')
+    .gte('ingested_at', yesterdayStart.toISOString())
+    .lt('ingested_at', todayStart.toISOString())
+
+  if (!inferredEdges || inferredEdges.length === 0) return insights
+
+  // Check how many were invalidated (valid_until set)
+  const invalidated = inferredEdges.filter(
+    e => e.valid_until && new Date(e.valid_until) <= new Date()
+  )
+  const precision = 1 - (invalidated.length / inferredEdges.length)
+
+  // Store precision metric for threshold tuning
+  try {
+    await supabase.from('consolidation_metrics').upsert({
+      org_id: orgId,
+      date: todayStart.toISOString().slice(0, 10),
+      stage: 'discover_relationships',
+      precision,
+      total_inferred: inferredEdges.length,
+      total_invalidated: invalidated.length,
+    }, {
+      onConflict: 'org_id,date,stage',
+    })
+  } catch (err) {
+    logger.warn('[sleep-consolidation] Stage 6 precision metric upsert failed', {
+      orgId, error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  if (precision < 0.6) {
+    insights.push({
+      content: `Relationship discovery precision was ${(precision * 100).toFixed(0)}% yesterday (${invalidated.length}/${inferredEdges.length} invalidated). Confidence threshold has been auto-raised to reduce false positives.`,
+      confidence: 0.8,
+    })
+  }
+
+  return insights
+}
+
+// ─── Model Routing Feedback ─────────────────────────────────────────────────
+
+function analyzeModelRouting(
+  runs: Array<{ quality_overall: number | null; trigger_payload: unknown; [key: string]: unknown }>,
+): SystemInsight[] {
+  const insights: SystemInsight[] = []
+
+  // Group runs by complexity level (stored in trigger_payload or metadata)
+  const byComplexity = groupBy(runs, r => {
+    const payload = r.trigger_payload as Record<string, unknown> | null
+    return (payload?.complexity as string) ?? 'medium'
+  })
+
+  for (const [complexity, complexityRuns] of Object.entries(byComplexity)) {
+    const scores = complexityRuns
+      .map(r => r.quality_overall)
+      .filter((s): s is number => s !== null)
+
+    if (scores.length === 0) continue
+
+    const avgQuality = mean(scores)
+
+    if (complexity === 'high' && avgQuality < 0.5) {
+      insights.push({
+        content: `High-complexity turns averaged ${avgQuality.toFixed(2)} quality across ${scores.length} runs. Consider escalating high-complexity to Opus more aggressively.`,
+        confidence: 0.7,
+      })
+    }
+
+    if (complexity === 'medium' && avgQuality > 0.85 && scores.length >= 5) {
+      insights.push({
+        content: `Medium-complexity turns averaged ${avgQuality.toFixed(2)} quality across ${scores.length} runs. Some may be safe to classify as low-complexity to save cost.`,
+        confidence: 0.6,
+      })
+    }
+  }
+
+  return insights
+}
+
+// ─── Adaptive Relationship Discovery Threshold (Sub-project D) ──────────────
+
+async function getRelationshipDiscoveryThreshold(
+  supabase: SupabaseClient,
+  orgId: string,
+): Promise<number> {
+  const DEFAULT_THRESHOLD = 0.7
+
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 7)
+
+  const { data: metrics } = await supabase
+    .from('consolidation_metrics')
+    .select('precision')
+    .eq('org_id', orgId)
+    .eq('stage', 'discover_relationships')
+    .gte('date', sevenDaysAgo.toISOString().slice(0, 10))
+    .order('date', { ascending: false })
+
+  if (!metrics || metrics.length < 3) return DEFAULT_THRESHOLD
+
+  const avgPrecision = mean(metrics.map(m => m.precision))
+
+  // Precision below 0.6 -> raise threshold (be more conservative)
+  // Precision above 0.8 -> lower threshold (be more exploratory)
+  // Clamp to [0.5, 0.9] range
+  if (avgPrecision < 0.6) return Math.min(DEFAULT_THRESHOLD + 0.1, 0.9)
+  if (avgPrecision > 0.8) return Math.max(DEFAULT_THRESHOLD - 0.1, 0.5)
+  return DEFAULT_THRESHOLD
 }
