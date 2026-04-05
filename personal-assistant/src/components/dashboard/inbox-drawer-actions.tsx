@@ -16,7 +16,7 @@ interface ActionsBarProps {
 
 export function InboxDrawerActions({ channelFamily, onArchive, onForward, onSpam }: ActionsBarProps) {
   return (
-    <div className="shrink-0 flex items-center gap-4 px-5 py-3 text-xs text-sidebar-foreground/25">
+    <div className="shrink-0 flex items-center gap-4 px-5 py-3 text-sm text-sidebar-foreground/25">
       <button onClick={onArchive} className="flex items-center gap-1.5 hover:text-sidebar-foreground/60 transition-colors">
         <IconArchive className="size-4" />
         Archive

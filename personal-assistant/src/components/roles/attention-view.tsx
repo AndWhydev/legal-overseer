@@ -131,7 +131,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <IconBell size={14} className="text-foreground" />
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
               Needs Your Attention
             </CardTitle>
             {counts.total > 0 && (
@@ -145,7 +145,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
         <div className="overflow-y-auto flex flex-col gap-2" style={{ maxHeight }}>
           {loading ? (
             Array.from({ length: 3 }, (_, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted">
                 <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
                 <div className="flex-1">
                   <Skeleton className="h-3 w-3/5 mb-2" />
@@ -157,7 +157,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
             <div className="py-10 text-center">
               <IconCircleCheck size={28} className="text-emerald-500 mx-auto mb-2" />
               <p className="text-sm font-medium text-foreground">All clear</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 No items need your attention right now
               </p>
             </div>
@@ -176,7 +176,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
                   onMouseLeave={() => setHoveredId(null)}
                   className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
                     isResolving ? 'opacity-50' : ''
-                  } ${isHovered ? 'bg-muted/50' : ''}`}
+                  } ${isHovered ? 'bg-muted' : ''}`}
                 >
                   {/* Priority indicator */}
                   <div className={`w-0.5 self-stretch rounded-full shrink-0 ${priorityMeta.className}`} />
@@ -200,7 +200,7 @@ export function AttentionView({ maxHeight = 'calc(100vh - 300px)' }: AttentionVi
                           {ROLE_LABELS[item.role_type] ?? item.role_type}
                         </Badge>
                       )}
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-sm text-muted-foreground">
                         {timeAgo(item.created_at)}
                       </span>
                     </div>

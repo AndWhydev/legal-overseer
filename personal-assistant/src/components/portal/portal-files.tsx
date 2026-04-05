@@ -76,7 +76,7 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-base font-medium tracking-tight text-gray-900">
+        <h1 className="text-base font-medium tracking-tight text-foreground">
           Files
         </h1>
         <button
@@ -92,7 +92,7 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
           type="file"
           multiple
           onChange={e => e.target.files && handleUpload(e.target.files)}
-          style={{ display: 'none' }}
+          className="hidden"
         />
       </div>
 
@@ -101,15 +101,11 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
         <div className="mb-4 flex items-center gap-2 overflow-x-auto">
           <button
             onClick={() => setFilter('all')}
+            className="px-4 py-2 rounded-lg text-sm border-none cursor-pointer"
             style={{
-              padding: '8px 16px',
-              borderRadius: 8,
-              fontSize: 14,
               fontWeight: filter === 'all' ? 500 : 400,
               background: filter === 'all' ? `${primaryColor}0D` : 'transparent',
               color: filter === 'all' ? primaryColor : 'var(--muted-foreground)',
-              border: 'none',
-              cursor: 'pointer',
             }}
           >
             All
@@ -118,15 +114,11 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
             <button
               key={cat}
               onClick={() => setFilter(cat)}
+              className="px-4 py-2 rounded-lg text-sm border-none cursor-pointer"
               style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                fontSize: 14,
                 fontWeight: filter === cat ? 500 : 400,
                 background: filter === cat ? `${primaryColor}0D` : 'transparent',
                 color: filter === cat ? primaryColor : 'var(--muted-foreground)',
-                border: 'none',
-                cursor: 'pointer',
               }}
             >
               {CATEGORY_LABELS[cat] ?? cat}
@@ -144,84 +136,69 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
           setDragOver(false)
           if (e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files)
         }}
+        className="rounded-xl px-6 py-8 text-center mb-6 transition-all duration-200"
         style={{
-          ...cardStyle,
           border: dragOver ? `2px dashed ${primaryColor}` : '2px dashed var(--border)',
           background: dragOver ? `${primaryColor}05` : 'var(--background)',
-          padding: '32px 24px',
-          textAlign: 'center',
-          marginBottom: 24,
-          transition: 'all 200ms',
-          borderRadius: 12,
         }}
       >
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={dragOver ? primaryColor : 'var(--border)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 12px' }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={dragOver ? primaryColor : 'var(--border)'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="17 8 12 3 7 8" />
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
-        <p style={{ fontSize: 14, color: dragOver ? primaryColor : 'var(--muted-foreground)', margin: 0 }}>
-          Drag files here or <button onClick={() => fileInputRef.current?.click()} style={{ color: primaryColor, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontSize: 14 }}>browse</button>
+        <p className="text-sm m-0" style={{ color: dragOver ? primaryColor : 'var(--muted-foreground)' }}>
+          Drag files here or <button onClick={() => fileInputRef.current?.click()} className="bg-transparent border-none cursor-pointer underline text-sm" style={{ color: primaryColor }}>browse</button>
         </p>
-        <p style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 4 }}>Max 50MB per file</p>
+        <p className="text-sm text-muted-foreground mt-1">Max 50MB per file</p>
       </div>
 
       {/* File List */}
       {filtered.length === 0 ? (
-        <div style={{ ...cardStyle, padding: 48, textAlign: 'center', border: '1px solid var(--border)' }}>
-          <p style={{ fontSize: 16, color: 'var(--text-dim)' }}>No files uploaded yet</p>
+        <div className="rounded-xl border border-border bg-card p-12 text-center">
+          <p className="text-base text-muted-foreground">No files uploaded yet</p>
         </div>
       ) : (
-        <div style={{ ...cardStyle, border: '1px solid var(--border)', overflow: 'hidden' }}>
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
           {filtered.map((file, i) => {
             const ext = FILE_ICONS[file.file_type ?? ''] ?? file.file_name.split('.').pop()?.toUpperCase() ?? 'FILE'
 
             return (
               <div
                 key={file.id}
-                className="flex items-center gap-4"
+                className="flex items-center gap-4 px-5 py-3"
                 style={{
-                  padding: '12px 20px',
                   borderBottom: i < filtered.length - 1 ? '1px solid var(--muted)' : 'none',
                 }}
               >
                 {/* File Icon */}
                 <div
+                  className="flex items-center justify-center rounded-lg text-sm font-medium shrink-0"
                   style={{
                     width: 44,
                     height: 44,
-                    borderRadius: 8,
                     background: `${primaryColor}0D`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 14,
-                    fontWeight: 500,
                     color: primaryColor,
-                    flexShrink: 0,
                   }}
                 >
                   {ext}
                 </div>
 
                 {/* File Info */}
-                <div className="flex-1" style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground m-0 truncate">
                     {file.file_name}
                   </p>
-                  <div className="flex items-center gap-3" style={{ marginTop: 2 }}>
-                    <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>{formatSize(file.file_size)}</span>
-                    <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-sm text-muted-foreground">{formatSize(file.file_size)}</span>
+                    <span className="text-sm text-muted-foreground">
                       {new Date(file.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                     <span
+                      className="text-sm font-medium px-2 py-0.5 rounded-lg"
                       style={{
-                        fontSize: 14,
-                        padding: '2px 8px',
-                        borderRadius: 8,
                         background: file.uploaded_by_role === 'client' ? '#EFF6FF' : '#F0FDF4',
                         color: file.uploaded_by_role === 'client' ? '#2563EB' : 'var(--success)',
-                        fontWeight: 500,
                       }}
                     >
                       {file.uploaded_by_role === 'client' ? 'You' : 'Agency'}
@@ -232,18 +209,7 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
                 {/* Download button */}
                 <button
                   onClick={() => window.open(`/api/portal/files/download?path=${encodeURIComponent(file.storage_path)}`, '_blank')}
-                  style={{
-                    padding: '8px 16px',
-                    borderRadius: 8,
-                    background: 'transparent',
-                    border: '1px solid var(--border)',
-                    color: 'var(--foreground)',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    transition: 'all 150ms',
-                    flexShrink: 0,
-                  }}
+                  className="px-4 py-2 rounded-lg bg-transparent border border-border text-foreground text-sm font-medium cursor-pointer transition-all duration-150 shrink-0"
                 >
                   Download
                 </button>
@@ -254,9 +220,4 @@ export function PortalFilesView({ initialFiles, primaryColor }: PortalFilesViewP
       )}
     </div>
   )
-}
-
-const cardStyle: React.CSSProperties = {
-  background: 'var(--card)',
-  borderRadius: 12,
 }

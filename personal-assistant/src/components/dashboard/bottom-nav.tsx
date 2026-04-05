@@ -89,7 +89,7 @@ export function BottomNav({
               {badgeCount > 0 && (
                 <Badge
                   variant="destructive"
-                  className="absolute -top-2 -right-3 text-[9px] px-1 py-0 min-w-4 h-4 flex items-center justify-center"
+                  className="absolute -top-2 -right-3 text-sm px-1 py-0 min-w-4 h-4 flex items-center justify-center"
                 >
                   {badgeCount > 99 ? '99+' : badgeCount}
                 </Badge>
@@ -97,7 +97,7 @@ export function BottomNav({
             </div>
             <span
               className={cn(
-                'text-xs leading-none truncate max-w-full',
+                'text-sm leading-none truncate max-w-full',
                 active ? 'font-medium' : 'font-medium',
               )}
             >

@@ -5,18 +5,17 @@ description: "Think, Act, Observe, Repeat: the agentic decision engine at the he
 
 # TAOR Loop
 
-The TAOR (Think, Act, Observe, Repeat) loop is BitBit's core execution engine. It replaced the original 1,100-line `engine.ts` with a clean, model-driven architecture where **the model decides when to stop**. There are no iteration caps, no convergence hints, and no observation masking.
+The TAOR (Think, Act, Observe, Repeat) loop is BitBit's core execution engine. It replaced the original 1,100-line `engine.ts` with a clean, model-driven architecture where **the model decides when to stop** with no iteration caps, no convergence hints, and no observation masking.
 
 A safety ceiling of 50 iterations exists purely for runaway cost protection.
 
 <TAORLoop />
 
-
 ## Execution Flow
 
 <Steps>
   <Step title="Pre-flight Checks">
-    Before the loop begins, the engine runs validation.
+    Before the loop begins, the engine runs validation:
     - Input length check (max 10,000 characters)
     - Thread ID validation
     - Injection detection and neutralization
@@ -24,7 +23,7 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
     - Calibrated confidence threshold loading (if available)
   </Step>
   <Step title="Model Routing">
-    If no model is explicitly specified, the auto-router selects the appropriate tier.
+    If no model is explicitly specified, the auto-router selects the appropriate tier:
 
     | Tier | Model | Max Tokens | Triggers |
     |------|-------|-----------|----------|
@@ -38,71 +37,47 @@ A safety ceiling of 50 iterations exists purely for runaway cost protection.
     The `ContextAssembler` builds the full context within a 48K token budget. This happens in parallel across four tiers with a 200ms latency target. See [Context Assembly](/intelligence/context-assembly) for details.
   </Step>
   <Step title="Tool Planning">
-    The engine prepares the tool set.
+    The engine prepares the tool set:
     - **Eager tools** are always loaded (core CRUD, memory, search)
     - **Deferred tools** are resolved via Tool RAG, matching user intent against tool descriptions using vector similarity
     - Tool definitions follow Anthropic's tool-use format
   </Step>
   <Step title="Execution Loop">
-    The core loop calls the Claude API and processes the response.
+    The core loop calls the Claude API and processes the response:
 
-    <Mermaid chart={`flowchart LR
-    A[Claude API Call] --> B{stop_reason}
-    B -->|tool_use| C[Execute tools] --> D[Feed results back] --> A
-    B -->|end_turn| E[Yield final message] --> F[Done]
-`} caption="TAOR loop decision flow" />
+    ```
+    Claude API Call → stop_reason?
+      ├── tool_use → Execute tools → Feed results back → Loop
+      └── end_turn → Yield final message → Done
+    ```
 
     Tools execute in batches with streaming. Results are fed back as `tool_result` messages for the next iteration.
   </Step>
   <Step title="Response Guard">
-    Before delivery, the response passes through three guards.
-    - **Leak detection** scans for exposed API keys or credentials.
-    - **Leak scrubbing** redacts any detected secrets.
-    - **Humanization** ensures natural, non-robotic output.
+    Before delivery, the response passes through:
+    - **Leak detection**: scans for exposed API keys or credentials
+    - **Leak scrubbing**: redacts any detected secrets
+    - **Humanization**: ensures natural, non-robotic output
   </Step>
 </Steps>
 
 ## SSE Event Stream
 
-The loop yields events as a server-sent event stream.
+The loop yields events as a server-sent event stream:
 
-<ApiRefTable
-  title="SSE Event Types"
-  props={[
-    { name: "stage", type: "string", description: "Pipeline stage transitions (model_routing, context_assembly, etc.)" },
-    { name: "thinking", type: "string", description: "Model routing and planning information" },
-    { name: "tool_call", type: "string", description: "Tool invocation with name and parameters" },
-    { name: "tool_result", type: "string", description: "Tool execution result" },
-    { name: "message", type: "string", description: "Final text response (streamed incrementally)" },
-    { name: "error", type: "string", description: "Error information" },
-    { name: "done", type: "string", description: "Completion event with total token usage" },
-  ]}
-/>
+| Event Type | Description |
+|-----------|-------------|
+| `stage` | Pipeline stage transitions (model_routing, context_assembly, etc.) |
+| `thinking` | Model routing and planning information |
+| `tool_call` | Tool invocation with name and parameters |
+| `tool_result` | Tool execution result |
+| `message` | Final text response (streamed incrementally) |
+| `error` | Error information |
+| `done` | Completion event with total token usage |
 
 <Tip>
 The `/api/agent/chat` route wraps the async generator in an SSE `ReadableStream`, sending each event as a `data:` frame. Clients can process events incrementally as they arrive.
 </Tip>
-
-<Mermaid chart={`
-sequenceDiagram
-    participant User
-    participant TAOR as TAOR Loop
-    participant LLM as Claude
-    participant Tools
-    participant DB as Supabase
-    
-    User->>TAOR: Send message
-    TAOR->>TAOR: Pre-flight checks
-    TAOR->>LLM: Context + tools
-    LLM->>TAOR: tool_use: search_memory
-    TAOR->>Tools: Execute search_memory
-    Tools->>DB: Query
-    DB-->>Tools: Results
-    Tools-->>TAOR: Tool result
-    TAOR->>LLM: Observe results
-    LLM-->>TAOR: Final response
-    TAOR-->>User: Stream response
-`} caption="TAOR loop executing a single tool call" />
 
 ## Circuit Breaker
 

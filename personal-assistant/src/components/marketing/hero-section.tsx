@@ -53,14 +53,14 @@ export default function HeroSection() {
 
         {/* Trust line + integration icons */}
         <div className="flex flex-col items-center gap-5">
-          <p className="text-xs text-muted-foreground/60 uppercase tracking-widest">
+          <p className="text-sm text-muted-foreground uppercase tracking-widest">
             Trusted by agencies across Australia
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             {INTEGRATIONS.map(({ name, Icon }) => (
               <div
                 key={name}
-                className="flex items-center justify-center w-11 h-11 rounded-xl bg-muted/50 border border-border transition-colors hover:bg-muted hover:border-border/80"
+                className="flex items-center justify-center w-11 h-11 rounded-xl bg-muted border border-border transition-colors hover:bg-muted hover:border-border"
                 title={name}
               >
                 <Icon size={18} className="text-muted-foreground" />

@@ -43,18 +43,18 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
 
   return (
     <div>
-      <h1 className="mb-6 text-base font-medium tracking-tight text-gray-900">
+      <h1 className="mb-6 text-base font-medium tracking-tight text-foreground">
         Projects
       </h1>
 
       {projects.length === 0 ? (
-        <div style={cardStyle} className="p-16 text-center">
+        <div className="rounded-xl border border-border bg-card p-16 text-center">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke='var(--border)' strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4">
             <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7-6H4a2 2 0 0 0-2 2z" />
             <path d="M14 2v6h6" />
           </svg>
-          <p className="text-base text-gray-500">No projects yet</p>
-          <p className="mt-1 text-sm text-gray-400">Your projects will appear here once they are set up.</p>
+          <p className="text-base text-muted-foreground">No projects yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Your projects will appear here once they are set up.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -66,73 +66,61 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
               <div key={project.id}>
                 <button
                   onClick={() => setSelectedProject(isSelected ? null : project)}
+                  className="w-full text-left cursor-pointer rounded-xl bg-card transition-all duration-200"
                   style={{
-                    ...cardStyle,
                     padding: 24,
-                    width: '100%',
-                    textAlign: 'left',
-                    cursor: 'pointer',
                     border: isSelected ? `2px solid ${primaryColor}` : '1px solid var(--border)',
-                    transition: 'all 200ms ease',
                   }}
                 >
                   <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-base font-medium text-gray-900">
+                    <h3 className="text-base font-medium text-foreground">
                       {project.title}
                     </h3>
                     <span
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 500,
-                        padding: '4px 12px',
-                        borderRadius: 8,
-                        background: sc.bg,
-                        color: sc.text,
-                      }}
+                      className="text-sm font-medium px-3 py-1 rounded-lg"
+                      style={{ background: sc.bg, color: sc.text }}
                     >
                       {sc.label}
                     </span>
                   </div>
 
                   {project.description && (
-                    <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 16px', lineHeight: 1.5 }}>
+                    <p className="text-sm text-muted-foreground mb-4 mt-0 leading-relaxed">
                       {project.description}
                     </p>
                   )}
 
                   {project.current_phase && (
-                    <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 12px' }}>
-                      Current phase: <span style={{ fontWeight: 500, color: 'var(--foreground)' }}>{project.current_phase}</span>
+                    <p className="text-sm text-muted-foreground mb-3 mt-0">
+                      Current phase: <span className="font-medium text-foreground">{project.current_phase}</span>
                     </p>
                   )}
 
                   {/* Progress Bar */}
                   <div>
-                    <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-                      <span style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>Progress</span>
-                      <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)' }}>{project.progress}%</span>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">Progress</span>
+                      <span className="text-sm font-medium text-foreground">{project.progress}%</span>
                     </div>
-                    <div style={{ height: 8, borderRadius: 8, background: 'var(--muted)', overflow: 'hidden' }}>
+                    <div className="h-2 rounded-lg bg-muted overflow-hidden">
                       <div
+                        className="h-full rounded-lg transition-[width] duration-500 ease-in-out"
                         style={{
-                          height: '100%',
-                          borderRadius: 8,
                           background: `linear-gradient(90deg, ${primaryColor}, ${primaryColor}CC)`,
                           width: `${project.progress}%`,
-                          transition: 'width 500ms ease',
                         }}
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4" style={{ marginTop: 16 }}>
+                  <div className="flex items-center gap-4 mt-4">
                     {project.start_date && (
-                      <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>
+                      <span className="text-sm text-muted-foreground">
                         Started: {new Date(project.start_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
                     {project.target_date && (
-                      <span style={{ fontSize: 14, color: 'var(--text-dim)' }}>
+                      <span className="text-sm text-muted-foreground">
                         Target: {new Date(project.target_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     )}
@@ -141,29 +129,29 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
 
                 {/* Task List (expanded) */}
                 {isSelected && (
-                  <div style={{ ...cardStyle, marginTop: 8, overflow: 'hidden' }}>
-                    <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--muted)', fontWeight: 500, fontSize: 14, color: 'var(--foreground)' }}>
+                  <div className="rounded-xl border border-border bg-card overflow-hidden mt-2">
+                    <div className="px-5 py-3 border-b border-muted font-medium text-sm text-foreground">
                       Project Milestones & Tasks
                     </div>
                     {loadingTasks ? (
-                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 14 }}>
+                      <div className="p-6 text-center text-muted-foreground text-sm">
                         Loading...
                       </div>
                     ) : tasks.length === 0 ? (
-                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 14 }}>
+                      <div className="p-6 text-center text-muted-foreground text-sm">
                         No tasks linked to this project yet.
                       </div>
                     ) : (
                       tasks.map((task, i) => (
                         <div
                           key={task.id}
-                          className="flex items-center gap-3"
+                          className="flex items-center gap-3 px-5 py-3"
                           style={{
-                            padding: '12px 20px',
                             borderBottom: i < tasks.length - 1 ? '1px solid var(--muted)' : 'none',
                           }}
                         >
                           <div
+                            className="flex items-center justify-center shrink-0"
                             style={{
                               width: 20,
                               height: 20,
@@ -172,10 +160,6 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                                 ? `2px solid 'var(--success)'`
                                 : '2px solid var(--border)',
                               background: task.task_status === 'completed' ? 'var(--success)' : 'transparent',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0,
                             }}
                           >
                             {task.task_status === 'completed' && (
@@ -186,15 +170,10 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
                           </div>
                           <div>
                             <span
-                              style={{
-                                fontSize: 14,
-                                color: task.task_status === 'completed' ? 'var(--text-dim)' : 'var(--foreground)',
-                                textDecoration: task.task_status === 'completed' ? 'line-through' : 'none',
-                                fontWeight: task.is_milestone ? 500 : 400,
-                              }}
+                              className={`text-sm ${task.task_status === 'completed' ? 'text-muted-foreground line-through' : 'text-foreground'} ${task.is_milestone ? 'font-medium' : 'font-normal'}`}
                             >
                               {task.is_milestone && (
-                                <span style={{ color: primaryColor, marginRight: 8, fontSize: 14 }}>MILESTONE</span>
+                                <span className="mr-2 text-sm" style={{ color: primaryColor }}>MILESTONE</span>
                               )}
                               {task.display_name ?? task.task_title}
                             </span>
@@ -211,10 +190,4 @@ export function PortalProjectsView({ projects, primaryColor }: PortalProjectsVie
       )}
     </div>
   )
-}
-
-const cardStyle: React.CSSProperties = {
-  background: 'var(--card)',
-  borderRadius: 12,
-  border: '1px solid var(--border)',
 }

@@ -89,7 +89,7 @@ export function RevenueInsightCard({ insight, onAction }: InsightCardProps) {
       <div className="flex flex-1 flex-col gap-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground truncate">{insight.title}</span>
-          <Badge variant={SEVERITY_VARIANTS[insight.severity]} className="shrink-0 uppercase text-xs tracking-wide">
+          <Badge variant={SEVERITY_VARIANTS[insight.severity]} className="shrink-0 uppercase text-sm tracking-wide">
             {TYPE_LABELS[insight.insight_type] ?? insight.insight_type}
           </Badge>
         </div>
@@ -106,13 +106,13 @@ export function RevenueInsightCard({ insight, onAction }: InsightCardProps) {
             )}
             <div className="flex items-center gap-2 mt-1">
               <button
-                className="text-sm font-medium px-3 py-1 rounded bg-green-500 text-black border-none cursor-pointer transition-opacity hover:opacity-80"
+                className="text-sm font-medium px-3 py-1 rounded-lg bg-green-500 text-black border-none cursor-pointer transition-opacity hover:opacity-80"
                 onClick={(e) => { e.stopPropagation(); onAction(insight.id, 'actioned') }}
               >
                 Mark Done
               </button>
               <button
-                className="text-sm font-medium px-3 py-1 rounded bg-accent text-muted-foreground border-none cursor-pointer transition-opacity hover:opacity-80"
+                className="text-sm font-medium px-3 py-1 rounded-lg bg-accent text-muted-foreground border-none cursor-pointer transition-opacity hover:opacity-80"
                 onClick={(e) => { e.stopPropagation(); onAction(insight.id, 'dismissed') }}
               >
                 Dismiss

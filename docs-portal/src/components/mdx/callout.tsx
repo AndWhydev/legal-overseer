@@ -26,30 +26,30 @@ export function Callout({
   return (
     <div
       style={{
-        backgroundColor: "rgb(245, 244, 240)",
-        border: "1px solid rgb(222, 222, 222)",
-        borderRadius: "6px",
-        padding: "12px 16px",
+        backgroundColor: "#f9fafb",
+        border: "1px solid #e5e7eb",
+        borderRadius: "8px",
+        padding: "16px 20px",
         margin: "24px 0",
-        fontSize: "15px",
-        lineHeight: "26.4px",
+        fontSize: "14px",
+        lineHeight: "28px",
       }}
     >
       <div
         style={{
           fontWeight: 600,
           fontSize: "14px",
-          color: "rgb(23, 23, 23)",
-          marginBottom: "4px",
+          color: "#171717",
+          marginBottom: "6px",
           display: "flex",
           alignItems: "center",
-          gap: "6px",
+          gap: "8px",
         }}
       >
-        <Icon size={16} className="shrink-0" style={{ color: "rgb(80, 80, 80)", marginTop: "1px" }} />
+        <Icon size={16} className="shrink-0" style={{ color: "#9ca3af", marginTop: "1px" }} />
         <span>{title || c.label}</span>
       </div>
-      <div style={{ color: "rgb(23, 23, 23)" }}>{children}</div>
+      <div style={{ color: "#374151" }}>{children}</div>
     </div>
   )
 }

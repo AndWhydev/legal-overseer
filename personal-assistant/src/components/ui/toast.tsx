@@ -32,7 +32,7 @@ const ICONS: Record<ToastType, React.ReactNode> = {
   info: <Info className="h-4 w-4 text-muted-foreground" aria-hidden="true" />,
 };
 
-// Toast uses inline glass styling — no border classes needed
+// Toast uses inline surface styling — no border classes needed
 const _BORDER_COLORS_UNUSED = null;
 
 const AUTO_DISMISS_MS: Record<ToastType, number | null> = {

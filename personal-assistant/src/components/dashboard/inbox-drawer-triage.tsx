@@ -24,10 +24,10 @@ function ReadyState({
     return (
       <div className="mx-3.5 mb-2 flex items-center gap-2 rounded-lg bg-sidebar-accent px-3 py-2 shrink-0">
         <IconSparkles className="size-4 text-sidebar-foreground/60 shrink-0" />
-        <span className="flex-1 text-xs text-sidebar-foreground/45 truncate">{summary}</span>
+        <span className="flex-1 text-sm text-sidebar-foreground/45 truncate">{summary}</span>
         <button
           onClick={onDelegate}
-          className="shrink-0 rounded-lg bg-primary/10 px-2 py-0.5 text-xs text-sidebar-foreground/70 hover:bg-primary/20 transition-colors"
+          className="shrink-0 rounded-lg bg-primary/10 px-2 py-0.5 text-sm text-sidebar-foreground/70 hover:bg-primary/20 transition-colors"
         >
           🤖
         </button>
@@ -39,7 +39,7 @@ function ReadyState({
     <div className="mx-3.5 mb-2 rounded-lg bg-sidebar-accent px-3.5 py-3 shrink-0">
       <div className="flex items-start gap-2 mb-2.5">
         <IconSparkles className="size-4 text-sidebar-foreground/60 shrink-0 mt-0.5" />
-        <p className="flex-1 text-xs text-sidebar-foreground/50 leading-relaxed [&_strong]:text-sidebar-foreground/70">
+        <p className="flex-1 text-sm text-sidebar-foreground/50 leading-relaxed [&_strong]:text-sidebar-foreground/70">
           {summary}
         </p>
       </div>
@@ -63,7 +63,7 @@ function LoadingState() {
     <div className="mx-3.5 mb-2 rounded-lg bg-sidebar-accent px-3.5 py-3 shrink-0">
       <div className="flex items-center gap-2">
         <IconRobot className="size-4 text-sidebar-foreground/60 animate-pulse" />
-        <span className="text-xs text-sidebar-foreground/50">BitBit is thinking...</span>
+        <span className="text-sm text-sidebar-foreground/50">BitBit is thinking...</span>
       </div>
     </div>
   )
@@ -80,15 +80,15 @@ function DelegatedState({
     <div className="mx-3.5 mb-2 rounded-lg bg-sidebar-accent px-3.5 py-3 shrink-0">
       <div className="flex items-center gap-2 mb-2">
         <IconRobot className="size-4 text-sidebar-foreground/60" />
-        <span className="text-xs font-medium text-sidebar-foreground/70">BitBit is handling this</span>
+        <span className="text-sm font-medium text-sidebar-foreground/70">BitBit is handling this</span>
       </div>
       <div className="flex flex-col gap-1.5 pl-1 mb-3">
         {delegationActions.map((action, i) => (
-          <div key={i} className="flex items-center gap-2 text-xs">
+          <div key={i} className="flex items-center gap-2 text-sm">
             <span className="text-sidebar-foreground/50">✓</span>
             <span className="text-sidebar-foreground/50">{action.label}</span>
             {action.targetRoute === 'approvals' && (
-              <span className="ml-auto text-xs rounded bg-sidebar-foreground/[0.06] px-1.5 py-0.5 text-sidebar-foreground/50">
+              <span className="ml-auto text-sm rounded-lg bg-sidebar-foreground/[0.06] px-1.5 py-0.5 text-sidebar-foreground/50">
                 In Approvals
               </span>
             )}

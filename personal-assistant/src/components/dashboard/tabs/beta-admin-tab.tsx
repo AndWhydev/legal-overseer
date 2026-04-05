@@ -291,7 +291,7 @@ export default function BetaAdminTab() {
                 <CardContent className="flex flex-col gap-1">
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <stat.icon className="size-3.5" />
-                    <span className="text-xs">{stat.label}</span>
+                    <span className="text-sm">{stat.label}</span>
                   </div>
                   <div className={cn(
                     'text-2xl font-medium tabular-nums',
@@ -299,7 +299,7 @@ export default function BetaAdminTab() {
                   )}>
                     {stat.value}
                   </div>
-                  <div className="text-xs text-muted-foreground">{stat.sub}</div>
+                  <div className="text-sm text-muted-foreground">{stat.sub}</div>
                 </CardContent>
               </Card>
             ))}
@@ -361,7 +361,7 @@ export default function BetaAdminTab() {
                         />
                       )}
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{entry.email}</TableCell>
+                    <TableCell className="font-mono text-sm">{entry.email}</TableCell>
                     <TableCell>{entry.referral_source}</TableCell>
                     <TableCell>
                       <Badge variant={STATUS_VARIANT[entry.status] ?? 'secondary'}>
@@ -424,10 +424,10 @@ export default function BetaAdminTab() {
                     <TableCell className="text-right">{m.active_days_7d}/7</TableCell>
                     <TableCell className="text-right">{m.total_messages_7d}</TableCell>
                     <TableCell className="text-right">{m.total_agent_runs_7d}</TableCell>
-                    <TableCell className="text-right font-mono text-xs">
+                    <TableCell className="text-right font-mono text-sm">
                       {m.total_tokens_7d.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-xs">
+                    <TableCell className="text-right font-mono text-sm">
                       {formatCost(m.total_cost_7d)}
                     </TableCell>
                     <TableCell className={cn('text-right', m.error_count_7d > 0 && 'text-destructive')}>
@@ -486,7 +486,7 @@ export default function BetaAdminTab() {
                     <TableCell>
                       <Badge variant={f.status === 'resolved' ? 'default' : 'secondary'}>{f.status}</Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{f.page_url ?? '--'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{f.page_url ?? '--'}</TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(f.created_at)}</TableCell>
                   </TableRow>
                 ))}

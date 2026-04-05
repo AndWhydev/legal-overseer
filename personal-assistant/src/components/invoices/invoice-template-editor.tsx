@@ -74,7 +74,7 @@ function InvoicePreview({ template, orgName }: { template: InvoiceTemplate; orgN
   return (
     <div
       ref={wrapperRef}
-      className="relative w-full overflow-hidden rounded-xl bg-muted/50 p-4"
+      className="relative w-full overflow-hidden rounded-xl bg-muted p-4"
       style={{ height: Math.round(842 * scale) + 32, transition: 'height 0.15s ease' }}
     >
       <div
@@ -343,7 +343,7 @@ export function InvoiceTemplateEditor() {
                     style={{ background: tpl.defaults.primary_color }}
                   />
                   <span className="text-sm font-medium">{tpl.name}</span>
-                  <span className="text-xs text-muted-foreground line-clamp-2">{tpl.description}</span>
+                  <span className="text-sm text-muted-foreground line-clamp-2">{tpl.description}</span>
                 </button>
               )
             })}
@@ -377,11 +377,11 @@ export function InvoiceTemplateEditor() {
             ) : (
               <button
                 onClick={() => fileRef.current?.click()}
-                className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 p-6 text-sm text-muted-foreground transition-colors hover:bg-muted/50"
+                className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-muted p-6 text-sm text-muted-foreground transition-colors hover:bg-muted"
               >
                 <IconUpload className="size-5" />
                 Click to upload logo
-                <span className="text-xs text-muted-foreground/70">PNG, JPG, SVG -- max 500 KB</span>
+                <span className="text-sm text-muted-foreground">PNG, JPG, SVG -- max 500 KB</span>
               </button>
             )}
             <input
@@ -445,7 +445,7 @@ export function InvoiceTemplateEditor() {
                 }))}
                 placeholder="e.g. 123 Agency St, Sydney NSW 2000"
               />
-              <p className="text-xs text-muted-foreground">Separate lines with commas</p>
+              <p className="text-sm text-muted-foreground">Separate lines with commas</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="bank">Bank Details</Label>
@@ -502,7 +502,7 @@ export function InvoiceTemplateEditor() {
                     value={template.primary_color ?? '#334155'}
                     onChange={(e) => setTemplate((prev) => ({ ...prev, primary_color: e.target.value }))}
                     placeholder="#334155"
-                    className="font-mono text-xs"
+                    className="font-mono text-sm"
                   />
                 </div>
               </div>
@@ -521,7 +521,7 @@ export function InvoiceTemplateEditor() {
                     value={template.accent_color ?? '#1E293B'}
                     onChange={(e) => setTemplate((prev) => ({ ...prev, accent_color: e.target.value }))}
                     placeholder="#1E293B"
-                    className="font-mono text-xs"
+                    className="font-mono text-sm"
                   />
                 </div>
               </div>
@@ -548,7 +548,7 @@ export function InvoiceTemplateEditor() {
               placeholder="e.g. Payment due within 14 days. BSB: 062-000 Account: 1234 5678"
               maxLength={500}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {(template.footer_text ?? '').length}/500 characters
             </p>
           </CardContent>
@@ -567,7 +567,7 @@ export function InvoiceTemplateEditor() {
               maxLength={5000}
               className="min-h-[100px]"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {(template.terms ?? '').length}/5,000 characters
             </p>
           </CardContent>

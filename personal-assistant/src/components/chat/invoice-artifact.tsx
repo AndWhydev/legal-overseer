@@ -48,7 +48,7 @@ export function InvoiceArtifact({
 
   return (
     <Card className="max-w-[520px] my-2 overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between py-3 px-4 bg-muted/50 border-b border-border">
+      <CardHeader className="flex flex-row items-center justify-between py-3 px-4 bg-muted border-b border-border">
         <div>
           <div className="text-sm font-medium text-foreground tracking-tight">
             Invoice {invoiceNumber}
@@ -58,13 +58,13 @@ export function InvoiceArtifact({
           </div>
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy} title="Copy HTML">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopy} title="Copy HTML">
             {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDownload} title="Save as PDF">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleDownload} title="Save as PDF">
             <IconDownload size={14} />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleOpenNew} title="Open in new tab">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleOpenNew} title="Open in new tab">
             <IconExternalLink size={14} />
           </Button>
         </div>

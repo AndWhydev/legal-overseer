@@ -259,17 +259,17 @@ function ConnectionCard({
 }: ConnectionCardProps) {
   if (variant === 'onboarding') {
     return (
-      <article className="flex items-center gap-3.5 rounded-[10px] border border-black/[0.06] bg-white/76 px-5 py-4 shadow-[0_8px_22px_rgba(15,23,42,0.04)] transition duration-200 hover:shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+      <article className="flex items-center gap-3.5 rounded-[10px] border border-black/[0.06] bg-white/76 px-5 py-4 shadow-sm transition duration-200 hover:shadow-md">
         <AppIcon id={connection.id} size={40} />
-        <span className="flex-1 text-base font-medium text-[#171411]">{connection.name}</span>
+        <span className="flex-1 text-base font-medium text-foreground">{connection.name}</span>
         {connection.comingSoon ? (
-          <span className={`${BTN_COMPACT} shrink-0 border border-black/[0.06] bg-[#f5f0ea] text-[#9b8a7d]`}>Soon</span>
+          <span className={`${BTN_COMPACT} shrink-0 border border-black/[0.06] bg-muted text-muted-foreground`}>Soon</span>
         ) : status.connected ? (
           <button
             type="button"
             onClick={() => onDisconnect(connection.id)}
             disabled={isLoading}
-            className={`${BTN_COMPACT} shrink-0 border border-[#d4e8d8] bg-[#edf7ef] text-[#4f7f5d] hover:bg-[#e0f0e3] disabled:opacity-50`}
+            className={`${BTN_COMPACT} shrink-0 border border-success bg-success/10 text-success hover:bg-success/15 disabled:opacity-50`}
           >
             {isLoading ? 'Removing\u2026' : 'Connected'}
           </button>
@@ -278,7 +278,7 @@ function ConnectionCard({
             type="button"
             onClick={() => onConnect(connection.id)}
             disabled={isLoading}
-            className={`${BTN_COMPACT} shrink-0 bg-[#171411] text-white hover:bg-[#2a241e] disabled:opacity-50`}
+            className={`${BTN_COMPACT} shrink-0 bg-foreground text-white hover:bg-foreground/90 disabled:opacity-50`}
           >
             {isLoading ? 'Connecting\u2026' : 'Connect'}
           </button>
@@ -288,18 +288,18 @@ function ConnectionCard({
   }
 
   return (
-    <article className="flex flex-col gap-3 rounded-[10px] border border-[var(--border)] bg-[var(--card)] p-4 shadow-[0_10px_28px_rgba(15,23,42,0.07)] transition duration-300 hover:translate-y-[-1px] hover:shadow-[0_16px_44px_rgba(15,23,42,0.08)]">
+    <article className="flex flex-col gap-3 rounded-[10px] border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition duration-300 hover:translate-y-[-1px] hover:shadow-md">
       <div className="flex items-center gap-3">
         <AppIcon id={connection.id} size={40} />
         <div className="min-w-0">
-          <h3 className="text-base font-medium leading-tight text-[#171411]">{connection.name}</h3>
-          <p className="mt-0.5 text-base leading-tight text-[#7d7468]">{connection.description}</p>
+          <h3 className="text-base font-medium leading-tight text-foreground">{connection.name}</h3>
+          <p className="mt-0.5 text-base leading-tight text-muted-foreground">{connection.description}</p>
         </div>
       </div>
 
       <div className="flex items-center justify-end">
         {connection.comingSoon ? (
-          <span className={`${BTN_BASE} border border-black/[0.06] bg-[#f5f0ea] text-[#9b8a7d]`}>
+          <span className={`${BTN_BASE} border border-black/[0.06] bg-muted text-muted-foreground`}>
             Soon
           </span>
         ) : status.connected ? (
@@ -307,7 +307,7 @@ function ConnectionCard({
             type="button"
             onClick={() => onDisconnect(connection.id)}
             disabled={isLoading}
-            className={`${BTN_BASE} border border-[#d4e8d8] bg-[#edf7ef] text-[#4f7f5d] hover:bg-[#e0f0e3] disabled:opacity-50`}
+            className={`${BTN_BASE} border border-success bg-success/10 text-success hover:bg-success/15 disabled:opacity-50`}
           >
             {isLoading ? 'Removing\u2026' : 'Connected'}
           </button>
@@ -316,7 +316,7 @@ function ConnectionCard({
             type="button"
             onClick={() => onConnect(connection.id)}
             disabled={isLoading}
-            className={`${BTN_BASE} bg-[#171411] text-white hover:translate-y-[-1px] hover:bg-[#2a241e] disabled:opacity-50`}
+            className={`${BTN_BASE} bg-foreground text-white hover:translate-y-[-1px] hover:bg-foreground/90 disabled:opacity-50`}
           >
             {isLoading ? 'Connecting\u2026' : 'Connect'}
           </button>
@@ -590,10 +590,10 @@ export function ConnectionsGrid({
 
       {showHeader ? (
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-lg font-medium tracking-[-0.02em] text-[#171411]">
+          <h2 className="text-lg font-medium tracking-[-0.02em] text-foreground">
             Connections
           </h2>
-          <div className="rounded-lg bg-[#f5ede6] px-3 py-1 text-base font-medium text-[#8c5f41]">
+          <div className="rounded-lg bg-accent/10 px-3 py-1 text-base font-medium text-accent">
             {getConnectedIds(statuses).length} connected
           </div>
         </div>
@@ -612,8 +612,8 @@ export function ConnectionsGrid({
                 onClick={() => setActiveCategory(category.id)}
                 className={`rounded-lg px-4 py-2 text-base font-medium uppercase tracking-[0.16em] transition ${
                   active
-                    ? 'bg-[#171411] text-white'
-                    : 'border border-black/[0.06] bg-white/72 text-[#7d7064] hover:text-[#171411]'
+                    ? 'bg-foreground text-white'
+                    : 'border border-black/[0.06] bg-white/72 text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {category.label}

@@ -220,7 +220,7 @@ export function Summon({ onNavigate, activeTab }: SummonProps) {
                 <div className="flex flex-col gap-0">
                   <span>{cmd.label}</span>
                   {cmd.description && (
-                    <span className="text-xs text-muted-foreground">{cmd.description}</span>
+                    <span className="text-sm text-muted-foreground">{cmd.description}</span>
                   )}
                 </div>
                 {cmd.shortcut && <CommandShortcut>{cmd.shortcut}</CommandShortcut>}

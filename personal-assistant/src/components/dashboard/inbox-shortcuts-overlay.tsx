@@ -86,23 +86,23 @@ export function InboxShortcutsOverlay({ isOpen, onClose }: InboxShortcutsOverlay
           {sortedCategories.map((category, catIdx) => (
             <div key={category}>
               {catIdx > 0 && <Separator className="mb-4" />}
-              <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+              <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-3">
                 {category}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {grouped[category].map((shortcut, idx) => (
                   <div
                     key={`${category}-${idx}`}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2"
+                    className="flex items-center gap-3 rounded-lg border border-border bg-muted px-3 py-2"
                   >
                     <div className="flex items-center gap-1">
                       {shortcut.keys.map((key, keyIdx) => (
                         <React.Fragment key={keyIdx}>
-                          <kbd className="inline-flex items-center rounded border border-border bg-background px-1.5 py-0.5 text-xs font-mono font-medium text-foreground">
+                          <kbd className="inline-flex items-center rounded-lg border border-border bg-background px-1.5 py-0.5 text-sm font-mono font-medium text-foreground">
                             {key}
                           </kbd>
                           {keyIdx < shortcut.keys.length - 1 && (
-                            <span className="text-xs text-muted-foreground">+</span>
+                            <span className="text-sm text-muted-foreground">+</span>
                           )}
                         </React.Fragment>
                       ))}

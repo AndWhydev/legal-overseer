@@ -61,7 +61,7 @@ const viewAllTextVariants = {
 function NotificationList() {
   return (
     <motion.div
-      className="bg-neutral-200 dark:bg-neutral-900 p-3 rounded-3xl w-xs space-y-3 shadow-md"
+      className="bg-muted p-3 rounded-3xl w-xs space-y-3 shadow-md"
       initial="collapsed"
       whileHover="expanded"
     >
@@ -69,7 +69,7 @@ function NotificationList() {
         {notifications.map((notification, i) => (
           <motion.div
             key={notification.id}
-            className="bg-neutral-100 dark:bg-neutral-800 rounded-xl px-4 py-2 shadow-sm hover:shadow-lg transition-shadow duration-200 relative"
+            className="bg-card rounded-xl px-4 py-2 shadow-sm hover:shadow-lg transition-shadow duration-200 relative"
             variants={getCardVariants(i)}
             transition={transition}
             style={{
@@ -79,13 +79,13 @@ function NotificationList() {
             <div className="flex justify-between items-center">
               <h1 className="text-sm font-medium">{notification.title}</h1>
               {notification.count && (
-                <div className="flex items-center text-xs gap-0.5 font-medium text-neutral-500 dark:text-neutral-300">
+                <div className="flex items-center text-sm gap-0.5 font-medium text-muted-foreground">
                   <IconRefresh className="size-3" />
                   <span>{notification.count}</span>
                 </div>
               )}
             </div>
-            <div className="text-xs text-neutral-500 font-medium">
+            <div className="text-sm text-muted-foreground font-medium">
               <span>{notification.time}</span>
               &nbsp;•&nbsp;
               <span>{notification.subtitle}</span>
@@ -95,19 +95,19 @@ function NotificationList() {
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="size-5 rounded-full bg-neutral-400 text-white text-xs flex items-center justify-center font-medium">
+        <div className="size-5 rounded-full bg-muted-foreground text-white text-sm flex items-center justify-center font-medium">
           {notifications.length}
         </div>
         <span className="grid">
           <motion.span
-            className="text-sm font-medium text-neutral-600 dark:text-neutral-300 row-start-1 col-start-1"
+            className="text-sm font-medium text-foreground row-start-1 col-start-1"
             variants={notificationTextVariants}
             transition={textSwitchTransition}
           >
             Notifications
           </motion.span>
           <motion.span
-            className="text-sm font-medium text-neutral-600 dark:text-neutral-300 flex items-center gap-1 cursor-pointer select-none row-start-1 col-start-1"
+            className="text-sm font-medium text-foreground flex items-center gap-1 cursor-pointer select-none row-start-1 col-start-1"
             variants={viewAllTextVariants}
             transition={textSwitchTransition}
           >

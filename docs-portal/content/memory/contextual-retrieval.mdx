@@ -13,6 +13,19 @@ The key insight: chunks lose context when split from their source document. "He 
 
 ## How It Works
 
+<Mermaid chart={`flowchart LR
+    subgraph Old[Old Path]
+        A1[Chunk] --> A2[Embed Raw]
+        A2 --> A3[Store]
+    end
+    subgraph New[New Path]
+        B1[Chunk] --> B2[Haiku Enrich\nwho/what/when]
+        B2 --> B3[Embed Enriched]
+        B3 --> B4[Store]
+        B2 -->|fails| B5[Use Raw]
+        B5 --> B3
+    end`} caption="Before vs after: raw embedding loses context, Haiku enrichment adds who/what/when at ingestion time" />
+
 At ingestion time (not query time), each chunk is enriched:
 
 1. Take a chunk from the source message
@@ -53,7 +66,7 @@ Contextual retrieval is enabled by default. Set `CONTEXTUALIZE_CHUNKS=false` to 
 At Haiku rates, contextual retrieval costs approximately **$1 per million tokens** at ingestion. At BitBit's current volume (hundreds of messages per day), this is negligible.
 
 <Note>
-This is a pure ingestion-time cost. Query-time retrieval is unaffected because the enriched chunks are already embedded and indexed. Better retrieval quality with zero latency impact on queries.
+This is a pure ingestion-time cost. Query-time retrieval is unaffected because the enriched chunks are already embedded and indexed. This is what makes the technique powerful: better retrieval quality with zero latency impact on queries.
 </Note>
 
 ## Graceful Degradation

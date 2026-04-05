@@ -90,7 +90,7 @@ export function PixelHeading({
         {children}
       </Tag>
       {showLabel && (
-        <output aria-live="polite" className="block text-xs text-muted-foreground mt-1">
+        <output aria-live="polite" className="block text-sm text-muted-foreground mt-1">
           {FONT_ORDER[fontIndex]}
         </output>
       )}

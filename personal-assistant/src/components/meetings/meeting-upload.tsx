@@ -104,7 +104,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
           onClick={() => fileInputRef.current?.click()}
           className={`mb-4 cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
             dragOver
-              ? 'border-foreground bg-secondary/50'
+              ? 'border-foreground bg-secondary'
               : 'border-border bg-transparent'
           }`}
         >
@@ -135,7 +135,7 @@ export function MeetingUpload({ onUploaded, onCancel }: MeetingUploadProps) {
               <div className="text-sm text-muted-foreground">
                 Drop audio/video file here or click to browse
               </div>
-              <div className="mt-1 text-sm text-muted-foreground/70">
+              <div className="mt-1 text-sm text-muted-foreground">
                 MP3, WAV, M4A, MP4, WebM, OGG, FLAC (max 500MB)
               </div>
             </div>

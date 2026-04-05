@@ -368,7 +368,7 @@ function StatPill({ value, label, active }: { value: number | string; label: str
       <span className={`text-sm font-medium tabular-nums ${active ? 'text-foreground' : 'text-muted-foreground'}`}>
         {value}
       </span>
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
     </span>
   )
 }
@@ -390,10 +390,10 @@ function ContactGroup({
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger asChild>
-        <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+        <button className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
           <Icon size={15} className="shrink-0" />
           <span>{group.label}</span>
-          <Badge variant="secondary" className="ml-0.5 text-[10px] px-1.5 py-0 tabular-nums">
+          <Badge variant="secondary" className="ml-0.5 text-sm px-1.5 py-0 tabular-nums">
             {contacts.length}
           </Badge>
           <IconChevronDown
@@ -463,7 +463,7 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
             </Badge>
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
             {email && (
               <span className="inline-flex items-center gap-1 truncate">
                 <IconMail className="size-3 shrink-0" />
@@ -481,12 +481,12 @@ function ContactCard({ contact, onOpen }: { contact: Contact; onOpen: () => void
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
               {tags.slice(0, 3).map(tag => (
-                <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
+                <Badge key={tag} variant="secondary" className="text-sm px-1.5 py-0">
                   {tag}
                 </Badge>
               ))}
               {tags.length > 3 && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                <Badge variant="secondary" className="text-sm px-1.5 py-0">
                   +{tags.length - 3}
                 </Badge>
               )}

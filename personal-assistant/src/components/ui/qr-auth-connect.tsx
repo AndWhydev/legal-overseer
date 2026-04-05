@@ -172,97 +172,49 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
       {/* Inject keyframes */}
       <style>{KEYFRAMES}</style>
 
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 20,
-        padding: '32px 24px',
-        minHeight: 320,
-        justifyContent: 'center',
-      }}>
+      <div className="flex flex-col items-center gap-5 px-6 py-8 justify-center" style={{ minHeight: 320 }}>
 
         {/* ─── WhatsApp icon (always visible in loading / post-QR states) ─── */}
         {(isPreQr || isPostQr) && (
-          <div style={{
-            position: 'relative',
-            width: 56,
-            height: 56,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
+          <div className="relative flex items-center justify-center" style={{ width: 56, height: 56 }}>
             <img
               src="/icons/integrations/whatsapp.png"
               alt="WhatsApp"
               width={48}
               height={48}
-              style={{
-                borderRadius: 12,
-                opacity: phase === 'connected' ? 1 : 0.9,
-                transition: 'opacity 400ms ease',
-              }}
+              className="rounded-xl transition-opacity duration-400"
+              style={{ opacity: phase === 'connected' ? 1 : 0.9 }}
             />
             {/* Spinner ring around icon for loading states */}
             {(isPreQr || phase === 'scanned' || phase === 'syncing') && (
-              <div style={{
-                position: 'absolute',
-                inset: -4,
-                borderRadius: '50%',
-                border: '2px solid transparent',
-                borderTopColor: 'var(--text-secondary)',
-                animation: 'qr-spin 1s linear infinite',
-              }} />
+              <div
+                className="absolute -inset-1 rounded-full border-2 border-transparent border-t-[var(--text-secondary)]"
+                style={{ animation: 'qr-spin 1s linear infinite' }}
+              />
             )}
             {/* Success ring pulse for connected */}
             {phase === 'connected' && (
-              <div style={{
-                position: 'absolute',
-                inset: -4,
-                borderRadius: '50%',
-                border: '2px solid var(--status-success-fg)',
-                animation: 'qr-pulse-ring 1s ease-out forwards',
-              }} />
+              <div
+                className="absolute -inset-1 rounded-full border-2 border-[var(--status-success-fg)]"
+                style={{ animation: 'qr-pulse-ring 1s ease-out forwards' }}
+              />
             )}
           </div>
         )}
 
         {/* ─── QR Code ─── */}
         {(phase === 'qr_ready' || phase === 'qr_waiting') && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 16,
-            animation: qrData ? undefined : undefined,
-          }}>
+          <div className="flex flex-col items-center gap-4">
             {qrData ? (
-              <div style={{
-                borderRadius: 16,
-                background: '#ffffff',
-                padding: 12,
-                boxShadow: '0 2px 16px rgba(0, 0, 0, 0.15)',
-                transition: 'opacity 400ms ease, transform 400ms ease',
-              }}>
-                <canvas ref={canvasRef} width={220} height={220} style={{ display: 'block' }} />
+              <div className="rounded-2xl bg-white p-3 shadow-lg transition-all duration-400">
+                <canvas ref={canvasRef} width={220} height={220} className="block" />
               </div>
             ) : (
-              <div style={{
-                width: 244,
-                height: 244,
-                borderRadius: 16,
-                background: 'var(--secondary)',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+              <div className="flex items-center justify-center rounded-2xl bg-secondary" style={{ width: 244, height: 244 }}>
                 <Loader2
                   size={24}
-                  style={{
-                    color: 'var(--text-secondary)',
-                    animation: 'qr-spin 1s linear infinite',
-                  }}
+                  className="text-[var(--text-secondary)]"
+                  style={{ animation: 'qr-spin 1s linear infinite' }}
                 />
               </div>
             )}
@@ -271,29 +223,15 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
 
         {/* ─── Scanned / Connecting transition ─── */}
         {phase === 'scanned' && (
-          <div style={{
-            width: 244,
-            height: 244,
-            borderRadius: 16,
-            background: 'var(--secondary)',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            animation: 'qr-success-in 500ms ease-out',
-          }}>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 8,
-            }}>
+          <div
+            className="flex items-center justify-center rounded-2xl bg-secondary"
+            style={{ width: 244, height: 244, animation: 'qr-success-in 500ms ease-out' }}
+          >
+            <div className="flex flex-col items-center gap-2">
               <Loader2
                 size={28}
-                style={{
-                  color: 'var(--text-secondary)',
-                  animation: 'qr-spin 1s linear infinite',
-                }}
+                className="text-[var(--text-secondary)]"
+                style={{ animation: 'qr-spin 1s linear infinite' }}
               />
             </div>
           </div>
@@ -301,24 +239,12 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
 
         {/* ─── Connected success state ─── */}
         {phase === 'connected' && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 4,
-            animation: 'qr-success-in 500ms ease-out',
-          }}>
+          <div
+            className="flex flex-col items-center gap-1"
+            style={{ animation: 'qr-success-in 500ms ease-out' }}
+          >
             {/* SF Symbol-style checkmark circle */}
-            <div style={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              background: 'var(--status-success-bg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 4,
-            }}>
+            <div className="flex items-center justify-center rounded-full bg-[var(--status-success-bg)] mb-1" style={{ width: 40, height: 40 }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path
                   d="M5 10.5L8.5 14L15 7"
@@ -335,12 +261,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
               </svg>
             </div>
             {phoneNumber && (
-              <span style={{
-                fontSize: 14,
-                fontWeight: 400,
-                color: 'var(--text-secondary)',
-                letterSpacing: '0.02em',
-              }}>
+              <span className="text-sm font-normal text-[var(--text-secondary)] tracking-wide">
                 {phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`}
               </span>
             )}
@@ -349,40 +270,20 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
 
         {/* ─── Error state ─── */}
         {phase === 'error' && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 16,
-          }}>
+          <div className="flex flex-col items-center gap-4">
             <img
               src="/icons/integrations/whatsapp.png"
               alt="WhatsApp"
               width={48}
               height={48}
-              style={{
-                borderRadius: 12,
-                opacity: 0.4,
-                filter: 'grayscale(0.6)',
-              }}
+              className="rounded-xl opacity-40"
+              style={{ filter: 'grayscale(0.6)' }}
             />
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 4,
-            }}>
-              <span style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: 'var(--text-primary)',
-              }}>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-sm font-medium text-[var(--text-primary)]">
                 {errorMsg || 'Something went wrong'}
               </span>
-              <span style={{
-                fontSize: 14,
-                color: 'var(--text-secondary)',
-              }}>
+              <span className="text-sm text-[var(--text-secondary)]">
                 Check your connection and try again.
               </span>
             </div>
@@ -405,28 +306,7 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
                     }
                   });
               }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 20px',
-                borderRadius: 20,
-                border: '1px solid var(--border)',
-                background: 'var(--secondary)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'background 200ms ease, border-color 200ms ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--glass-hover-bg)';
-                e.currentTarget.style.borderColor = 'var(--border-hover)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'var(--secondary)';
-                e.currentTarget.style.borderColor = 'var(--border)';
-              }}
+              className="flex items-center gap-2 px-5 py-2 rounded-full border border-border bg-secondary text-[var(--text-primary)] text-sm font-medium cursor-pointer transition-colors duration-200 hover:bg-secondary hover:border-border"
             >
               <RotateCcw size={14} />
               Try Again
@@ -435,19 +315,18 @@ export function QrAuthConnect({ sessionId, serviceName, onConnected, onError }: 
         )}
 
         {/* ─── Single status line ─── */}
-        <span style={{
-          fontSize: 14,
-          fontWeight: phase === 'connected' ? 500 : 400,
-          color: phase === 'connected'
-            ? 'var(--status-success-fg)'
-            : phase === 'error'
-              ? 'transparent' // hidden — error has its own copy above
-              : 'var(--text-secondary)',
-          textAlign: 'center',
-          maxWidth: 280,
-          lineHeight: 1.45,
-          transition: 'color 300ms ease',
-        }}>
+        <span
+          className="text-sm text-center leading-relaxed transition-colors duration-300"
+          style={{
+            maxWidth: 280,
+            fontWeight: phase === 'connected' ? 500 : 400,
+            color: phase === 'connected'
+              ? 'var(--status-success-fg)'
+              : phase === 'error'
+                ? 'transparent' // hidden — error has its own copy above
+                : 'var(--text-secondary)',
+          }}
+        >
           {STATUS_COPY[phase]}
         </span>
       </div>

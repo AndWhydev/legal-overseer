@@ -34,7 +34,7 @@ const ROLES: Role[] = [
 
 export default function RolesSection() {
   return (
-    <section className="py-24 px-5 bg-muted/20 relative">
+    <section className="py-24 px-5 bg-muted relative">
       <div className="max-w-[1100px] mx-auto">
         {/* Section header */}
         <div className="text-center mb-16">
@@ -51,11 +51,11 @@ export default function RolesSection() {
           {ROLES.map(({ Icon, name, handles, example }) => (
             <Card
               key={name}
-              className="py-8 px-6 transition-all duration-300 hover:bg-muted/50 hover:border-border/80 hover:-translate-y-1"
+              className="py-8 px-6 transition-all duration-300 hover:bg-muted hover:border-border hover:-translate-y-1"
             >
               <CardContent className="p-0 flex flex-col gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-muted/50 border border-border flex items-center justify-center shrink-0">
+                  <div className="w-11 h-11 rounded-xl bg-muted border border-border flex items-center justify-center shrink-0">
                     <Icon size={20} className="text-muted-foreground" />
                   </div>
                   <h3 className="text-base font-medium text-foreground">
@@ -67,7 +67,7 @@ export default function RolesSection() {
                   {handles}
                 </p>
 
-                <div className="p-3 px-4 rounded-lg bg-muted/30 border border-border text-sm text-muted-foreground/80 leading-relaxed italic">
+                <div className="p-3 px-4 rounded-lg bg-muted border border-border text-sm text-muted-foreground leading-relaxed italic">
                   {example}
                 </div>
               </CardContent>
@@ -76,7 +76,7 @@ export default function RolesSection() {
         </div>
 
         {/* Additional roles note */}
-        <p className="text-center text-sm text-muted-foreground/60">
+        <p className="text-center text-sm text-muted-foreground">
           + Growth tools: SEO Monitor, Tender Hunter, Content Creator, Ad Scripts
         </p>
       </div>

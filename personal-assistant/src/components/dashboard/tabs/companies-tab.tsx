@@ -202,7 +202,7 @@ function StatPill({ value, label, active }: { value: number | string; label: str
       <span className={`text-sm font-medium tabular-nums ${active ? 'text-foreground' : 'text-muted-foreground'}`}>
         {value}
       </span>
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
     </span>
   )
 }
@@ -234,7 +234,7 @@ function CompanyCard({ company }: { company: Company }) {
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
             {domain && (
               <span className="inline-flex items-center gap-1 truncate">
                 <IconWorld className="size-3 shrink-0" />

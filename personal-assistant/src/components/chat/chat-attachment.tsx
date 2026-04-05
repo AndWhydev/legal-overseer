@@ -90,7 +90,7 @@ function ImageAttachment({ attachmentId, name }: { attachmentId?: string; name: 
 
   if (status === 'error') {
     return (
-      <div className="flex flex-col items-center justify-center gap-1.5 w-[200px] h-[140px] rounded-lg bg-muted/50 border border-border text-muted-foreground text-xs">
+      <div className="flex flex-col items-center justify-center gap-1.5 w-[200px] h-[140px] rounded-lg bg-muted border border-border text-muted-foreground text-sm">
         <IconPhotoOff size={20} />
         <span>{truncateFilename(name, 24)}</span>
       </div>
@@ -139,7 +139,7 @@ function FileCard({ attachmentId, name, type, size }: { attachmentId?: string; n
 
   return (
     <Card
-      className="inline-flex items-center gap-2.5 px-3.5 py-2.5 max-w-[320px] cursor-pointer hover:bg-muted/50 transition-colors"
+      className="inline-flex items-center gap-2.5 px-3.5 py-2.5 max-w-[320px] cursor-pointer hover:bg-muted transition-colors"
       role="button"
       tabIndex={0}
       onClick={handleClick}
@@ -158,9 +158,9 @@ function FileCard({ attachmentId, name, type, size }: { attachmentId?: string; n
           {truncateFilename(name)}
         </div>
         {size && size > 0 && (
-          <div className="text-[11px] text-muted-foreground mt-0.5">{formatFileSize(size)}</div>
+          <div className="text-sm text-muted-foreground mt-0.5">{formatFileSize(size)}</div>
         )}
-        <div className="inline-flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+        <div className="inline-flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
           {downloading ? (
             <span>Opening...</span>
           ) : (

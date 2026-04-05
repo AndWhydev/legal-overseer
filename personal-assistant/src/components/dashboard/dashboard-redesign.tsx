@@ -4,7 +4,8 @@ import React, { lazy, Suspense } from 'react';
 import { SectionCards } from '@/components/section-cards';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChartData } from '@/hooks/use-chart-data';
-import { WeeklySummaryCard } from './weekly-summary-card';
+import { WeeklySummaryCard } from './weekly-summary-card'
+import { MorningBriefingCard } from './morning-briefing-card';
 import { ProjectProgressCards } from './project-progress-cards';
 import { ActivityTimeline } from './activity-timeline';
 import { AttentionQueue } from './attention-queue';
@@ -32,6 +33,7 @@ export function DashboardRedesign() {
 
       {/* Row 2: Operational cards (weekly ops + projects) */}
       <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:bg-card">
+        <MorningBriefingCard />
         <WeeklySummaryCard />
         <ProjectProgressCards />
       </div>

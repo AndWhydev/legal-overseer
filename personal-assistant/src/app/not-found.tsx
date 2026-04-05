@@ -14,7 +14,6 @@ export default function NotFound() {
       background: 'var(--bg-primary, #0a0f1a)',
       padding: '24px',
       gap: 24,
-      fontFamily: 'var(--font-dm-sans, DM Sans, sans-serif)',
     }}>
       {/* Mascot image — theme-aware color via CSS filter */}
       <motion.div
@@ -102,21 +101,20 @@ export default function NotFound() {
             gap: 8,
             padding: '12px 20px',
             borderRadius: 12,
-            background: 'var(--glass-bg, rgba(255,255,255,0.06))',
-            border: '1px solid var(--glass-border, rgba(255,255,255,0.1))',
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
             color: 'var(--text-secondary, rgba(255,255,255,0.6))',
             fontSize: 14,
             fontWeight: 500,
             textDecoration: 'none',
-            backdropFilter: 'blur(8px)',
             transition: 'border-color 0.15s, color 0.15s',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'var(--glass-border-hover, rgba(255,255,255,0.2))'
+            e.currentTarget.style.borderColor = 'var(--border)'
             e.currentTarget.style.color = 'var(--text-primary, #fff)'
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'var(--glass-border, rgba(255,255,255,0.1))'
+            e.currentTarget.style.borderColor = 'var(--border)'
             e.currentTarget.style.color = 'var(--text-secondary, rgba(255,255,255,0.6))'
           }}
         >

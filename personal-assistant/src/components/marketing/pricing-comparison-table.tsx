@@ -77,7 +77,7 @@ const PLAN_KEYS = ['free', 'starter', 'growth', 'scale', 'enterprise'] as const
 function CellContent({ value }: { value: CellValue }) {
   if (typeof value === 'string') {
     return (
-      <span className="font-mono text-xs">
+      <span className="font-mono text-sm">
         {value}
       </span>
     )
@@ -85,7 +85,7 @@ function CellContent({ value }: { value: CellValue }) {
   if (value === true) {
     return <IconCheck size={16} className="text-foreground" />
   }
-  return <IconMinus size={14} className="text-muted-foreground/60" />
+  return <IconMinus size={14} className="text-muted-foreground" />
 }
 
 export default function PricingComparisonTable() {
@@ -95,21 +95,21 @@ export default function PricingComparisonTable() {
         Compare all features
       </h2>
 
-      <div className="overflow-auto rounded-xl border border-border/30 bg-card">
+      <div className="overflow-auto rounded-xl border border-border bg-card">
         <table className="w-full min-w-[640px] border-collapse">
           {/* Header */}
           <thead>
             <tr>
-              <th className="sticky left-0 z-[2] min-w-[180px] border-b border-border/30 bg-card px-5 py-3.5 text-left text-sm font-medium text-muted-foreground/60">
+              <th className="sticky left-0 z-[2] min-w-[180px] border-b border-border bg-card px-5 py-3.5 text-left text-sm font-medium text-muted-foreground">
                 Feature
               </th>
               {PLAN_NAMES.map((plan, i) => (
                 <th
                   key={plan}
                   className={cn(
-                    'min-w-[90px] border-b border-border/30 px-4 py-3.5 text-center text-sm',
+                    'min-w-[90px] border-b border-border px-4 py-3.5 text-center text-sm',
                     plan === 'Growth' ? 'font-medium text-foreground' : 'font-medium text-muted-foreground',
-                    i === 0 && 'border-l border-border/30',
+                    i === 0 && 'border-l border-border',
                   )}
                 >
                   {plan}
@@ -125,7 +125,7 @@ export default function PricingComparisonTable() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="sticky left-0 z-[1] border-b border-border/30 bg-card px-5 pb-2 pt-3 text-xs font-medium uppercase tracking-[0.03em] text-muted-foreground/60"
+                    className="sticky left-0 z-[1] border-b border-border bg-card px-5 pb-2 pt-3 text-sm font-medium uppercase tracking-[0.03em] text-muted-foreground"
                   >
                     {section.category}
                   </td>
@@ -139,7 +139,7 @@ export default function PricingComparisonTable() {
                   >
                     <td
                       className={cn(
-                        'sticky left-0 z-[1] border-b border-border/30 px-5 py-2.5 text-sm text-muted-foreground',
+                        'sticky left-0 z-[1] border-b border-border px-5 py-2.5 text-sm text-muted-foreground',
                         rowIdx % 2 === 0 ? 'bg-card' : 'bg-card',
                       )}
                     >
@@ -149,8 +149,8 @@ export default function PricingComparisonTable() {
                       <td
                         key={key}
                         className={cn(
-                          'border-b border-border/30 px-4 py-2.5 text-center',
-                          i === 0 && 'border-l border-border/30',
+                          'border-b border-border px-4 py-2.5 text-center',
+                          i === 0 && 'border-l border-border',
                         )}
                       >
                         <CellContent value={row[key]} />

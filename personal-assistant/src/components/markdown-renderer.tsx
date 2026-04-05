@@ -30,8 +30,8 @@ const textSizeMap = {
     h6: 'text-sm',
     p: 'text-sm',
     li: 'text-sm',
-    code: 'text-xs',
-    pre: 'text-xs',
+    code: 'text-sm',
+    pre: 'text-sm',
     blockquote: 'text-sm',
     ul: 'text-sm',
     ol: 'text-sm',
@@ -42,18 +42,18 @@ const textSizeMap = {
     h1: 'text-xl',
     h2: 'text-lg',
     h3: 'text-base',
-    h4: 'text-xs',
-    h5: 'text-xs',
-    h6: 'text-xs',
-    p: 'text-xs',
-    li: 'text-xs',
-    code: 'text-xs',
-    pre: 'text-xs',
-    blockquote: 'text-xs',
-    ul: 'text-xs',
-    ol: 'text-xs',
-    th: 'text-xs',
-    td: 'text-xs',
+    h4: 'text-sm',
+    h5: 'text-sm',
+    h6: 'text-sm',
+    p: 'text-sm',
+    li: 'text-sm',
+    code: 'text-sm',
+    pre: 'text-sm',
+    blockquote: 'text-sm',
+    ul: 'text-sm',
+    ol: 'text-sm',
+    th: 'text-sm',
+    td: 'text-sm',
   },
 }
 
@@ -132,7 +132,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
             }
             // Inline code
             return (
-              <span className="inline bg-muted/30 rounded px-1 text-pink-400/80">
+              <span className="inline bg-muted rounded-lg px-1 text-pink-400/80">
                 <code className={cn(textSize.code, fontClass)}>{children}</code>
               </span>
             )
@@ -187,7 +187,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
               <ZoomableImage
                 src={src}
                 alt={alt}
-                className={cn('max-w-full h-auto my-0 py-0 rounded', fontClass)}
+                className={cn('max-w-full h-auto my-0 py-0 rounded-lg', fontClass)}
               />
             )
           },
@@ -201,7 +201,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
           thead: ({ children }) => <thead className={cn('border-b border-border', fontClass)}>{children}</thead>,
           tbody: ({ children }) => <tbody className={fontClass}>{children}</tbody>,
           tr: ({ children }) => <tr className="border-b border-border last:border-0">{children}</tr>,
-          th: ({ children }) => <th className={cn('px-3 py-1.5 text-left text-xs text-muted-foreground', fontClass)}>{children}</th>,
+          th: ({ children }) => <th className={cn('px-3 py-1.5 text-left text-sm text-muted-foreground', fontClass)}>{children}</th>,
           td: ({ children }) => <td className={cn('px-3 py-1.5 text-sm', fontClass)}>{children}</td>,
 
           // Horizontal rule

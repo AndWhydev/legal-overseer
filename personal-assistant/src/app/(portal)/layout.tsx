@@ -18,7 +18,7 @@ export default function PortalRootLayout({
         <meta name="theme-color" content="#FAFAFA" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className="antialiased" style={{ background: '#FAFAFA' }}>
+      <body className="antialiased" style={{ background: 'var(--background)' }}>
         {children}
       </body>
     </html>

@@ -120,7 +120,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="flex flex-col">
           {Array.from({ length: 5 }).map((_, row) => (
-            <div key={row} className="flex gap-4 border-b border-border/70 px-4 py-3 last:border-b-0">
+            <div key={row} className="flex gap-4 border-b border-border px-4 py-3 last:border-b-0">
               {Array.from({ length: 5 }).map((_, col) => (
                 <Skeleton key={col} className="h-4 flex-1" />
               ))}
@@ -156,7 +156,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
           type="button"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="rounded-lg border border-border bg-secondary px-2 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 disabled:opacity-60"
+          className="rounded-lg border border-border bg-secondary px-2 py-1.5 text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-60"
         >
           <IconRefresh className={`inline-block h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
@@ -165,7 +165,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-sm">
-            <thead className="bg-background text-xs uppercase tracking-wide text-muted-foreground">
+            <thead className="bg-background text-sm uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Period</th>
@@ -175,10 +175,10 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
             </thead>
             <tbody>
               {reports.map((report) => (
-                <tr key={report.id} className="border-t border-border/70">
+                <tr key={report.id} className="border-t border-border">
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-flex rounded-full border px-2 py-1 text-xs font-medium ${REPORT_TYPE_COLORS[report.report_type]}`}
+                      className={`inline-flex rounded-full border px-2 py-1 text-sm font-medium ${REPORT_TYPE_COLORS[report.report_type]}`}
                     >
                       {REPORT_TYPE_LABELS[report.report_type]}
                     </span>
@@ -193,7 +193,7 @@ export function ReportList({ onRefresh }: { onRefresh?: () => void }) {
                     <button
                       type="button"
                       onClick={() => void handleDownload(report.id)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500/40 px-2 py-1 text-xs font-medium text-sky-300 hover:bg-sky-500/20"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-sky-500/40 px-2 py-1 text-sm font-medium text-sky-300 hover:bg-sky-500/20"
                     >
                       <IconDownload className="h-3 w-3" />
                       Download

@@ -175,7 +175,7 @@ export function IntelligenceWidgets() {
 
   return (
     <div>
-      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Intelligence</h3>
+      <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-3">Intelligence</h3>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {WIDGET_DEFS.map(widget => {
           const widgetData = widget.extract(data)
@@ -183,14 +183,14 @@ export function IntelligenceWidgets() {
           const formatted = widgetData ? widget.format(widgetData) : null
 
           return (
-            <Card key={widget.key} className="py-4 hover:bg-muted/50 transition-colors">
+            <Card key={widget.key} className="py-4 hover:bg-muted transition-colors">
               <CardContent>
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-3">
                   <div className={`w-6.5 h-6.5 rounded-lg flex items-center justify-center ${widget.colorClass}`}>
                     <Icon size={13} />
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground">{widget.label}</span>
+                  <span className="text-sm font-medium text-muted-foreground">{widget.label}</span>
                   {formatted?.alert && (
                     <IconAlertTriangle size={11} className="text-amber-500 ml-auto" />
                   )}
@@ -207,7 +207,7 @@ export function IntelligenceWidgets() {
 
                 {/* Subtitle */}
                 {formatted && (
-                  <p className="text-xs text-muted-foreground">{formatted.subtitle}</p>
+                  <p className="text-sm text-muted-foreground">{formatted.subtitle}</p>
                 )}
               </CardContent>
             </Card>

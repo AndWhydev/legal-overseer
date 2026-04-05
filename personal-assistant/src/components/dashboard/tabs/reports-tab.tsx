@@ -170,7 +170,7 @@ export default function ReportsTab() {
       {previewHtml && (
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Report Preview</h2>
+            <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Report Preview</h2>
             <Button variant="outline" size="sm" onClick={handlePrintPreview} className="gap-1.5">
               <IconDownload className="size-3.5" /> Download PDF
             </Button>
@@ -190,7 +190,7 @@ export default function ReportsTab() {
       {/* History */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Generated Reports</h2>
+          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Generated Reports</h2>
           <Button variant="ghost" size="icon-sm" onClick={() => fetchReports()} aria-label="Refresh">
             <IconRefresh className="size-4" />
           </Button>
@@ -220,7 +220,7 @@ export default function ReportsTab() {
                     <div className="text-sm font-medium">
                       {REPORT_LABELS[r.report_type as ReportType] ?? r.report_type}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-sm text-muted-foreground">
                       Period: {r.period_from ?? '-'} &middot; Generated: {new Date(r.created_at).toLocaleDateString('en-AU')}
                     </div>
                   </div>

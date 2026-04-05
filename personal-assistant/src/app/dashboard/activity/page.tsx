@@ -22,7 +22,7 @@ export default async function ActivityPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <h1 className="text-2xl font-semibold">Activity Feed</h1>
+      <h1 className="text-2xl font-medium">Activity Feed</h1>
       <ActivityFeed activities={activities} />
     </div>
   )

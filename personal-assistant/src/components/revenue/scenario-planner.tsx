@@ -65,7 +65,7 @@ export function ScenarioPlanner() {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-xl bg-card shadow-sm p-5">
-        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+        <div className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
           Scenario Planner
         </div>
         <div className="text-sm text-muted-foreground mb-3">
@@ -80,7 +80,7 @@ export function ScenarioPlanner() {
               className={`flex items-center gap-2 px-4 py-3 rounded-lg border border-border text-sm font-medium text-foreground text-left transition-all ${
                 activePreset === preset.name
                   ? 'bg-muted'
-                  : 'bg-muted/50 hover:bg-muted'
+                  : 'bg-muted hover:bg-muted'
               } ${running ? 'cursor-wait' : 'cursor-pointer'}`}
             >
               <IconPlayerPlay size={12} className="text-foreground" />
@@ -141,7 +141,7 @@ export function ScenarioPlanner() {
                 <div className="text-sm text-muted-foreground mb-2">
                   Distribution (P10 → P90)
                 </div>
-                <div className="flex items-center gap-0.5 h-6 rounded-lg overflow-hidden bg-muted/50">
+                <div className="flex items-center gap-0.5 h-6 rounded-lg overflow-hidden bg-muted">
                   {[
                     { label: 'P10', value: p.p10, color: 'bg-red-500/30' },
                     { label: 'P25', value: p.p25, color: 'bg-yellow-500/30' },
@@ -150,7 +150,7 @@ export function ScenarioPlanner() {
                     { label: 'P90', value: p.p90, color: 'bg-green-500/40' },
                   ].map(({ label, value, color }) => (
                     <div key={label} className={`flex flex-1 h-full items-center justify-center ${color}`}>
-                      <span className="text-xs text-muted-foreground font-mono">
+                      <span className="text-sm text-muted-foreground font-mono">
                         {fmt(value)}
                       </span>
                     </div>

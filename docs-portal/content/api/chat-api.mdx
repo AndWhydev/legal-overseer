@@ -5,45 +5,65 @@ description: "The POST endpoint that powers BitBit's conversational interface vi
 
 # Chat API
 
-<StatusIndicator status="operational" label="API Operational" />
-
 The Chat API (`src/app/api/agent/chat/route.ts`) is the primary endpoint for interacting with BitBit. It accepts user messages and streams back agent responses as Server-Sent Events.
 
 ## Endpoint
 
-<CodeBlock code="POST /api/agent/chat" language="bash" title="Chat endpoint" />
+```
+POST /api/agent/chat
+```
 
 ## Request
 
-<CodeBlock code={`{
+```json
+{
   "message": "What tasks do I have this week?",
   "threadId": "optional-thread-uuid",
   "attachmentIds": ["optional-attachment-uuid"]
-}`} language="json" title="Request body" />
+}
+```
 
-<ApiRefTable
-  title="Request Parameters"
-  props={[
-    { name: "message", type: "string", required: true, description: "User message (max 10,000 chars)" },
-    { name: "threadId", type: "string", required: false, description: "Conversation thread ID (max 128 chars)" },
-    { name: "attachmentIds", type: "string[]", required: false, description: "File attachment IDs (max 10)" },
-  ]}
-/>
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `message` | string | Yes | User message (max 10,000 chars) |
+| `threadId` | string | No | Conversation thread ID (max 128 chars) |
+| `attachmentIds` | string[] | No | File attachment IDs (max 10) |
 
 ## Authentication
 
-The endpoint supports two authentication methods.
+The endpoint supports two authentication methods:
 
-1. **Bearer token** for mobile clients: `Authorization: Bearer <token>`
-2. **Cookie-based** for web clients: Supabase session cookie
+1. **Bearer token** (mobile clients): `Authorization: Bearer <token>`
+2. **Cookie-based** (web clients): Supabase session cookie
 
 In development, set `DEV_BYPASS=true` to skip authentication.
 
 ## Response (SSE Stream)
 
-The response is a `text/event-stream` with the following events.
+<Mermaid chart={`sequenceDiagram
+    participant C as Client
+    participant API as Chat API
+    participant CTX as Context Assembly
+    participant TAOR as TAOR Loop
+    participant Tools as Tools
 
-<CodeBlock code={`data: {"type":"stage","data":{"stage":"model_routing","status":"start"}}
+    C->>API: POST /api/agent/chat
+    API->>API: Auth + Security
+    API->>CTX: Build Context (48K budget)
+    CTX-->>API: Assembled Context
+    loop TAOR Loop
+        API->>TAOR: Think
+        TAOR->>Tools: tool_call
+        Tools-->>TAOR: tool_result
+        API-->>C: SSE events
+    end
+    TAOR-->>API: Final Response
+    API-->>C: SSE done`} caption="Chat API sequence: authenticate, assemble context, TAOR loop streams tool calls and results as SSE" />
+
+The response is a `text/event-stream` with events:
+
+```
+data: {"type":"stage","data":{"stage":"model_routing","status":"start"}}
 
 data: {"type":"tool_call","data":{"name":"search_tasks","input":{...}}}
 
@@ -51,32 +71,30 @@ data: {"type":"tool_result","data":{"name":"search_tasks","output":"..."}}
 
 data: {"type":"message","data":{"text":"Here are your tasks..."}}
 
-data: {"type":"done","data":{"inputTokens":1234,"outputTokens":567}}`} language="json" title="SSE event stream" />
+data: {"type":"done","data":{"inputTokens":1234,"outputTokens":567}}
+```
 
 ### Event Types
 
-<ApiRefTable
-  title="SSE Event Types"
-  props={[
-    { name: "stage", type: "string", description: "Pipeline stage transitions" },
-    { name: "thinking", type: "string", description: "Model routing information" },
-    { name: "tool_call", type: "string", description: "Tool invocation with parameters" },
-    { name: "tool_result", type: "string", description: "Tool execution result" },
-    { name: "message", type: "string", description: "Final text (streamed incrementally)" },
-    { name: "error", type: "string", description: "Error information" },
-    { name: "done", type: "string", description: "Completion with token counts" },
-  ]}
-/>
+| Type | Description |
+|------|-------------|
+| `stage` | Pipeline stage transitions |
+| `thinking` | Model routing information |
+| `tool_call` | Tool invocation with parameters |
+| `tool_result` | Tool execution result |
+| `message` | Final text (streamed incrementally) |
+| `error` | Error information |
+| `done` | Completion with token counts |
 
 ## Security
 
-The endpoint includes several security layers.
+The endpoint includes several security layers:
 
-- **Input length validation** ensures message, threadId, and attachmentIds are all size-limited.
-- **Injection detection** scans messages for prompt injection attempts via `detectInjection()`.
-- **Injection neutralization** neutralizes detected injections before processing.
-- **Rate limiting** enforces per-user endpoint limits via `checkUserEndpointLimit()`.
-- **Timing jitter** via `addTimingJitter()` prevents timing-based side-channel attacks.
+- **Input length validation**: message, threadId, and attachmentIds are all size-limited
+- **Injection detection**: messages are scanned for prompt injection attempts via `detectInjection()`
+- **Injection neutralization**: detected injections are neutralized before processing
+- **Rate limiting**: per-user endpoint limits via `checkUserEndpointLimit()`
+- **Timing jitter**: `addTimingJitter()` prevents timing-based side-channel attacks
 
 <Warning>
 The dev bypass mode grants full access without authentication. It should never be enabled in production environments.

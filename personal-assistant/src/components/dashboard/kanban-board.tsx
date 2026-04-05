@@ -458,15 +458,15 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
                   <KanbanColumn key={column.id} value={column.id} className="flex h-full min-w-[18rem] max-w-[24rem] flex-1">
                     <section
                       aria-labelledby={columnHeadingId}
-                      className="flex h-full min-h-0 w-full flex-col rounded-[24px] border border-border/70 bg-background shadow-[0_18px_46px_-34px_rgba(0,0,0,0.75)]"
+                      className="flex h-full min-h-0 w-full flex-col rounded-[24px] border border-border bg-background shadow-lg"
                     >
-                      <div className="border-b border-border/60 px-4 pb-4 pt-4">
+                      <div className="border-b border-border px-4 pb-4 pt-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1">
                             <h3 id={columnHeadingId} className="text-sm font-medium text-foreground">
                               {column.title}
                             </h3>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                               {getColumnSummary(columnTasks.length)}
                             </p>
                           </div>
@@ -476,12 +476,12 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
                           </Badge>
                         </div>
 
-                        <Progress value={progressPct} className="mt-3 h-1.5 bg-muted/80" />
+                        <Progress value={progressPct} className="mt-3 h-1.5 bg-muted" />
                       </div>
 
                       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3 pt-3">
                         {columnTasks.length === 0 && (
-                          <div className="rounded-2xl border border-dashed border-border/70 bg-muted/15 px-4 py-6 text-center text-sm text-muted-foreground">
+                          <div className="rounded-2xl border border-dashed border-border bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
                             Nothing here yet. Add a task or drop one into this column.
                           </div>
                         )}
@@ -501,7 +501,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
 
             {hasActiveFilters && visibleTaskCount === 0 && (
               <div className="flex min-h-full min-w-[22rem] flex-1 items-center justify-center">
-                <Empty className="max-w-md border border-dashed border-border/70 bg-muted/15">
+                <Empty className="max-w-md border border-dashed border-border bg-muted">
                   <EmptyMedia variant="icon">
                     <IconPlus size={16} />
                   </EmptyMedia>
@@ -532,7 +532,7 @@ export function KanbanBoard({ initialColumns, initialTasks, doneColumnId }: Kanb
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-6 left-1/2 z-50 flex min-w-[18rem] -translate-x-1/2 items-center gap-3 rounded-2xl border border-border/70 bg-background p-3 shadow-[0_20px_40px_-26px_rgba(0,0,0,0.7)]"
+          className="fixed bottom-6 left-1/2 z-50 flex min-w-[18rem] -translate-x-1/2 items-center gap-3 rounded-2xl border border-border bg-background p-3 shadow-lg"
         >
           <span className="flex-1 text-sm font-medium text-foreground">
             {undoToast.message}
@@ -584,7 +584,7 @@ function QuickAddInline({
   }
 
   return isAdding ? (
-    <div className={cn('rounded-2xl border border-dashed border-border/70 bg-muted/10 p-3', className)}>
+    <div className={cn('rounded-2xl border border-dashed border-border bg-muted p-3', className)}>
       <div className="flex flex-col gap-3">
         <Input
           value={newTitle}
@@ -626,7 +626,7 @@ function QuickAddInline({
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Press Enter to create quickly, or use the priority toggle before saving.
         </p>
       </div>
@@ -638,7 +638,7 @@ function QuickAddInline({
       size="sm"
       onClick={() => setIsAdding(true)}
       className={cn(
-        'w-full rounded-2xl border border-dashed border-border/70 py-5 text-muted-foreground hover:border-border hover:bg-muted/20 hover:text-foreground',
+        'w-full rounded-2xl border border-dashed border-border py-5 text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground',
         className
       )}
     >

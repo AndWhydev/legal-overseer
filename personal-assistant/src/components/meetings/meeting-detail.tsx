@@ -342,7 +342,7 @@ function ActionItemsView({
         <div className="flex justify-end">
           <button
             onClick={onConvertToTasks}
-            className="rounded-lg border border-ring bg-secondary px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary/80"
+            className="rounded-lg border border-ring bg-secondary px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
           >
             Convert {pendingCount} to Kanban Tasks
           </button>
@@ -352,7 +352,7 @@ function ActionItemsView({
       {items.map(item => (
         <div
           key={item.id}
-          className="flex flex-col gap-2 rounded-xl border border-border bg-secondary/30 px-4 py-3"
+          className="flex flex-col gap-2 rounded-xl border border-border bg-secondary px-4 py-3"
         >
           <div className="flex items-start gap-3">
             {/* Priority dot */}
@@ -423,7 +423,7 @@ function FollowUpView({
       {followUps.map(fu => (
         <div
           key={fu.id}
-          className="rounded-xl border border-border bg-secondary/30 p-4"
+          className="rounded-xl border border-border bg-secondary p-4"
         >
           {/* Header */}
           <div className="mb-3 flex items-center justify-between">

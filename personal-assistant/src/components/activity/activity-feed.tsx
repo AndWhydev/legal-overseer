@@ -86,7 +86,7 @@ export function ActivityFeed({ activities }: { activities: ActivityEntry[] }) {
       <div className="flex flex-col gap-4">
         {grouped.map(group => (
           <div key={group.label}>
-            <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <h3 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
               {group.label}
             </h3>
             <div className="flex flex-col gap-1">

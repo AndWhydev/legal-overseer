@@ -62,7 +62,7 @@ export function VoiceConversationOverlay({
       case 'speaking':
         return 'bg-indigo-500/80 shadow-indigo-500/40';
       default:
-        return 'bg-zinc-600/60 shadow-zinc-600/20';
+        return 'bg-muted shadow-sm';
     }
   }, [state]);
 
@@ -76,7 +76,7 @@ export function VoiceConversationOverlay({
       case 'speaking':
         return 'border-indigo-500/30';
       default:
-        return 'border-zinc-600/20';
+        return 'border-border';
     }
   }, [state]);
 
@@ -108,7 +108,7 @@ export function VoiceConversationOverlay({
               'absolute top-4 right-4 z-10',
               'flex items-center justify-center',
               'h-10 w-10 rounded-full',
-              'text-zinc-400 hover:text-zinc-100',
+              'text-muted-foreground hover:text-foreground',
               'hover:bg-white/10 transition-colors duration-150',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30',
             )}
@@ -162,7 +162,7 @@ export function VoiceConversationOverlay({
               transition={{ duration: 0.2 }}
               className={cn(
                 'text-sm font-medium tracking-wide mb-6',
-                error ? 'text-red-400' : 'text-zinc-300',
+                error ? 'text-red-400' : 'text-muted-foreground',
               )}
             >
               {displayLabel}
@@ -174,7 +174,7 @@ export function VoiceConversationOverlay({
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-sm italic text-zinc-500 text-center max-w-[320px] px-4 mb-3 line-clamp-2"
+              className="text-sm italic text-muted-foreground text-center max-w-[320px] px-4 mb-3 line-clamp-2"
             >
               &ldquo;{transcript}&rdquo;
             </motion.p>
@@ -186,7 +186,7 @@ export function VoiceConversationOverlay({
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="text-base text-zinc-200 text-center max-w-[380px] px-4 line-clamp-3 leading-relaxed"
+              className="text-base text-foreground text-center max-w-[380px] px-4 line-clamp-3 leading-relaxed"
             >
               {lastResponse}
             </motion.p>

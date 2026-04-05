@@ -27,7 +27,7 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">
+          <p className="text-sm font-medium uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">
             BitBit in motion
           </p>
           <p className="text-sm text-muted-foreground">
@@ -43,7 +43,7 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
         {activeTasks.map((task) => (
           <div
             key={task.id}
-            className="flex min-w-[16rem] shrink-0 items-center gap-3 rounded-full border border-border/70 bg-background px-3 py-2 shadow-sm"
+            className="flex min-w-[16rem] shrink-0 items-center gap-3 rounded-full border border-border bg-background px-3 py-2 shadow-sm"
           >
             <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/12">
               <span className="size-2 animate-pulse rounded-full bg-emerald-500" />
@@ -53,7 +53,7 @@ export function KanbanActivityStrip({ tasks }: KanbanActivityStripProps) {
               <p className="truncate text-sm font-medium text-foreground">
                 {truncateTitle(task.title)}
               </p>
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="truncate text-sm text-muted-foreground">
                 {task.assigned_to} is working on this now
               </p>
             </div>

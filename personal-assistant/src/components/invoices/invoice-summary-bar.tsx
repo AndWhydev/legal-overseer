@@ -47,14 +47,14 @@ export function InvoiceSummaryBar({
       {metrics.map((m, i) => (
         <Card key={m.label} className="py-4">
           <CardContent className="flex flex-col gap-1 px-5">
-            <span className="text-xs font-medium tracking-wide text-muted-foreground">
+            <span className="text-sm font-medium tracking-wide text-muted-foreground">
               {m.label}
             </span>
             <span className={`text-lg font-medium tabular-nums leading-tight ${m.accent || 'text-foreground'}`}>
               {m.value}
             </span>
             {m.sub && (
-              <span className="text-xs text-muted-foreground">{m.sub}</span>
+              <span className="text-sm text-muted-foreground">{m.sub}</span>
             )}
             {i === 0 && barTotal > 0 && (
               <div className="mt-1 flex h-1 gap-0.5 overflow-hidden rounded-full">

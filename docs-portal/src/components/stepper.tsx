@@ -96,7 +96,7 @@ function StepperItem({
           {/* Connector line — hidden on the last item via CSS */}
           <div
             className={cn(
-              "w-px min-h-4 grow",
+              "w-px h-4",
               status === "completed"
                 ? "bg-[#d0cfca]"
                 : "bg-[#e5e4df]",
@@ -107,7 +107,7 @@ function StepperItem({
 
         {/* Content */}
         <div
-          className="flex min-w-0 flex-col gap-1 pb-6 pt-1 group-last/step:pb-0"
+          className="flex min-w-0 flex-col gap-1 pb-1 pt-0.5 group-last/step:pb-0"
         >
           <div className="flex flex-col gap-0.5">
             <h3
@@ -170,7 +170,7 @@ function HorizontalStepper({
     <div
       data-slot="stepper"
       data-orientation="horizontal"
-      className={cn("flex flex-col gap-4", className)}
+      className={cn("flex flex-col gap-0", className)}
     >
       {/* Step indicators row */}
       <div className="flex items-center">

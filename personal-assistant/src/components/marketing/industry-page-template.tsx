@@ -46,7 +46,7 @@ export default function IndustryPageTemplate({
         />
 
         <div className="relative z-10 mx-auto max-w-[800px]">
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground/60">
+          <p className="mb-4 text-sm font-medium uppercase tracking-[0.08em] text-muted-foreground">
             BitBit for {industry}
           </p>
           <h1 className="mb-6 text-[clamp(28px,5vw,48px)] font-medium leading-[1.15] tracking-tight">
@@ -68,9 +68,9 @@ export default function IndustryPageTemplate({
             {painPoints.map(({ icon: Icon, title, description }) => (
               <div
                 key={title}
-                className="group rounded-xl border border-border/30 bg-card p-7 transition-all hover:-translate-y-1 hover:border-border/60 hover:bg-card"
+                className="group rounded-xl border border-border bg-card p-7 transition-all hover:-translate-y-1 hover:border-border hover:bg-card"
               >
-                <div className="mb-4 flex size-11 items-center justify-center rounded-xl border border-border/30 bg-white/[0.04]">
+                <div className="mb-4 flex size-11 items-center justify-center rounded-xl border border-border bg-white/[0.04]">
                   <Icon size={20} className="text-muted-foreground" />
                 </div>
                 <h3 className="mb-2 text-base font-medium">
@@ -95,7 +95,7 @@ export default function IndustryPageTemplate({
             {roles.map(({ name, description, example }) => (
               <div
                 key={name}
-                className="flex flex-col gap-3 rounded-xl border border-border/30 bg-card p-6"
+                className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6"
               >
                 <h3 className="text-base font-medium">
                   {name}
@@ -103,7 +103,7 @@ export default function IndustryPageTemplate({
                 <p className="text-sm leading-normal text-muted-foreground">
                   {description}
                 </p>
-                <div className="rounded-lg border border-border/30 bg-white/[0.02] px-3.5 py-2.5 text-sm italic leading-normal text-muted-foreground/60">
+                <div className="rounded-lg border border-border bg-white/[0.02] px-3.5 py-2.5 text-sm italic leading-normal text-muted-foreground">
                   {example}
                 </div>
               </div>
@@ -115,8 +115,8 @@ export default function IndustryPageTemplate({
       {/* Recommended Tier */}
       <section className="px-5 py-20">
         <div className="mx-auto max-w-[600px]">
-          <div className="rounded-xl border border-border/30 bg-card px-8 py-10 text-center">
-            <p className="mb-3 text-xs font-medium uppercase tracking-[0.06em] text-muted-foreground/60">
+          <div className="rounded-xl border border-border bg-card px-8 py-10 text-center">
+            <p className="mb-3 text-sm font-medium uppercase tracking-[0.06em] text-muted-foreground">
               Recommended for {industry}
             </p>
             <h3 className="mb-2 text-[clamp(22px,3vw,32px)] font-medium">

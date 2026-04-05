@@ -7,6 +7,15 @@ description: "Haiku-based SVO extraction pipeline that populates the knowledge g
 
 The Entity Extractor (`src/lib/knowledge-graph/entity-extractor.ts`) uses Claude Haiku to decompose messages into structured knowledge graph data: entities, relationships, and events. It runs as a **fire-and-forget** step after memory writes, meaning extraction failures never block the main conversation flow.
 
+<Mermaid chart={`flowchart LR
+    A[New Message] --> B[Filter\nTrivial]
+    B --> C[Haiku\nExtract]
+    C --> D[Validate\nZod Schema]
+    D --> E[entity_nodes]
+    D --> F[entity_edges]
+    D --> G[event_tuples]
+    C -.->|fire-and-forget| C`} caption="Entity extraction: messages filtered, Haiku extracts structured data into 3 graph tables" />
+
 ## Extraction Pipeline
 
 <Steps>
@@ -69,11 +78,11 @@ The extractor is intentionally conservative. A missed extraction costs nothing (
 
 Entity extraction plugs into the existing embedding pipeline in `embedding-service.ts`. After a new memory or channel message is written, the extraction runs asynchronously:
 
-<Mermaid chart={\`flowchart LR
-    A[Memory Write] --> B[Embedding Generation] --> C[Entity Extraction]
-    C --> D[findOrCreateEntity]
-    C --> E[createEdge]
-    C --> F[createEventTuple]
-\`} caption="Entity extraction runs as a fire-and-forget step after embedding" />
+```
+Memory Write → Embedding Generation → Entity Extraction (fire-and-forget)
+                                           ├── findOrCreateEntity()
+                                           ├── createEdge()
+                                           └── createEventTuple()
+```
 
 The fire-and-forget pattern means the user gets their response immediately. Graph population happens in the background.

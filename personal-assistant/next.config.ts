@@ -23,16 +23,7 @@ const nextConfig: NextConfig = {
     ],
   },
   turbopack: { root: "/home/claude/bitbit" },
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.resolve = config.resolve || {};
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        voyageai: require.resolve('voyageai'),
-      };
-    }
-    return config;
-  },
+
 };
 
 const isDev = process.env.NODE_ENV !== 'production';

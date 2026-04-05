@@ -30,29 +30,29 @@ export function AttentionQueue() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">Needs Attention</CardTitle>
-          {items.length > 0 && <Badge variant="outline" className="text-xs font-mono">{items.length}</Badge>}
+          {items.length > 0 && <Badge variant="outline" className="text-sm font-mono">{items.length}</Badge>}
         </div>
-        <CardDescription className="text-xs">Prioritised by urgency</CardDescription>
+        <CardDescription className="text-sm">Prioritised by urgency</CardDescription>
       </CardHeader>
       <CardContent className="space-y-0">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex gap-3 py-2 border-b border-border/30 last:border-0">
+            <div key={i} className="flex gap-3 py-2 border-b border-border last:border-0">
               <Skeleton className="h-4 w-4 shrink-0" />
               <div className="flex-1"><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-2/3 mt-1" /></div>
             </div>
           ))
         ) : items.length === 0 ? (
-          <div className="text-xs text-muted-foreground py-4">Nothing urgent</div>
+          <div className="text-sm text-muted-foreground py-4">Nothing urgent</div>
         ) : (
           items.map((item, i) => (
-            <div key={i} className="flex gap-3 py-2 border-b border-border/20 last:border-0 items-start">
-              <span className="text-xs text-muted-foreground/50 font-mono shrink-0 w-4 pt-0.5">{TYPE_ICON[item.type] || '·'}</span>
+            <div key={i} className="flex gap-3 py-2 border-b border-border last:border-0 items-start">
+              <span className="text-sm text-muted-foreground font-mono shrink-0 w-4 pt-0.5">{TYPE_ICON[item.type] || '·'}</span>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-foreground/80 truncate">{item.label}</div>
-                <div className="text-[10px] text-muted-foreground truncate">{item.detail}</div>
+                <div className="text-sm font-medium text-foreground truncate">{item.label}</div>
+                <div className="text-sm text-muted-foreground truncate">{item.detail}</div>
               </div>
-              {item.age && <span className="text-[10px] tabular-nums text-muted-foreground/50 shrink-0 pt-0.5">{item.age}</span>}
+              {item.age && <span className="text-sm tabular-nums text-muted-foreground shrink-0 pt-0.5">{item.age}</span>}
             </div>
           ))
         )}

@@ -81,7 +81,7 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
   const confidencePct = Math.round(approval.confidence_score * 100)
 
   return (
-    <Card className="transition-colors hover:bg-muted/30">
+    <Card className="transition-colors hover:bg-muted">
       <CardContent className="flex flex-col gap-3 p-5">
         {/* Badges */}
         <div className="flex flex-wrap items-center gap-2">
@@ -108,7 +108,7 @@ export function ApprovalCard({ approval, isResolving = false, onApprove, onRejec
         {/* Context */}
         {contextRows.length > 0 && (
           <div className="border-t border-border pt-3">
-            <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <span className="mb-2 block text-sm font-medium uppercase tracking-wider text-muted-foreground">
               Context
             </span>
             <dl className="grid gap-2">

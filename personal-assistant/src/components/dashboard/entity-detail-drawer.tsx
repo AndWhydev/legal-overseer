@@ -90,7 +90,7 @@ function getInitials(name: string): string {
 function ProjectDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Project</h3>
+      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Project</h3>
       {meta.name ? <div className="text-lg font-medium">{String(meta.name)}</div> : null}
       {meta.status ? (
         <Badge variant="secondary" className="capitalize">
@@ -105,7 +105,7 @@ function ProjectDetail({ meta }: { meta: Record<string, unknown> }) {
 function InvoiceDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Invoice</h3>
+      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Invoice</h3>
       {meta.invoice_number ? <div className="text-lg font-medium">{String(meta.invoice_number)}</div> : null}
       <div className="flex items-center gap-3">
         {meta.status ? (
@@ -130,7 +130,7 @@ function InvoiceDetail({ meta }: { meta: Record<string, unknown> }) {
 function TaskDetail({ meta }: { meta: Record<string, unknown> }) {
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Task</h3>
+      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Task</h3>
       {meta.title ? <div className="text-lg font-medium">{String(meta.title)}</div> : null}
       <div className="flex items-center gap-3">
         {meta.status ? (
@@ -139,7 +139,7 @@ function TaskDetail({ meta }: { meta: Record<string, unknown> }) {
           </Badge>
         ) : null}
         {meta.priority ? (
-          <span className="text-xs text-muted-foreground capitalize">{String(meta.priority)} priority</span>
+          <span className="text-sm text-muted-foreground capitalize">{String(meta.priority)} priority</span>
         ) : null}
       </div>
     </div>
@@ -176,11 +176,11 @@ function RelatedEntitiesStack({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
         Related ({related.length})
       </h3>
       <motion.div
-        className="rounded-xl bg-muted/30 p-3 space-y-0"
+        className="rounded-xl bg-muted p-3 space-y-0"
         initial="collapsed"
         whileHover="expanded"
       >
@@ -203,7 +203,7 @@ function RelatedEntitiesStack({
                     <div className="text-sm font-medium text-foreground truncate">
                       {node.label}
                     </div>
-                    <div className="text-xs text-muted-foreground capitalize">
+                    <div className="text-sm text-muted-foreground capitalize">
                       {edge?.relationshipType?.replace(/_/g, ' ') ?? node.type}
                     </div>
                   </div>
@@ -214,12 +214,12 @@ function RelatedEntitiesStack({
         </div>
 
         <div className="mt-2 flex items-center gap-2 pt-1">
-          <div className="flex size-5 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+          <div className="flex size-5 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
             {related.length}
           </div>
           <span className="grid">
             <motion.span
-              className="text-xs font-medium text-muted-foreground row-start-1 col-start-1"
+              className="text-sm font-medium text-muted-foreground row-start-1 col-start-1"
               variants={{
                 collapsed: { opacity: 1, y: 0 },
                 expanded: { opacity: 0, y: -12 },
@@ -229,7 +229,7 @@ function RelatedEntitiesStack({
               Related entities
             </motion.span>
             <motion.span
-              className="text-xs font-medium text-muted-foreground flex items-center gap-1 cursor-pointer select-none row-start-1 col-start-1"
+              className="text-sm font-medium text-muted-foreground flex items-center gap-1 cursor-pointer select-none row-start-1 col-start-1"
               variants={{
                 collapsed: { opacity: 0, y: 12 },
                 expanded: { opacity: 1, y: 0 },
@@ -368,20 +368,20 @@ function EntityDetailDrawer({ open, onClose, entityType, entityId }: EntityDetai
               {timeline.length > 0 && (
                 <div className="flex flex-col gap-3">
                   <Separator />
-                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
                     Timeline
                   </h3>
                   {timeline.map((event) => (
                     <div
                       key={event.id}
-                      className="flex gap-3 rounded-lg border border-border bg-muted/30 p-3"
+                      className="flex gap-3 rounded-lg border border-border bg-muted p-3"
                     >
                       <div className="mt-1.5 size-1.5 rounded-full bg-primary shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm text-foreground">
                           {formatEventType(event.eventType)}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-sm text-muted-foreground">
                           {formatDate(event.occurredAt)}
                           {event.channelSource && ` via ${event.channelSource}`}
                         </div>

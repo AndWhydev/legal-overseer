@@ -509,13 +509,13 @@ export function SidebarNav({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                  <div className="relative flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-foreground shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
+                  <div className="relative flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden bg-foreground shadow-sm">
                     <img src="/bitbit-icon-mark-light.png" alt="BitBit" width={22} height={22} className="dark:hidden" style={{ filter: 'brightness(0.45)' }} />
                     <img src="/bitbit-icon-mark.png" alt="BitBit" width={22} height={22} className="hidden dark:block" style={{ filter: 'invert(1) brightness(0.55)' }} />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <PixelWordmark className="truncate font-medium text-sm" style={{ WebkitTextStroke: '0.5px currentColor' }}>BitBit</PixelWordmark>
-                    <span className="truncate text-xs text-muted-foreground">
+                    <span className="truncate text-sm text-muted-foreground">
                       {activeOrg?.name ?? 'Personal'}
                     </span>
                   </div>
@@ -528,7 +528,7 @@ export function SidebarNav({
                 align="start"
                 sideOffset={4}
               >
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                <DropdownMenuLabel className="text-sm text-muted-foreground">
                   Teams
                 </DropdownMenuLabel>
                 {orgs.map((org) => (
@@ -583,7 +583,7 @@ export function SidebarNav({
                       </SidebarMenuButton>
                       {badgeCount > 0 && (
                         <SidebarMenuBadge>
-                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                          <Badge variant="destructive" className="text-sm px-1.5 py-0">
                             {badgeCount}
                           </Badge>
                         </SidebarMenuBadge>
@@ -627,7 +627,7 @@ export function SidebarNav({
                             {item.icon && <item.icon className="size-4 shrink-0" />}
                             <span>{item.label}</span>
                             {item.count !== undefined && (
-                              <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                              <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-sm text-muted-foreground">
                                 {item.count}
                               </SidebarMenuBadge>
                             )}
@@ -684,7 +684,7 @@ export function SidebarNav({
                     <span className="truncate font-medium">
                       {displayName || 'User'}
                     </span>
-                    <span className="truncate text-xs text-muted-foreground">
+                    <span className="truncate text-sm text-muted-foreground">
                       {activeOrg?.plan ?? 'Free'} plan
                     </span>
                   </div>
@@ -707,7 +707,7 @@ export function SidebarNav({
                       <span className="truncate font-medium">
                         {displayName || 'User'}
                       </span>
-                      <span className="truncate text-xs text-muted-foreground">
+                      <span className="truncate text-sm text-muted-foreground">
                         {activeOrg?.plan ?? 'Free'} plan
                       </span>
                     </div>

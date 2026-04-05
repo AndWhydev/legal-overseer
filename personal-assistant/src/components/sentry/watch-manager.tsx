@@ -398,7 +398,7 @@ export function WatchManager() {
                 <Card key={watch.id} className="gap-3 py-4">
                   <CardHeader className="pb-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <span className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
                         {WATCH_LABEL[watch.watch_type]}
                       </span>
                       <Badge variant={watch.status === 'active' ? 'default' : 'secondary'}>
@@ -408,11 +408,11 @@ export function WatchManager() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <p className="text-sm">{watch.description}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Every {watch.interval_seconds}s, escalate after {watch.escalation_minutes}m, last checked{' '}
                       {toLocalDate(watch.last_checked_at)}
                     </p>
-                    <pre className="overflow-x-auto rounded-lg bg-muted p-3 font-mono text-xs text-muted-foreground">
+                    <pre className="overflow-x-auto rounded-lg bg-muted p-3 font-mono text-sm text-muted-foreground">
                       {JSON.stringify(watch.conditions, null, 2)}
                     </pre>
                     <div className="flex gap-2">
@@ -470,7 +470,7 @@ export function WatchManager() {
                 <Card key={alert.id} className="gap-3 py-4">
                   <CardHeader className="pb-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      <span className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
                         Alert {alert.id.slice(0, 8)}
                       </span>
                       <Badge variant={alert.status === 'escalated' ? 'destructive' : 'secondary'}>
@@ -480,8 +480,8 @@ export function WatchManager() {
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <p className="text-sm">{alert.evidence ?? 'No evidence text provided'}</p>
-                    <p className="text-xs text-muted-foreground">Suggested fix: {alert.remediation_suggestion ?? 'None'}</p>
-                    <p className="text-xs text-muted-foreground">Created {toLocalDate(alert.created_at)}</p>
+                    <p className="text-sm text-muted-foreground">Suggested fix: {alert.remediation_suggestion ?? 'None'}</p>
+                    <p className="text-sm text-muted-foreground">Created {toLocalDate(alert.created_at)}</p>
                     <Button
                       variant="outline"
                       size="sm"

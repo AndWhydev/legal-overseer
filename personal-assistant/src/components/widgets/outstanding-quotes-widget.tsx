@@ -31,16 +31,16 @@ export function OutstandingQuotesWidget() {
           <Empty><EmptyTitle>No outstanding quotes</EmptyTitle><EmptyDescription>Draft and sent quotes will appear here.</EmptyDescription></Empty>
         ) : (
           quotes.map(quote => (
-            <div key={quote.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
+            <div key={quote.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted border border-border">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{(quote.title || quote.description || 'Untitled Quote') as string}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   {quote.customer_name ? `${quote.customer_name}` : ''}
                 </p>
               </div>
               <div className="text-right flex items-center gap-2">
-                <p className="text-xs font-medium">{quote.total ? `$${Number(quote.total).toLocaleString()}` : '--'}</p>
-                <Badge variant={quote.status === 'sent' ? 'default' : 'secondary'} className="text-[10px]">
+                <p className="text-sm font-medium">{quote.total ? `$${Number(quote.total).toLocaleString()}` : '--'}</p>
+                <Badge variant={quote.status === 'sent' ? 'default' : 'secondary'} className="text-sm">
                   {(quote.status as string) || 'draft'}
                 </Badge>
               </div>

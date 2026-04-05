@@ -248,7 +248,7 @@ export function WorldGraph({ worldModel, stats, onCorrection }: WorldGraphProps)
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.5, duration: 0.4 }}
-          className="absolute bottom-3 left-3 right-3 flex justify-center gap-6 text-xs text-muted-foreground"
+          className="absolute bottom-3 left-3 right-3 flex justify-center gap-6 text-sm text-muted-foreground"
         >
           <span>{stats.peopleFound} people</span>
           <span>{stats.projectsFound} projects</span>

@@ -83,7 +83,7 @@ function ToolCallRow({
               }}
             />
           )}
-          <span className="relative z-10 inline-flex size-8 shrink-0 items-center justify-center rounded-xl border border-border/55 bg-background shadow-[0_12px_26px_-24px_rgba(0,0,0,0.85)]">
+          <span className="relative z-10 inline-flex size-8 shrink-0 items-center justify-center rounded-xl border border-border bg-background shadow-lg">
             {iconNode}
           </span>
         </div>
@@ -91,18 +91,18 @@ function ToolCallRow({
           <div className="min-w-0 truncate text-[14px] font-medium leading-6">
             {isRunning ? (
               <span className="inline-flex items-center gap-1.5">
-                <Shimmer duration={1.4} as="span" className="text-foreground/84">
+                <Shimmer duration={1.4} as="span" className="text-foreground">
                   {call.message || call.tool_name}
                 </Shimmer>
-                <IconLoader2 size={13} className="inline-block shrink-0 animate-spin text-foreground/40" />
+                <IconLoader2 size={13} className="inline-block shrink-0 animate-spin text-foreground" />
               </span>
             ) : isError ? (
               <span className="inline-flex items-center gap-1.5">
-                <span className="text-foreground/50">{call.message || call.tool_name}</span>
-                <span className="text-[12px] text-destructive">{call.result_summary || "Failed"}</span>
+                <span className="text-foreground">{call.message || call.tool_name}</span>
+                <span className="text-sm text-destructive">{call.result_summary || "Failed"}</span>
               </span>
             ) : (
-              <span className="text-foreground/50">
+              <span className="text-foreground">
                 {call.message || call.tool_name}
               </span>
             )}
@@ -137,7 +137,7 @@ function renderCallIcon({
   }
 
   const Icon = getToolCategoryIcon(call.tool_category)
-  return <Icon size={iconSize} className="text-foreground/80" />
+  return <Icon size={iconSize} className="text-foreground" />
 }
 
 // ── Main component ──────────────────────────────────────────────────────────
@@ -255,7 +255,7 @@ export function ToolCallsSection({
                 exit={{ opacity: 0, scale: 0.74, y: 6 }}
                 transition={{ duration: 0.32, ease: [0.2, 0.9, 0.2, 1] }}
                 className={cn(
-                  "inline-flex size-10 items-center justify-center rounded-[18px] border border-border/60 bg-background shadow-[0_16px_34px_-24px_rgba(0,0,0,0.9)]",
+                  "inline-flex size-10 items-center justify-center rounded-[18px] border border-border bg-background shadow-lg",
                   index > 0 && "-ml-3.5"
                 )}
                 style={{
@@ -280,17 +280,17 @@ export function ToolCallsSection({
               transition={{ duration: 0.28, ease: [0.2, 0.9, 0.2, 1] }}
               className="flex min-w-0 items-center gap-1.5"
             >
-              <p className="truncate text-[14px] font-medium text-foreground/76">
+              <p className="truncate text-[14px] font-medium text-foreground">
                 {summary || `${toolCalls.length} tool${toolCalls.length !== 1 ? "s" : ""}`}
               </p>
 
               {runningCount > 0 && (
-                <Badge variant="secondary" className="rounded-full px-2 text-[11px]">
+                <Badge variant="secondary" className="rounded-full px-2 text-sm">
                   {runningCount} running
                 </Badge>
               )}
               {failedCount > 0 && (
-                <Badge variant="destructive" className="rounded-full px-2 text-[11px]">
+                <Badge variant="destructive" className="rounded-full px-2 text-sm">
                   {failedCount} failed
                 </Badge>
               )}
@@ -298,7 +298,7 @@ export function ToolCallsSection({
               <motion.span
                 animate={{ rotate: open ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
-                className="shrink-0 text-foreground/50"
+                className="shrink-0 text-foreground"
               >
                 <IconChevronDown size={16} stroke={2.3} />
               </motion.span>

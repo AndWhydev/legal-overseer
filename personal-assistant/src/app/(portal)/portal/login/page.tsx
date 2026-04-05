@@ -51,7 +51,7 @@ function PortalLoginContent() {
         style={{
           width: '100%',
           maxWidth: 420,
-          background: '#FFFFFF',
+          background: 'var(--background)',
           borderRadius: 16,
           border: '1px solid #E5E7EB',
           boxShadow: '0 4px 24px rgba(0, 0, 0, 0.06)',
@@ -77,8 +77,8 @@ function PortalLoginContent() {
               <path d="M14 2v6h6" />
             </svg>
           </div>
-          <h1 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: 0 }}>Client Portal</h1>
-          <p style={{ fontSize: 14, color: '#6B7280', marginTop: 8 }}>
+          <h1 style={{ fontSize: 16, fontWeight: 500, color: 'var(--foreground)', margin: 0 }}>Client Portal</h1>
+          <p style={{ fontSize: 14, color: 'var(--muted-foreground)', marginTop: 8 }}>
             Sign in with your email to access your portal
           </p>
         </div>
@@ -101,17 +101,17 @@ function PortalLoginContent() {
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h2 style={{ fontSize: 16, fontWeight: 500, color: '#111827', margin: '0 0 8px' }}>
+            <h2 style={{ fontSize: 16, fontWeight: 500, color: 'var(--foreground)', margin: '0 0 8px' }}>
               Check your email
             </h2>
-            <p style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.6 }}>
-              We sent a magic link to <strong style={{ color: '#111827' }}>{email}</strong>. Click the link in the email to sign in.
+            <p style={{ fontSize: 14, color: 'var(--muted-foreground)', lineHeight: 1.6 }}>
+              We sent a magic link to <strong style={{ color: 'var(--foreground)' }}>{email}</strong>. Click the link in the email to sign in.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 8 }}>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: 'var(--foreground)', marginBottom: 8 }}>
                 Email address
               </label>
               <input
@@ -127,7 +127,7 @@ function PortalLoginContent() {
                   borderRadius: 8,
                   border: '1px solid #D1D5DB',
                   fontSize: 16,
-                  color: '#111827',
+                  color: 'var(--foreground)',
                   outline: 'none',
                   transition: 'border-color 200ms',
                   fontFamily: 'inherit',
@@ -142,7 +142,7 @@ function PortalLoginContent() {
                   borderRadius: 8,
                   background: '#FEF2F2',
                   border: '1px solid #FECACA',
-                  color: '#DC2626',
+                  color: 'var(--destructive)',
                   fontSize: 14,
                   marginBottom: 16,
                 }}
@@ -159,7 +159,7 @@ function PortalLoginContent() {
                 padding: '12px',
                 borderRadius: 8,
                 background: '#2563EB',
-                color: '#FFFFFF',
+                color: 'var(--primary-foreground)',
                 fontSize: 16,
                 fontWeight: 500,
                 border: 'none',
@@ -171,7 +171,7 @@ function PortalLoginContent() {
               {loading ? 'Sending...' : 'Send Magic Link'}
             </button>
 
-            <p style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', marginTop: 16 }}>
+            <p style={{ fontSize: 14, color: 'var(--muted-foreground)', textAlign: 'center', marginTop: 16 }}>
               You must have been invited to access this portal.
             </p>
           </form>

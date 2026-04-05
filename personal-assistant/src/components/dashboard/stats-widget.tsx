@@ -131,19 +131,19 @@ export function StatsWidget({ className }: StatsWidgetProps) {
       icon: IconCircleCheck,
       value: stats.completedToday,
       label: 'Done today',
-      color: '#7CAA85',
+      color: 'var(--success)',
     },
     {
       icon: IconFlame,
       value: stats.weeklyStreak,
       label: 'Day streak',
-      color: '#D4A574',
+      color: 'var(--accent)',
     },
     {
       icon: IconRadio,
       value: stats.channelsSynced,
       label: 'Channels',
-      color: '#A78BFA',
+      color: 'var(--chart-4)',
     },
   ]
 
@@ -166,7 +166,7 @@ export function StatsWidget({ className }: StatsWidgetProps) {
             <span className="text-sm font-medium text-foreground leading-none">
               {isLoading ? '–' : <CountUp target={item.value} />}
             </span>
-            <span className="text-[10px] text-muted-foreground">{item.label}</span>
+            <span className="text-sm text-muted-foreground">{item.label}</span>
           </div>
         </div>
       ))}

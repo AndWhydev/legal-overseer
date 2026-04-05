@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { IconHeartHandshake, IconMail } from '@tabler/icons-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { TabSkeleton } from '@/components/dashboard/tabs/tab-skeleton'
 import {
@@ -16,6 +15,7 @@ import {
 } from '@/components/ui/empty'
 import { useLeads } from '@/hooks/use-leads'
 import { useLeadsAnalytics } from '@/hooks/use-leads-analytics'
+import { useDrawer } from '@/components/dashboard/drawer-context'
 import { LeadsToolbar } from './leads-toolbar'
 import { LeadsKanbanView } from './leads-kanban-view'
 import { LeadsListView } from './leads-list-view'
@@ -24,7 +24,6 @@ import { ProspectDiscoveryPanel } from './prospect-discovery-panel'
 import { OutreachDashboard } from './outreach-dashboard'
 import { CompletionAnimation } from '../dashboard/completion-animation'
 import type { SmartView } from '@/lib/leads/types'
-import { cn } from '@/lib/utils'
 
 const SMART_VIEWS: Array<{ key: SmartView; label: string }> = [
   { key: 'all', label: 'All' },
@@ -52,6 +51,7 @@ export function LeadsPage() {
   } = useLeads()
 
   const { analytics } = useLeadsAnalytics()
+  const { setDrawer, closeDrawer: closeDrawerSlot } = useDrawer()
   const [discoveryOpen, setDiscoveryOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'leads' | 'campaigns'>('leads')
   const [winTrigger, setWinTrigger] = useState(false)
@@ -81,6 +81,23 @@ export function LeadsPage() {
     await advanceLead(leadId)
     if (nextMap[lead.status] === 'converted') setWinTrigger(true)
   }, [leads, advanceLead])
+
+  // Push lead detail into the layout drawer
+  useEffect(() => {
+    if (selectedLead) {
+      setDrawer(
+        <LeadDetailDrawer
+          lead={selectedLead}
+          open={true}
+          onClose={() => { setSelectedLeadId(null); closeDrawerSlot() }}
+          onUpdate={updateLead}
+          onAdvanceStage={handleAdvance}
+        />
+      )
+    } else {
+      closeDrawerSlot()
+    }
+  }, [selectedLead, setDrawer, closeDrawerSlot, setSelectedLeadId, updateLead, handleAdvance])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -133,39 +150,14 @@ export function LeadsPage() {
 
         {/* Leads Tab */}
         <TabsContent value="leads" className="flex flex-col gap-3">
-          {/* Smart View Pills */}
-          <nav className="flex flex-wrap gap-2" role="tablist" aria-label="Lead views">
-            {SMART_VIEWS.map((sv) => {
-              const isActive = activeView === sv.key
-              const count = (counts as Record<string, number>)[sv.key]
-              return (
-                <Button
-                  key={sv.key}
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-label={`${sv.label}${count > 0 ? `, ${count} leads` : ''}`}
-                  variant={isActive ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setFilters(f => ({ ...f, smartView: sv.key }))}
-                  className="rounded-full"
-                >
-                  {sv.label}
-                  {count > 0 && (
-                    <Badge variant="secondary" className="ml-1 font-mono">
-                      {count}
-                    </Badge>
-                  )}
-                </Button>
-              )
-            })}
-          </nav>
-
           <LeadsToolbar
             filters={filters} onFiltersChange={setFilters}
             viewMode={viewMode} onViewModeChange={setViewMode}
             onDiscoverClick={() => setDiscoveryOpen(true)}
             searchQuery={searchQuery} onSearchChange={setSearchQuery}
             analytics={analytics} searchInputRef={searchInputRef}
+
+
           />
 
           {empty ? (
@@ -188,7 +180,7 @@ export function LeadsPage() {
               </Empty>
             )
           ) : (
-            <div className="min-h-0 flex-1 overflow-y-auto" role="tabpanel">
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-[24px] border border-border bg-card p-3 shadow-sm" role="tabpanel">
               {viewMode === 'kanban' ? (
                 <LeadsKanbanView
                   grouped={grouped} onMoveLead={moveLead}
@@ -212,11 +204,6 @@ export function LeadsPage() {
         </TabsContent>
       </Tabs>
 
-      <LeadDetailDrawer
-        lead={selectedLead} open={!!selectedLead}
-        onClose={() => setSelectedLeadId(null)}
-        onUpdate={updateLead} onAdvanceStage={handleAdvance}
-      />
       <ProspectDiscoveryPanel open={discoveryOpen} onClose={() => setDiscoveryOpen(false)} />
       <CompletionAnimation trigger={winTrigger} onComplete={() => setWinTrigger(false)} variant="confetti" x={winPos.x} y={winPos.y} />
     </div>

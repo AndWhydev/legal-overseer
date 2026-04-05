@@ -30,7 +30,7 @@ export function ChartLinePerformance({ data, loading }: Props) {
         <CardHeader><CardTitle>Response Times</CardTitle></CardHeader>
         <CardContent className="flex h-[250px] flex-col items-center justify-center gap-2 text-muted-foreground text-sm">
           <span>{chartData.length === 0 ? 'No performance data yet' : `${chartData[0]?.avgMs}ms avg in ${chartData[0]?.month}`}</span>
-          <span className="text-xs">Trend will appear with more months of data</span>
+          <span className="text-sm">Trend will appear with more months of data</span>
         </CardContent>
       </Card>
     )

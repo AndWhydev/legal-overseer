@@ -11,79 +11,16 @@ BitBit is a **Cognitive Operating System**, a Next.js App Router frontend backed
 
 The system is organized into six interconnected layers, each independently testable and deployable:
 
-<CodeBlock code={`Layer 6: Predictive Context Loading + Procedural Memory
+```
+Layer 6: Predictive Context Loading + Procedural Memory
 Layer 5: Adaptive Query Routing (simple/moderate/complex)
 Layer 4: Sleep-Cycle Consolidation (nightly 5-stage pipeline)
 Layer 3: Contextual Retrieval at Ingestion (Haiku enrichment)
 Layer 2: Graph-Aware Retrieval (proactive recall + search_memory)
-Layer 1: Entity Graph + Temporal Knowledge (pgvector foundation)`} language="bash" title="Cognitive Memory OS Layers" />
+Layer 1: Entity Graph + Temporal Knowledge (pgvector foundation)
+```
 
 Lower layers are prerequisites for upper layers. Layer 1 (Entity Graph) is the foundation everything builds upon.
-
-<LayerStack />
-
-## Project Structure
-
-<FileTree
-  tree={[
-    { name: "src", children: [
-      { name: "app", children: [
-        { name: "api", children: [
-          { name: "agent" },
-          { name: "cron" },
-          { name: "dashboard" },
-        ]},
-        { name: "dashboard" },
-      ]},
-      { name: "lib", children: [
-        { name: "agent", children: [
-          { name: "taor-loop.ts" },
-          { name: "model-router.ts" },
-          { name: "context-assembler.ts" },
-          { name: "response-guard.ts" },
-          { name: "tools", children: [
-            { name: "core-tools.ts" },
-            { name: "channel-tools.ts" },
-            { name: "agent-tools.ts" },
-          ]},
-        ]},
-        { name: "memory-palace" },
-        { name: "knowledge-graph" },
-        { name: "context-assembly" },
-        { name: "rag" },
-        { name: "proactive" },
-        { name: "channels" },
-      ]},
-      { name: "components" },
-    ]},
-    { name: "supabase", children: [
-      { name: "migrations" },
-    ]},
-  ]}
-  iconStyle="colored"
-  highlight={["src/lib/agent/taor-loop.ts", "src/lib/agent/context-assembler.ts"]}
-/>
-
-<Mermaid chart={`
-mindmap
-  root((BitBit))
-    Intelligence
-      TAOR Loop
-      Context Assembly
-      Proactive Recall
-    Knowledge Graph
-      Entity Nodes
-      Temporal Edges
-      Event Tuples
-    Memory
-      Memory Palace
-      Contextual Retrieval
-      Sleep Consolidation
-    Autonomy
-      Confidence Calibrator
-      Graduation
-      Lifecycle Rules
-`} caption="BitBit system architecture mind map" />
 
 ## The TAOR Loop
 
@@ -126,10 +63,23 @@ All tiers fetch in parallel. If a tier fails, others continue. The system degrad
 ## Data Flow
 
 <Mermaid chart={`flowchart LR
-    A[User Message] --> B[Auth] --> C[TAOR Loop] --> D[Tool Calls] --> E[Supabase CRUD]
-    E --> F[Realtime Broadcast]
-    F --> G[React UI Auto-Update]
-`} caption="Data flow" />
+    subgraph API[API Layer]
+        A[Chat Endpoint] --> B[Auth + Security]
+    end
+    subgraph Intelligence
+        C[Model Router] --> D[Context Assembly]
+        D --> E[Autonomy + Confidence]
+    end
+    subgraph Data[Data Layer]
+        F[Memory Palace]
+        G[Knowledge Graph]
+        H[Action Outcomes]
+    end
+    B --> C
+    E --> I[TAOR Loop]
+    I <--> Data
+    I --> J[SSE Stream]
+    J --> K[React UI]`} caption="Three-layer architecture: API handles auth, Intelligence routes and assembles context, Data stores graph and memories" />
 
 <Tip>
 The Supabase Realtime subscription means the kanban board, activity feed, and contact directory all update instantly when the agent creates or modifies data. No polling required.
@@ -137,8 +87,8 @@ The Supabase Realtime subscription means the kanban board, activity feed, and co
 
 ## Safety and Reliability
 
-- **Response Guard** filters harmful output before delivery.
-- **Circuit Breaker** prevents cascading failures in external service calls.
-- **Dead Letter Queue** captures failed operations for retry.
-- **Cost Guard** monitors and limits API spend per request.
-- **Injection Guard** detects and neutralizes prompt injection attempts.
+- **Response Guard**: filters harmful output before delivery
+- **Circuit Breaker**: prevents cascading failures in external service calls
+- **Dead Letter Queue**: captures failed operations for retry
+- **Cost Guard**: monitors and limits API spend per request
+- **Injection Guard**: detects and neutralizes prompt injection attempts

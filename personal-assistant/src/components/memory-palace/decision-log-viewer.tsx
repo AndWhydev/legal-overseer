@@ -86,7 +86,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
           <div
             key={decision.id}
             onClick={() => setExpandedId(isExpanded ? null : decision.id)}
-            className="cursor-pointer rounded-xl bg-card p-3.5-[12px] transition-colors hover:bg-secondary/50"
+            className="cursor-pointer rounded-xl bg-card p-3.5-[12px] transition-colors hover:bg-secondary"
             style={{ borderLeft: `3px solid ${impactColor}` }}
           >
             {/* Header */}
@@ -148,7 +148,7 @@ export function DecisionLogViewer({ orgId, entityId }: DecisionLogViewerProps) {
                       ALTERNATIVES CONSIDERED
                     </div>
                     {(decision.alternatives as { option: string; pros: string[]; cons: string[] }[]).map((alt, i) => (
-                      <div key={i} className="mb-1 rounded-lg bg-secondary/50 px-3 py-2">
+                      <div key={i} className="mb-1 rounded-lg bg-secondary px-3 py-2">
                         <div className="text-sm text-muted-foreground">
                           {alt.option}
                         </div>

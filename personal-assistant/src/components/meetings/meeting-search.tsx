@@ -47,7 +47,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
     const parts = text.split(regex)
     return parts.map((part, i) =>
       regex.test(part)
-        ? <mark key={i} className="rounded bg-primary/20 px-1 text-foreground">{part}</mark>
+        ? <mark key={i} className="rounded-lg bg-primary/20 px-1 text-foreground">{part}</mark>
         : part
     )
   }
@@ -99,7 +99,7 @@ export function MeetingSearch({ onSelectMeeting }: MeetingSearchProps) {
             <div
               key={i}
               onClick={() => onSelectMeeting(result.meeting_id)}
-              className={`cursor-pointer px-4 py-3 transition-colors hover:bg-secondary/50 ${
+              className={`cursor-pointer px-4 py-3 transition-colors hover:bg-secondary ${
                 i < results.length - 1 ? 'border-b border-border' : ''
               }`}
             >

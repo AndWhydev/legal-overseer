@@ -1,9 +1,10 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Kbd } from "@/components/kbd"
 import { navigation } from "@/docs.config"
+import { SidebarContent } from "@/components/layout/sidebar"
 
 const tabs = [
   { label: "Getting Started", prefix: "/docs/getting-started", fallback: "/docs/overview" },
@@ -25,8 +26,57 @@ function getFirstHref(prefix: string): string {
   return prefix
 }
 
+function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const pathname = usePathname()
+  useEffect(() => { onClose() }, [pathname])
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : ""
+    return () => { document.body.style.overflow = "" }
+  }, [open])
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed", inset: 0, zIndex: 90,
+          background: "rgba(0,0,0,0.3)",
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transition: "opacity 150ms ease",
+        }}
+      />
+      <div
+        style={{
+          position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 91,
+          width: "min(300px, 85vw)",
+          background: "#fff",
+          borderRight: "1px solid #e5e7eb",
+          transform: open ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 150ms ease",
+          display: "flex", flexDirection: "column",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #e5e7eb" }}>
+          <Link href="/docs/overview" onClick={onClose} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
+            <img src="/bitbit-icon-mark-light.png" alt="BitBit" width={24} height={24} style={{ borderRadius: "5px" }} />
+            <span style={{ fontSize: "18px", fontWeight: 600, color: "#171717" }}>BitBit</span>
+          </Link>
+          <button onClick={onClose} aria-label="Close navigation" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", background: "transparent", cursor: "pointer", borderRadius: "6px", color: "#6b7280" }}>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M5 5l10 10M15 5L5 15" /></svg>
+          </button>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+          <SidebarContent navigation={navigation} />
+        </div>
+      </div>
+    </>
+  )
+}
+
 export function Header() {
   const pathname = usePathname()
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const isTabActive = (tab: typeof tabs[number]) => {
     if (tab.fallback && (pathname === tab.fallback || pathname === "/docs/overview")) return true
@@ -34,164 +84,57 @@ export function Header() {
   }
 
   return (
-    <header
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-        backgroundColor: "#faf9f5",
-      }}
-    >
-      {/* Top bar: logo + search */}
-      <div
-        style={{
-          height: "56px",
-          display: "flex",
-          alignItems: "center",
-          padding: "0 24px",
-        }}
-      >
-        <Link href="/docs/overview" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <rect x="2" y="2" width="12" height="12" rx="2.5" fill="#141413" />
-            <rect x="10" y="10" width="12" height="12" rx="2.5" fill="#141413" opacity="0.55" />
-          </svg>
-          <span
-            style={{
-              fontFamily: "Lora, Georgia, Times New Roman, serif",
-              fontWeight: 400,
-              fontSize: "16px",
-              color: "rgb(23, 23, 23)",
-            }}
+    <>
+      <header style={{ position: "sticky", top: 0, zIndex: 50, backgroundColor: "#fff", borderBottom: "1px solid #e5e7eb" }}>
+        <div style={{ height: "56px", display: "flex", alignItems: "center", padding: "0 20px", gap: "16px" }}>
+          {/* Hamburger - mobile only */}
+          <button
+            className="flex md:hidden items-center justify-center"
+            onClick={() => setDrawerOpen(true)}
+            style={{ width: "36px", height: "36px", border: "none", background: "transparent", cursor: "pointer", borderRadius: "6px", color: "#171717", flexShrink: 0 }}
+            aria-label="Open navigation"
           >
-            BitBit
-          </span>
-          <span
-            style={{
-              color: "rgb(140, 140, 140)",
-              fontSize: "14px",
-              fontWeight: 400,
-              fontFamily: "Inter, system-ui, sans-serif",
-              marginLeft: "2px",
-            }}
-          >
-            Docs
-          </span>
-        </Link>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3 5h14M3 10h14M3 15h14" /></svg>
+          </button>
 
-        <div style={{ flex: 1 }} />
+          {/* Logo */}
+          <Link href="/docs/overview" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+            <img src="/bitbit-icon-mark-light.png" alt="BitBit" width={28} height={28} style={{ borderRadius: "6px" }} />
+            <span style={{ fontSize: "20px", fontWeight: 600, color: "#171717", lineHeight: "28px" }}>BitBit</span>
+            <span style={{ fontSize: "20px", fontWeight: 400, color: "#9ca3af", lineHeight: "28px", marginLeft: "-6px" }}>Docs</span>
+          </Link>
 
-        <button
-          onClick={() => {
-            window.dispatchEvent(
-              new KeyboardEvent("keydown", {
-                key: "k",
-                metaKey: true,
-                bubbles: true,
-              })
-            )
-          }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "6px 12px",
-            border: "1px solid rgb(222, 222, 222)",
-            borderRadius: "8px",
-            background: "transparent",
-            cursor: "pointer",
-            color: "rgb(140, 140, 140)",
-            fontSize: "14px",
-            fontFamily: "inherit",
-          }}
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ opacity: 0.5 }}
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-          <span>Search docs...</span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}>
-            <Kbd size="sm" variant="flat">{"\u2318"}</Kbd>
-            <Kbd size="sm" variant="flat">K</Kbd>
-          </span>
-        </button>
-      </div>
+          {/* Divider */}
+          <div style={{ width: "1px", height: "24px", background: "#e5e7eb", flexShrink: 0, marginLeft: "16px" }} className="hidden lg:block" />
 
-      {/* Tab navigation bar */}
-      <div
-        className="docs-tab-bar"
-        style={{
-          height: "48px",
-          display: "flex",
-          alignItems: "center",
-          padding: "0 24px",
-          gap: "0",
-          overflowX: "auto",
-          borderBottom: "1px solid rgb(222, 222, 222)",
-        }}
-      >
-        {tabs.map((tab) => {
-          const active = isTabActive(tab)
-          const href = tab.fallback || getFirstHref(tab.prefix)
-          return (
-            <Link
-              key={tab.prefix}
-              href={href}
-              className="docs-tab-item"
-              style={{
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                height: "48px",
-                padding: "0 16px",
-                fontSize: "14px",
-                fontWeight: active ? 500 : 400,
-                color: active ? "rgb(23, 23, 23)" : "rgb(80, 80, 80)",
-                textDecoration: "none",
-                whiteSpace: "nowrap",
-                borderRadius: "6px",
-                transition: "color 150ms ease, background-color 150ms ease",
-              }}
-              onMouseEnter={(e) => {
-                if (!active) {
-                  e.currentTarget.style.backgroundColor = "rgba(14, 14, 14, 0.05)"
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!active) {
-                  e.currentTarget.style.backgroundColor = "transparent"
-                }
-              }}
-            >
-              {tab.label}
-              {active && (
-                <span
+          {/* Tab navigation - visible only on lg+ */}
+          <nav className="hidden lg:flex" style={{ alignItems: "center", gap: "4px", overflow: "hidden", flex: 1, minWidth: 0 }}>
+            {tabs.map((tab) => {
+              const active = isTabActive(tab)
+              const href = tab.fallback || getFirstHref(tab.prefix)
+              return (
+                <Link
+                  key={tab.prefix}
+                  href={href}
                   style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: "16px",
-                    right: "16px",
-                    height: "2px",
-                    backgroundColor: "rgb(23, 23, 23)",
-                    borderRadius: "1px",
-                    transition: "background-color 150ms ease",
+                    display: "flex", alignItems: "center", height: "56px",
+                    padding: "0 12px", fontSize: "14px", fontWeight: active ? 500 : 400,
+                    color: active ? "#171717" : "#6b7280",
+                    textDecoration: "none", whiteSpace: "nowrap",
+                    borderBottom: active ? "2px solid #171717" : "2px solid transparent",
+                    transition: "color 150ms ease",
                   }}
-                />
-              )}
-            </Link>
-          )
-        })}
-      </div>
-    </header>
+                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "#374151" }}
+                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = "#6b7280" }}
+                >
+                  {tab.label}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+      </header>
+      <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+    </>
   )
 }

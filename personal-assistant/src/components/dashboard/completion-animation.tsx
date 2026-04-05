@@ -18,7 +18,7 @@ const CONFETTI_PARTICLES = Array.from({ length: 10 }, (_, i) => {
     tx: `${Math.cos(angle) * distance}px`,
     ty: `${Math.sin(angle) * distance - 10}px`,
     rot: `${Math.random() * 360}deg`,
-    color: ['#D4A574', '#FBBF24', '#7CAA85', '#E8C49A', '#A78BFA'][i % 5],
+    color: ['var(--accent)', 'var(--warning, #FBBF24)', 'var(--success)', 'var(--accent)', 'var(--chart-4)'][i % 5],
     delay: `${i * 30}ms`,
   }
 })
@@ -35,11 +35,11 @@ function CheckmarkAnimation() {
   return (
     <>
       <svg width="28" height="28" viewBox="0 0 28 28" className="animate-task-complete">
-        <circle cx="14" cy="14" r="12" fill="#D4A574" opacity="0.15" />
+        <circle cx="14" cy="14" r="12" fill="var(--accent)" opacity="0.15" />
         <path
           d="M9 14.5l3.5 3.5 7-7"
           fill="none"
-          stroke="#D4A574"
+          stroke="var(--accent)"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -86,10 +86,10 @@ function RippleAnimation() {
   return (
     <>
       <div
-        className="absolute left-1/2 top-1/2 h-12 w-12 rounded-full border-2 border-[#D4A574] animate-ripple"
+        className="absolute left-1/2 top-1/2 h-12 w-12 rounded-full border-2 border-accent animate-ripple"
       />
       <div
-        className="absolute left-1/2 top-1/2 h-8 w-8 rounded-full border border-[#D4A574]/50 animate-ripple"
+        className="absolute left-1/2 top-1/2 h-8 w-8 rounded-full border border-accent/50 animate-ripple"
         style={{ animationDelay: '100ms' }}
       />
     </>

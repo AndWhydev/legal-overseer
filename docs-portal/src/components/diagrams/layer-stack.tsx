@@ -46,7 +46,7 @@ export function LayerStack() {
                 transform: activeLayer === i ? 'scale(1.02)' : 'scale(1)',
               }}
             >
-              <Icon size={16} style={{ color: 'rgb(80, 80, 80)', flexShrink: 0 }} />
+              <Icon size={16} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
                 <div style={{
                   fontSize: '0.875rem',

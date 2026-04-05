@@ -148,14 +148,14 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
             ].join(' ')}
           >
             {/* ── Toolbar ── */}
-            <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-3 py-2 min-h-[48px]">
+            <div className="flex items-center gap-2 border-b border-border bg-muted px-3 py-2 min-h-[48px]">
               {/* Title */}
               <div className="flex-1 min-w-0 mr-2">
                 <h2 className="truncate text-sm font-medium text-foreground leading-tight">
                   {artifact.title}
                 </h2>
                 {artifact.type !== 'html' && artifact.language && (
-                  <span className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                  <span className="text-sm text-muted-foreground uppercase tracking-wide">
                     {artifact.language}
                   </span>
                 )}
@@ -163,12 +163,12 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
 
               {/* View mode toggle */}
               {showModeToggle && (
-                <div className="flex items-center rounded-lg border border-border bg-muted/50 p-0.5">
+                <div className="flex items-center rounded-lg border border-border bg-muted p-0.5">
                   <button
                     type="button"
                     onClick={() => setViewMode('preview')}
                     className={[
-                      'inline-flex items-center gap-1 rounded-[3px] px-2 py-1 text-xs font-medium transition-colors',
+                      'inline-flex items-center gap-1 rounded-[3px] px-2 py-1 text-sm font-medium transition-colors',
                       viewMode === 'preview'
                         ? 'bg-background text-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground',
@@ -182,7 +182,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                     type="button"
                     onClick={() => setViewMode('code')}
                     className={[
-                      'inline-flex items-center gap-1 rounded-[3px] px-2 py-1 text-xs font-medium transition-colors',
+                      'inline-flex items-center gap-1 rounded-[3px] px-2 py-1 text-sm font-medium transition-colors',
                       viewMode === 'code'
                         ? 'bg-background text-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground',
@@ -259,9 +259,9 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
                   title={artifact.title}
                 />
               ) : (
-                <div className="h-full overflow-auto bg-muted/20">
+                <div className="h-full overflow-auto bg-muted">
                   <div className="p-4">
-                    <pre className="m-0 text-[13px] leading-relaxed font-mono text-foreground whitespace-pre-wrap break-words">
+                    <pre className="m-0 text-sm leading-relaxed font-mono text-foreground whitespace-pre-wrap break-words">
                       <code>{artifact.content}</code>
                     </pre>
                   </div>
@@ -270,7 +270,7 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
             </div>
 
             {/* ── Bottom status bar ── */}
-            <div className="flex items-center justify-between border-t border-border bg-muted/20 px-3 py-1.5 text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-between border-t border-border bg-muted px-3 py-1.5 text-sm text-muted-foreground">
               <span>
                 {artifact.type === 'html' ? 'HTML' : artifact.language?.toUpperCase() || artifact.type.toUpperCase()}
                 {' · '}

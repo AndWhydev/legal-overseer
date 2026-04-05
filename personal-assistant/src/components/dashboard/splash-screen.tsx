@@ -51,7 +51,6 @@ function FloatingParticle({ index }: { index: number }) {
         height: size,
         marginLeft: -size / 2,
         marginTop: -size / 2,
-        borderRadius: 0,
         background: 'var(--particle-color)',
       }}
       initial={{
@@ -79,17 +78,13 @@ function FloatingParticle({ index }: { index: number }) {
 function AmbientGlow() {
   return (
     <motion.div
+      className="absolute top-1/2 left-1/2 pointer-events-none rounded-full"
       style={{
-        position: 'absolute',
         width: 120,
         height: 120,
-        borderRadius: '50%',
         background: 'radial-gradient(circle, var(--glow-color) 0%, transparent 70%)',
-        top: '50%',
-        left: '50%',
         marginLeft: -60,
         marginTop: -60,
-        pointerEvents: 'none',
       }}
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{
@@ -108,14 +103,13 @@ function AmbientGlow() {
 /* ── Loading shimmer — bouncing dots ── */
 function LoadingShimmer() {
   return (
-    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+    <div className="flex gap-1 items-center">
       {[0, 1, 2, 3, 4].map((i) => (
         <motion.div
           key={i}
           style={{
             width: 4,
             height: 4,
-            borderRadius: 0,
             background: 'var(--foreground, #FAFAFA)',
           }}
           initial={{ opacity: 0.2, y: 0, scale: 0.8 }}
@@ -190,12 +184,7 @@ export function SplashScreen({
             aria-hidden={exiting}
           >
             <motion.div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 28,
-              }}
+              className="flex flex-col items-center gap-7"
               initial={{ scale: 1, opacity: 1, y: 0 }}
               animate={
                 exiting
@@ -209,26 +198,11 @@ export function SplashScreen({
               }}
             >
               {/* Logo + Text lockup row */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0,
-                  position: 'relative',
-                  height: 96,
-                }}
-              >
+              <div className="flex items-center relative h-24">
                 {/* Logo container — starts centered, swooshes left */}
                 <motion.div
-                  style={{
-                    position: 'relative',
-                    width: 80,
-                    height: 80,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
+                  className="relative flex items-center justify-center shrink-0"
+                  style={{ width: 80, height: 80 }}
                   animate={{
                     marginRight: phase >= 1 ? 16 : 0,
                   }}
@@ -252,12 +226,8 @@ export function SplashScreen({
                     alt=""
                     width={64}
                     height={64}
-                    className="dark:block hidden"
-                    style={{
-                      position: 'relative',
-                      zIndex: 1,
-                      filter: 'var(--splash-logo-filter)',
-                    }}
+                    className="dark:block hidden relative z-[1]"
+                    style={{ filter: 'var(--splash-logo-filter)' }}
                     initial={{ scale: 0.6, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.05 }}
@@ -268,12 +238,8 @@ export function SplashScreen({
                     alt=""
                     width={64}
                     height={64}
-                    className="dark:hidden"
-                    style={{
-                      position: 'relative',
-                      zIndex: 1,
-                      filter: 'var(--splash-logo-filter)',
-                    }}
+                    className="dark:hidden relative z-[1]"
+                    style={{ filter: 'var(--splash-logo-filter)' }}
                     initial={{ scale: 0.6, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.05 }}
@@ -282,13 +248,9 @@ export function SplashScreen({
                 </motion.div>
 
                 {/* Text — swipes in from right after logo swooshes */}
-                <div style={{ overflow: 'visible' }}>
+                <div className="overflow-visible">
                   <motion.div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      whiteSpace: 'nowrap',
-                    }}
+                    className="flex items-center whitespace-nowrap"
                     initial={{ x: 40, opacity: 0 }}
                     animate={
                       phase >= 1
@@ -305,14 +267,8 @@ export function SplashScreen({
                     {'BitBit'.split('').map((letter, i) => (
                       <motion.span
                         key={i}
-                        style={{
-                          fontFamily: 'var(--font-geist-pixel-square)',
-                          fontSize: 16,
-                          fontWeight: 500,
-                          letterSpacing: '0.04em',
-                          color: 'var(--foreground, #FAFAFA)',
-                          display: 'inline-block',
-                        }}
+                        className="inline-block text-base font-medium tracking-wide text-[var(--foreground,#FAFAFA)]"
+                        style={{ fontFamily: 'var(--font-geist-pixel-square)' }}
                         initial={{ opacity: 0, y: 8 }}
                         animate={
                           phase >= 1

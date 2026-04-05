@@ -25,7 +25,7 @@ function StatCard({ value, label, context }: StatCardProps) {
         <span className="text-sm font-medium text-foreground">
           {label}
         </span>
-        <span className="text-xs text-muted-foreground leading-snug">
+        <span className="text-sm text-muted-foreground leading-snug">
           {context}
         </span>
       </CardContent>
@@ -73,7 +73,7 @@ function ResultMetric({ number, label, context }: ResultMetricProps) {
         <span className="text-sm font-medium text-foreground">
           {label}
         </span>
-        <span className="text-xs text-muted-foreground leading-snug">
+        <span className="text-sm text-muted-foreground leading-snug">
           {context}
         </span>
       </CardContent>
@@ -141,7 +141,7 @@ export default function CaseStudyContent() {
 
       {/* The Challenge */}
       <section className="mb-12">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-muted-foreground mb-4">
           The Challenge
         </h2>
         <Card>
@@ -167,7 +167,7 @@ export default function CaseStudyContent() {
 
       {/* The Solution */}
       <section className="mb-12">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-muted-foreground mb-4">
           The Solution
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-4">
@@ -202,7 +202,7 @@ export default function CaseStudyContent() {
 
       {/* The Results */}
       <section className="mb-12">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-muted-foreground mb-4">
           The Results
         </h2>
 
@@ -232,7 +232,7 @@ export default function CaseStudyContent() {
 
       {/* Pull Quote */}
       <section className="mb-12">
-        <Card className="px-7 py-8 text-center border-border/80">
+        <Card className="px-7 py-8 text-center border-border">
           <blockquote>
             <p className="text-lg italic font-serif text-foreground leading-relaxed mb-4">
               &ldquo;This thing can be sold to a marketing agency worldwide and they&rsquo;d
@@ -241,7 +241,7 @@ export default function CaseStudyContent() {
             <footer className="text-sm text-muted-foreground">
               <strong className="text-foreground font-medium">Andy Taleb</strong>
               {' '}
-              <span className="text-muted-foreground/60">--</span>
+              <span className="text-muted-foreground">--</span>
               {' '}
               Founder, All Webbed Up
             </footer>
@@ -251,7 +251,7 @@ export default function CaseStudyContent() {
 
       {/* What's Next */}
       <section className="mb-12">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
+        <h2 className="text-sm font-medium uppercase tracking-widest text-muted-foreground mb-4">
           What&apos;s Next
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed mb-6">

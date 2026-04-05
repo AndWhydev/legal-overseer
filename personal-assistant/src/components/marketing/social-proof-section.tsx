@@ -47,7 +47,7 @@ export default function SocialProofSection() {
           <CardContent className="p-0 flex flex-col gap-8">
             {/* Case study header */}
             <div>
-              <p className="text-xs font-medium tracking-widest uppercase text-muted-foreground/60 mb-2">
+              <p className="text-sm font-medium tracking-widest uppercase text-muted-foreground mb-2">
                 Case Study
               </p>
               <h3 className="text-[clamp(18px,3vw,24px)] font-medium text-foreground mb-2">
@@ -63,12 +63,12 @@ export default function SocialProofSection() {
               {CASE_STUDY_STATS.map(({ value, label }) => (
                 <div
                   key={label}
-                  className="p-5 px-4 rounded-xl bg-muted/30 border border-border text-center"
+                  className="p-5 px-4 rounded-xl bg-muted border border-border text-center"
                 >
                   <div className="text-[clamp(20px,3vw,28px)] font-medium text-foreground mb-1 font-mono tracking-tight">
                     {value}
                   </div>
-                  <div className="text-xs text-muted-foreground/60 uppercase tracking-wider">
+                  <div className="text-sm text-muted-foreground uppercase tracking-wider">
                     {label}
                   </div>
                 </div>
@@ -92,7 +92,7 @@ export default function SocialProofSection() {
           {TESTIMONIALS.map((t) => (
             <Card
               key={t.name}
-              className="py-8 px-6 transition-all duration-300 hover:bg-muted/50 hover:border-border/80 hover:-translate-y-1"
+              className="py-8 px-6 transition-all duration-300 hover:bg-muted hover:border-border hover:-translate-y-1"
             >
               <CardContent className="p-0 flex flex-col h-full">
                 <p className="text-base text-foreground leading-relaxed mb-6 italic flex-1">

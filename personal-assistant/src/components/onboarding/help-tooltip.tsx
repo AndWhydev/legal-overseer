@@ -95,7 +95,7 @@ export function HelpTooltip({
       {/* Pulsing indicator dot */}
       <button
         onClick={() => setShowTooltip(!showTooltip)}
-        className="relative w-5 h-5 p-0 bg-transparent border-none cursor-pointer inline-flex items-center justify-center shrink-0"
+        className="relative w-8 h-8 p-0 bg-transparent border-none cursor-pointer inline-flex items-center justify-center shrink-0"
         aria-label={`Help: ${title}`}
         title={title}
       >

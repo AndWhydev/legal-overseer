@@ -6,7 +6,7 @@ import { type ReactNode } from 'react'
 /**
  * Horizontal process pipeline visualization showing sequential stages
  * connected by animated data connectors. Each stage displays as a
- * glassmorphic card with status-colored glow.
+ * surface card with status-colored glow.
  */
 export interface PipelineStage {
   label: string

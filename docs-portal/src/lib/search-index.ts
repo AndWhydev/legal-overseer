@@ -4,9 +4,10 @@ import matter from "gray-matter"
 
 export interface SearchEntry {
   title: string
+  section: string
   description: string
   href: string
-  content: string // first 200 chars of body for preview
+  content: string
 }
 
 export function buildSearchIndex(): SearchEntry[] {
@@ -24,11 +25,25 @@ export function buildSearchIndex(): SearchEntry[] {
         const source = fs.readFileSync(filePath, "utf-8")
         const { data, content } = matter(source)
         const slug = [...prefix, item.name.replace(".mdx", "")].join("/")
+        // Strip MDX components, imports, and markdown syntax for plain text
+        const plainContent = content
+          .replace(/^import\s.*$/gm, "")
+          .replace(/<[^>]+>/g, "")
+          .replace(/```[\s\S]*?```/g, "")
+          .replace(/[#*`\[\](){}|>_~]/g, "")
+          .replace(/\n{2,}/g, "\n")
+          .trim()
+
+        const sectionName = prefix.length > 0
+          ? prefix[0].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+          : "Overview"
+
         entries.push({
           title: (data.title as string) || slug,
+          section: sectionName,
           description: (data.description as string) || "",
           href: `/docs/${slug}`,
-          content: content.replace(/[#*`\[\]()]/g, "").slice(0, 200),
+          content: plainContent.slice(0, 500),
         })
       }
     }

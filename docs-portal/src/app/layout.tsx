@@ -1,20 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import { Inter, Lora, JetBrains_Mono } from "next/font/google"
+import { JetBrains_Mono } from "next/font/google"
 import { cn } from "@/lib/utils"
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-})
-
-const lora = Lora({
-  subsets: ["latin"],
-  variable: "--font-heading",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-})
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -28,7 +15,15 @@ export const metadata: Metadata = {
   description:
     "Internal documentation for BitBit — Agentic AI Operations Platform",
   icons: {
-    icon: "/favicon.svg",
+    icon: [{url: "/favicon.png", sizes: "32x32", type: "image/png"}, {url: "/favicon-64.png", sizes: "64x64", type: "image/png"}],
+  },
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
   },
 }
 
@@ -40,7 +35,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn(inter.variable, lora.variable, jetbrainsMono.variable)}
+      className={cn(jetbrainsMono.variable)}
     >
       <body>{children}</body>
     </html>

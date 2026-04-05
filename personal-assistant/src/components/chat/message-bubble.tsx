@@ -122,7 +122,7 @@ export function MessageBubble({ message, citations, onRegenerate, onFeedback, on
 
       if (isInline) {
         return (
-          <code className="bg-muted px-1.5 py-0.5 rounded text-[0.9em] font-mono whitespace-pre-wrap break-words">
+          <code className="bg-muted px-1.5 py-0.5 rounded-lg text-[0.9em] font-mono whitespace-pre-wrap break-words">
             {children}
           </code>
         )
@@ -202,7 +202,7 @@ export function MessageBubble({ message, citations, onRegenerate, onFeedback, on
               <button
                 type="button"
                 onClick={() => handleFeedback('up')}
-                className={`p-1 cursor-pointer bg-transparent border-0 outline-none ${feedback === 'up' ? 'text-foreground' : 'text-muted-foreground/40 hover:text-muted-foreground'}`}
+                className={`p-1 cursor-pointer bg-transparent border-0 outline-none ${feedback === 'up' ? 'text-foreground' : 'text-muted-foreground hover:text-muted-foreground'}`}
                 aria-label="Good response"
               >
                 <IconThumbUp size={16} fill={feedback === 'up' ? 'currentColor' : 'none'} />
@@ -215,7 +215,7 @@ export function MessageBubble({ message, citations, onRegenerate, onFeedback, on
               <button
                 type="button"
                 onClick={() => handleFeedback('down')}
-                className={`p-1 cursor-pointer bg-transparent border-0 outline-none ${feedback === 'down' ? 'text-foreground' : 'text-muted-foreground/40 hover:text-muted-foreground'}`}
+                className={`p-1 cursor-pointer bg-transparent border-0 outline-none ${feedback === 'down' ? 'text-foreground' : 'text-muted-foreground hover:text-muted-foreground'}`}
                 aria-label="Bad response"
               >
                 <IconThumbDown size={16} fill={feedback === 'down' ? 'currentColor' : 'none'} />
@@ -224,7 +224,7 @@ export function MessageBubble({ message, citations, onRegenerate, onFeedback, on
             <button
               type="button"
               onClick={handleCopy}
-              className="p-1 cursor-pointer bg-transparent border-0 outline-none text-muted-foreground/40 hover:text-muted-foreground"
+              className="p-1 cursor-pointer bg-transparent border-0 outline-none text-muted-foreground hover:text-muted-foreground"
               aria-label="Copy message"
             >
               {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
@@ -233,7 +233,7 @@ export function MessageBubble({ message, citations, onRegenerate, onFeedback, on
               <button
                 type="button"
                 onClick={onRegenerate}
-                className="p-1 cursor-pointer bg-transparent border-0 outline-none text-muted-foreground/40 hover:text-muted-foreground"
+                className="p-1 cursor-pointer bg-transparent border-0 outline-none text-muted-foreground hover:text-muted-foreground"
                 aria-label="Regenerate response"
               >
                 <IconRefresh size={16} />

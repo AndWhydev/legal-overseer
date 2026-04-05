@@ -303,7 +303,7 @@ function LegendItem({
   circle?: boolean
 }) {
   return (
-    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+    <div className="flex items-center gap-1 text-sm text-muted-foreground">
       {circle ? (
         <svg width={10} height={10} viewBox="0 0 10 10">
           <circle cx={5} cy={5} r={4} fill="none" stroke={color} strokeWidth={1.5} />
@@ -390,13 +390,13 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
             className="mb-1 grid gap-1"
             style={{ gridTemplateColumns: `120px repeat(${weekHeaders.length}, 1fr)` }}
           >
-            <div className="py-1 text-xs font-medium text-muted-foreground">
+            <div className="py-1 text-sm font-medium text-muted-foreground">
               Cohort
             </div>
             {weekHeaders.map((w) => (
               <div
                 key={w}
-                className="py-1 text-center text-xs font-medium text-muted-foreground"
+                className="py-1 text-center text-sm font-medium text-muted-foreground"
               >
                 {w}
               </div>
@@ -412,7 +412,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
             >
               <div className="flex flex-col gap-0.5 px-1 py-2">
                 <span className="text-sm font-medium text-foreground">{cohort.cohortLabel}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   {cohort.orgCount} org{cohort.orgCount !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -422,7 +422,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                   <div
                     key={wi}
                     title={pct !== null ? `${pct}%` : 'N/A'}
-                    className="flex h-8 items-center justify-center rounded-lg font-mono text-xs font-medium"
+                    className="flex h-8 items-center justify-center rounded-lg font-mono text-sm font-medium"
                     style={{
                       backgroundColor: pct !== null ? retentionColor(pct) : undefined,
                       color: pct !== null && pct >= 40 ? 'hsl(var(--foreground))' : undefined,
@@ -431,7 +431,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
                     {pct !== null ? (
                       <span className={pct < 40 ? 'text-muted-foreground' : ''}>{pct}%</span>
                     ) : (
-                      <span className="text-muted-foreground/50">&mdash;</span>
+                      <span className="text-muted-foreground">&mdash;</span>
                     )}
                   </div>
                 )
@@ -441,7 +441,7 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
 
           {/* Colour scale legend */}
           <div className="mt-3 flex items-center gap-2 border-t pt-3">
-            <span className="text-xs text-muted-foreground">Retention:</span>
+            <span className="text-sm text-muted-foreground">Retention:</span>
             {[
               { pct: 0, label: '0%' },
               { pct: 25, label: '25%' },
@@ -451,10 +451,10 @@ function CohortHeatmap({ matrix }: { matrix: CohortMatrix }) {
             ].map(({ pct, label }) => (
               <div key={pct} className="flex items-center gap-1">
                 <div
-                  className="size-4 rounded border"
+                  className="size-4 rounded-lg border"
                   style={{ backgroundColor: retentionColor(pct) }}
                 />
-                <span className="text-xs text-muted-foreground">{label}</span>
+                <span className="text-sm text-muted-foreground">{label}</span>
               </div>
             ))}
           </div>
@@ -539,7 +539,7 @@ function AnalyticsTab() {
 
         {/* MRR Stats */}
         <section className="flex flex-col gap-4">
-          <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
             Monthly Recurring Revenue
           </h3>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
@@ -575,7 +575,7 @@ function AnalyticsTab() {
 
         {/* Trend Forecasting */}
         <section className="flex flex-col gap-4">
-          <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
             Activity Trends &amp; Forecasting
           </h3>
           {trendsLoading ? (
@@ -612,7 +612,7 @@ function AnalyticsTab() {
         {/* Cohort Retention */}
         <section className="flex flex-col gap-4">
           <div>
-            <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
               Cohort Retention
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -641,7 +641,7 @@ function AnalyticsTab() {
         {/* Token Usage */}
         {usage && (
           <section className="flex flex-col gap-4">
-            <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
               Token Usage &amp; Costs
             </h3>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
@@ -710,7 +710,7 @@ function AnalyticsTab() {
         {/* Churn Risk */}
         {churn && churn.risks.length > 0 && (
           <section className="flex flex-col gap-4">
-            <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
               Churn Risk ({churn.atRiskOrgs} orgs)
             </h3>
             <div className="flex flex-col gap-3">
@@ -757,7 +757,7 @@ function AnalyticsTab() {
 
         {/* ROI Metrics */}
         <section className="flex flex-col gap-4">
-          <h3 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          <h3 className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
             ROI Metrics
           </h3>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">

@@ -62,6 +62,15 @@ export async function aggregateSignals(
   // Step 1: Deduplicate
   let deduped = deduplicateSignals(signals)
 
+  // Step 1b: Filter out signals that already have pending approvals
+  if (supabase) {
+    deduped = await filterAlreadyPending(supabase, orgId, deduped)
+    if (deduped.length === 0) {
+      logger.info("[proactive/aggregator] All signals filtered by pending approval check", { orgId })
+      return []
+    }
+  }
+
   // Step 2: Priority sort (critical first, then by recency)
   deduped = prioritySort(deduped)
 
@@ -223,6 +232,115 @@ async function getRemainingActionBudget(
     })
     return Math.max(1, Math.floor(maxPerHour / 2))
   }
+}
+
+// ---------------------------------------------------------------------------
+// Cross-Run Deduplication (Approval Queue)
+// ---------------------------------------------------------------------------
+
+/**
+ * Filter out signals that already have a pending approval in the queue.
+ * This prevents the same signal (e.g., overdue invoice) from creating
+ * a new approval entry on every cron run.
+ *
+ * Matches on action_type pattern "proactive:*" + entity identifiers
+ * stored in action_payload.
+ */
+async function filterAlreadyPending(
+  supabase: SupabaseClient,
+  orgId: string,
+  signals: ProactiveSignal[],
+): Promise<ProactiveSignal[]> {
+  try {
+    // Fetch all pending proactive approvals for this org
+    const { data: pendingApprovals, error } = await supabase
+      .from("approval_queue")
+      .select("action_type, action_payload")
+      .eq("org_id", orgId)
+      .eq("status", "pending")
+      .like("action_type", "proactive:%")
+
+    if (error || !pendingApprovals?.length) {
+      return signals // No pending approvals or error — allow all through
+    }
+
+    // Build a set of entity keys from pending approvals
+    const pendingKeys = new Set<string>()
+    for (const approval of pendingApprovals) {
+      const payload = (approval.action_payload ?? {}) as Record<string, unknown>
+      const key = buildApprovalDeduplicationKey(approval.action_type, payload)
+      if (key) pendingKeys.add(key)
+    }
+
+    if (pendingKeys.size === 0) return signals
+
+    // Filter out signals whose entity key matches an existing pending approval
+    const filtered = signals.filter((signal) => {
+      const signalKey = buildSignalDeduplicationKey(signal)
+      if (!signalKey) return true // No key — allow through
+      const isDuplicate = pendingKeys.has(signalKey)
+      if (isDuplicate) {
+        logger.info("[proactive/aggregator] Filtered duplicate signal (pending approval exists)", {
+          signalType: signal.type,
+          key: signalKey,
+        })
+      }
+      return !isDuplicate
+    })
+
+    return filtered
+  } catch (err) {
+    logger.warn("[proactive/aggregator] filterAlreadyPending failed, allowing all signals", {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return signals // Fail open
+  }
+}
+
+/**
+ * Build a dedup key from an existing approval_queue entry.
+ * Maps action_type back to signal type and extracts entity IDs from payload.
+ */
+function buildApprovalDeduplicationKey(
+  actionType: string,
+  payload: Record<string, unknown>,
+): string | null {
+  // actionType is "proactive:alert_user", "proactive:create_task", etc.
+  // The reasoning field contains entity info, but we need stable keys.
+  // Extract from the nested action payload or reasoning.
+  const reasoning = (payload.reasoning ?? "") as string
+
+  // Try to extract invoice number from reasoning
+  const invoiceMatch = reasoning.match(/Invoice\s+(INV-[\w-]+|[A-Z0-9-]+)/i)
+  if (invoiceMatch) {
+    return "invoice_overdue|" + invoiceMatch[1]
+  }
+
+  // Try to extract project name
+  const projectMatch = reasoning.match(/Project\s+"([^"]+)"/i)
+  if (projectMatch) {
+    return actionType + "|project:" + projectMatch[1]
+  }
+
+  return null
+}
+
+/**
+ * Build a dedup key from a signal, matching the format used by
+ * buildApprovalDeduplicationKey so they can be compared.
+ */
+function buildSignalDeduplicationKey(signal: ProactiveSignal): string | null {
+  const data = signal.data as Record<string, unknown>
+
+  if (signal.type === "invoice_overdue" && data.invoice_number) {
+    return "invoice_overdue|" + String(data.invoice_number)
+  }
+
+  if ((signal.type === "project_action_overdue" || signal.type === "project_blocked_stale") && data.project_name) {
+    return "proactive:" + (signal.type === "project_action_overdue" ? "create_task" : "alert_user") + "|project:" + String(data.project_name)
+  }
+
+  return null
 }
 
 // ---------------------------------------------------------------------------

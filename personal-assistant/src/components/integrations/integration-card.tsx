@@ -151,7 +151,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
     <>
       <div
         className={cn(
-          'flex items-center gap-3 rounded-xl border border-border/30 bg-card px-4 py-3 transition-colors',
+          'flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors',
           !isComingSoon && 'hover:bg-card',
           isComingSoon && 'opacity-50',
         )}
@@ -174,7 +174,7 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
               <Badge variant="secondary">Soon</Badge>
             )}
           </div>
-          <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+          <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
             {integration.description}
           </p>
         </div>

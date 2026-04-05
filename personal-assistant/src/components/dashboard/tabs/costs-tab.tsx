@@ -152,7 +152,7 @@ function CostsTab() {
             <CardContent>
               <div className="flex flex-col gap-2">
                 {summary.by_agent.map((entry) => (
-                  <div key={entry.agent_type} className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50">
+                  <div key={entry.agent_type} className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted">
                     <span className="text-sm">{entry.agent_type}</span>
                     <div className="flex items-center gap-6 text-sm">
                       <span className="text-muted-foreground">{entry.run_count} runs</span>

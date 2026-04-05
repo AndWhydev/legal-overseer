@@ -77,7 +77,7 @@ export function RevenueDigestCard() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <IconCalendar size={14} className="text-foreground" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               Revenue Digest
             </span>
           </div>
@@ -86,10 +86,10 @@ export function RevenueDigestCard() {
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`text-xs font-medium px-3 py-1 rounded-lg border-none cursor-pointer transition-colors ${
+                className={`text-sm font-medium px-3 py-1 rounded-lg border-none cursor-pointer transition-colors ${
                   period === p
                     ? 'bg-muted text-foreground'
-                    : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                    : 'bg-muted text-muted-foreground hover:bg-muted'
                 }`}
               >
                 {p}
@@ -134,12 +134,12 @@ export function RevenueDigestCard() {
                 { label: 'Overdue', value: fmt(latest.overdue_cents), color: latest.overdue_cents > 0 ? 'text-red-500' : undefined },
                 { label: '30d Outlook', value: fmt(latest.projected_30d_cents) },
               ].map(m => (
-                <div key={m.label} className="p-3 rounded-lg bg-muted/50">
-                  <div className="text-xs text-muted-foreground mb-1">{m.label}</div>
+                <div key={m.label} className="p-3 rounded-lg bg-muted">
+                  <div className="text-sm text-muted-foreground mb-1">{m.label}</div>
                   <div className={`text-base font-medium font-mono tracking-tight ${m.color ?? 'text-foreground'}`}>
                     {m.value}
                   </div>
-                  {m.sub && <div className="text-xs text-muted-foreground">{m.sub}</div>}
+                  {m.sub && <div className="text-sm text-muted-foreground">{m.sub}</div>}
                 </div>
               ))}
             </div>

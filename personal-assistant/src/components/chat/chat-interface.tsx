@@ -2018,7 +2018,7 @@ export function ChatInterface() {
                                     <div>
                                       <div className="font-medium">{stage.title}</div>
                                       {stage.description && (
-                                        <div className="text-muted-foreground text-xs">{stage.description}</div>
+                                        <div className="text-muted-foreground text-sm">{stage.description}</div>
                                       )}
                                     </div>
                                   </div>
@@ -2225,7 +2225,7 @@ export function ChatInterface() {
             gap: '4px',
             padding: '4px 8px',
             marginBottom: '4px',
-            fontSize: '12px',
+            fontSize: '14px',
             color: 'var(--text-secondary)',
           }}>
             {dragUpload.uploads.map(item => (

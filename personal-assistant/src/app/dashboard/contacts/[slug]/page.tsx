@@ -84,14 +84,14 @@ export default async function ContactDetailPage({
       </Link>
 
       <div className="flex items-center gap-4">
-        <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-xl font-semibold text-primary">
+        <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-xl font-medium text-primary">
           {profile.name.charAt(0)}
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold">{profile.name}</h1>
+            <h1 className="text-2xl font-medium">{profile.name}</h1>
             <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${typeColor[profile.type] || 'bg-muted text-muted-foreground'}`}
+              className={`rounded-full px-2 py-0.5 text-sm font-medium ${typeColor[profile.type] || 'bg-muted text-muted-foreground'}`}
             >
               {profile.type}
             </span>
@@ -114,7 +114,7 @@ export default async function ContactDetailPage({
       <Separator />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-border/50">
+        <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-base">Profile</CardTitle>
           </CardHeader>
@@ -136,7 +136,7 @@ export default async function ContactDetailPage({
                 <span className="text-muted-foreground">Aliases</span>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {profile.aliases.map((a: string) => (
-                    <Badge key={a} variant="secondary" className="text-xs">
+                    <Badge key={a} variant="secondary" className="text-sm">
                       {a}
                     </Badge>
                   ))}
@@ -150,7 +150,7 @@ export default async function ContactDetailPage({
                   {tags.map((t: string) => (
                     <span
                       key={t}
-                      className="flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs"
+                      className="flex items-center gap-1 rounded-lg bg-muted px-2 py-0.5 text-sm"
                     >
                       <Tag className="size-2.5" /> {t}
                     </span>
@@ -161,7 +161,7 @@ export default async function ContactDetailPage({
           </CardContent>
         </Card>
 
-        <Card className="border-border/50">
+        <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-base">Related Tasks</CardTitle>
           </CardHeader>
@@ -171,7 +171,7 @@ export default async function ContactDetailPage({
                 {relatedTasks.map((task: { id: string; title: string; status: string }) => (
                   <div
                     key={task.id}
-                    className="flex items-center gap-2 rounded-md border border-border/30 bg-muted/20 px-3 py-2 text-sm"
+                    className="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2 text-sm"
                   >
                     <CheckCircle2
                       className={`size-4 ${
@@ -183,7 +183,7 @@ export default async function ContactDetailPage({
                       }`}
                     />
                     <span className="flex-1">{task.title}</span>
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge variant="secondary" className="text-sm">
                       {task.status}
                     </Badge>
                   </div>
@@ -195,7 +195,7 @@ export default async function ContactDetailPage({
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 lg:col-span-2">
+        <Card className="border-border lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">Recent Activity</CardTitle>
           </CardHeader>
@@ -209,7 +209,7 @@ export default async function ContactDetailPage({
                   >
                     <Clock className="size-3.5 text-muted-foreground" />
                     <span className="flex-1">{act.action}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                       {new Date(act.created_at).toLocaleDateString()}
                     </span>
                   </div>

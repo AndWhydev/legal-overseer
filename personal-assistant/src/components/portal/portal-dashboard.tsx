@@ -30,11 +30,11 @@ export function PortalDashboard({
     <div>
       {/* Welcome Header */}
       <div className="mb-8">
-        <h1 className="text-base font-medium tracking-tight text-gray-900">
+        <h1 className="text-base font-medium tracking-tight text-foreground">
           {greeting}, {contactName.split(' ')[0]}
         </h1>
         {welcomeMessage && (
-          <p className="mt-2 text-base text-gray-500">{welcomeMessage}</p>
+          <p className="mt-2 text-base text-muted-foreground">{welcomeMessage}</p>
         )}
       </div>
 
@@ -75,7 +75,7 @@ export function PortalDashboard({
         {/* Projects */}
         <div className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-medium text-gray-900">Your Projects</h2>
+            <h2 className="text-base font-medium text-foreground">Your Projects</h2>
             <Link
               href={`${basePath}/projects`}
               className="text-sm font-medium no-underline" style={{ color: primaryColor }}
@@ -85,8 +85,8 @@ export function PortalDashboard({
           </div>
 
           {projects.length === 0 ? (
-            <div style={cardStyle} className="p-12 text-center">
-              <p className="text-base text-gray-400">No projects yet</p>
+            <div className="rounded-xl border border-border bg-card overflow-hidden p-12 text-center">
+              <p className="text-base text-muted-foreground">No projects yet</p>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -104,35 +104,33 @@ export function PortalDashboard({
 
         {/* Activity Feed */}
         <div>
-          <h2 className="mb-4 text-base font-medium text-gray-900">Recent Activity</h2>
+          <h2 className="mb-4 text-base font-medium text-foreground">Recent Activity</h2>
 
           {activity.length === 0 ? (
-            <div style={cardStyle} className="p-12 text-center">
-              <p className="text-base text-gray-400">No activity yet</p>
+            <div className="rounded-xl border border-border bg-card overflow-hidden p-12 text-center">
+              <p className="text-base text-muted-foreground">No activity yet</p>
             </div>
           ) : (
-            <div style={cardStyle}>
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
               {activity.map((item, i) => (
                 <div
                   key={item.id}
-                  className={`px-4 py-3 ${i < activity.length - 1 ? 'border-b border-gray-100' : ''}`}
+                  className={`px-4 py-3 ${i < activity.length - 1 ? 'border-b border-border' : ''}`}
                 >
                   <div className="flex items-start gap-3">
                     <div
+                      className="mt-2 shrink-0 rounded-full"
                       style={{
                         width: 8,
                         height: 8,
-                        borderRadius: '50%',
                         background: item.read ? 'var(--border)' : primaryColor,
-                        marginTop: 8,
-                        flexShrink: 0,
                       }}
                     />
                     <div>
-                      <p style={{ fontSize: 14, color: 'var(--foreground)', margin: 0, fontWeight: item.read ? 400 : 500 }}>
+                      <p className={`text-sm text-foreground m-0 ${item.read ? 'font-normal' : 'font-medium'}`}>
                         {item.title}
                       </p>
-                      <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: '4px 0 0' }}>
+                      <p className="text-sm text-muted-foreground mt-1 m-0">
                         {formatRelative(item.created_at)}
                       </p>
                     </div>
@@ -148,13 +146,6 @@ export function PortalDashboard({
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
-
-const cardStyle: React.CSSProperties = {
-  background: 'var(--card)',
-  borderRadius: 12,
-  border: '1px solid var(--border)',
-  overflow: 'hidden',
-}
 
 function StatCard({
   label,
@@ -172,32 +163,29 @@ function StatCard({
   href?: string
 }) {
   const content = (
-    <div style={{ ...cardStyle, padding: '20px', cursor: href ? 'pointer' : 'default', transition: 'box-shadow 150ms' }}>
-      <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+    <div className={`rounded-xl border border-border bg-card overflow-hidden p-5 transition-shadow ${href ? 'cursor-pointer' : 'cursor-default'}`}>
+      <div className="flex items-center justify-between mb-3">
         <div
+          className="flex items-center justify-center rounded-xl"
           style={{
             width: 40,
             height: 40,
-            borderRadius: 12,
             background: `${primaryColor}0D`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
           }}
         >
           {icon}
         </div>
       </div>
-      <p style={{ fontSize: 16, fontWeight: 500, color: 'var(--foreground)', margin: 0, letterSpacing: '-0.02em' }}>
+      <p className="text-base font-medium text-foreground m-0 tracking-tight">
         {value}
       </p>
-      <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '4px 0 0' }}>{label}</p>
-      {subtext && <p style={{ fontSize: 14, color: primaryColor, margin: '4px 0 0', fontWeight: 500 }}>{subtext}</p>}
+      <p className="text-sm text-muted-foreground mt-1 m-0">{label}</p>
+      {subtext && <p className="text-sm font-medium mt-1 m-0" style={{ color: primaryColor }}>{subtext}</p>}
     </div>
   )
 
   if (href) {
-    return <Link href={href} style={{ textDecoration: 'none' }}>{content}</Link>
+    return <Link href={href} className="no-underline">{content}</Link>
   }
   return content
 }
@@ -221,52 +209,40 @@ function ProjectCard({
   const sc = statusColors[project.status] ?? statusColors.active
 
   return (
-    <Link href={`${basePath}/projects`} style={{ textDecoration: 'none' }}>
-      <div style={{ ...cardStyle, padding: '20px', transition: 'box-shadow 150ms' }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 500, color: 'var(--foreground)', margin: 0 }}>{project.title}</h3>
+    <Link href={`${basePath}/projects`} className="no-underline">
+      <div className="rounded-xl border border-border bg-card overflow-hidden p-5 transition-shadow">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-medium text-foreground m-0">{project.title}</h3>
           <span
-            style={{
-              fontSize: 14,
-              fontWeight: 500,
-              padding: '4px 12px',
-              borderRadius: 8,
-              background: sc.bg,
-              color: sc.text,
-              textTransform: 'capitalize',
-            }}
+            className="text-sm font-medium px-3 py-1 rounded-lg capitalize"
+            style={{ background: sc.bg, color: sc.text }}
           >
             {project.status.replace('_', ' ')}
           </span>
         </div>
 
         {project.current_phase && (
-          <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: '0 0 12px' }}>
+          <p className="text-sm text-muted-foreground mb-3 mt-0">
             Phase: {project.current_phase}
           </p>
         )}
 
         {/* Progress Bar */}
-        <div style={{ marginTop: 8 }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-            <span style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>Progress</span>
-            <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)' }}>{project.progress}%</span>
+        <div className="mt-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Progress</span>
+            <span className="text-sm font-medium text-foreground">{project.progress}%</span>
           </div>
-          <div style={{ height: 6, borderRadius: 8, background: 'var(--muted)', overflow: 'hidden' }}>
+          <div className="h-1.5 rounded-lg bg-muted overflow-hidden">
             <div
-              style={{
-                height: '100%',
-                borderRadius: 8,
-                background: primaryColor,
-                width: `${project.progress}%`,
-                transition: 'width 500ms ease',
-              }}
+              className="h-full rounded-lg transition-[width] duration-500 ease-in-out"
+              style={{ background: primaryColor, width: `${project.progress}%` }}
             />
           </div>
         </div>
 
         {project.target_date && (
-          <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: '12px 0 0' }}>
+          <p className="text-sm text-muted-foreground mt-3 mb-0">
             Target: {new Date(project.target_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
         )}

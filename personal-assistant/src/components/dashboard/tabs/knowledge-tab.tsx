@@ -220,13 +220,13 @@ function KnowledgeTab() {
                   const root = graph.nodes[0];
                   const Icon = TYPE_ICON[root.type] ?? IconBriefcase;
                   return (
-                    <div className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
+                    <div className="flex items-center gap-3 rounded-lg border bg-muted p-3">
                       <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                         <Icon className="size-5 text-primary" />
                       </div>
                       <div>
                         <div className="text-sm font-medium">{root.label}</div>
-                        <div className="text-xs capitalize text-muted-foreground">{root.type}</div>
+                        <div className="text-sm capitalize text-muted-foreground">{root.type}</div>
                       </div>
                     </div>
                   );
@@ -235,7 +235,7 @@ function KnowledgeTab() {
                 {/* Connected Entities */}
                 {graph.nodes.length > 1 && (
                   <div>
-                    <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Connected Entities</h3>
+                    <h3 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Connected Entities</h3>
                     <div className="flex flex-wrap gap-2">
                       {graph.nodes.slice(1).map((node) => {
                         const Icon = TYPE_ICON[node.type] ?? IconBriefcase;
@@ -259,20 +259,20 @@ function KnowledgeTab() {
                 {/* Relationships List */}
                 {graph.edges.length > 0 && (
                   <div>
-                    <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Relationships</h3>
+                    <h3 className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">Relationships</h3>
                     <div className="flex flex-col gap-2">
                       {graph.edges.map((edge, idx) => {
                         const sourceNode = graph.nodes.find((n) => n.id === edge.source);
                         const targetNode = graph.nodes.find((n) => n.id === edge.target);
                         return (
-                          <div key={idx} className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50">
+                          <div key={idx} className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted">
                             <div>
                               <div className="text-sm font-medium">{sourceNode?.label ?? edge.source}</div>
-                              <div className="text-xs capitalize text-muted-foreground">
+                              <div className="text-sm capitalize text-muted-foreground">
                                 {edge.relationshipType?.replace(/_/g, ' ') ?? 'Related'} (strength: {(edge.strength * 100).toFixed(0)}%)
                               </div>
                             </div>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-sm text-muted-foreground">
                               &rarr; {targetNode?.label ?? edge.target}
                             </span>
                           </div>
@@ -306,14 +306,14 @@ function KnowledgeTab() {
       {/* Search Results */}
       {!selectedEntity && results.length > 0 && (
         <div>
-          <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Search Results</h2>
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">Search Results</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {results.map((result) => {
               const Icon = TYPE_ICON[result.type] ?? IconBriefcase;
               return (
                 <Card
                   key={`${result.type}-${result.id}`}
-                  className="cursor-pointer transition-colors hover:bg-muted/50"
+                  className="cursor-pointer transition-colors hover:bg-muted"
                   onClick={() => selectEntity(result.type, result.id)}
                 >
                   <CardContent className="flex items-start gap-3 py-4">
@@ -324,7 +324,7 @@ function KnowledgeTab() {
                       <div className="truncate text-sm font-medium">{result.label}</div>
                       <Badge variant={TYPE_BADGE_VARIANT[result.type]} className="mt-1">{result.type}</Badge>
                       {result.snippet && (
-                        <p className="mt-2 truncate text-xs text-muted-foreground">{result.snippet}</p>
+                        <p className="mt-2 truncate text-sm text-muted-foreground">{result.snippet}</p>
                       )}
                     </div>
                   </CardContent>

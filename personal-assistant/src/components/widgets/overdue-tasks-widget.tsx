@@ -31,14 +31,14 @@ export function OverdueTasksWidget() {
           <Empty><EmptyTitle>No overdue tasks</EmptyTitle><EmptyDescription>You're all caught up.</EmptyDescription></Empty>
         ) : (
           tasks.map(task => (
-            <div key={task.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
+            <div key={task.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted border border-border">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{(task.title || 'Untitled Task') as string}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   Due: {task.due_date ? new Date(task.due_date as string).toLocaleDateString() : '--'}
                 </p>
               </div>
-              <Badge variant="destructive" className="text-[10px]">
+              <Badge variant="destructive" className="text-sm">
                 overdue
               </Badge>
             </div>

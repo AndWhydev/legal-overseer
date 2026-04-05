@@ -38,7 +38,7 @@ export function MessagePreview({ message, classification }: MessagePreviewProps)
   const Icon = channelIcons[message.channel]
 
   return (
-    <div className="glass-card rounded-lg p-3 transition-all duration-150 hover:border-primary/20">
+    <div className="surface-card rounded-lg p-3 transition-all duration-150 hover:border-primary/20">
       <div className="flex items-start gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
           <Icon className="h-4 w-4" />
@@ -47,7 +47,7 @@ export function MessagePreview({ message, classification }: MessagePreviewProps)
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-medium text-foreground">{message.sender}</span>
             {classification && (
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${classification === 'actionable'
+              <span className={`rounded-full px-1.5 py-0.5 text-sm font-medium ${classification === 'actionable'
                   ? 'bg-primary/10 text-primary'
                   : classification === 'noise'
                     ? 'bg-secondary text-muted-foreground'
@@ -57,8 +57,8 @@ export function MessagePreview({ message, classification }: MessagePreviewProps)
               </span>
             )}
           </div>
-          <p className="truncate text-xs font-medium text-foreground/80">{message.subject}</p>
-          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{message.body}</p>
+          <p className="truncate text-sm font-medium text-foreground">{message.subject}</p>
+          <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{message.body}</p>
         </div>
       </div>
     </div>

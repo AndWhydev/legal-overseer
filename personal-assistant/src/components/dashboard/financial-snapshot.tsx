@@ -33,24 +33,24 @@ export function FinancialSnapshot() {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium">Financial</CardTitle>
-        <CardDescription className="text-xs">${data.totalInvoiced.toLocaleString()} invoiced, ${data.totalPaid.toLocaleString()} received</CardDescription>
+        <CardDescription className="text-sm">${data.totalInvoiced.toLocaleString()} invoiced, ${data.totalPaid.toLocaleString()} received</CardDescription>
       </CardHeader>
       <CardContent className="px-2">
         {data.timeline.length > 0 ? (
           <ChartContainer config={chartConfig} className="h-[100px] w-full">
             <AreaChart data={data.timeline} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.3} />
-              <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={4} tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} tickFormatter={(v: string) => v.slice(5)} />
+              <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={4} tick={{ fontSize: 14, fill: 'var(--muted-foreground)' }} tickFormatter={(v: string) => v.slice(5)} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Area dataKey="invoiced" type="monotone" fill="var(--foreground)" fillOpacity={0.08} stroke="var(--foreground)" strokeOpacity={0.4} strokeWidth={1.5} />
               <Area dataKey="received" type="monotone" fill="var(--muted-foreground)" fillOpacity={0.05} stroke="var(--muted-foreground)" strokeOpacity={0.3} strokeWidth={1} />
             </AreaChart>
           </ChartContainer>
         ) : (
-          <div className="text-xs text-muted-foreground py-4">No invoice data yet</div>
+          <div className="text-sm text-muted-foreground py-4">No invoice data yet</div>
         )}
       </CardContent>
-      <CardFooter className="text-xs text-muted-foreground gap-3">
+      <CardFooter className="text-sm text-muted-foreground gap-3">
         <span>${data.outstanding.toLocaleString()} outstanding</span>
         {data.overdue > 0 && <span>{data.overdue} overdue</span>}
         {data.pending > 0 && <span>{data.pending} pending</span>}

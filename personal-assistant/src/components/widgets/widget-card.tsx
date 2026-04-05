@@ -23,7 +23,7 @@ export function WidgetCard({ title, subtitle, icon, action, className, children 
           </CardTitle>
           {action}
         </div>
-        {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
+        {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
       </CardHeader>
       <CardContent>
         {children}

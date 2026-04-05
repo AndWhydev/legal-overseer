@@ -35,7 +35,7 @@ function FactorList({ breakdown }: { breakdown: ScoreBreakdown | null }) {
         <div key={i} className="flex items-center justify-between py-1">
           <span className="text-sm text-muted-foreground">
             {c.factor}
-            {c.note && <span className="ml-1 text-muted-foreground/60">({c.note})</span>}
+            {c.note && <span className="ml-1 text-muted-foreground">({c.note})</span>}
           </span>
           <Badge variant="secondary" className="font-mono tabular-nums">
             {c.points > 0 ? '+' : ''}{c.points}

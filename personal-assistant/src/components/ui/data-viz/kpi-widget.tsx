@@ -5,7 +5,7 @@ import { MiniSparkline } from './mini-sparkline'
 
 /**
  * KPI (Key Performance Indicator) widget card with value, trend indicator,
- * and optional embedded sparkline chart. Uses glassmorphic card styling.
+ * and optional embedded sparkline chart. Uses surface card styling.
  */
 export interface KPIWidgetProps {
   label: string

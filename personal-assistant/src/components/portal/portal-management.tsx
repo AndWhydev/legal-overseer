@@ -400,7 +400,7 @@ export function PortalManagement() {
                       {(branding.company_name || 'A').charAt(0)}
                     </div>
                   )}
-                  <span className="text-base font-medium text-gray-900">
+                  <span className="text-base font-medium text-foreground">
                     {branding.company_name || 'Your Agency'}
                   </span>
                 </div>

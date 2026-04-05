@@ -196,7 +196,7 @@ function DayHeader({ date, isToday }: { date: Date; isToday: boolean }) {
   return (
     <div className="flex flex-col items-center gap-1 py-3">
       <span
-        className={`text-xs font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}
+        className={`text-sm font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}
       >
         {dayLabel}
       </span>
@@ -233,15 +233,15 @@ function EventBlock({ event }: { event: PositionedEvent }) {
       title={`${event.title}\n${formatTime(startDate)} - ${formatTime(endDate)}`}
     >
       {isCompact ? (
-        <p className="truncate text-xs font-medium leading-tight">
+        <p className="truncate text-sm font-medium leading-tight">
           {event.title}
         </p>
       ) : (
         <>
-          <p className="truncate text-xs font-medium leading-tight">
+          <p className="truncate text-sm font-medium leading-tight">
             {event.title}
           </p>
-          <p className="truncate text-[10px] leading-tight opacity-70">
+          <p className="truncate text-sm leading-tight opacity-70">
             {formatTime(startDate)} - {formatTime(endDate)}
           </p>
         </>
@@ -324,7 +324,7 @@ function MeetingsTabCalendar() {
     <TabShell variant="fixed" padding="p-0">
       <div className="flex h-full flex-col">
         {/* Navigation bar */}
-        <div className="flex items-center justify-between border-b border-border/50 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-border px-4 py-2">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setWeekOffset((w) => w - 1)}
@@ -353,7 +353,7 @@ function MeetingsTabCalendar() {
         </div>
 
         {/* Day column headers */}
-        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/50">
+        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border">
           <div />
           {weekDays.map((day, i) => (
             <DayHeader key={i} date={day} isToday={isSameDay(day, today)} />
@@ -372,13 +372,13 @@ function MeetingsTabCalendar() {
               return (
                 <React.Fragment key={hour}>
                   <div
-                    className="pointer-events-none absolute left-0 w-[60px] pr-3 text-right text-xs text-muted-foreground"
+                    className="pointer-events-none absolute left-0 w-[60px] pr-3 text-right text-sm text-muted-foreground"
                     style={{ top: `${top - 6}px` }}
                   >
                     {formatHour(hour)}
                   </div>
                   <div
-                    className="pointer-events-none absolute right-0 left-[60px] border-t border-border/30"
+                    className="pointer-events-none absolute right-0 left-[60px] border-t border-border"
                     style={{ top: `${top}px` }}
                   />
                 </React.Fragment>

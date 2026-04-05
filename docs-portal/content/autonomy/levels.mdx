@@ -20,13 +20,13 @@ The Autonomy Levels system (`src/lib/intelligence/autonomy-levels.ts`) is a risk
 
 Every tool has a default autonomy level based on its risk profile:
 
-- **L4 (Silent)** covers read-only operations:
+**L4 (Silent)**: Read-only operations:
 `search_memory`, `find_messages`, `search_contacts`, `get_contact`, `search_tasks`, `web_search`, `fetch_url`, `list_projects`, `list_standing_orders`, `summarize_inbox`, `read_message`
 
-- **L3 (Notify)** covers reversible write operations:
+**L3 (Notify)**: Write operations, reversible:
 `create_task`, `update_task`, `log_activity`, `add_memory`, `create_reminder`, `schedule_event`, `draft_reply`, `create_project`, `execute_code`, `generate_ad_scripts`
 
-- **L2 (Propose)** covers outbound communications:
+**L2 (Propose)**: Outbound communications:
 `send_email`, `send_sms`, `send_whatsapp`, `send_gmail`, `send_outlook`, `approve_action`
 
 ## Org Overrides
@@ -43,17 +43,26 @@ The `getAutonomyLevel()` function checks org overrides first, falling back to th
 
 ## Integration with Confidence Router
 
+<Mermaid chart={`flowchart LR
+    A[Tool Call] --> B[Get Level]
+    B --> C[L4: Silent]
+    B --> D[L3: Notify]
+    B --> E[L2/L1]
+    C --> F[Execute + Log]
+    D --> G[Execute + Notify]
+    E --> H[Confidence\nRouter]
+    H -->|high| I[Act]
+    H -->|medium| J[Ask]
+    H -->|low| K[Escalate]`} caption="Autonomy routing: L4/L3 bypass approval, L2/L1 enter confidence router" />
+
 Autonomy levels act as a **pre-filter** before confidence routing:
 
-<Mermaid chart={\`flowchart LR
-    A[Tool Call] --> B[getAutonomyLevel]
-    B -->|L4 silent| C[Execute + log]
-    B -->|L3 notify| D[Execute + notify user]
-    B -->|L2/L1| E{Confidence Router}
-    E -->|Act| F[Auto-execute]
-    E -->|Ask| G[Approval queue]
-    E -->|Escalate| H[Human required]
-\`} caption="Autonomy level routing" />
+```
+Tool Call → getAutonomyLevel(toolName)
+  ├── L4_silent  → Execute immediately, log only
+  ├── L3_notify  → Execute immediately, notify user
+  └── L2/L1      → Confidence Router → Act / Ask / Escalate
+```
 
 L4 and L3 tools bypass the approval queue entirely. Only L2 and L1 tools go through the full confidence routing pipeline.
 

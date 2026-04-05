@@ -74,7 +74,7 @@ export function ChartPieChannels({ data, totalMessages, loading }: Props) {
                   return (
                     <text x={viewBox.cx} y={cy} textAnchor="middle">
                       <tspan x={viewBox.cx} dy="0" className="fill-foreground text-3xl font-medium">{total.toLocaleString()}</tspan>
-                      <tspan x={viewBox.cx} dy="1.4em" className="fill-muted-foreground text-xs">total</tspan>
+                      <tspan x={viewBox.cx} dy="1.4em" className="fill-muted-foreground text-sm">total</tspan>
                     </text>
                   )
                 }

@@ -59,7 +59,7 @@ export function WeeklySummaryCard() {
               style={{ width: `${a.autonomyRate}%` }}
             />
           </div>
-          <div className="flex gap-3 mt-1.5 text-xs tabular-nums text-muted-foreground">
+          <div className="flex gap-3 mt-1.5 text-sm tabular-nums text-muted-foreground">
             <span>{a.actDecisions} auto</span>
             <span className="opacity-60">{a.askDecisions} ask</span>
             <span className="opacity-40">{a.escalateDecisions} esc</span>
@@ -74,14 +74,14 @@ export function WeeklySummaryCard() {
         {data.highlights.length > 0 && (
           <div className="text-muted-foreground mt-1 space-y-0.5">
             {data.highlights.slice(0, 2).map((h, i) => (
-              <div key={i} className="text-xs truncate">+ {h}</div>
+              <div key={i} className="text-sm truncate">+ {h}</div>
             ))}
           </div>
         )}
         {data.concerns.length > 0 && (
           <div className="text-muted-foreground mt-0.5 space-y-0.5">
             {data.concerns.slice(0, 2).map((c, i) => (
-              <div key={i} className="text-xs truncate">! {c}</div>
+              <div key={i} className="text-sm truncate">! {c}</div>
             ))}
           </div>
         )}

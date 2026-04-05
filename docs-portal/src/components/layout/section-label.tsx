@@ -6,7 +6,7 @@ export function SectionLabel({ label }: { label: string }) {
         fontWeight: 500,
         textTransform: "uppercase",
         letterSpacing: "0.1em",
-        color: "rgb(140, 140, 140)",
+        color: "var(--text-faint)",
         marginBottom: "8px",
       }}
     >

@@ -105,20 +105,20 @@ export const CodeBlock = memo(function CodeBlock({
   return (
     <div
       className={cn(
-        'relative group/codeblock my-6 rounded-xl border border-border overflow-hidden bg-zinc-950 min-h-0 h-full flex flex-col',
+        'relative group/codeblock my-6 rounded-xl border border-border overflow-hidden bg-background min-h-0 h-full flex flex-col',
         className
       )}
     >
       {/* Header bar */}
       {showHeader && (
-        <div className="flex-none flex items-center justify-between px-4 py-2 border-b border-white/5 bg-zinc-900/50">
-          <span className="text-xs text-zinc-500 font-mono">
+        <div className="flex-none flex items-center justify-between px-4 py-2 border-b border-white/5 bg-muted">
+          <span className="text-sm text-muted-foreground font-mono">
             {language || 'code'}
           </span>
           {showCopyButton && (
             <button
               onClick={handleCopy}
-              className="cursor-pointer flex items-center gap-1.5 px-2 py-1 rounded text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+              className="cursor-pointer flex items-center gap-1.5 px-2 py-1 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
               aria-label="Copy code"
             >
               {copied ? (
@@ -149,7 +149,7 @@ export const CodeBlock = memo(function CodeBlock({
               )}
             >
               {showLineNumbers && (
-                <span className="text-zinc-600 select-none text-right min-w-[2ch] text-xs leading-6">
+                <span className="text-muted-foreground select-none text-right min-w-[2ch] text-sm leading-6">
                   {i + 1}
                 </span>
               )}
@@ -183,7 +183,7 @@ export interface CompactCodeBlockProps {
 export const CompactCodeBlock = memo(function CompactCodeBlock({
   children,
   className,
-  textSize = 'text-xs',
+  textSize = 'text-sm',
   language,
 }: CompactCodeBlockProps) {
   const [copied, setCopied] = useState(false)
@@ -209,13 +209,13 @@ export const CompactCodeBlock = memo(function CompactCodeBlock({
   return (
     <div
       className={cn(
-        'relative group/codeblock block bg-muted/30 rounded-lg max-w-full min-w-0 p-2',
+        'relative group/codeblock block bg-muted rounded-lg max-w-full min-w-0 p-2',
         className
       )}
     >
       <button
         onClick={handleCopy}
-        className="cursor-pointer absolute top-1 right-1 p-1.5 rounded bg-background hover:bg-background border border-border opacity-0 group-hover/codeblock:opacity-100 transition-opacity z-10"
+        className="cursor-pointer absolute top-1 right-1 p-1.5 rounded-lg bg-background hover:bg-background border border-border opacity-0 group-hover/codeblock:opacity-100 transition-opacity z-10"
         aria-label="Copy code"
       >
         {copied ? (
@@ -231,7 +231,7 @@ export const CompactCodeBlock = memo(function CompactCodeBlock({
               <span
                 className={cn(
                   textSize,
-                  'text-muted-foreground/30 select-none text-right min-w-[2ch]'
+                  'text-muted-foreground select-none text-right min-w-[2ch]'
                 )}
               >
                 {i + 1}

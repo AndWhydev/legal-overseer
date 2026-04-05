@@ -67,9 +67,9 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
   return (
     <div className="rounded-lg overflow-hidden border border-border bg-card my-3">
       {/* Header */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 bg-muted/50 border-b border-border min-h-[40px]">
+      <div className="flex items-center justify-between px-3.5 py-2.5 bg-muted border-b border-border min-h-[40px]">
         {/* Language badge (left) */}
-        <Badge variant="outline" className="text-[11px] uppercase tracking-wider font-medium">
+        <Badge variant="outline" className="text-sm uppercase tracking-wider font-medium">
           {language || 'code'}
         </Badge>
 
@@ -79,7 +79,7 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+              className="h-8 px-2 text-sm text-muted-foreground hover:text-foreground"
               onClick={() => onOpenArtifact(codeContent, language)}
             >
               <IconLayoutSidebarRight size={14} />
@@ -90,7 +90,7 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
           <Button
             variant="ghost"
             size="sm"
-            className={`h-7 px-2 text-xs ${copied ? 'text-emerald-500' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`h-8 px-2 text-sm ${copied ? 'text-emerald-500' : 'text-muted-foreground hover:text-foreground'}`}
             onClick={handleCopy}
           >
             {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
@@ -100,7 +100,7 @@ export function CodeBlock({ children, className, onOpenArtifact }: CodeBlockProp
       </div>
 
       {/* Code */}
-      <div className="max-h-[400px] overflow-auto text-[13px] leading-5 font-mono text-foreground">
+      <div className="max-h-[400px] overflow-auto text-sm leading-5 font-mono text-foreground">
         {isLoading || !highlighted ? (
           // Fallback plain monospace
           <pre className="m-0 p-3.5 bg-transparent">

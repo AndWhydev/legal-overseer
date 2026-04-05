@@ -77,7 +77,7 @@ export function MorningBriefingCard() {
           <CardDescription>Morning Briefing</CardDescription>
           <CardTitle className="text-lg font-medium">No briefing yet</CardTitle>
         </CardHeader>
-        <CardFooter className="text-xs text-muted-foreground">
+        <CardFooter className="text-sm text-muted-foreground">
           Morning briefing generates overnight
         </CardFooter>
       </Card>
@@ -99,7 +99,7 @@ export function MorningBriefingCard() {
       <CardContent className="space-y-3 text-sm">
         {data.urgent.length > 0 && (
           <div className="space-y-1">
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Urgent
             </div>
             {data.urgent.map((item, i) => (
@@ -112,7 +112,7 @@ export function MorningBriefingCard() {
 
         {data.followUps.length > 0 && (
           <div className="space-y-1">
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Follow ups
             </div>
             {data.followUps.map((item, i) => (
@@ -125,7 +125,7 @@ export function MorningBriefingCard() {
 
         {data.discoveries.length > 0 && (
           <div className="space-y-1">
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
               Discoveries
             </div>
             {data.discoveries.map((item, i) => (
@@ -144,7 +144,7 @@ export function MorningBriefingCard() {
       </CardContent>
 
       {data.stale && data.generatedAt && (
-        <CardFooter className="text-xs text-muted-foreground">
+        <CardFooter className="text-sm text-muted-foreground">
           {formatTimeAgo(data.generatedAt)}
         </CardFooter>
       )}

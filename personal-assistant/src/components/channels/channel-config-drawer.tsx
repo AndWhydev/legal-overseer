@@ -192,7 +192,7 @@ export function ChannelConfigDrawer({
           <div className="flex flex-col gap-6 px-4 py-4">
             {/* Last sync info */}
             {config.last_sync && (
-              <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm text-muted-foreground">
                 <IconClock className="h-3 w-3" />
                 Last synced: {new Date(config.last_sync).toLocaleString()}
               </div>
@@ -207,10 +207,10 @@ export function ChannelConfigDrawer({
                     key={opt.value}
                     onClick={() => updateConfig({ sync_frequency: opt.value })}
                     className={cn(
-                      'rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
+                      'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
                       config.sync_frequency === opt.value
                         ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border bg-background text-muted-foreground hover:border-border/80'
+                        : 'border-border bg-background text-muted-foreground hover:border-border'
                     )}
                   >
                     {opt.label}
@@ -223,7 +223,7 @@ export function ChannelConfigDrawer({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">Relay Enabled</p>
-                <p className="text-xs text-muted-foreground">Auto-process incoming messages</p>
+                <p className="text-sm text-muted-foreground">Auto-process incoming messages</p>
               </div>
               <Switch
                 checked={config.relay_enabled}
@@ -237,7 +237,7 @@ export function ChannelConfigDrawer({
                 <label className="text-sm font-medium text-foreground">
                   {channel === 'gmail' ? 'Label' : 'Folder'} Filter
                 </label>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Comma-separated {channel === 'gmail' ? 'labels' : 'folders'} to sync (leave empty for all)
                 </p>
                 <input
@@ -253,7 +253,7 @@ export function ChannelConfigDrawer({
             {channel === 'asana' && (
               <div>
                 <label className="text-sm font-medium text-foreground">Workspace</label>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Select which Asana workspace to sync
                 </p>
                 {config.workspaces && config.workspaces.length > 0 ? (
@@ -288,7 +288,7 @@ export function ChannelConfigDrawer({
             {channel === 'calendly' && (
               <div>
                 <label className="text-sm font-medium text-foreground">Event Type Filter</label>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Filter by event type name (leave empty for all)
                 </p>
                 <input
@@ -304,7 +304,7 @@ export function ChannelConfigDrawer({
             {channel === 'stripe' && (
               <div>
                 <label className="text-sm font-medium text-foreground">Event Types</label>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   Select which Stripe events to process
                 </p>
                 <div className="mt-2 flex flex-col gap-2">
@@ -322,9 +322,9 @@ export function ChannelConfigDrawer({
                               : [...current, evt]
                             updateConfig({ event_types: next })
                           }}
-                          className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
+                          className="h-4 w-4 rounded-lg border-border text-primary focus:ring-ring"
                         />
-                        <span className="font-mono text-xs text-foreground">{evt}</span>
+                        <span className="font-mono text-sm text-foreground">{evt}</span>
                       </label>
                     )
                   })}
@@ -336,7 +336,7 @@ export function ChannelConfigDrawer({
               <div className="flex flex-col gap-3">
                 <div>
                   <label className="text-sm font-medium text-foreground">Session Status</label>
-                  <div className="mt-1.5 flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2">
+                  <div className="mt-1.5 flex items-center gap-2 rounded-lg bg-secondary px-3 py-2">
                     <span className={cn(
                       'h-2 w-2 rounded-full',
                       config.session_status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'
@@ -348,7 +348,7 @@ export function ChannelConfigDrawer({
                 </div>
                 <button
                   onClick={() => onToast?.('Reconnect initiated (Phase 15)', 'success')}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
                 >
                   <IconRefresh className="h-3 w-3" />
                   Reconnect Session
@@ -382,7 +382,7 @@ export function ChannelConfigDrawer({
                 <IconPlugOff className="h-4 w-4" />
                 Disconnect Channel
               </button>
-              <p className="mt-1.5 text-center text-xs text-muted-foreground">
+              <p className="mt-1.5 text-center text-sm text-muted-foreground">
                 Synced messages will be preserved
               </p>
             </div>

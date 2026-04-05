@@ -37,13 +37,13 @@ export function UnreadMessagesWidget() {
             <div key={(msg.id as string) || idx} className="flex items-start gap-3 pb-3 border-b border-border last:border-0">
               <div className="w-2 h-2 rounded-full bg-violet-400 mt-2 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate">
+                <p className="text-sm font-medium truncate">
                   {(msg.sender_name || msg.content || 'New message') as string}
                 </p>
-                <p className="text-[11px] text-muted-foreground truncate">
+                <p className="text-sm text-muted-foreground truncate">
                   {(msg.body as string || (msg.content as string) || '').slice(0, 80)}
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   {msg.received_at ? new Date(msg.received_at as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                   {msg.channel_type ? <span className="ml-2 opacity-60">via {String(msg.channel_type)}</span> : null}
                 </p>

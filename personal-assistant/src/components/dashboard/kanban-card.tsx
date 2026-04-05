@@ -114,9 +114,9 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
       tabIndex={isOverlay ? -1 : 0}
       aria-label={isOverlay ? undefined : `Open task ${task.title}`}
       className={cn(
-        'group relative rounded-2xl border border-border/70 bg-card p-4 text-left shadow-[0_14px_32px_-24px_rgba(0,0,0,0.7)] transition duration-200',
+        'group relative rounded-2xl border border-border bg-card p-4 text-left shadow-md transition duration-200',
         'focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-        !isOverlay && 'cursor-pointer hover:-translate-y-0.5 hover:border-border hover:shadow-[0_18px_36px_-24px_rgba(0,0,0,0.75)]',
+        !isOverlay && 'cursor-pointer hover:-translate-y-0.5 hover:border-border hover:shadow-lg',
         isOptimistic && 'opacity-70',
         isAgentWorking && 'border-emerald-500/25 bg-emerald-500/5',
       )}
@@ -139,7 +139,7 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
             event.stopPropagation()
             onArchive(task)
           }}
-          className="absolute right-3 top-3 text-muted-foreground/70 hover:text-foreground"
+          className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
           aria-label={`Archive ${task.title}`}
         >
           <IconX data-icon className="size-3.5" />
@@ -210,8 +210,8 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
         </div>
 
         {task.assigned_to && (
-          <div className="rounded-xl border border-border/60 bg-muted/35 px-3 py-2">
-            <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="rounded-xl border border-border bg-muted px-3 py-2">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
               <span
                 className={cn(
                   'size-2 rounded-full',
@@ -228,7 +228,7 @@ export const KanbanCard = memo(function KanbanCard({ task, onEdit, onArchive }: 
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
           <span className="truncate">
             {isAgentCreated ? 'Created by BitBit' : sourceLabel ? `From ${sourceLabel}` : 'Created manually'}
           </span>

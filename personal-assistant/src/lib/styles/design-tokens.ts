@@ -2,7 +2,7 @@
  * BitBit Design Tokens — Monochrome Solid System
  *
  * Single source of truth for all visual styles. Import these instead of
- * hardcoding rgba() values or duplicating glass patterns.
+ * hardcoding rgba() values or duplicating hardcoded patterns.
  *
  * Palette: black → white continuum only. No orange, no blue, no purple.
  * Status colors (green/yellow/red) are the ONLY exception and are used
@@ -26,8 +26,8 @@ export const C = {
   bgElevated: "var(--elevated)",
   bgInput: "var(--input)",
   bgOverlay: "var(--bg-overlay, rgba(0, 0, 0, 0.6))",
-  bgHover: "var(--hover-bg, rgba(255, 255, 255, 0.04))",
-  bgHoverStrong: "var(--hover-bg-strong, rgba(255, 255, 255, 0.08))",
+  bgHover: "var(--secondary)",
+  bgHoverStrong: "var(--accent)",
   bgListRow: "var(--secondary)",
   bgListRowHover: "var(--elevated)",
 
@@ -40,7 +40,7 @@ export const C = {
 
   // Borders — subtle to strong
   borderSubtle: "var(--border-subtle, rgba(255, 255, 255, 0.03))",
-  borderVisible: "var(--glass-border, rgba(255, 255, 255, 0.06))",
+  borderVisible: "var(--border)",
   borderHover: "var(--border-active, rgba(255, 255, 255, 0.1))",
   borderFocus: "var(--border-focus-ring, rgba(255, 255, 255, 0.2))",
 
@@ -231,7 +231,7 @@ export const S = {
   /** Active pill state */
   pillActive: {
     color: C.textPrimary,
-    background: "var(--pill-active-bg, rgba(255, 255, 255, 0.08))",
+    background: "var(--secondary)",
   } satisfies CSSProperties,
 
   // ── Input ──
@@ -317,7 +317,6 @@ export const S = {
     inset: 0,
     background: "rgba(0, 0, 0, 0.6)",
     zIndex: 52,
-    backdropFilter: "blur(2px)",
   } satisfies CSSProperties,
 
   drawerPanel: {

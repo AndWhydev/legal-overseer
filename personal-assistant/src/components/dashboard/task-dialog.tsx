@@ -198,7 +198,7 @@ function TaskDialogPanel({
   return (
     <DialogContent
       showCloseButton
-      className="max-h-[min(86vh,48rem)] max-w-2xl gap-0 overflow-hidden rounded-[28px] border border-border/70 bg-background p-0 shadow-[0_28px_80px_-30px_rgba(0,0,0,0.7)]"
+      className="max-h-[min(86vh,48rem)] max-w-2xl gap-0 overflow-hidden rounded-[28px] border border-border bg-background p-0 shadow-lg"
     >
       {editMode ? (
         <form onSubmit={handleSubmit} className="flex max-h-[inherit] flex-col">
@@ -312,7 +312,7 @@ function TaskDialogPanel({
             </FieldGroup>
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/35 px-6 py-4 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 border-t border-border bg-muted px-6 py-4 sm:flex-row sm:items-center">
             {task && onDelete && (
               <Button type="button" variant="destructive" onClick={handleDelete} className="gap-2 sm:mr-auto">
                 <IconTrash data-icon className="size-4" />
@@ -386,11 +386,11 @@ function TaskDialogPanel({
             </DialogHeader>
 
             {task?.description ? (
-              <div className="mt-6 rounded-3xl border border-border/70 bg-muted/20 p-4 sm:p-5">
+              <div className="mt-6 rounded-3xl border border-border bg-muted p-4 sm:p-5">
                 <MarkdownRenderer content={task.description} />
               </div>
             ) : (
-              <div className="mt-6 rounded-3xl border border-dashed border-border/70 bg-muted/15 p-4 text-sm text-muted-foreground sm:p-5">
+              <div className="mt-6 rounded-3xl border border-dashed border-border bg-muted p-4 text-sm text-muted-foreground sm:p-5">
                 No notes yet. Use edit mode to add more context or a lightweight checklist.
               </div>
             )}
@@ -429,7 +429,7 @@ function TaskDialogPanel({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/35 px-6 py-4 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 border-t border-border bg-muted px-6 py-4 sm:flex-row sm:items-center">
             {task && onDelete && (
               <Button type="button" variant="destructive" onClick={handleDelete} className="gap-2 sm:mr-auto">
                 <IconTrash data-icon className="size-4" />

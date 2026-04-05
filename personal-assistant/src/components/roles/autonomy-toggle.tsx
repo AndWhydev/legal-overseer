@@ -74,7 +74,7 @@ export function AutonomyToggle({ roleType, currentLevel, enabled, onLevelChange 
   return (
     <div className="flex flex-col gap-2">
       {/* Track */}
-      <div className={`flex rounded-xl bg-muted/50 p-1 ${enabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+      <div className={`flex rounded-xl bg-muted p-1 ${enabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
         {LEVELS.map((lvl) => {
           const isActive = optimisticLevel === lvl.level
           const isHovered = hoveredLevel === lvl.level

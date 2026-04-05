@@ -88,7 +88,7 @@ function KanbanSkeleton() {
         {Array.from({ length: 5 }).map((_, col) => (
           <div key={col} className="flex flex-col gap-3">
             {/* Column header */}
-            <div className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-2.5">
+            <div className="flex items-center justify-between rounded-lg bg-muted px-4 py-2.5">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-5 w-6 rounded-full" />
             </div>

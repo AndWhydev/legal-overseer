@@ -70,7 +70,7 @@ export const KanbanColumn = memo(function KanbanColumn({
           <h3 className="text-sm font-medium text-muted-foreground">
             {column.title}
           </h3>
-          <Badge variant="secondary" className="font-mono text-xs">
+          <Badge variant="secondary" className="font-mono text-sm">
             {tasks.length}
           </Badge>
         </div>
@@ -86,7 +86,7 @@ export const KanbanColumn = memo(function KanbanColumn({
         className={`kanban-scroll-${scrollId} flex flex-1 flex-col gap-2 overflow-y-auto rounded-xl border p-2 transition-colors duration-100 ${
           isOver
             ? 'border-dashed border-primary/30 bg-accent/50'
-            : 'border-transparent bg-muted/30'
+            : 'border-transparent bg-muted'
         }${!isEmpty ? ' kanban-col-populated' : ''}`}
       >
         <SortableContext
@@ -148,7 +148,7 @@ export const KanbanColumn = memo(function KanbanColumn({
                 className="h-auto border-0 bg-transparent p-0 text-sm font-medium shadow-none focus-visible:ring-0"
               />
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               Enter create / Tab priority / Esc close
             </p>
           </div>
@@ -157,7 +157,7 @@ export const KanbanColumn = memo(function KanbanColumn({
             variant="ghost"
             size="sm"
             onClick={() => setIsAdding(true)}
-            className={`w-full gap-1 border border-dashed border-border/50 text-muted-foreground hover:border-border hover:text-foreground ${isEmpty ? '' : 'mt-auto'}`}
+            className={`w-full gap-1 border border-dashed border-border text-muted-foreground hover:border-border hover:text-foreground ${isEmpty ? '' : 'mt-auto'}`}
           >
             <IconPlus data-icon className="size-3.5" />
             {!isEmpty && 'Add task'}

@@ -287,7 +287,7 @@ export function VoicePill({
           'flex items-center gap-0.5',
           'h-[34px] px-3 rounded-[22px]',
           'bg-card border border-border',
-          'shadow-[0_4px_16px_rgba(0,0,0,0.25)]',
+          'shadow-md',
           'will-change-[transform,opacity] overflow-visible',
           // Hidden by default (floating only)
           'opacity-0 invisible pointer-events-none',
@@ -466,7 +466,7 @@ export function VoicePill({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                    className="rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
                     aria-label="Attach file"
                     type="button"
                     onClick={handlePaperclipClick}
@@ -481,7 +481,7 @@ export function VoicePill({
                         'rounded-full',
                         voiceModeEnabled
                           ? 'text-foreground bg-foreground/10 hover:bg-foreground/15'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/80',
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted',
                         isSpeaking && 'animate-pulse',
                       )}
                       onClick={onVoiceModeToggle}
@@ -501,7 +501,7 @@ export function VoicePill({
                         'rounded-full',
                         voice.isListening
                           ? 'text-destructive hover:text-destructive hover:bg-destructive/10'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/80',
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted',
                       )}
                       onClick={voice.toggleListening}
                       aria-label={voice.isListening ? 'Stop listening' : 'Start voice input'}
@@ -536,7 +536,7 @@ export function VoicePill({
                 className={cn(
                   'flex-1 min-w-0',
                   'bg-transparent border-0 outline-none',
-                  'text-xs text-foreground caret-foreground',
+                  'text-sm text-foreground caret-foreground',
                   'placeholder:text-muted-foreground',
                 )}
                 type="text"
@@ -588,13 +588,13 @@ export function VoicePill({
       {effectiveMode === 'response' && (
         <div className="flex flex-col gap-[3px] overflow-y-auto max-h-[140px] w-full animate-[pill-content-enter_180ms_cubic-bezier(0.25,1,0.5,1)_both]">
           {error ? (
-            <span className="text-[11px] leading-[1.4] text-destructive">{error}</span>
+            <span className="text-sm leading-[1.4] text-destructive">{error}</span>
           ) : (
             <>
               {transcription && (
-                <p className="text-[10px] leading-[1.3] text-muted-foreground italic">&ldquo;{transcription}&rdquo;</p>
+                <p className="text-sm leading-[1.3] text-muted-foreground italic">&ldquo;{transcription}&rdquo;</p>
               )}
-              <p className="text-[11px] leading-[1.4] text-foreground">{response}</p>
+              <p className="text-sm leading-[1.4] text-foreground">{response}</p>
             </>
           )}
         </div>
@@ -619,7 +619,7 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
         'relative size-16 rounded-lg overflow-hidden',
         isError
           ? 'bg-destructive/15 border border-destructive/30'
-          : 'bg-muted/40 border border-border',
+          : 'bg-muted border border-border',
       )}>
         {/* Image thumbnail or file icon */}
         {isImage ? (
@@ -664,7 +664,7 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
             'size-[18px] rounded-full',
             'bg-black/60',
             'border-0 p-0 cursor-pointer',
-            'text-white/85',
+            'text-primary-foreground',
             'flex items-center justify-center',
           )}
         >
@@ -675,7 +675,7 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
       {/* Filename below thumbnail for non-image files */}
       {!isImage && (
         <div className={cn(
-          'mt-[3px] text-[10px] leading-[13px]',
+          'mt-1 text-sm leading-[13px]',
           'overflow-hidden text-ellipsis whitespace-nowrap text-center',
           'max-w-16',
           isError ? 'text-destructive' : 'text-muted-foreground',
@@ -686,7 +686,7 @@ function UploadProgressItem({ item, onRemove }: { item: UploadItem; onRemove: ()
 
       {/* Error tooltip for images */}
       {isError && isImage && item.error && (
-        <div className="mt-[3px] text-[10px] leading-[13px] text-destructive overflow-hidden text-ellipsis whitespace-nowrap text-center max-w-16">
+        <div className="mt-1 text-sm leading-[13px] text-destructive overflow-hidden text-ellipsis whitespace-nowrap text-center max-w-16">
           {item.error}
         </div>
       )}

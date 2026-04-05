@@ -43,32 +43,27 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
   return (
     <div style={{ minHeight: '100vh', background: bgColor, fontFamily: branding?.font_family ?? 'Inter, system-ui, sans-serif' }}>
       {/* Top Header */}
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-border bg-background shadow-sm">
 
-        <div className="flex items-center justify-between" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 64 }}>
+        <div className="flex items-center justify-between mx-auto max-w-[1280px] px-6 h-16">
           {/* Left: Logo + Company Name */}
-          <Link href={basePath} className="flex items-center gap-3" style={{ textDecoration: 'none' }}>
+          <Link href={basePath} className="flex items-center gap-3 no-underline">
             {branding?.logo_url ? (
-              <img src={branding.logo_url} alt={companyName} style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
+              <img src={branding.logo_url} alt={companyName} className="h-8 w-auto object-contain" />
             ) : (
               <div
+                className="flex items-center justify-center rounded-lg text-sm font-medium"
                 style={{
                   width: 32,
                   height: 32,
-                  borderRadius: 8,
                   background: primaryColor,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                   color: 'var(--card)',
-                  fontSize: 14,
-                  fontWeight: 500,
                 }}
               >
                 {companyName.charAt(0)}
               </div>
             )}
-            <span className="text-base font-medium tracking-tight text-gray-900">
+            <span className="text-base font-medium tracking-tight text-foreground">
               {companyName}
             </span>
           </Link>
@@ -85,16 +80,11 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                 <Link
                   key={item.path}
                   href={itemPath}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm no-underline transition-all duration-150"
                   style={{
-                    padding: '8px 16px',
-                    borderRadius: 8,
-                    fontSize: 14,
                     fontWeight: isActive ? 500 : 400,
                     color: isActive ? primaryColor : 'var(--muted-foreground)',
                     background: isActive ? `${primaryColor}0D` : 'transparent',
-                    textDecoration: 'none',
-                    transition: 'all 150ms ease',
                   }}
                 >
                   <item.icon color={isActive ? primaryColor : 'var(--text-dim)'} size={18} />
@@ -108,33 +98,21 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
           <div className="flex items-center gap-3">
             <PortalNotificationBell accessId={accessId} primaryColor={primaryColor} />
             <div
+              className="flex items-center justify-center rounded-full text-sm font-medium"
               style={{
                 width: 36,
                 height: 36,
-                borderRadius: '50%',
                 background: `${primaryColor}15`,
                 border: `2px solid ${primaryColor}30`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
                 color: primaryColor,
-                fontSize: 14,
-                fontWeight: 500,
               }}
             >
               {initials}
             </div>
             {/* Mobile menu toggle */}
             <button
-              className="md:hidden"
+              className="md:hidden p-2 bg-transparent border-none cursor-pointer text-muted-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{
-                padding: 8,
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--muted-foreground)',
-              }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 {mobileMenuOpen ? (
@@ -156,7 +134,7 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <nav className="md:hidden" style={{ borderTop: '1px solid var(--border)', padding: '8px 24px 16px' }}>
+          <nav className="md:hidden border-t border-border px-6 pt-2 pb-4">
             {NAV_ITEMS.map(item => {
               const itemPath = `${basePath}${item.path}`
               const isActive = item.path === ''
@@ -168,14 +146,10 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
                   key={item.path}
                   href={itemPath}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3"
+                  className="flex items-center gap-3 py-3 text-base no-underline border-b border-muted"
                   style={{
-                    padding: '12px 0',
-                    fontSize: 16,
                     fontWeight: isActive ? 500 : 400,
                     color: isActive ? primaryColor : 'var(--foreground)',
-                    textDecoration: 'none',
-                    borderBottom: '1px solid var(--muted)',
                   }}
                 >
                   <item.icon color={isActive ? primaryColor : 'var(--text-dim)'} size={20} />
@@ -193,16 +167,16 @@ export function PortalShell({ branding, orgName, contactName, orgSlug, accessId,
       </main>
 
       {/* Footer */}
-      <footer className="mt-12 border-t border-gray-200 py-6">
+      <footer className="mt-12 border-t border-border py-6">
         <div className="mx-auto max-w-[1280px] px-6 text-center">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             {branding?.support_email && (
               <>
                 Need help? <a href={`mailto:${branding.support_email}`} className="no-underline" style={{ color: primaryColor }}>{branding.support_email}</a>
                 {' · '}
               </>
             )}
-            Built with <span className="font-medium text-gray-500">BitBit</span>
+            Built with <span className="font-medium text-muted-foreground">BitBit</span>
           </p>
         </div>
       </footer>

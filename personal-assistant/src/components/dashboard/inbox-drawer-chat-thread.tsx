@@ -38,7 +38,7 @@ export function ChatThreadView({ messages, channelType }: ChatThreadProps) {
                   <div className="w-44 h-24 bg-sidebar-foreground/[0.06] flex items-center justify-center text-lg">
                     🖼
                   </div>
-                  <div className="px-2.5 py-1.5 text-xs text-sidebar-foreground/40">
+                  <div className="px-2.5 py-1.5 text-sm text-sidebar-foreground/40">
                     {a.name}
                   </div>
                 </div>
@@ -47,14 +47,14 @@ export function ChatThreadView({ messages, channelType }: ChatThreadProps) {
               {/* Text bubble */}
               {msg.bodyPreview && (
                 <div
-                  className={`px-3 py-2 text-xs leading-relaxed ${
+                  className={`px-3 py-2 text-sm leading-relaxed ${
                     isSelf
                       ? `bg-primary/10 text-sidebar-foreground/80 rounded-xl rounded-br-sm`
                       : 'bg-sidebar-foreground/[0.06] text-sidebar-foreground/65 rounded-xl rounded-bl-sm'
                   }`}
                 >
                   {msg.bodyPreview}
-                  <div className={`text-xs mt-1 text-right ${
+                  <div className={`text-sm mt-1 text-right ${
                     isSelf ? 'text-sidebar-foreground/30' : 'text-sidebar-foreground/20'
                   }`}>
                     {formatTime(msg.receivedAt)}
@@ -64,7 +64,7 @@ export function ChatThreadView({ messages, channelType }: ChatThreadProps) {
 
               {/* Non-image attachments */}
               {hasMedia && msg.attachments!.filter((a: AttachmentItem) => a.type !== 'image').map((a: AttachmentItem, i: number) => (
-                <div key={i} className="mt-1 flex items-center gap-1.5 rounded-lg bg-sidebar-foreground/[0.03] px-2.5 py-1.5 text-xs text-sidebar-foreground/40">
+                <div key={i} className="mt-1 flex items-center gap-1.5 rounded-lg bg-sidebar-foreground/[0.03] px-2.5 py-1.5 text-sm text-sidebar-foreground/40">
                   📎 {a.name} · {a.size}
                 </div>
               ))}

@@ -142,7 +142,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           </h2>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-transparent text-muted-foreground hover:text-foreground"
           >
             &times;
           </button>
@@ -156,7 +156,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           onClick={() => fileInputRef.current?.click()}
           className={`mb-4 cursor-pointer rounded-xl border-2 border-dashed transition-colors ${
             dragOver
-              ? 'border-foreground bg-secondary/50'
+              ? 'border-foreground bg-secondary'
               : 'border-border bg-background'
           } ${file ? 'p-4' : 'px-5 py-10'}`}
         >
@@ -198,7 +198,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               <p className="mb-1 text-sm text-muted-foreground">
                 Drop audio or video file here
               </p>
-              <p className="text-sm text-muted-foreground/70">
+              <p className="text-sm text-muted-foreground">
                 MP3, WAV, M4A, OGG, MP4, WebM (up to 500MB)
               </p>
             </div>
@@ -251,7 +251,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                 {participants.map((p, i) => (
                   <span
                     key={i}
-                    className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-3 py-1 text-sm text-muted-foreground"
+                    className="flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-sm text-muted-foreground"
                   >
                     {p.name}
                     <button

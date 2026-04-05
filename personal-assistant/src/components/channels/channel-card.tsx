@@ -132,7 +132,7 @@ export function ChannelCard({
             </div>
             <div>
               <h3 className="font-medium text-foreground">{name}</h3>
-              <p className="text-xs text-muted-foreground">{description}</p>
+              <p className="text-sm text-muted-foreground">{description}</p>
             </div>
           </div>
 
@@ -166,13 +166,13 @@ export function ChannelCard({
 
         {/* Stats row for connected channels */}
         {isActive && (messageCount !== undefined && messageCount > 0) && (
-          <div className="flex items-center gap-4 rounded-lg bg-secondary/50 px-3 py-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="flex items-center gap-4 rounded-lg bg-secondary px-3 py-2">
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <IconMail className="size-3" />
               <span className="font-medium text-foreground">{messageCount}</span> messages
             </div>
             {lastSync && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <IconClock className="size-3" />
                 {relativeTime(lastSync)}
               </div>
@@ -189,7 +189,7 @@ export function ChannelCard({
                 size="sm"
                 onClick={handleDisconnect}
                 disabled={disconnecting}
-                className="h-7 gap-1 text-xs text-muted-foreground hover:text-destructive"
+                className="h-8 gap-1 text-sm text-muted-foreground hover:text-destructive"
               >
                 <IconPlugOff className="size-3" />
                 {disconnecting ? 'Disconnecting...' : 'Disconnect'}
@@ -199,7 +199,7 @@ export function ChannelCard({
                   <Button
                     variant="secondary"
                     size="sm"
-                    className="h-7 gap-1.5 text-xs"
+                    className="h-8 gap-1.5 text-sm"
                     onClick={(e) => { e.stopPropagation(); onSync() }}
                     disabled={isSyncing}
                   >
@@ -210,7 +210,7 @@ export function ChannelCard({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 gap-1.5 text-xs"
+                  className="h-8 gap-1.5 text-sm"
                   onClick={(e) => { e.stopPropagation(); onCardClick?.() }}
                 >
                   <IconSettings className="size-3" />
@@ -221,16 +221,16 @@ export function ChannelCard({
           ) : (
             <>
               {lastSync ? (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                   <IconClock className="size-3" />
                   {relativeTime(lastSync)}
                 </div>
               ) : (
-                <span className="text-xs text-muted-foreground/50">Not connected</span>
+                <span className="text-sm text-muted-foreground">Not connected</span>
               )}
               <Button
                 size="sm"
-                className="h-7 text-xs"
+                className="h-8 text-sm"
                 onClick={(e) => { e.stopPropagation(); onConnect() }}
               >
                 Connect

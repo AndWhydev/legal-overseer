@@ -77,7 +77,7 @@ export function KanbanToolbar({
   const hasAnyFilters = hasPriorityFilter || hasSourceFilter || filters.overdueOnly || hasSearch
 
   return (
-    <div className="flex flex-col gap-4 border-b border-border/70 px-4 py-5 sm:px-5">
+    <div className="flex flex-col gap-4 border-b border-border px-4 py-5 sm:px-5">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -99,7 +99,7 @@ export function KanbanToolbar({
                 Overdue
                 <Badge
                   variant={filters.overdueOnly ? 'secondary' : 'outline'}
-                  className="bg-transparent px-1.5 text-[11px]"
+                  className="bg-transparent px-1.5 text-sm"
                 >
                   {overdueCount}
                 </Badge>
@@ -112,7 +112,7 @@ export function KanbanToolbar({
             without turning the board into visual noise.
           </p>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {hasAnyFilters
               ? `Showing ${visibleCount} of ${totalCount} tasks.`
               : 'Showing the full board.'}
@@ -152,7 +152,7 @@ export function KanbanToolbar({
                     <DropdownMenuRadioItem key={option.value} value={option.value}>
                       {option.label}
                       {option.value !== 'all' && (
-                        <span className="ml-auto font-mono text-xs text-muted-foreground">
+                        <span className="ml-auto font-mono text-sm text-muted-foreground">
                           {priorityCounts[option.value] ?? 0}
                         </span>
                       )}

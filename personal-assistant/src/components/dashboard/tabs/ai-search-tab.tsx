@@ -300,7 +300,7 @@ function SchemaGenerator() {
             <span className="text-sm font-medium">{result.schemaType} JSON-LD</span>
             <CopyButton text={result.htmlSnippet} />
           </div>
-          <pre className="max-h-96 overflow-auto rounded-lg border bg-muted p-4 font-mono text-xs leading-relaxed">
+          <pre className="max-h-96 overflow-auto rounded-lg border bg-muted p-4 font-mono text-sm leading-relaxed">
             {result.htmlSnippet}
           </pre>
           {result.validationNotes.length > 0 && (
@@ -379,7 +379,7 @@ function AISearchTab() {
             <CardContent className="flex items-center gap-3">
               <ScoreBadge score={auditResult.overallScore} />
               <TrendArrow current={auditResult.overallScore} previous={previousScore} />
-              <span className="text-xs text-muted-foreground">/100</span>
+              <span className="text-sm text-muted-foreground">/100</span>
             </CardContent>
           </Card>
           <Card>
@@ -471,7 +471,7 @@ function AISearchTab() {
                     .reduce<string[]>((acc, r) => { if (!acc.includes(r.query)) acc.push(r.query); return acc }, [])
                     .slice(0, 5)
                     .map((query) => (
-                      <div key={query} className="rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground transition-colors hover:bg-muted">
+                      <div key={query} className="rounded-lg border bg-muted p-3 text-sm text-muted-foreground transition-colors hover:bg-muted">
                         Create a dedicated FAQ page for: <strong>&quot;{query}&quot;</strong>
                       </div>
                     ))}

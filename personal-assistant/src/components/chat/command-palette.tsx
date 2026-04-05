@@ -61,7 +61,7 @@ export function CommandPalette({ query, commands, onSelect }: CommandPaletteProp
             <Icon className="size-4 shrink-0 text-muted-foreground" />
             <div>
               <div className="font-medium text-foreground">/{cmd.label}</div>
-              <div className="mt-0.5 text-xs text-muted-foreground">{cmd.description}</div>
+              <div className="mt-0.5 text-sm text-muted-foreground">{cmd.description}</div>
             </div>
           </button>
         )

@@ -26,14 +26,6 @@
   --text-on-accent: var(--bb-white);
 
   /* ── Glassmorphism (disabled — solid surfaces) ── */
-  --glass-card-bg: #FFFFFF;
-  --glass-card-bg-light: #FFFFFF;
-  --glass-card-border: rgba(0, 0, 0, 0.04);
-  --glass-card-blur: none;
-  --glass-hover-bg: rgba(0, 0, 0, 0.04);
-  --glass-divider: rgba(0, 0, 0, 0.04);
-  --glass-interactive-bg: rgba(0, 0, 0, 0.04);
-  --glass-interactive-border: rgba(0, 0, 0, 0.04);
 
   /* ── Borders (nearly invisible) ── */
   --border-subtle: rgba(0, 0, 0, 0.04);
@@ -183,7 +175,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
-[data-theme="light"] .glass-card {
+[data-theme="light"] .surface-card {
   background: #FFFFFF !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -238,7 +230,7 @@
   font-weight: 600;
 }
 
-[data-theme="light"] .glass-sidebar {
+[data-theme="light"] .surface-sidebar {
   background: #FAFAF9 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;

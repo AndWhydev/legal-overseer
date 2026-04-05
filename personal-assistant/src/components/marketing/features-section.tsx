@@ -56,10 +56,10 @@ export default function FeaturesSection() {
           {FEATURES.map(({ Icon, title, description }) => (
             <Card
               key={title}
-              className="py-8 px-6 transition-all duration-300 hover:bg-muted/50 hover:border-border/80 hover:-translate-y-1"
+              className="py-8 px-6 transition-all duration-300 hover:bg-muted hover:border-border hover:-translate-y-1"
             >
               <CardContent className="p-0">
-                <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-xl bg-muted border border-border flex items-center justify-center mb-4">
                   <Icon size={22} className="text-muted-foreground" />
                 </div>
                 <h3 className="text-base font-medium mb-2 text-foreground">

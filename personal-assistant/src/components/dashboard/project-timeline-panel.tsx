@@ -48,16 +48,16 @@ export function ProjectTimelinePanel({ projectId }: { projectId: string }) {
 
   const entries = data?.entries ?? []
   if (entries.length === 0) {
-    return <div className="px-4 pb-4 text-xs text-muted-foreground">No timeline events yet</div>
+    return <div className="px-4 pb-4 text-sm text-muted-foreground">No timeline events yet</div>
   }
 
   return (
-    <div className="px-4 pb-4 space-y-0 border-t border-border/20 pt-2 mt-1">
+    <div className="px-4 pb-4 space-y-0 border-t border-border pt-2 mt-1">
       {entries.slice(0, 10).map((entry, i) => (
         <div key={i} className="flex gap-3 py-1 items-start">
-          <span className="text-[10px] tabular-nums text-muted-foreground/50 shrink-0 w-14 pt-0.5 text-right">{relDate(entry.date)}</span>
-          <span className="text-[10px] text-muted-foreground/40 shrink-0 w-12 pt-0.5 truncate">{TYPE_LABEL[entry.type] || entry.type}</span>
-          <span className="text-xs text-muted-foreground leading-snug line-clamp-1">{entry.summary}</span>
+          <span className="text-sm tabular-nums text-muted-foreground shrink-0 w-14 pt-0.5 text-right">{relDate(entry.date)}</span>
+          <span className="text-sm text-muted-foreground shrink-0 w-12 pt-0.5 truncate">{TYPE_LABEL[entry.type] || entry.type}</span>
+          <span className="text-sm text-muted-foreground leading-snug line-clamp-1">{entry.summary}</span>
         </div>
       ))}
     </div>

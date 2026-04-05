@@ -25,26 +25,28 @@ export function Breadcrumbs() {
         alignItems: "center",
         gap: "6px",
         fontSize: "14px",
-        color: "rgb(115, 114, 108)",
+        color: "#9ca3af",
         marginBottom: "12px",
       }}
     >
       <Link
         href="/docs/overview"
-        style={{ color: "rgb(115, 114, 108)", textDecoration: "none" }}
+        style={{ color: "#9ca3af", textDecoration: "none", transition: "color 150ms ease" }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = "#6b7280" }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = "#9ca3af" }}
       >
         Docs
       </Link>
       {sectionTitle && (
         <>
-          <span style={{ color: "rgb(115, 114, 108)" }}>/</span>
+          <span style={{ color: "#9ca3af" }}>/</span>
           <span>{sectionTitle}</span>
         </>
       )}
       {pageTitle && sectionTitle && (
         <>
-          <span style={{ color: "rgb(115, 114, 108)" }}>/</span>
-          <span style={{ color: "rgb(61, 61, 58)" }}>{pageTitle}</span>
+          <span style={{ color: "#9ca3af" }}>/</span>
+          <span style={{ color: "#374151" }}>{pageTitle}</span>
         </>
       )}
     </nav>

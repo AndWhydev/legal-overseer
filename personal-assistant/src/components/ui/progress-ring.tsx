@@ -96,13 +96,13 @@ export function ProgressRing({
           />
         </svg>
         {showValue && (
-          <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-foreground">
+          <span className="absolute inset-0 flex items-center justify-center text-sm font-medium text-foreground">
             {displayValue}%
           </span>
         )}
       </div>
       {label && (
-        <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
       )}
     </div>
   )

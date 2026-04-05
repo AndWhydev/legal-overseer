@@ -163,7 +163,7 @@ export function MeetingList({ onSelectMeeting, onUpload }: MeetingListProps) {
                 <div
                   key={meeting.id}
                   className={`flex cursor-pointer items-center gap-4 px-5 py-4 transition-colors ${
-                    isHovered ? 'bg-secondary/50' : 'bg-transparent'
+                    isHovered ? 'bg-secondary' : 'bg-transparent'
                   } ${i < meetings.length - 1 ? 'border-b border-border' : ''}`}
                   onClick={() => onSelectMeeting(meeting)}
                   onMouseEnter={() => setHoveredId(meeting.id)}

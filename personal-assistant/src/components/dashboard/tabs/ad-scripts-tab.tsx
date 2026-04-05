@@ -133,17 +133,17 @@ function StoryboardView({ shots }: { shots: StoryboardShot[] }) {
       <CollapsibleContent>
         <div className="mt-3 flex flex-col gap-2">
           {shots.map((shot) => (
-            <div key={shot.shotNumber} className="rounded-lg border bg-muted/50 p-3">
+            <div key={shot.shotNumber} className="rounded-lg border bg-muted p-3">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Shot {shot.shotNumber}</span>
-                <span className="text-xs text-muted-foreground">{shot.startTime}s - {shot.endTime}s ({shot.duration}s)</span>
+                <span className="text-sm text-muted-foreground">{shot.startTime}s - {shot.endTime}s ({shot.duration}s)</span>
               </div>
               <p className="mb-2 text-sm">{shot.visual}</p>
               {shot.textOverlay && (
-                <p className="text-xs text-muted-foreground">Text: <span className="text-foreground">{shot.textOverlay}</span></p>
+                <p className="text-sm text-muted-foreground">Text: <span className="text-foreground">{shot.textOverlay}</span></p>
               )}
               {shot.audio && (
-                <p className="text-xs text-muted-foreground">Audio: <span className="text-foreground">{shot.audio}</span></p>
+                <p className="text-sm text-muted-foreground">Audio: <span className="text-foreground">{shot.audio}</span></p>
               )}
             </div>
           ))}
@@ -167,7 +167,7 @@ function ScriptCard({ script }: { script: AdScript }) {
               {PLATFORM_LABELS[script.platform]}
             </Badge>
             <Badge variant="outline">{HOOK_LABELS[script.hookType]}</Badge>
-            <span className="text-xs text-muted-foreground">{script.duration}s</span>
+            <span className="text-sm text-muted-foreground">{script.duration}s</span>
           </div>
           <CopyButton text={script.script} />
         </div>
@@ -340,19 +340,19 @@ function HistorySection({ batches, onSelect }: { batches: SavedBatch[]; onSelect
 
   return (
     <div>
-      <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">History</h2>
+      <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted-foreground">History</h2>
       <div className="flex flex-col gap-2">
         {batches.map((b) => (
           <button
             key={b.id}
             onClick={() => onSelect(b)}
-            className="w-full rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/50"
+            className="w-full rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted"
           >
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{b.offer_name}</span>
-              <span className="text-xs text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</span>
+              <span className="text-sm text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               {b.scripts.length} script{b.scripts.length !== 1 ? 's' : ''}
               {b.variations.length > 0 ? ` + ${b.variations.length} variations` : ''}
             </p>

@@ -42,8 +42,8 @@ export function ActivityItem({ activity }: { activity: Activity }) {
   return (
     <div
       className={cn(
-        'rounded-lg border border-border/30 bg-card transition-colors',
-        expanded && 'border-border/60'
+        'rounded-lg border border-border bg-card transition-colors',
+        expanded && 'border-border'
       )}
     >
       <button
@@ -60,7 +60,7 @@ export function ActivityItem({ activity }: { activity: Activity }) {
 
         <span
           className={cn(
-            'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium',
+            'mt-0.5 shrink-0 rounded-lg px-1.5 py-0.5 text-sm font-medium',
             style.bg,
             style.text
           )}
@@ -70,29 +70,29 @@ export function ActivityItem({ activity }: { activity: Activity }) {
 
         <span className="flex-1 text-sm">{activity.action}</span>
 
-        <span className="shrink-0 text-xs text-muted-foreground">
+        <span className="shrink-0 text-sm text-muted-foreground">
           {formatTimestamp(activity.created_at)}
         </span>
       </button>
 
       {expanded && (
-        <div className="border-t border-border/20 px-4 py-3 pl-12">
+        <div className="border-t border-border px-4 py-3 pl-12">
           {activity.reasoning && (
             <div className="mb-2">
-              <span className="text-xs font-medium text-muted-foreground">
+              <span className="text-sm font-medium text-muted-foreground">
                 Reasoning:
               </span>
-              <p className="mt-0.5 text-sm text-foreground/70">
+              <p className="mt-0.5 text-sm text-foreground">
                 {activity.reasoning}
               </p>
             </div>
           )}
           {activity.result && (
             <div>
-              <span className="text-xs font-medium text-muted-foreground">
+              <span className="text-sm font-medium text-muted-foreground">
                 Result:
               </span>
-              <p className="mt-0.5 text-sm text-foreground/70">
+              <p className="mt-0.5 text-sm text-foreground">
                 {activity.result}
               </p>
             </div>

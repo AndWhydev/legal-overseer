@@ -36,6 +36,17 @@ Procedural memories can be created through three paths:
 ## Trigger Matching
 
 <Note>
+<Mermaid chart={`flowchart LR
+    A[User Message] --> B[Match Trigger
+Pattern]
+    B -->|match| C[Inject Steps
+into Prompt]
+    C --> D[Agent
+Executes]
+    D -->|success| E[Increment
+Counter]
+    B -->|no match| F[Standard Flow]`} caption="Procedural memory: trigger matching injects learned workflows into the system prompt" />
+
 Trigger patterns are stored as regex strings and matched case-insensitively against the current message. The `matchProcedure()` function iterates all active procedures for the organization and returns the first match.
 
 Invalid regex patterns (corrupted data) are silently skipped. A bad trigger pattern never crashes the system.

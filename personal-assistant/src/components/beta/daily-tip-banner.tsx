@@ -109,7 +109,7 @@ export function DailyTipBanner({ onNavigate }: DailyTipBannerProps) {
           <span className="text-sm font-medium text-foreground">
             {tip.title}
           </span>
-          <Badge variant="secondary" className="text-[11px]">
+          <Badge variant="secondary" className="text-sm">
             Day {day}
           </Badge>
         </div>

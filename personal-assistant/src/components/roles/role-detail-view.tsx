@@ -64,11 +64,11 @@ interface RoleStatus {
 // ---------------------------------------------------------------------------
 
 const ROLE_META: Record<RoleType, { label: string; icon: React.ElementType; color: string }> = {
-  finance: { label: 'Finance', icon: IconCurrencyDollar, color: '#22c55e' },
-  comms: { label: 'Communications', icon: IconMessage, color: '#3b82f6' },
-  sales: { label: 'Sales', icon: IconTrendingUp, color: '#F1F5F9' },
-  growth: { label: 'Growth', icon: IconTrendingUp, color: '#f59e0b' },
-  builder: { label: 'Builder', icon: IconCode, color: '#8b5cf6' },
+  finance: { label: 'Finance', icon: IconCurrencyDollar, color: 'var(--success)' },
+  comms: { label: 'Communications', icon: IconMessage, color: 'var(--primary)' },
+  sales: { label: 'Sales', icon: IconTrendingUp, color: 'var(--muted)' },
+  growth: { label: 'Growth', icon: IconTrendingUp, color: 'var(--warning, #f59e0b)' },
+  builder: { label: 'Builder', icon: IconCode, color: 'var(--chart-4)' },
 }
 
 const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
@@ -81,12 +81,12 @@ const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
 }
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
-  action: '#F1F5F9',
-  insight: '#3b82f6',
-  escalation: '#eab308',
-  learning: '#8b5cf6',
-  error: '#ef4444',
-  workflow_step: '#94A3B8',
+  action: 'var(--muted)',
+  insight: 'var(--primary)',
+  escalation: 'var(--warning, #f59e0b)',
+  learning: 'var(--chart-4)',
+  error: 'var(--destructive)',
+  workflow_step: 'var(--muted-foreground)',
 }
 
 function timeAgo(dateStr: string | null): string {
@@ -173,7 +173,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
         <div className="grid grid-cols-2 gap-3">
           {/* Status card */}
           <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Status</div>
+            <div className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-3">Status</div>
             <div className="grid grid-cols-2 gap-3">
               <StatCell label="Last tick" value={timeAgo(status.last_tick_at)} />
               <StatCell label="Active workflows" value={String(status.active_workflows)} mono />
@@ -186,7 +186,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 
           {/* Autonomy card */}
           <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+            <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground mb-3">
               <IconSettings size={11} />
               Autonomy Level
             </div>
@@ -204,7 +204,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
       <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <IconActivity size={14} style={{ color: meta.color }} />
-          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Activity Timeline</span>
+          <span className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Activity Timeline</span>
           <span className="text-sm text-muted-foreground ml-auto">
             {activities.length} events
           </span>
@@ -213,11 +213,11 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
         <div className="overflow-y-auto max-h-[calc(100vh-450px)] flex flex-col gap-2">
           {loading ? (
             Array.from({ length: 6 }, (_, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 opacity-50">
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-muted opacity-50">
                 <div className="h-6 w-6 rounded-lg bg-muted" />
                 <div className="flex-1">
-                  <div className="h-3 rounded bg-muted w-3/5 mb-2" />
-                  <div className="h-2.5 rounded bg-muted/50 w-2/5" />
+                  <div className="h-3 rounded-lg bg-muted w-3/5 mb-2" />
+                  <div className="h-2.5 rounded-lg bg-muted w-2/5" />
                 </div>
               </div>
             ))
@@ -229,7 +229,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
           ) : (
             activities.map(item => {
               const ItemIcon = ACTIVITY_ICONS[item.activity_type] ?? IconActivity
-              const color = ACTIVITY_COLORS[item.activity_type] ?? '#94A3B8'
+              const color = ACTIVITY_COLORS[item.activity_type] ?? 'var(--muted-foreground)'
               const isHovered = hoveredId === item.id
               const isExpanded = expandedId === item.id
 
@@ -240,7 +240,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                     onMouseLeave={() => setHoveredId(null)}
                     onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
                     className={`flex items-start gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
-                      isHovered ? 'bg-accent' : 'bg-muted/30'
+                      isHovered ? 'bg-accent' : 'bg-muted'
                     }`}
                   >
                     {/* Timeline dot */}
@@ -258,17 +258,17 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span
-                          className="text-xs font-medium px-2 py-0.5 rounded capitalize"
+                          className="text-sm font-medium px-2 py-0.5 rounded-lg capitalize"
                           style={{ background: `${color}15`, color }}
                         >
                           {item.activity_type.replace('_', ' ')}
                         </span>
                         {item.confidence != null && (
-                          <span className="text-xs text-muted-foreground font-mono">
+                          <span className="text-sm text-muted-foreground font-mono">
                             {Math.round(item.confidence * 100)}%
                           </span>
                         )}
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-sm text-muted-foreground">
                           {timeAgo(item.created_at)}
                         </span>
                       </div>
@@ -277,7 +277,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 
                   {/* Expanded detail */}
                   {isExpanded && (
-                    <div className="mt-0.5 ml-9 p-3 rounded-xl bg-muted/30 border border-border text-sm text-muted-foreground leading-relaxed">
+                    <div className="mt-0.5 ml-9 p-3 rounded-xl bg-muted border border-border text-sm text-muted-foreground leading-relaxed">
                       {item.reasoning && (
                         <div className="mb-2">
                           <span className="font-medium text-foreground">Reasoning: </span>
@@ -297,7 +297,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
                       {Object.keys(item.details).length > 0 && (
                         <div>
                           <span className="font-medium">Details:</span>
-                          <pre className="mt-1 p-2 rounded-lg bg-muted/50 text-xs font-mono text-muted-foreground overflow-auto max-h-[200px] whitespace-pre-wrap break-words">
+                          <pre className="mt-1 p-2 rounded-lg bg-muted text-sm font-mono text-muted-foreground overflow-auto max-h-[200px] whitespace-pre-wrap break-words">
                             {JSON.stringify(item.details, null, 2)}
                           </pre>
                         </div>
@@ -321,7 +321,7 @@ export function RoleDetailView({ roleType, onBack }: RoleDetailViewProps) {
 function StatCell({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground mb-1">{label}</div>
+      <div className="text-sm text-muted-foreground mb-1">{label}</div>
       <div className={`text-sm font-medium text-foreground ${mono ? 'font-mono' : ''}`}>
         {value}
       </div>

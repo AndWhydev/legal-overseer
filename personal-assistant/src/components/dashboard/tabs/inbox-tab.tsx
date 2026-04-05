@@ -920,7 +920,7 @@ function InboxTab() {
                 </TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
               </TooltipProvider>
 
-              <div className="ml-auto hidden text-xs text-muted-foreground sm:block">
+              <div className="ml-auto hidden text-sm text-muted-foreground sm:block">
                 {displayed.length} messages
               </div>
             </div>
@@ -973,7 +973,7 @@ function InboxTab() {
                               />
                               {showChildren && (
                                 <div className={cn(
-                                  'ml-8 flex flex-col gap-1 border-l border-border/60 pl-2.5',
+                                  'ml-8 flex flex-col gap-1 border-l border-border pl-2.5',
                                   isGroupCollapsing && 'pointer-events-none animate-out fade-out-0 duration-200'
                                 )}>
                                   {item.messages.map((msg) => (
@@ -1114,7 +1114,7 @@ function SnoozePickerContent({ onSnooze }: { onSnooze: (time: string) => void })
   const options = getSnoozeOptions();
   return (
     <div className="flex flex-col">
-      <span className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <span className="px-3 py-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
         Snooze until
       </span>
       {options.map((opt) => (
@@ -1127,7 +1127,7 @@ function SnoozePickerContent({ onSnooze }: { onSnooze: (time: string) => void })
             <IconClock size={13} className="text-muted-foreground shrink-0" />
             {opt.label}
           </span>
-          <span className="text-xs text-muted-foreground shrink-0">{opt.sublabel}</span>
+          <span className="text-sm text-muted-foreground shrink-0">{opt.sublabel}</span>
         </button>
       ))}
     </div>
@@ -1193,14 +1193,14 @@ function GroupRow({
 
       <div className="min-w-0 flex-1 truncate text-sm">
         <span className="text-foreground">{item.label}</span>
-        <span className="ml-2 inline-flex rounded-full border border-border px-1.5 py-0 text-xs text-muted-foreground tabular-nums align-middle">
+        <span className="ml-2 inline-flex rounded-full border border-border px-1.5 py-0 text-sm text-muted-foreground tabular-nums align-middle">
           {item.messages.length}
         </span>
-        <span className="mx-2 text-muted-foreground/50">&middot;</span>
+        <span className="mx-2 text-muted-foreground">&middot;</span>
         <span className="text-muted-foreground">{sanitizeText(String(preview))}</span>
       </div>
 
-      <span className="shrink-0 text-xs text-muted-foreground" title={absTime}>
+      <span className="shrink-0 text-sm text-muted-foreground" title={absTime}>
         {relTime}
       </span>
     </div>
@@ -1266,13 +1266,13 @@ function MessageRow({
       <div className="min-w-0 flex-1 truncate text-sm">
         <span className="text-foreground">{subject}</span>
         {message.threadCount && message.threadCount > 1 && (
-          <span className="ml-1 text-xs text-muted-foreground">({message.threadCount})</span>
+          <span className="ml-1 text-sm text-muted-foreground">({message.threadCount})</span>
         )}
-        <span className="mx-2 text-muted-foreground/50">&middot;</span>
+        <span className="mx-2 text-muted-foreground">&middot;</span>
         <span className="text-muted-foreground">{preview}</span>
       </div>
 
-      <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground" title={absTime}>
+      <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground" title={absTime}>
         {timeAgo}
       </span>
     </div>

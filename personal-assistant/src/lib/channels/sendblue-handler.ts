@@ -38,7 +38,7 @@ export async function handleSendblueMessage(
       // Store outbound message
       await supabase.from('channel_messages').insert({
         org_id: orgId,
-        channel: 'imessage', // TODO: change to 'sendblue' after DB constraint migration
+        channel: 'sendblue',
         external_id: `out-${Date.now()}`,
         sender: 'BitBit',
         body: responseText,

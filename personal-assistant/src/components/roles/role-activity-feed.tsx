@@ -150,7 +150,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <IconActivity size={14} className="text-foreground" />
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Role Activity</CardTitle>
+            <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">Role Activity</CardTitle>
           </div>
           <IconFilter size={12} className="text-muted-foreground" />
         </div>
@@ -188,7 +188,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
         <div className="overflow-y-auto flex flex-col gap-2" style={{ maxHeight }}>
           {loading ? (
             Array.from({ length: 5 }, (_, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted">
                 <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
                 <div className="flex-1">
                   <Skeleton className="h-3 w-3/4 mb-2" />
@@ -219,7 +219,7 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
               return (
                 <div
                   key={item.id}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
                 >
                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${colorClass}`}>
                     <Icon size={14} />
@@ -235,11 +235,11 @@ export function RoleActivityFeed({ maxHeight = 'calc(100vh - 300px)', limit = 50
                         </Badge>
                       )}
                       {item.confidence != null && (
-                        <span className="text-xs text-muted-foreground font-mono">
+                        <span className="text-sm text-muted-foreground font-mono">
                           {Math.round(item.confidence * 100)}%
                         </span>
                       )}
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-sm text-muted-foreground">
                         {timeAgo(item.created_at)}
                       </span>
                     </div>

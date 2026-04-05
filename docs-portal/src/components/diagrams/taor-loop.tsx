@@ -44,8 +44,6 @@ export function TAORLoop() {
       const currentAngle = progress * 360 // 0 to 360
 
       // Determine which node the arc center is closest to
-      // Arc center is at currentAngle, nodes are at 0, 90, 180, 270
-      // A node is "active" when the arc center is within 45 degrees of it
       let closest = 0
       let minDist = 360
       for (let i = 0; i < 4; i++) {
@@ -96,7 +94,7 @@ export function TAORLoop() {
         <circle
           cx={cx} cy={cy} r={radius}
           fill="none"
-          stroke="rgb(23, 23, 23)"
+          stroke="var(--text-primary)"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeDasharray={`${arcLen} ${circumference - arcLen}`}
@@ -108,7 +106,7 @@ export function TAORLoop() {
         />
 
         {/* Center */}
-        <circle cx={cx} cy={cy} r={centerR} fill="rgb(23, 23, 23)" />
+        <circle cx={cx} cy={cy} r={centerR} fill="var(--text-primary)" />
         <text
           x={cx} y={cy + 1}
           textAnchor="middle"
@@ -128,8 +126,8 @@ export function TAORLoop() {
             <g key={node.name} style={{ cursor: 'pointer' }} onClick={() => setPaused(!paused)}>
               <circle
                 cx={node.x} cy={node.y} r={nodeR}
-                fill={isActive ? 'rgb(23, 23, 23)' : '#faf9f5'}
-                stroke={isActive ? 'rgb(23, 23, 23)' : 'rgb(210, 210, 208)'}
+                fill={isActive ? 'var(--text-primary)' : '#fff'}
+                stroke={isActive ? 'var(--text-primary)' : 'rgb(210, 210, 208)'}
                 strokeWidth={isActive ? 0 : 1.5}
                 style={{ transition: 'all 0.25s ease' }}
               />
@@ -139,7 +137,7 @@ export function TAORLoop() {
                 dominantBaseline="middle"
                 fontSize="12"
                 fontWeight="500"
-                fill={isActive ? 'white' : 'rgb(23, 23, 23)'}
+                fill={isActive ? 'white' : 'var(--text-primary)'}
                 fontFamily="Inter, system-ui, sans-serif"
                 style={{ transition: 'fill 0.25s ease', pointerEvents: 'none' }}
               >
@@ -154,10 +152,10 @@ export function TAORLoop() {
       <div style={{
         marginTop: '1rem',
         padding: '0.625rem 1rem',
-        background: 'rgba(238, 238, 230, 0.4)',
+        background: 'var(--code-bg)',
         borderRadius: '8px',
         fontSize: '14px',
-        color: 'rgb(80, 80, 80)',
+        color: 'var(--text-muted)',
         lineHeight: '1.5',
         minHeight: '44px',
         display: 'flex',
@@ -165,7 +163,7 @@ export function TAORLoop() {
         justifyContent: 'center',
         gap: '6px',
       }}>
-        <strong style={{ color: 'rgb(23, 23, 23)' }}>{PHASES[active].name}</strong>
+        <strong style={{ color: 'var(--text-primary)' }}>{PHASES[active].name}</strong>
         {PHASES[active].description}
       </div>
 
@@ -177,10 +175,10 @@ export function TAORLoop() {
           padding: '0.375rem 1rem',
           fontSize: '12px',
           background: 'transparent',
-          border: '1px solid rgb(222, 222, 220)',
+          border: '1px solid var(--border-subtle)',
           borderRadius: '6px',
           cursor: 'pointer',
-          color: 'rgb(140, 140, 140)',
+          color: 'var(--text-faint)',
           fontFamily: 'inherit',
         }}
       >

@@ -49,10 +49,10 @@ export function HotLeadsWidget() {
           <Empty><EmptyTitle>No active leads</EmptyTitle><EmptyDescription>New leads will appear here as they come in.</EmptyDescription></Empty>
         ) : (
           leads.map(lead => (
-            <div key={lead.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
+            <div key={lead.id} className="flex items-center justify-between p-3 rounded-xl bg-muted border border-border">
               <div className="flex-1">
                 <p className="font-medium text-sm">{lead.prospect_name || lead.source_detail || lead.source_channel || 'Unnamed Lead'}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   {lead.status === 'new' && 'New Contact'}
                   {lead.status === 'qualified' && 'Qualified'}
                   {lead.status === 'booked' && 'Booked'}
@@ -60,7 +60,7 @@ export function HotLeadsWidget() {
               </div>
               <div className="flex items-center gap-2">
                 {lead.score && (
-                  <Badge variant={SCORE_VARIANT[lead.score] ?? 'outline'} className="uppercase text-xs">
+                  <Badge variant={SCORE_VARIANT[lead.score] ?? 'outline'} className="uppercase text-sm">
                     {lead.score}
                   </Badge>
                 )}

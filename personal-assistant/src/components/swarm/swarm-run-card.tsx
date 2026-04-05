@@ -44,7 +44,7 @@ export function SwarmRunCard({ run, onClick }: SwarmRunCardProps) {
 
   return (
     <Card
-      className="cursor-pointer hover:bg-muted/50 transition-colors py-4"
+      className="cursor-pointer hover:bg-muted transition-colors py-4"
       onClick={onClick}
     >
       <CardContent className="py-0">
@@ -68,7 +68,7 @@ export function SwarmRunCard({ run, onClick }: SwarmRunCardProps) {
           {run.trigger_input}
         </p>
 
-        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
           <span>{timeAgo}</span>
           {durationLabel && <span>{durationLabel}</span>}
           {run.total_cost > 0 && (

@@ -158,11 +158,11 @@ function QuotesTab() {
             <button
               key={q.id}
               onClick={() => setSelected(q)}
-              className="w-full flex items-center justify-between rounded-lg border border-border bg-card p-4 text-left hover:bg-muted/50 transition-colors"
+              className="w-full flex items-center justify-between rounded-lg border border-border bg-card p-4 text-left hover:bg-muted transition-colors"
             >
               <div>
                 <p className="font-medium text-sm">{q.contact?.name ?? 'Unknown Customer'}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {new Date(q.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </p>
               </div>

@@ -85,7 +85,7 @@ const LINE_NUMBER_CLASSES = cn(
   "before:w-8",
   "before:mr-4",
   "before:text-right",
-  "before:text-muted-foreground/50",
+  "before:text-muted-foreground",
   "before:font-mono",
   "before:select-none"
 );
@@ -329,7 +329,7 @@ export const CodeBlockHeader = ({
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex items-center justify-between border-b bg-muted/80 px-3 py-2 text-muted-foreground text-xs",
+      "flex items-center justify-between border-b bg-muted px-3 py-2 text-muted-foreground text-sm",
       className
     )}
     {...props}
@@ -526,7 +526,7 @@ export const CodeBlockLanguageSelectorTrigger = ({
 }: CodeBlockLanguageSelectorTriggerProps) => (
   <SelectTrigger
     className={cn(
-      "h-7 border-none bg-transparent px-2 text-xs shadow-none",
+      "h-8 border-none bg-transparent px-2 text-sm shadow-none",
       className
     )}
     size="sm"

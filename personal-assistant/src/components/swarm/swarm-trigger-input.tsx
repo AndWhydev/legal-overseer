@@ -47,7 +47,7 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
 
   return (
     <div className="relative">
-      <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-widest">Command your team</div>
+      <div className="text-sm text-muted-foreground mb-2 font-medium uppercase tracking-widest">Command your team</div>
       <div
         className={`flex items-center gap-3 rounded-xl bg-card px-4 py-3 border transition-colors ${
           focused ? 'border-ring' : 'border-border'
@@ -82,10 +82,10 @@ export function SwarmTriggerInput({ onTrigger }: SwarmTriggerInputProps) {
         {BUILTIN_TEMPLATES.map(template => (
           <button
             key={template.slug}
-            className={`px-3 py-1 rounded-lg text-xs font-medium border cursor-pointer transition-all ${
+            className={`px-3 py-1 rounded-lg text-sm font-medium border cursor-pointer transition-all ${
               hoveredTemplate === template.slug
                 ? 'bg-muted text-foreground border-border'
-                : 'bg-muted/50 text-muted-foreground border-border/50 hover:bg-muted hover:text-foreground'
+                : 'bg-muted text-muted-foreground border-border hover:bg-muted hover:text-foreground'
             }`}
             onClick={() => handleTemplateClick(template.slug, template.name)}
             onMouseEnter={() => setHoveredTemplate(template.slug)}

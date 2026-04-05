@@ -45,7 +45,7 @@ export function MeetingsTab({ initialMeetingId }: MeetingsTabProps) {
     <div className="flex h-full flex-col gap-4">
       {/* Section toggle (only visible when not in detail view) */}
       {view !== 'detail' && (
-        <div className="flex self-start gap-1 rounded-xl bg-muted/50 p-1">
+        <div className="flex self-start gap-1 rounded-xl bg-muted p-1">
           <button
             onClick={() => { setActiveSection('meetings'); setView('list') }}
             className={`flex cursor-pointer items-center gap-2 rounded-lg border-none px-4 py-2 text-sm font-medium transition-all ${activeSection === 'meetings' ? 'bg-muted text-foreground' : 'bg-transparent text-muted-foreground'}`}

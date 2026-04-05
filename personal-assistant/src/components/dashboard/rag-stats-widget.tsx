@@ -201,7 +201,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         {showDetails && topChannels.length > 0 && (
           <>
             <div className="mt-2 border-t border-border pt-2" />
-            <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <div className="mb-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
               TOP CHANNELS
             </div>
             <div className="flex flex-col gap-2">
@@ -220,7 +220,7 @@ export function RagStatsWidget({ className = '', showDetails = true }: RagStatsW
         )}
 
         {/* Last updated */}
-        <div className="mt-2 text-right text-sm text-muted-foreground/60">
+        <div className="mt-2 text-right text-sm text-muted-foreground">
           {stats?.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString() : 'Loading...'}
         </div>
       </div>

@@ -13,44 +13,35 @@ Channel tools (`src/lib/agent/tools/channel-tools.ts`) provide unified access to
 
 Search across all connected channels for messages matching a query.
 
-<ApiRefTable
-  title="find_messages"
-  props={[
-    { name: "query", type: "string", required: true, description: "Sender name, subject keywords, content" },
-    { name: "channel", type: "string", required: false, description: "Limit to: gmail, outlook, whatsapp, sms, slack" },
-    { name: "from", type: "string", required: false, description: "Filter by sender name or email" },
-    { name: "since", type: "string", required: false, description: "ISO date for how far back to look (default: 90 days)" },
-    { name: "limit", type: "number", required: false, description: "Max results (default: 10)" },
-    { name: "unread_only", type: "boolean", required: false, description: "Only return unprocessed messages" },
-    { name: "folder", type: "string", required: false, description: "inbox, sent, or all (default: inbox)" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | string | Sender name, subject keywords, content |
+| `channel` | string | Limit to: gmail, outlook, whatsapp, sms, slack |
+| `from` | string | Filter by sender name or email |
+| `since` | string | ISO date, how far back to look (default: 90 days) |
+| `limit` | number | Max results (default: 10) |
+| `unread_only` | boolean | Only return unprocessed messages |
+| `folder` | string | inbox, sent, or all (default: inbox) |
 
 <Tip>
-Use `folder: "sent"` to find emails the user wrote. This reveals their voice, communication style, and relationship dynamics. Essential context for drafting replies.
+Use `folder: "sent"` to find emails the user wrote. This reveals their voice, communication style, and relationship dynamics, which is essential context for drafting replies.
 </Tip>
 
 ### read_message
 
 Read the full content of a specific message by ID.
 
-<ApiRefTable
-  title="read_message"
-  props={[
-    { name: "message_id", type: "string", required: true, description: "The message ID to read" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `message_id` | string | The message ID to read |
 
 ### summarize_inbox
 
 Generate a natural-language summary of recent inbox messages grouped by category.
 
-<ApiRefTable
-  title="summarize_inbox"
-  props={[
-    { name: "hours", type: "number", required: false, description: "Look back this many hours (default: 24)" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `hours` | number | Look back this many hours (default: 24) |
 
 ## Compose Tools
 
@@ -58,40 +49,31 @@ Generate a natural-language summary of recent inbox messages grouped by category
 
 Create a draft email reply saved for user review before sending.
 
-<ApiRefTable
-  title="draft_reply"
-  props={[
-    { name: "message_id", type: "string", required: true, description: "Message to reply to" },
-    { name: "body", type: "string", required: true, description: "Reply message body" },
-    { name: "tone", type: "string", required: false, description: "professional | casual | friendly | formal" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `message_id` | string | Message to reply to |
+| `body` | string | Reply message body |
+| `tone` | string | professional, casual, friendly, formal |
 
 ### send_gmail
 
 Send an email via Gmail. Autonomy level: L2 (Propose First).
 
-<ApiRefTable
-  title="send_gmail"
-  props={[
-    { name: "to", type: "string", required: true, description: "Recipient email" },
-    { name: "subject", type: "string", required: true, description: "Email subject" },
-    { name: "body", type: "string", required: true, description: "Email body" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `to` | string | Recipient email |
+| `subject` | string | Email subject |
+| `body` | string | Email body |
 
 ### send_outlook
 
 Send an email via Microsoft Outlook/365. Autonomy level: L2 (Propose First).
 
-<ApiRefTable
-  title="send_outlook"
-  props={[
-    { name: "to", type: "string", required: true, description: "Recipient email" },
-    { name: "subject", type: "string", required: true, description: "Email subject" },
-    { name: "body", type: "string", required: true, description: "Email body" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `to` | string | Recipient email |
+| `subject` | string | Email subject |
+| `body` | string | Email body |
 
 ## Calendar and Reminders
 
@@ -99,41 +81,32 @@ Send an email via Microsoft Outlook/365. Autonomy level: L2 (Propose First).
 
 List upcoming calendar events and due reminders within a specified window.
 
-<ApiRefTable
-  title="get_upcoming"
-  props={[
-    { name: "days", type: "number", required: false, description: "Days to look ahead (default: 7)" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `days` | number | Days to look ahead (default: 7) |
 
 ### create_reminder
 
 Create an Apple Reminder item (macOS only).
 
-<ApiRefTable
-  title="create_reminder"
-  props={[
-    { name: "title", type: "string", required: true, description: "Reminder title" },
-    { name: "notes", type: "string", required: false, description: "Additional notes" },
-    { name: "due_date", type: "string", required: false, description: "ISO date" },
-    { name: "list", type: "string", required: false, description: 'Reminder list name (default: "Reminders")' },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `title` | string | Reminder title |
+| `notes` | string | Additional notes |
+| `due_date` | string | ISO date |
+| `list` | string | Reminder list name (default: "Reminders") |
 
 ### schedule_event
 
 Create a calendar event on Apple Calendar (macOS only).
 
-<ApiRefTable
-  title="schedule_event"
-  props={[
-    { name: "title", type: "string", required: true, description: "Event title" },
-    { name: "start", type: "string", required: true, description: "ISO start date/time" },
-    { name: "end", type: "string", required: true, description: "ISO end date/time" },
-    { name: "location", type: "string", required: false, description: "Event location" },
-    { name: "notes", type: "string", required: false, description: "Event notes" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `title` | string | Event title |
+| `start` | string | ISO start date/time |
+| `end` | string | ISO end date/time |
+| `location` | string | Event location |
+| `notes` | string | Event notes |
 
 <Note>
 Calendar and Reminders tools use macOS `osascript` (AppleScript) for native integration. They require the app to be running on macOS.

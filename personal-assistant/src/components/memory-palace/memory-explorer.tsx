@@ -160,7 +160,7 @@ export function MemoryExplorer({ orgId }: MemoryExplorerProps) {
           className={`whitespace-nowrap rounded-xl px-3 py-1 text-sm ${
             activeCategory === null
               ? 'bg-secondary font-medium text-foreground'
-              : 'bg-secondary/50 text-muted-foreground'
+              : 'bg-secondary text-muted-foreground'
           }`}
         >
           All

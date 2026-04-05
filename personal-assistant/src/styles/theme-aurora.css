@@ -1,7 +1,7 @@
 /* ============================================================================
-   BitBit Aurora Theme — Light Glassmorphism
-   Inspired by: Warm peach-to-cool-blue gradient, frosted white glass,
-   dark text, ethereal premium aesthetic
+   BitBit Aurora Theme — Light Solid Surfaces
+   Warm peach-to-cool-blue gradient, solid white/light surfaces,
+   dark text, clean premium aesthetic
    ============================================================================ */
 
 /* --------------------------------------------------------------------------
@@ -11,18 +11,18 @@
 [data-theme="aurora"] {
   /* ── Core Backgrounds ── */
   --bg-primary: #DDD0D3;
-  --bg-secondary: rgba(255, 255, 255, 0.2);
-  --bg-card: rgba(255, 255, 255, 0.32);
-  --bg-card-alpha: rgba(255, 255, 255, 0.32);
-  --bg-sidebar: rgba(255, 255, 255, 0.22);
-  --bg-elevated: rgba(255, 255, 255, 0.45);
-  --bg-input: rgba(255, 255, 255, 0.35);
-  --bg-overlay: rgba(200, 210, 230, 0.4);
+  --bg-secondary: #f0f4f8;
+  --bg-card: #f8fafb;
+  --bg-card-alpha: #f8fafb;
+  --bg-sidebar: #edf1f5;
+  --bg-elevated: #ffffff;
+  --bg-input: #ffffff;
+  --bg-overlay: #c8d2e6;
 
   /* ── Surfaces ── */
-  --bb-surface: rgba(255, 255, 255, 0.28);
-  --bb-surface-hover: rgba(255, 255, 255, 0.42);
-  --bb-surface-active: rgba(255, 255, 255, 0.52);
+  --bb-surface: #f4f7fa;
+  --bb-surface-hover: #eaeff4;
+  --bb-surface-active: #e0e7ee;
 
   /* ── Text ── */
   --text-primary: #1A1A2E;
@@ -30,32 +30,30 @@
   --text-dim: #718096;
   --text-on-accent: var(--bb-white);
 
-  /* ── Glassmorphism ── */
-
-  /* ── Borders (nearly invisible) ── */
-  --border-subtle: rgba(255, 255, 255, 0.03);
-  --border-subtle-alpha: rgba(255, 255, 255, 0.03);
-  --border-active: rgba(255, 255, 255, 0.08);
-  --border-focus-ring: rgba(255, 255, 255, 0.15);
+  /* ── Borders ── */
+  --border-subtle: #e8ecf0;
+  --border-subtle-alpha: #e8ecf0;
+  --border-active: #d0d7e0;
+  --border-focus-ring: #c0c8d4;
 
   /* ── Card Shadows ── */
-  --card-shadow: 0 8px 32px rgba(100, 120, 160, 0.1);
-  --card-shadow-hover: 0 12px 40px rgba(100, 120, 160, 0.14);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --card-shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.08), 0 8px 20px rgba(0, 0, 0, 0.06);
 
   /* ── Hover States ── */
-  --hover-bg: rgba(255, 255, 255, 0.18);
-  --hover-bg-strong: rgba(255, 255, 255, 0.28);
+  --hover-bg: #edf1f5;
+  --hover-bg-strong: #e4eaf0;
 
-  /* ── Card variant (more opaque glass) ── */
-  --bg-card-solid: rgba(255, 255, 255, 0.42);
+  /* ── Card variant ── */
+  --bg-card-solid: #f0f3f6;
 
   /* ── Toggle / Pill / Button tokens ── */
-  --toggle-container-bg: rgba(0, 0, 0, 0.06);
-  --toggle-active-bg: rgba(255, 255, 255, 0.7);
+  --toggle-container-bg: #e8ecf0;
+  --toggle-active-bg: #ffffff;
   --toggle-active-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --toggle-off-bg: rgba(0, 0, 0, 0.1);
-  --pill-active-bg: rgba(255, 255, 255, 0.5);
-  --pill-inactive-bg: rgba(0, 0, 0, 0.04);
+  --toggle-off-bg: #d8dde4;
+  --pill-active-bg: #ffffff;
+  --pill-inactive-bg: #f0f3f6;
   --btn-primary-bg: #1A1A2E;
   --btn-primary-fg: var(--bb-white);
   --btn-primary-hover: #2D2D4E;
@@ -102,27 +100,27 @@
   /* ── Tailwind/shadcn token overrides ── */
   --background: #DDD0D3;
   --foreground: #1A1A2E;
-  --card: rgba(255, 255, 255, 0.32);
+  --card: #f8fafb;
   --card-foreground: #1A1A2E;
-  --popover: rgba(255, 255, 255, 0.85);
+  --popover: #ffffff;
   --popover-foreground: #1A1A2E;
-  --elevated: rgba(255, 255, 255, 0.45);
+  --elevated: #ffffff;
   --primary: #E04E1A;
   --primary-foreground: var(--bb-white);
   --primary-hover: #C74416;
   --primary-light: #F06630;
-  --secondary: rgba(255, 255, 255, 0.3);
+  --secondary: #edf1f5;
   --secondary-foreground: #1A1A2E;
-  --muted: rgba(200, 210, 230, 0.3);
+  --muted: #e0e7ee;
   --muted-foreground: #718096;
   --accent: #E04E1A;
   --accent-foreground: var(--bb-white);
   --destructive: #DC2626;
   --success: #16A34A;
   --warning: #D97706;
-  --border: rgba(255, 255, 255, 0.35);
-  --border-hover: rgba(255, 255, 255, 0.5);
-  --input: rgba(255, 255, 255, 0.35);
+  --border: #d8dde4;
+  --border-hover: #c8d0da;
+  --input: #ffffff;
   --ring: #E04E1A;
   --text-muted: #718096;
 
@@ -134,13 +132,13 @@
   --chart-5: #DC2626;
 
   /* Sidebar */
-  --sidebar: rgba(255, 255, 255, 0.2);
+  --sidebar: #edf1f5;
   --sidebar-foreground: #1A1A2E;
   --sidebar-primary: #E04E1A;
   --sidebar-primary-foreground: var(--bb-white);
-  --sidebar-accent: rgba(255, 255, 255, 0.3);
+  --sidebar-accent: #e4eaf0;
   --sidebar-accent-foreground: #1A1A2E;
-  --sidebar-border: rgba(255, 255, 255, 0.35);
+  --sidebar-border: #d8dde4;
   --sidebar-ring: #E04E1A;
 
   color-scheme: light;
@@ -172,28 +170,28 @@
 
 
 /* --------------------------------------------------------------------------
-   Aurora: Glass Card Overrides
+   Aurora: Solid Card Overrides
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] .bb-card {
-  background: rgba(255, 255, 255, 0.32) !important;
-  backdrop-filter: blur(20px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 8px 32px rgba(100, 120, 160, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+  background: #f8fafb !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #d8dde4 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04) !important;
   background-image: none !important;
 }
 
 [data-theme="aurora"] .bb-card:hover {
-  background: rgba(255, 255, 255, 0.38) !important;
-  box-shadow: 0 12px 40px rgba(100, 120, 160, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  background: #f4f7fa !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 8px 20px rgba(0, 0, 0, 0.06) !important;
 }
 
-[data-theme="aurora"] .glass-card {
-  background: rgba(255, 255, 255, 0.32) !important;
-  backdrop-filter: blur(20px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+[data-theme="aurora"] .surface-card {
+  background: #f8fafb !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #d8dde4 !important;
 }
 
 
@@ -202,17 +200,17 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] .bb-sidebar-rail {
-  background: rgba(255, 255, 255, 0.18) !important;
-  backdrop-filter: blur(24px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: #eaeff4 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-right: 1px solid #d8dde4 !important;
 }
 
 [data-theme="aurora"] .bb-sidebar-panel {
-  background: rgba(255, 255, 255, 0.25) !important;
-  backdrop-filter: blur(24px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: #edf1f5 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-right: 1px solid #d8dde4 !important;
 }
 
 [data-theme="aurora"] .bb-sidebar-rail__icon {
@@ -221,11 +219,11 @@
 
 [data-theme="aurora"] .bb-sidebar-rail__icon--active {
   color: #1A1A2E !important;
-  background: rgba(255, 255, 255, 0.35) !important;
+  background: #e0e7ee !important;
 }
 
 [data-theme="aurora"] .bb-sidebar-rail__icon:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
+  background: #eaeff4 !important;
   color: #1A1A2E !important;
 }
 
@@ -234,20 +232,20 @@
 }
 
 [data-theme="aurora"] .bb-sidebar-panel__item:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
+  background: #eaeff4 !important;
   color: #1A1A2E !important;
 }
 
 [data-theme="aurora"] .bb-sidebar-panel__item--active {
   color: #1A1A2E !important;
-  background: rgba(255, 255, 255, 0.35) !important;
+  background: #e0e7ee !important;
   font-weight: 600;
 }
 
-[data-theme="aurora"] .glass-sidebar {
-  background: rgba(255, 255, 255, 0.2) !important;
-  backdrop-filter: blur(24px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
+[data-theme="aurora"] .surface-sidebar {
+  background: #edf1f5 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 
@@ -256,10 +254,10 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] .bb-topbar-area {
-  background: rgba(255, 255, 255, 0.15) !important;
-  backdrop-filter: blur(20px) saturate(1.3) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.3) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: #f0f4f8 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid #d8dde4 !important;
 }
 [data-theme="aurora"] .bb-topbar {
   background: transparent !important;
@@ -279,16 +277,16 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] .bb-btn--ghost {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  background: #f0f4f8 !important;
+  border: 1px solid #d8dde4 !important;
   color: #1A1A2E !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 [data-theme="aurora"] .bb-btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.35) !important;
-  border-color: rgba(255, 255, 255, 0.55) !important;
+  background: #e4eaf0 !important;
+  border-color: #c8d0da !important;
 }
 
 [data-theme="aurora"] .bb-btn--accent {
@@ -301,7 +299,7 @@
 }
 
 [data-theme="aurora"] .bb-btn--icon:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
+  background: #eaeff4 !important;
   color: #1A1A2E !important;
 }
 
@@ -327,11 +325,11 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] ::-webkit-scrollbar-thumb {
-  background: rgba(100, 120, 160, 0.2);
+  background: #c0c8d4;
 }
 
 [data-theme="aurora"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 120, 160, 0.35);
+  background: #a8b4c0;
 }
 
 
@@ -340,7 +338,7 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] ::selection {
-  background: rgba(100, 120, 200, 0.2);
+  background: #c0c8e0;
   color: #1A1A2E;
 }
 
@@ -350,10 +348,10 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] .bb-sidebar-area {
-  background: rgba(255, 255, 255, 0.25) !important;
-  backdrop-filter: blur(24px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.35) !important;
+  background: #edf1f5 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-top: 1px solid #d8dde4 !important;
 }
 
 
@@ -374,10 +372,10 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] .bb-notification-panel {
-  background: rgba(255, 255, 255, 0.75) !important;
-  backdrop-filter: blur(24px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #d8dde4 !important;
 }
 
 
@@ -386,19 +384,19 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] .bb-kanban-column {
-  background: rgba(255, 255, 255, 0.18) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: #f0f4f8 !important;
+  border: 1px solid #d8dde4 !important;
 }
 
 [data-theme="aurora"] .bb-kanban-card {
-  background: rgba(255, 255, 255, 0.45) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  box-shadow: 0 4px 16px rgba(100, 120, 160, 0.08) !important;
+  background: #ffffff !important;
+  border: 1px solid #d8dde4 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
 
 [data-theme="aurora"] .bb-kanban-card:hover {
-  background: rgba(255, 255, 255, 0.55) !important;
-  box-shadow: 0 8px 24px rgba(100, 120, 160, 0.12) !important;
+  background: #f8fafb !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
 }
 
 
@@ -449,17 +447,16 @@
    These catch common patterns used in component inline styles.
    -------------------------------------------------------------------------- */
 
-/* Ensure glassmorphic cards render properly */
 [data-theme="aurora"] [style*="rgba(15, 20, 30"] {
   background: var(--bg-card) !important;
-  backdrop-filter: blur(20px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.4) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 [data-theme="aurora"] [style*="rgba(10, 14, 23"] {
   background: var(--bb-surface) !important;
-  backdrop-filter: blur(20px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.4) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 [data-theme="aurora"] [style*="rgba(13, 17, 23"] {
@@ -491,14 +488,14 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] .bb-global-search-overlay {
-  background: rgba(200, 210, 230, 0.4) !important;
+  background: rgba(0, 0, 0, 0.2) !important;
 }
 
 [data-theme="aurora"] .bb-global-search-dialog {
-  background: rgba(255, 255, 255, 0.75) !important;
-  backdrop-filter: blur(24px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #d8dde4 !important;
 }
 
 
@@ -507,10 +504,10 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="aurora"] .bb-dev-toolbar {
-  background: rgba(255, 255, 255, 0.6) !important;
-  backdrop-filter: blur(16px) saturate(1.3) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(1.3) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  background: #f8fafb !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #d8dde4 !important;
   color: #1A1A2E !important;
 }
 

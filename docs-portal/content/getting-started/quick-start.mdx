@@ -17,53 +17,45 @@ This guide walks you through setting up BitBit for local development.
 
 <Steps>
   <Step title="Clone and install">
-    <CodeBlockCommand
-      pnpm="pnpm install"
-      npm="npm install"
-      yarn="yarn install"
-      bun="bun install"
-    />
-
-    First clone the repo:
-
-    <CodeBlock code={`git clone https://github.com/your-org/bitbit.git
-cd bitbit/personal-assistant`} language="bash" title="Clone repository" />
+    ```bash
+    git clone https://github.com/your-org/bitbit.git
+    cd bitbit/personal-assistant
+    pnpm install
+    ```
   </Step>
   <Step title="Configure environment">
     Copy the example env file and fill in your API keys:
 
-    <CodeBlock code="cp .env.example .env.local" language="bash" />
+    ```bash
+    cp .env.example .env.local
+    ```
 
     Required variables:
 
-    <EnvTable
-      title="Required Environment Variables"
-      variables={[
-        { key: "ANTHROPIC_API_KEY", value: "sk-ant-...", description: "Claude API key for the TAOR loop" },
-        { key: "VOYAGE_API_KEY", value: "pa-...", description: "Voyage AI embedding API key" },
-        { key: "NEXT_PUBLIC_SUPABASE_URL", value: "http://localhost:54321", environment: "development", description: "Local Supabase instance URL" },
-        { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", value: "eyJ...", environment: "development", description: "Supabase anonymous key" },
-        { key: "SUPABASE_SERVICE_ROLE_KEY", value: "eyJ...", environment: "development", description: "Supabase service role key (server-side only)" },
-      ]}
-    />
+    ```
+    ANTHROPIC_API_KEY=sk-ant-...
+    VOYAGE_API_KEY=pa-...
+    NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+    SUPABASE_SERVICE_ROLE_KEY=...
+    ```
 
     <Note>
     Optional: Set `GOOGLE_API_KEY` for dual-embedding support (768d multimodal). Without it, the system falls back to Voyage-only embeddings.
     </Note>
   </Step>
   <Step title="Start Supabase locally">
-    <CodeBlock code={`supabase start
-supabase db reset  # applies all 80+ migrations`} language="bash" title="Start Supabase" />
+    ```bash
+    supabase start
+    supabase db reset  # applies all 80+ migrations
+    ```
 
     This creates all tables including `entity_nodes`, `entity_edges`, `event_tuples`, `memory_palace_entries`, and the full application schema.
   </Step>
   <Step title="Start the dev server">
-    <CodeBlockCommand
-      pnpm="pnpm dev"
-      npm="npm run dev"
-      yarn="yarn dev"
-      bun="bun dev"
-    />
+    ```bash
+    pnpm dev
+    ```
 
     The app runs at `http://localhost:3000`. The chat endpoint is at `/api/agent/chat`.
   </Step>
@@ -74,44 +66,24 @@ supabase db reset  # applies all 80+ migrations`} language="bash" title="Start S
 
 ## Project Structure
 
-<FileTree
-  tree={[
-    { name: "personal-assistant", children: [
-      { name: "src", children: [
-        { name: "app", children: [
-          { name: "api", children: [
-            { name: "agent", children: [{ name: "chat", children: [{ name: "route.ts" }] }] },
-            { name: "cron", children: [{ name: "..." }] },
-          ]},
-          { name: "dashboard", children: [{ name: "page.tsx" }] },
-        ]},
-        { name: "lib", children: [
-          { name: "agent", children: [{ name: "taor-loop.ts" }, { name: "tools" }] },
-          { name: "memory-palace", children: [{ name: "index.ts" }] },
-          { name: "knowledge-graph", children: [{ name: "index.ts" }] },
-          { name: "context-assembly", children: [{ name: "index.ts" }] },
-          { name: "rag", children: [{ name: "index.ts" }] },
-          { name: "proactive", children: [{ name: "index.ts" }] },
-          { name: "channels", children: [{ name: "gmail.ts" }, { name: "outlook.ts" }, { name: "whatsapp.ts" }] },
-        ]},
-        { name: "components", children: [
-          { name: "kanban" },
-          { name: "chat" },
-          { name: "contacts" },
-        ]},
-      ]},
-      { name: "supabase", children: [
-        { name: "migrations", children: [{ name: "..." }] },
-        { name: "seed.sql" },
-      ]},
-      { name: ".planning" },
-      { name: "package.json" },
-      { name: ".env.example" },
-    ]},
-  ]}
-  iconStyle="colored"
-  highlight={["personal-assistant/src/lib/agent/taor-loop.ts"]}
-/>
+```
+personal-assistant/
+  src/
+    app/            Next.js App Router
+    lib/
+      agent/        TAOR loop, tools, routing
+      memory-palace/ Episodic + semantic memory
+      knowledge-graph/ Entity graph (pgvector)
+      context-assembly/ 4-tier context pipeline
+      rag/          Hybrid retrieval
+      proactive/    Signal, Decision, Action
+      channels/     Gmail, Outlook, WhatsApp
+    components/     31 domain-specific dirs
+  supabase/         80+ migrations, seed data
+  .planning/        Architecture and planning docs
+```
+
+
 
 <Tip>
 Components are organized by **feature domain** (e.g., `components/kanban/`, `components/chat/`) rather than atomic design. This keeps related code co-located.

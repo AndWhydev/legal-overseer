@@ -34,16 +34,9 @@ const EXPORT_ENTITIES = ['contacts', 'projects', 'invoices', 'leads', 'agent_run
 // ---------------------------------------------------------------------------
 
 const STATUS_COLORS: Record<string, string> = {
-  healthy: '#22c55e',
-  degraded: '#f59e0b',
-  down: '#ef4444',
-};
-
-const glassCard: React.CSSProperties = {
-  background: 'var(--card)',
-  border: '1px solid var(--border)',
-  boxShadow: 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.3))',
-  borderRadius: 16,
+  healthy: 'var(--success)',
+  degraded: 'var(--warning, #f59e0b)',
+  down: 'var(--destructive)',
 };
 
 async function getToken(client: SupabaseClient): Promise<string | null> {
@@ -188,7 +181,7 @@ export default function AdminTab() {
       <div className="mx-auto flex max-w-[900px] flex-col gap-6 p-6">
 
       {/* System Health */}
-      <div style={glassCard}>
+      <div className="bg-card border border-border shadow-md rounded-xl">
         <div className="border-b border-white/[0.03] px-5 py-4">
           <div className="flex items-center justify-between text-base font-medium text-foreground">
             <span>System Health</span>
@@ -228,7 +221,7 @@ export default function AdminTab() {
       </div>
 
       {/* Import */}
-      <div style={glassCard}>
+      <div className="bg-card border border-border shadow-md rounded-xl">
         <div className="border-b border-white/[0.03] px-5 py-4">
           <div className="text-base font-medium text-foreground">Import Data</div>
         </div>
@@ -276,7 +269,7 @@ export default function AdminTab() {
       </div>
 
       {/* Export */}
-      <div style={glassCard}>
+      <div className="bg-card border border-border shadow-md rounded-xl">
         <div className="border-b border-white/[0.03] px-5 py-4">
           <div className="text-base font-medium text-foreground">Export Data</div>
         </div>

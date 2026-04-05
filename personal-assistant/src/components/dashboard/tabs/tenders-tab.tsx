@@ -235,30 +235,30 @@ function TendersTab() {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-5">
           {pipelineGroups.map((stage) => (
             <div key={stage.key} className="flex flex-col gap-3">
-              <div className="flex items-center justify-between rounded-lg bg-muted/50 px-4 py-2.5">
+              <div className="flex items-center justify-between rounded-lg bg-muted px-4 py-2.5">
                 <span className="text-sm font-medium text-foreground">{stage.label}</span>
-                <Badge variant="secondary" className="text-xs">{stage.tenders.length}</Badge>
+                <Badge variant="secondary" className="text-sm">{stage.tenders.length}</Badge>
               </div>
 
               <div className="flex flex-col gap-2">
                 {stage.tenders.slice(0, 5).map((tender) => (
                   <Card
                     key={tender.id}
-                    className="cursor-pointer py-3 transition-colors hover:bg-muted/30"
+                    className="cursor-pointer py-3 transition-colors hover:bg-muted"
                     onClick={() => setSelectedTender(tender)}
                   >
                     <CardContent className="flex flex-col gap-2 px-4">
                       <p className="text-sm font-medium leading-snug text-foreground">
                         {tender.title}
                       </p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <span>{sourceLabel(tender.source)}</span>
                         {tender.value && (
                           <span className="font-mono font-medium">{formatMoney(tender.value)}</span>
                         )}
                       </div>
                       {tender.fit_score !== null && (
-                        <Badge variant={fitScoreBadgeVariant(tender.fit_score)} className="w-fit text-xs">
+                        <Badge variant={fitScoreBadgeVariant(tender.fit_score)} className="w-fit text-sm">
                           Fit: {tender.fit_score}%
                         </Badge>
                       )}
@@ -267,7 +267,7 @@ function TendersTab() {
                 ))}
 
                 {stage.tenders.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-border p-5 text-center text-xs text-muted-foreground">
+                  <div className="rounded-lg border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
                     No tenders
                   </div>
                 )}
@@ -301,7 +301,7 @@ function TendersTab() {
                   >
                     <TableCell>
                       <p className="font-medium text-foreground">{tender.title}</p>
-                      <p className="text-xs text-muted-foreground">{tender.tender_number}</p>
+                      <p className="text-sm text-muted-foreground">{tender.tender_number}</p>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {sourceLabel(tender.source)}
@@ -318,11 +318,11 @@ function TendersTab() {
                     </TableCell>
                     <TableCell>
                       {tender.fit_score !== null ? (
-                        <Badge variant={fitScoreBadgeVariant(tender.fit_score)} className="text-xs">
+                        <Badge variant={fitScoreBadgeVariant(tender.fit_score)} className="text-sm">
                           {tender.fit_score}%
                         </Badge>
                       ) : (
-                        <span className="text-xs text-muted-foreground">--</span>
+                        <span className="text-sm text-muted-foreground">--</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -384,20 +384,20 @@ function TendersTab() {
                   <CardContent className="flex flex-col gap-3">
                     {profile.skills.length > 0 && (
                       <div>
-                        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Skills</p>
+                        <p className="mb-2 text-sm font-medium uppercase tracking-wide text-muted-foreground">Skills</p>
                         <div className="flex flex-wrap gap-1.5">
                           {profile.skills.map((skill) => (
-                            <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+                            <Badge key={skill} variant="secondary" className="text-sm">{skill}</Badge>
                           ))}
                         </div>
                       </div>
                     )}
                     {profile.certifications.length > 0 && (
                       <div>
-                        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Certifications</p>
+                        <p className="mb-2 text-sm font-medium uppercase tracking-wide text-muted-foreground">Certifications</p>
                         <div className="flex flex-wrap gap-1.5">
                           {profile.certifications.map((cert) => (
-                            <Badge key={cert} variant="secondary" className="text-xs">{cert}</Badge>
+                            <Badge key={cert} variant="secondary" className="text-sm">{cert}</Badge>
                           ))}
                         </div>
                       </div>
@@ -437,7 +437,7 @@ function TendersTab() {
               <div className="grid grid-cols-3 gap-3 px-4">
                 <Card className="py-3">
                   <CardContent className="px-3 text-center">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Value</p>
+                    <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Value</p>
                     <p className="mt-1 font-mono text-sm font-medium text-foreground">
                       {selectedTender.value ? formatMoney(selectedTender.value) : '--'}
                     </p>
@@ -445,7 +445,7 @@ function TendersTab() {
                 </Card>
                 <Card className="py-3">
                   <CardContent className="px-3 text-center">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Closing</p>
+                    <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Closing</p>
                     <p className="mt-1 text-sm font-medium text-foreground">
                       {selectedTender.deadline ? formatDate(selectedTender.deadline) : '--'}
                     </p>
@@ -453,9 +453,9 @@ function TendersTab() {
                 </Card>
                 <Card className="py-3">
                   <CardContent className="px-3 text-center">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Fit Score</p>
+                    <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Fit Score</p>
                     {selectedTender.fit_score !== null ? (
-                      <Badge variant={fitScoreBadgeVariant(selectedTender.fit_score)} className="mt-1 text-xs">
+                      <Badge variant={fitScoreBadgeVariant(selectedTender.fit_score)} className="mt-1 text-sm">
                         {selectedTender.fit_score}%
                       </Badge>
                     ) : (
@@ -513,7 +513,7 @@ function TendersTab() {
               {/* Response sections */}
               {selectedResponse?.content?.sections && selectedResponse.content.sections.length > 0 && (
                 <div className="flex flex-col gap-3 px-4">
-                  <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Draft Response</h3>
+                  <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Draft Response</h3>
                   {selectedResponse.content.sections.map((section, i) => (
                     <Card key={i} className="py-3">
                       <CardContent className="px-4">
@@ -529,7 +529,7 @@ function TendersTab() {
               {selectedResponse?.content?.compliance_matrix && selectedResponse.content.compliance_matrix.length > 0 && (
                 <div className="flex flex-col gap-3 px-4">
                   <div>
-                    <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Compliance Check</h3>
+                    <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Compliance Check</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Score: <span className="font-mono font-medium text-foreground">{selectedResponse.compliance_score ?? '--'}%</span>
                     </p>

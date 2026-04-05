@@ -279,12 +279,12 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
                     type="button"
                     disabled={connectingId !== null}
                     onClick={() => handleConnect(provider.id)}
-                    className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3 text-left transition-colors hover:bg-accent/50 disabled:opacity-50"
+                    className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent/50 disabled:opacity-50"
                   >
                     <AppIcon id={provider.id} size={36} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium">{provider.label}</div>
-                      <div className="text-xs text-muted-foreground">{provider.sublabel}</div>
+                      <div className="text-sm text-muted-foreground">{provider.sublabel}</div>
                     </div>
                     {connectingId === provider.id && (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
@@ -342,11 +342,11 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
                   transition={{ delay: 0.3 }}
                   className="flex flex-col gap-3"
                 >
-                  <p className="text-xs text-muted-foreground">Connect more sources?</p>
+                  <p className="text-sm text-muted-foreground">Connect more sources?</p>
 
                   {EXTRA_CATEGORIES.map(category => (
                     <div key={category.heading}>
-                      <p className="text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wider mb-1.5">{category.heading}</p>
+                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-1.5">{category.heading}</p>
                       <div className="flex gap-2 flex-wrap">
                         {category.providers.map(provider => (
                           <button
@@ -354,7 +354,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
                             type="button"
                             disabled={connectingId !== null || connectedExtras.has(provider.id)}
                             onClick={() => handleConnect(provider.id, true)}
-                            className="flex items-center gap-2 rounded-lg border border-border/50 bg-card px-3 py-2 text-sm transition-colors hover:bg-accent/50 disabled:opacity-50"
+                            className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm transition-colors hover:bg-accent/50 disabled:opacity-50"
                           >
                             <AppIcon id={provider.id} size={24} />
                             <span>{provider.label}</span>

@@ -31,14 +31,14 @@ export function TodaysPrioritiesWidget() {
           <Empty><EmptyTitle>No high-priority tasks</EmptyTitle><EmptyDescription>Enjoy the calm — nothing urgent right now.</EmptyDescription></Empty>
         ) : (
           priorities.map(task => (
-            <div key={task.id} className="flex items-center gap-3 p-2 rounded-xl bg-muted/50 border border-border">
+            <div key={task.id} className="flex items-center gap-3 p-2 rounded-xl bg-muted border border-border">
               <Badge
                 variant={task.priority === 'critical' ? 'destructive' : 'secondary'}
-                className="text-[10px]"
+                className="text-sm"
               >
                 {task.priority}
               </Badge>
-              <p className="text-xs font-medium truncate flex-1">{task.title}</p>
+              <p className="text-sm font-medium truncate flex-1">{task.title}</p>
             </div>
           ))
         )}

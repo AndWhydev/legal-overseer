@@ -80,13 +80,16 @@ const SNAP = 'cubic-bezier(0.2, 0.9, 0.3, 1)'
 
 const PROGRESS_STEPS = ['Draft', 'Sent', 'Paid'] as const
 
-// ─── Shared Styles ──────────────────────────────────────────────────────────
+// ─── Shared Styles
 
-const glassCard: React.CSSProperties = {
+const solidCard: React.CSSProperties = {
   borderRadius: 12,
-  background: 'var(--card)',
-  overflow: 'hidden',
-}
+  background: "var(--card)",
+  overflow: "hidden",
+};
+// ──────────────────────────────────────────────────────────
+
+
 
 // ─── MD5 (Gravatar) ─────────────────────────────────────────────────────────
 
@@ -520,8 +523,8 @@ function InvoiceDetailPanel({
     <div
       onClick={(e) => e.stopPropagation()}
       style={{
-        borderTop: '1px solid var(--glass-divider)',
-        background: 'var(--glass-card-border)',
+        borderTop: '1px solid var(--border)',
+        background: 'var(--border)',
         padding: '20px 16px',
         display: 'flex',
         flexDirection: 'column',
@@ -602,7 +605,7 @@ function InvoiceDetailPanel({
                   alignItems: 'center',
                   padding: '8px 12px',
                   borderBottom: i < invoice.line_items!.length - 1
-                    ? '1px solid var(--glass-card-border)' : 'none',
+                    ? '1px solid var(--border)' : 'none',
                 }}
               >
                 <div>
@@ -623,8 +626,8 @@ function InvoiceDetailPanel({
               display: 'flex',
               flexDirection: 'column',
               gap: 0,
-              borderTop: '1px solid var(--glass-divider)',
-              background: 'var(--glass-card-border)',
+              borderTop: '1px solid var(--border)',
+              background: 'var(--border)',
             }}>
               {(invoice.subtotal != null || invoice.tax != null) && (
                 <>
@@ -642,7 +645,7 @@ function InvoiceDetailPanel({
                   </div>
                 </>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 12px', fontSize: 14, fontWeight: 500, borderTop: (invoice.subtotal != null || invoice.tax != null) ? '1px solid var(--glass-divider)' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 12px', fontSize: 14, fontWeight: 500, borderTop: (invoice.subtotal != null || invoice.tax != null) ? '1px solid var(--border)' : 'none' }}>
                 <span style={{ color: 'var(--text-dim)' }}>Total</span>
                 <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
                   {formatMoney(invoice.total, invoice.currency)}
@@ -780,7 +783,7 @@ function InvoiceRowContent({
             : hovered
               ? sc.bg
               : 'transparent',
-          borderBottom: expanded ? 'none' : '1px solid var(--glass-card-border)',
+          borderBottom: expanded ? 'none' : '1px solid var(--border)',
           borderLeft: expanded ? `2px solid ${sc.dot}` : '2px solid transparent',
           position: 'relative',
         }}
@@ -919,7 +922,7 @@ function InvoiceSection({
       value={sectionKey}
       className="gap-0 rounded-xl border-0 bg-transparent p-0"
       style={{
-        ...glassCard,
+        ...solidCard,
         animation: `bb-inv-section 160ms ${SPRING} both`,
         animationDelay: `${delay}ms`,
       }}
@@ -1018,7 +1021,7 @@ function ClientGroupSection({
 
   return (
     <div style={{
-      ...glassCard,
+      ...solidCard,
       animation: `bb-inv-section 160ms ${SPRING} both`,
       animationDelay: `${delay}ms`,
     }}>
@@ -1091,7 +1094,7 @@ function DragGhost({ invoice }: { invoice: InvoiceRow }) {
       padding: '12px 16px',
       borderRadius: 12,
       background: 'var(--popover)',
-      boxShadow: 'var(--card-shadow-hover), 0 0 0 1px var(--glass-card-border)',
+      boxShadow: 'var(--card-shadow-hover), 0 0 0 1px var(--border)',
       transform: 'rotate(1.5deg) scale(1.02)',
       maxWidth: 320,
       pointerEvents: 'none',
@@ -1134,7 +1137,7 @@ function InvoiceSkeleton() {
       `}</style>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[0, 1, 2, 3].map(i => (
-          <div key={i} style={{ ...glassCard, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div key={i} style={{ ...solidCard, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ ...shimmer, width: 60, height: 10, animationDelay: `${i * 80}ms` }} />
             <div style={{ ...shimmer, width: 100, height: 24, animationDelay: `${i * 80 + 40}ms` }} />
           </div>
@@ -1142,7 +1145,7 @@ function InvoiceSkeleton() {
       </div>
       <div style={{ ...shimmer, height: 40, borderRadius: 12 }} />
       {[0, 1, 2].map(s => (
-        <div key={s} style={{ ...glassCard, padding: 0 }}>
+        <div key={s} style={{ ...solidCard, padding: 0 }}>
           <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ ...shimmer, width: 80, height: 12, animationDelay: `${s * 60}ms` }} />
             <div style={{ ...shimmer, width: 20, height: 12, animationDelay: `${s * 60 + 30}ms` }} />
@@ -1150,7 +1153,7 @@ function InvoiceSkeleton() {
           {[0, 1].map(r => (
             <div key={r} style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-              borderTop: '1px solid var(--glass-card-border)',
+              borderTop: '1px solid var(--border)',
             }}>
               <div style={{ ...shimmer, width: 36, height: 36, borderRadius: 12, animationDelay: `${s * 60 + r * 40}ms` }} />
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1426,7 +1429,7 @@ export function InvoiceList() {
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
             />
             <input
-              className="bb-glass-input"
+              className="bb-solid-input"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search invoices..."

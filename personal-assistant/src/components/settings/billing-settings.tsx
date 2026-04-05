@@ -193,7 +193,7 @@ export function BillingSettings() {
             <IconAlertTriangle className="size-5 shrink-0 text-destructive" />
             <div className="flex-1">
               <p className="text-sm font-medium text-destructive">Payment past due</p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Last payment failed. Update the payment method to avoid service interruption.
               </p>
             </div>
@@ -292,7 +292,7 @@ export function BillingSettings() {
           />
 
           {usage?.estimatedCostUSD != null && usage.estimatedCostUSD > 0 && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Estimated AI cost this period: ${usage.estimatedCostUSD.toFixed(2)} USD
             </p>
           )}

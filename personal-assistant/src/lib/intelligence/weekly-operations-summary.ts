@@ -98,7 +98,7 @@ export async function generateWeeklyOperationsSummary(
   const concerns: string[] = []
 
   if (actCount > 0) highlights.push(`${actCount} actions executed autonomously`)
-  if (invoices.paid > 0) highlights.push(`${invoices.paid} invoices paid ($${invoices.totalReceived.toFixed(0)})`)
+  if (invoices.invoicesPaid > 0) highlights.push(`${invoices.invoicesPaid} invoices paid ($${invoices.totalReceived.toFixed(0)})`)
   if (projects.some(p => p.phasesCompleted.length > 0)) {
     highlights.push('Project phases completed: ' + projects.flatMap(p => p.phasesCompleted).join(', '))
   }

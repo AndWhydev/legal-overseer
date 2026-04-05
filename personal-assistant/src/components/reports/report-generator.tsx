@@ -100,7 +100,7 @@ export function ReportGenerator({ onGenerateStart, onGenerateComplete }: ReportG
         <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
           {/* Report Type Selector */}
           <div>
-            <label htmlFor="report-type" className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
+            <label htmlFor="report-type" className="block text-sm font-medium text-muted-foreground mb-1.5 uppercase">
               Report Type
             </label>
             <Select value={reportType} onValueChange={(v) => setReportType(v as ReportType)}>
@@ -115,7 +115,7 @@ export function ReportGenerator({ onGenerateStart, onGenerateComplete }: ReportG
 
           {/* Period Selector */}
           <div>
-            <label htmlFor="period" className="block text-xs font-medium text-muted-foreground mb-1.5 uppercase">
+            <label htmlFor="period" className="block text-sm font-medium text-muted-foreground mb-1.5 uppercase">
               Period
             </label>
             <Select value={String(periodIndex)} onValueChange={(v) => setPeriodIndex(Number(v))}>

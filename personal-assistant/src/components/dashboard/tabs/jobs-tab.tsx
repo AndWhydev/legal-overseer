@@ -35,7 +35,7 @@ function statusLabel(s: string): string {
 
 function statusBadgeClass(s: string): string {
   switch (s) {
-    case 'quoted': return 'bg-slate-500/15 text-slate-300 border-transparent hover:bg-slate-500/20'
+    case 'quoted': return 'bg-muted text-muted-foreground border-transparent hover:bg-muted'
     case 'booked': return 'bg-blue-500/15 text-blue-300 border-transparent hover:bg-blue-500/20'
     case 'in-progress': return 'bg-amber-500/15 text-amber-300 border-transparent hover:bg-amber-500/20'
     case 'complete': return 'bg-emerald-500/15 text-emerald-300 border-transparent hover:bg-emerald-500/20'
@@ -46,25 +46,25 @@ function statusBadgeClass(s: string): string {
 
 function JobCard({ job }: { job: Job }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-3 hover:bg-muted/50 transition-colors">
+    <div className="rounded-lg border border-border bg-card p-3 hover:bg-muted transition-colors">
       <p className="font-medium text-sm truncate">{job.title}</p>
       {job.contact?.name && (
-        <p className="text-xs text-muted-foreground mt-1">{job.contact.name}</p>
+        <p className="text-sm text-muted-foreground mt-1">{job.contact.name}</p>
       )}
       {job.job_type && (
-        <p className="text-xs text-muted-foreground">{job.job_type}</p>
+        <p className="text-sm text-muted-foreground">{job.job_type}</p>
       )}
       {job.address && (
-        <p className="text-xs text-muted-foreground truncate">{job.address}</p>
+        <p className="text-sm text-muted-foreground truncate">{job.address}</p>
       )}
       <div className="flex items-center justify-between mt-2">
         {job.scheduled_at && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {new Date(job.scheduled_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
           </span>
         )}
         {job.value != null && (
-          <span className="text-xs font-medium">
+          <span className="text-sm font-medium">
             ${Number(job.value).toLocaleString('en-AU')}
           </span>
         )}
@@ -117,10 +117,10 @@ function JobsTab() {
           return (
             <div key={status}>
               <div className="flex items-center gap-2 mb-3">
-                <Badge className={`text-xs px-2 py-0.5 ${statusBadgeClass(status)}`}>
+                <Badge className={`text-sm px-2 py-0.5 ${statusBadgeClass(status)}`}>
                   {statusLabel(status)}
                 </Badge>
-                <span className="text-xs text-muted-foreground">{col.length}</span>
+                <span className="text-sm text-muted-foreground">{col.length}</span>
               </div>
               <div className="flex flex-col gap-2">
                 {col.map((job) => (

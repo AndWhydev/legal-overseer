@@ -9,7 +9,7 @@ The Context Assembler (`src/lib/context-assembly/context-assembler.ts`) builds a
 
 ## Token Budget
 
-The total context budget is **48,000 tokens**, managed by the `TokenBudgetManager`. Each tier receives a portion of the budget based on priority.
+The total context budget is **48,000 tokens**, managed by the `TokenBudgetManager`. Each tier receives a portion of the budget based on priority:
 
 | Tier | Content | Budget Share | Fallback |
 |------|---------|-------------|----------|
@@ -22,14 +22,14 @@ The total context budget is **48,000 tokens**, managed by the `TokenBudgetManage
 
 ## Assembly Pipeline
 
-The assembler runs these operations in parallel.
+The assembler runs these operations in parallel:
 
-1. **Entity mention scanning** detects contact and project names in the user message.
-2. **Session history loading** pulls recent messages and thread summaries.
-3. **Proactive recall** runs graph-aware memory retrieval for mentioned entities.
-4. **Predictive context** handles anticipatory loading based on deadlines, recency, and patterns.
-5. **Procedural memory matching** checks trigger patterns against the current message.
-6. **Pending approvals** loads any actions awaiting user confirmation.
+1. **Entity mention scanning**: detects contact/project names in the user message
+2. **Session history loading**: recent messages + thread summaries
+3. **Proactive recall**: graph-aware memory retrieval for mentioned entities
+4. **Predictive context**: anticipatory loading based on deadlines, recency, and patterns
+5. **Procedural memory matching**: checks trigger patterns against the current message
+6. **Pending approvals**: loads any actions awaiting user confirmation
 
 <Note>
 Each fetch is wrapped in a `timedFetch` helper that catches errors and records latency. If any tier fails, the others still contribute their context. The system never fails completely due to a single tier timeout.
@@ -37,11 +37,18 @@ Each fetch is wrapped in a `timedFetch` helper that catches errors and records l
 
 ## System Prompt Construction
 
-The system prompt is built by `buildEntityAwarePrompt()`. It includes base identity and behavioral guidelines, organization-specific settings, entity baseplates (structured snapshots for each mentioned contact), proactive recall results formatted as `<memory-context>` blocks, matched procedural memories as "Known Procedure" sections, and pending action summaries.
+The system prompt is built by `buildEntityAwarePrompt()` which composes:
+
+- Base identity and behavioral guidelines
+- Organization-specific settings and preferences
+- Entity baseplates: structured snapshots for each mentioned contact
+- Proactive recall results formatted as `<memory-context>` blocks
+- Matched procedural memories as "Known Procedure" sections
+- Pending action summaries
 
 ## Token Budget Manager
 
-The `TokenBudgetManager` tracks allocation across tiers.
+The `TokenBudgetManager` tracks allocation across tiers:
 
 ```typescript
 interface TokenAllocation {
@@ -56,7 +63,7 @@ Each tier reports its actual token usage after assembly. The manager ensures no 
 
 ## Configuration
 
-Default settings (overridable per-request).
+Default settings (overridable per-request):
 
 ```typescript
 {

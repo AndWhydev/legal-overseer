@@ -90,7 +90,7 @@ export function InboxDrawerIdentity({ message, channelFamily, onClose }: Identit
           {senderDisplay}
         </div>
         {subtitle && (
-          <div className="text-xs text-sidebar-foreground/40 truncate mt-0.5">
+          <div className="text-sm text-sidebar-foreground/40 truncate mt-0.5">
             {subtitle}
           </div>
         )}
@@ -98,7 +98,7 @@ export function InboxDrawerIdentity({ message, channelFamily, onClose }: Identit
 
       {/* Time + close */}
       <div className="flex items-center gap-2 shrink-0">
-        <span className="text-xs text-sidebar-foreground/25">
+        <span className="text-sm text-sidebar-foreground/25">
           {formatTimeAgo(message.receivedAt)}
         </span>
         <Button

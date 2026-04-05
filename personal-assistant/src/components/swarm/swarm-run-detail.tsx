@@ -66,8 +66,8 @@ const messageBgColors: Record<string, string> = {
   blocker: 'bg-red-500/10',
   completion: 'bg-green-500/10',
   negotiation: 'bg-purple-500/[0.06]',
-  status: 'bg-muted/50',
-  handoff: 'bg-muted/50',
+  status: 'bg-muted',
+  handoff: 'bg-muted',
 };
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -153,23 +153,23 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
           </div>
           <div className="text-sm text-muted-foreground mt-1">{run.trigger_input}</div>
           <div className="flex gap-4 flex-wrap mt-1.5">
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{run.status.replace('_', ' ')}</span>
-            {durationLabel && <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{durationLabel}</span>}
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">{steps.length} steps</span>
+            <span className="px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground">{run.status.replace('_', ' ')}</span>
+            {durationLabel && <span className="px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground">{durationLabel}</span>}
+            <span className="px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground">{steps.length} steps</span>
           </div>
           <button
             onClick={() => setShowDetails(d => !d)}
-            className="mt-2 px-3 py-1 rounded-lg text-xs font-medium bg-muted text-muted-foreground border-none cursor-pointer transition-colors hover:text-foreground"
+            className="mt-2 px-3 py-1 rounded-lg text-sm font-medium bg-muted text-muted-foreground border-none cursor-pointer transition-colors hover:text-foreground"
           >
             {showDetails ? 'Hide details' : 'Show details'}
           </button>
           {showDetails && (
             <div className="flex gap-4 flex-wrap mt-2">
               {run.total_cost > 0 && (
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">${run.total_cost.toFixed(4)}</span>
+                <span className="px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground">${run.total_cost.toFixed(4)}</span>
               )}
               {run.total_tokens_in + run.total_tokens_out > 0 && (
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                <span className="px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground">
                   {((run.total_tokens_in + run.total_tokens_out) / 1000).toFixed(1)}k tokens
                 </span>
               )}
@@ -189,7 +189,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
       {/* Execution Timeline */}
       {showDetails && (
         <div>
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">Execution Timeline</div>
+          <div className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-2">Execution Timeline</div>
           <div className="flex flex-col gap-0.5 relative">
             {steps.map(step => (
               <div
@@ -204,7 +204,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
                     </span>
                     <span className="text-sm font-medium text-foreground">{step.step_key.replace(/_/g, ' ')}</span>
                     {step.agent_role && (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">
+                      <span className="text-sm font-medium px-2 py-0.5 rounded-lg bg-muted text-muted-foreground">
                         {ROLE_LABELS[step.agent_role] || step.agent_role}
                       </span>
                     )}
@@ -212,7 +212,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
                   <span className={`text-sm font-medium ${statusTextColors[step.status] || 'text-muted-foreground'}`}>{step.status}</span>
                 </div>
 
-                <div className="flex gap-3 mt-1.5 text-xs text-muted-foreground">
+                <div className="flex gap-3 mt-1.5 text-sm text-muted-foreground">
                   {step.duration_ms != null && step.duration_ms > 0 && (
                     <span>{step.duration_ms < 1000 ? `${step.duration_ms}ms` : `${(step.duration_ms / 1000).toFixed(1)}s`}</span>
                   )}
@@ -231,14 +231,14 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
 
                 {/* Expanded output */}
                 {expandedStep === step.step_key && step.output_data && (
-                  <div className="mt-2 p-2 rounded-lg bg-muted/50 text-xs font-mono text-muted-foreground max-h-[120px] overflow-auto whitespace-pre-wrap break-words">
+                  <div className="mt-2 p-2 rounded-lg bg-muted text-sm font-mono text-muted-foreground max-h-[120px] overflow-auto whitespace-pre-wrap break-words">
                     {JSON.stringify(step.output_data, null, 2)}
                   </div>
                 )}
 
                 {/* Negotiation display */}
                 {step.negotiation && (
-                  <div className="mt-2 p-2 rounded-lg bg-muted/50 text-xs font-mono text-muted-foreground max-h-[120px] overflow-auto whitespace-pre-wrap break-words border-l-2 border-l-purple-500/30">
+                  <div className="mt-2 p-2 rounded-lg bg-muted text-sm font-mono text-muted-foreground max-h-[120px] overflow-auto whitespace-pre-wrap break-words border-l-2 border-l-purple-500/30">
                     <div className="text-purple-500 mb-1 font-medium font-sans">
                       Agent Pushback
                     </div>
@@ -254,19 +254,19 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
       {/* Inter-Agent Messages */}
       {filteredMessages.length > 0 && (
         <div>
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">Agent Communications ({filteredMessages.length})</div>
+          <div className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-2">Agent Communications ({filteredMessages.length})</div>
           <div className="flex flex-col gap-1.5">
             {filteredMessages.map(msg => (
-              <div key={msg.id} className={`p-2 rounded-lg text-sm text-muted-foreground ${messageBgColors[msg.message_type] || 'bg-muted/50'}`}>
+              <div key={msg.id} className={`p-2 rounded-lg text-sm text-muted-foreground ${messageBgColors[msg.message_type] || 'bg-muted'}`}>
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                     {msg.from_step_key.replace(/_/g, ' ')}
                   </span>
-                  <span className={`text-xs font-medium uppercase ${messageTypeColors[msg.message_type] || 'text-muted-foreground'}`}>
+                  <span className={`text-sm font-medium uppercase ${messageTypeColors[msg.message_type] || 'text-muted-foreground'}`}>
                     {msg.message_type}
                   </span>
                   {msg.to_step_key && (
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                       &rarr; {msg.to_step_key.replace(/_/g, ' ')}
                     </span>
                   )}
@@ -281,7 +281,7 @@ export function SwarmRunDetail({ runId, onBack, onRollback }: SwarmRunDetailProp
       {/* Result Summary */}
       {run.result_summary && (
         <div>
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">Result Summary</div>
+          <div className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-2">Result Summary</div>
           <div className="p-3 rounded-xl bg-card text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
             {run.result_summary}
           </div>

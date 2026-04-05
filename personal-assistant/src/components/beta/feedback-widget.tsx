@@ -133,7 +133,7 @@ export function FeedbackWidget({ onClose }: FeedbackWidgetProps) {
         <>
           {/* Categories */}
           <div>
-            <label className="mb-2 block text-xs font-medium text-muted-foreground">
+            <label className="mb-2 block text-sm font-medium text-muted-foreground">
               Category
             </label>
             <div className="flex flex-wrap gap-2">
@@ -152,7 +152,7 @@ export function FeedbackWidget({ onClose }: FeedbackWidgetProps) {
 
           {/* Message */}
           <div>
-            <label className="mb-2 block text-xs font-medium text-muted-foreground">
+            <label className="mb-2 block text-sm font-medium text-muted-foreground">
               What&apos;s on your mind?
             </label>
             <Textarea
@@ -163,7 +163,7 @@ export function FeedbackWidget({ onClose }: FeedbackWidgetProps) {
               className="min-h-[100px]"
               maxLength={5000}
             />
-            <div className="mt-1 text-right text-xs text-muted-foreground">
+            <div className="mt-1 text-right text-sm text-muted-foreground">
               {message.length}/5000
             </div>
           </div>
@@ -200,7 +200,7 @@ export function FeedbackWidget({ onClose }: FeedbackWidgetProps) {
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            <div className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
             </div>
           )}

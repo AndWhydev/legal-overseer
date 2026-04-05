@@ -47,7 +47,7 @@ function RadialGoal({ label, value, fill, description }: { label: string; value:
         </RadialBarChart>
       </ChartContainer>
       <span className="text-sm font-medium">{label}</span>
-      <span className="text-xs text-muted-foreground">{description}</span>
+      <span className="text-sm text-muted-foreground">{description}</span>
     </div>
   )
 }

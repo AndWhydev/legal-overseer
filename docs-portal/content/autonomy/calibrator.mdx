@@ -9,6 +9,16 @@ The Confidence Calibrator (`src/lib/intelligence/confidence-calibrator.ts`) runs
 
 ## How It Works
 
+<Mermaid chart={`flowchart LR
+    A[Tool Outcome] --> B[Record in\naction_outcomes]
+    B --> C[Nightly\nAnalysis]
+    C -->|20+ samples| D[Calculate\nBand Rates]
+    D --> E[New\nThresholds]
+    E --> F[Confidence\nRouter]
+    F --> A
+    C -->|insufficient| G[Keep Static\nThresholds]
+    G --> F`} caption="Calibration feedback loop: outcomes drive nightly threshold adjustment" />
+
 The calibrator analyzes the `action_outcomes` table, which records every agent action along with whether it was approved and whether it was correct:
 
 ```typescript
@@ -57,7 +67,7 @@ These rails ensure that even with skewed training data, the system cannot become
 
 ## Graduation Mechanism
 
-The calibrator also handles tool graduation, promoting tools from L2 (Propose) to L3 (Notify).
+The calibrator also handles tool graduation, promoting tools from L2 (Propose) to L3 (Notify):
 
 **Criteria:**
 - 20+ approved outcomes in the last 30 days
@@ -69,7 +79,7 @@ The calibrator also handles tool graduation, promoting tools from L2 (Propose) t
 2. Qualifying tools get promoted via `organisations.settings.autonomy_overrides`
 3. `getAutonomyLevel()` checks org overrides, so promotion takes effect immediately
 
-- **Safety cap:** Tools can only graduate to L3 (Act + Notify), never L4 (Silent). External communications always produce a notification.
+**Safety cap:** Tools can only graduate to L3 (Act + Notify), never L4 (Silent). External communications always produce a notification.
 
 <Note>
 Seeded data (used during development) is excluded from graduation calculations via the `threshold_source` field. Only organic outcomes from real tool executions count toward graduation.

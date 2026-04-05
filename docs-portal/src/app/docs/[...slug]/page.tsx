@@ -3,8 +3,6 @@ import rehypePrettyCode from "rehype-pretty-code"
 import { notFound } from "next/navigation"
 import { compileMDX } from "next-mdx-remote/rsc"
 import { getDocBySlug, getAllDocSlugs, extractHeadings } from "@/lib/mdx"
-import { Header } from "@/components/layout/header"
-import { Sidebar } from "@/components/layout/sidebar"
 import { TableOfContents } from "@/components/layout/toc"
 import { PrevNext } from "@/components/layout/prev-next"
 import { SectionLabel } from "@/components/layout/section-label"
@@ -97,27 +95,24 @@ export default async function DocPage({
   }
 
   return (
-    <>
-      <Header />
-      <div className="docs-layout" style={{ display: "flex", minHeight: "calc(100vh - 104px)" }}>
-        <Sidebar navigation={navigation} />
-        <main
-          style={{
-            flex: 1,
-            maxWidth: "640px",
-            marginLeft: "auto",
-            marginRight: "auto",
-            padding: "32px 24px",
-            minWidth: 0,
-          }}
-        >
+    <div style={{ display: "flex" }}>
+      <main
+        style={{
+          flex: 1,
+          maxWidth: "768px",
+          marginLeft: "auto",
+          marginRight: "auto",
+          padding: "24px 32px",
+          minWidth: 0,
+        }}
+      >
           {sectionTitle && <SectionLabel label={sectionTitle} />}
           {doc.frontmatter.description && (
             <p
               style={{
-                fontSize: "16px",
-                lineHeight: "26.4px",
-                color: "var(--text-body)",
+                fontSize: "17px",
+                lineHeight: "28px",
+                color: "#6b7280",
                 marginBottom: "32px",
               }}
             >
@@ -127,9 +122,8 @@ export default async function DocPage({
           <div className="mdx-content">{mdxContent}</div>
           <PrevNext />
         </main>
-        <TableOfContents headings={headings} />
-      </div>
-    </>
+      <TableOfContents headings={headings} />
+    </div>
   )
 }
 

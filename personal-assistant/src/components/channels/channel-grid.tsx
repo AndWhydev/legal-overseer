@@ -55,15 +55,15 @@ function ChannelSkeleton() {
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-secondary" />
           <div>
-            <div className="h-4 w-20 rounded bg-secondary" />
-            <div className="mt-1.5 h-3 w-32 rounded bg-secondary/60" />
+            <div className="h-4 w-20 rounded-lg bg-secondary" />
+            <div className="mt-1.5 h-3 w-32 rounded-lg bg-secondary" />
           </div>
         </div>
         <div className="h-5 w-16 rounded-full bg-secondary" />
       </div>
-      <div className="mt-4 h-10 rounded-lg bg-secondary/30" />
+      <div className="mt-4 h-10 rounded-lg bg-secondary" />
       <div className="mt-4 flex items-center justify-between">
-        <div className="h-3 w-16 rounded bg-secondary/40" />
+        <div className="h-3 w-16 rounded-lg bg-secondary" />
         <div className="h-7 w-20 rounded-lg bg-secondary" />
       </div>
     </div>
@@ -290,7 +290,7 @@ export function ChannelGrid() {
     return (
       <div>
         <div className="mb-6 flex items-center justify-between">
-          <div className="h-4 w-40 animate-pulse rounded bg-secondary" />
+          <div className="h-4 w-40 animate-pulse rounded-lg bg-secondary" />
           <div className="h-9 w-36 animate-pulse rounded-lg bg-secondary" />
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

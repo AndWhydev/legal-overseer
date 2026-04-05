@@ -1,23 +1,23 @@
 /* ============================================================================
-   BitBit Midnight Theme — Deep Dark
-   Ultra-dark navy backgrounds, light text, glassmorphism
+   BitBit Midnight Theme — Deep Dark Solid Surfaces
+   Ultra-dark backgrounds, light text, solid opaque surfaces
    ============================================================================ */
 
 [data-theme="midnight"] {
   /* ── Core Backgrounds ── */
   --bg-primary: #0A0A0B;
   --bg-secondary: #141416;
-  --bg-card: rgba(24, 24, 27, 0.92);
-  --bg-card-alpha: rgba(24, 24, 27, 0.92);
+  --bg-card: #18181b;
+  --bg-card-alpha: #18181b;
   --bg-sidebar: #0A0A0B;
   --bg-elevated: #18181B;
-  --bg-input: rgba(24, 24, 27, 0.94);
+  --bg-input: #1c1c1f;
   --bg-overlay: rgba(0, 0, 0, 0.7);
 
   /* ── Surfaces ── */
-  --bb-surface: rgba(24, 24, 27, 0.9);
-  --bb-surface-hover: rgba(39, 39, 42, 0.96);
-  --bb-surface-active: rgba(63, 63, 70, 0.98);
+  --bb-surface: #18181b;
+  --bb-surface-hover: #27272a;
+  --bb-surface-active: #3f3f46;
 
   /* ── Special Chat Surface Tokens ── */
   --chat-surface-bg: var(--card);
@@ -29,35 +29,25 @@
   --text-dim: #9a9a9a;
   --text-on-accent: var(--bb-white);
 
-  --background: #0A0A0B;
+  --background: #1a1a1a;
   --foreground: #FAFAFA;
 
-  /* ── Glassmorphism ── */
-  --glass-card-bg: rgba(43, 43, 43, 0.92);
-  --glass-card-bg-light: rgba(49, 49, 49, 0.88);
-  --glass-card-border: rgba(255, 255, 255, 0.03);
-  --glass-card-blur: blur(10px);
-  --glass-hover-bg: rgba(255, 255, 255, 0.08);
-  --glass-divider: rgba(255, 255, 255, 0.04);
-  --glass-interactive-bg: rgba(255, 255, 255, 0.04);
-  --glass-interactive-border: rgba(255, 255, 255, 0.04);
-
-  /* ── Borders (nearly invisible) ── */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-subtle-alpha: rgba(255, 255, 255, 0.12);
+  /* ── Borders ── */
+  --border-subtle: #333333;
+  --border-subtle-alpha: #3a3a3a;
   --border-active: var(--bb-white);
-  --border-focus-ring: rgba(218, 218, 218, 0.22);
+  --border-focus-ring: #52525b;
 
   /* ── Card Shadows ── */
-  --card-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
-  --card-shadow-hover: 0 18px 38px rgba(0, 0, 0, 0.28);
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.4);
 
   /* ── Hover States ── */
-  --hover-bg: rgba(255, 255, 255, 0.08);
-  --hover-bg-strong: rgba(255, 255, 255, 0.12);
+  --hover-bg: #2d2d2d;
+  --hover-bg-strong: #353535;
 
-  /* ── Card variant (more opaque glass) ── */
-  --bg-card-solid: #2f2f2f;
+  /* ── Card variant ── */
+  --bg-card-solid: #242424;
 
   /* ── Accent (monochrome) ── */
   --bb-orange: #94A3B8;
@@ -96,29 +86,29 @@
   --ai-gradient-glow: 0 4px 20px rgba(34, 197, 94, 0.15), 0 4px 20px rgba(239, 68, 68, 0.1);
 
   /* ── Tailwind/shadcn token overrides ── */
-  --background: #242424;
+  --background: #1a1a1a;
   --foreground: var(--bb-white);
-  --card: #2b2b2b;
+  --card: #242424;
   --card-foreground: var(--bb-white);
-  --popover: #2b2b2b;
+  --popover: #242424;
   --popover-foreground: var(--bb-white);
-  --elevated: #2f2f2f;
+  --elevated: #2e2e2e;
   --primary: var(--bb-white);
   --primary-foreground: #242424;
   --primary-hover: #efefef;
   --primary-light: #f5f5f5;
-  --secondary: #313131;
+  --secondary: #2d2d2d;
   --secondary-foreground: var(--bb-white);
-  --muted: #2b2b2b;
+  --muted: #242424;
   --muted-foreground: #9a9a9a;
-  --accent: #313131;
+  --accent: #2d2d2d;
   --accent-foreground: var(--bb-white);
   --destructive: #C47070;
   --success: #7CAA85;
   --warning: #F59E0B;
-  --border: #3a3a3a;
-  --border-hover: #4a4a4a;
-  --input: #313131;
+  --border: #404040;
+  --border-hover: #555555;
+  --input: #2d2d2d;
   --ring: var(--bb-white);
   --text-muted: #9a9a9a;
 
@@ -130,13 +120,13 @@
   --chart-5: #C47070;
 
   /* Sidebar */
-  --sidebar: #202020;
+  --sidebar: #151515;
   --sidebar-foreground: var(--bb-white);
-  --sidebar-primary: #313131;
+  --sidebar-primary: #2d2d2d;
   --sidebar-primary-foreground: var(--bb-white);
-  --sidebar-accent: #2b2b2b;
+  --sidebar-accent: #222222;
   --sidebar-accent-foreground: var(--bb-white);
-  --sidebar-border: #1F1F22;
+  --sidebar-border: #2a2a2a;
   --sidebar-ring: #FF5A1F;
 
   color-scheme: dark;
@@ -153,28 +143,28 @@
 }
 
 /* --------------------------------------------------------------------------
-   Midnight: Glass Card Overrides
+   Midnight: Solid Card Overrides
    -------------------------------------------------------------------------- */
 
 [data-theme="midnight"] .bb-card {
-  background: rgba(15, 20, 30, 0.6) !important;
-  backdrop-filter: blur(20px) saturate(1.2) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
+  background: #1a1a1d !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border: none !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3) !important;
   background-image: none !important;
 }
 
 [data-theme="midnight"] .bb-card:hover {
-  background: rgba(15, 20, 30, 0.75) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  background: #1e1e22 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 20px 60px rgba(0, 0, 0, 0.4) !important;
 }
 
-[data-theme="midnight"] .glass-card {
-  background: rgba(17, 17, 19, 0.7) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(31, 31, 34, 0.6) !important;
+[data-theme="midnight"] .surface-card {
+  background: #151517 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid #27272a !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -185,14 +175,14 @@
   background: #202020 !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.03) !important;
+  border-right: 1px solid #27272a !important;
 }
 
 [data-theme="midnight"] .bb-sidebar-panel {
-  background: rgba(32, 32, 32, 0.94) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.03) !important;
+  background: #202020 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-right: 1px solid #27272a !important;
 }
 
 [data-theme="midnight"] .bb-sidebar-rail__icon {
@@ -201,11 +191,11 @@
 
 [data-theme="midnight"] .bb-sidebar-rail__icon--active {
   color: var(--text-primary) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: #27272a !important;
 }
 
 [data-theme="midnight"] .bb-sidebar-rail__icon:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: #27272a !important;
   color: var(--text-primary) !important;
 }
 
@@ -214,20 +204,20 @@
 }
 
 [data-theme="midnight"] .bb-sidebar-panel__item:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: #27272a !important;
   color: var(--text-primary) !important;
 }
 
 [data-theme="midnight"] .bb-sidebar-panel__item--active {
   color: var(--text-primary) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: #27272a !important;
   font-weight: 600;
 }
 
-[data-theme="midnight"] .glass-sidebar {
-  background: rgba(32, 32, 32, 0.94) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
+[data-theme="midnight"] .surface-sidebar {
+  background: #202020 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -235,10 +225,10 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="midnight"] .bb-topbar-area {
-  background: rgba(36, 36, 36, 0.9) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: #242424 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid #27272a !important;
 }
 
 [data-theme="midnight"] .bb-topbar {
@@ -258,16 +248,16 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="midnight"] .bb-btn--ghost {
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: #1c1c1f !important;
   border: none !important;
   color: var(--text-primary) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 [data-theme="midnight"] .bb-btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #27272a !important;
+  border-color: #27272a !important;
 }
 
 [data-theme="midnight"] .bb-btn--accent {
@@ -280,7 +270,7 @@
 }
 
 [data-theme="midnight"] .bb-btn--icon:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: #27272a !important;
   color: var(--text-primary) !important;
 }
 
@@ -329,7 +319,7 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="midnight"] ::selection {
-  background: rgba(218, 218, 218, 0.22);
+  background: #3f3f46;
   color: #f3f3f3;
 }
 
@@ -339,9 +329,9 @@
 
 [data-theme="midnight"] .bb-sidebar-area {
   background: #242424 !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-top: 1px solid #27272a !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -360,9 +350,9 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="midnight"] .bb-notification-panel {
-  background: rgba(43, 43, 43, 0.94) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+  background: #2b2b2b !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border: none !important;
 }
 
@@ -371,19 +361,19 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="midnight"] .bb-kanban-column {
-  background: rgba(20, 28, 40, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  background: #141416 !important;
+  border: 1px solid #27272a !important;
 }
 
 [data-theme="midnight"] .bb-kanban-card {
-  background: rgba(20, 28, 40, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  background: #1a1a1d !important;
+  border: 1px solid #27272a !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
 [data-theme="midnight"] .bb-kanban-card:hover {
-  background: rgba(20, 28, 40, 0.8) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  background: #1e1e22 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -431,17 +421,16 @@
    Midnight: Override inline-style RGBA via attribute selectors
    -------------------------------------------------------------------------- */
 
-/* Ensure glassmorphic cards render properly */
 [data-theme="midnight"] [style*="rgba(15, 20, 30"] {
   background: var(--bg-card) !important;
-  backdrop-filter: blur(20px) saturate(1.2) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 [data-theme="midnight"] [style*="rgba(10, 14, 23"] {
   background: var(--bb-surface) !important;
-  backdrop-filter: blur(20px) saturate(1.2) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 [data-theme="midnight"] [style*="rgba(13, 17, 23"] {
@@ -469,9 +458,9 @@
 }
 
 [data-theme="midnight"] .bb-global-search-dialog {
-  background: rgba(15, 20, 30, 0.8) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
+  background: #1a1a1d !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border: none !important;
 }
 
@@ -480,9 +469,9 @@
    -------------------------------------------------------------------------- */
 
 [data-theme="midnight"] .bb-dev-toolbar {
-  background: rgba(20, 28, 40, 0.8) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
+  background: #1a1a1d !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   border: none !important;
   color: #F5F0E8 !important;
 }
@@ -498,8 +487,7 @@
   --bg-primary: #242424;
   --bg-card: #313131;
   --bg-card-solid: #313131;
-  --glass-card-blur: none;
-  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-subtle: #27272a;
 }
 
 [data-theme="midnight"] .bb-chat__bubble--assistant,

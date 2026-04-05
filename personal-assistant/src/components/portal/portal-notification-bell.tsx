@@ -66,7 +66,7 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
             if (unreadIds.length > 0) markRead(unreadIds)
           }
         }}
-        className="relative cursor-pointer border-none bg-transparent p-2 text-gray-500 transition-colors"
+        className="relative cursor-pointer border-none bg-transparent p-2 text-muted-foreground transition-colors"
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -75,7 +75,7 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
         </svg>
         {unreadCount > 0 && (
           <span
-            className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full text-xs font-medium leading-none text-white"
+            className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full text-sm font-medium leading-none text-white"
             style={{ background: primaryColor }}
           >
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -91,26 +91,26 @@ export function PortalNotificationBell({ accessId, primaryColor }: PortalNotific
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-40"
           />
-          <div className="absolute right-0 top-full z-50 mt-2 w-[360px] max-h-[400px] overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
-            <div className="border-b border-gray-100 px-4 py-3 text-sm font-medium text-gray-900">
+          <div className="absolute right-0 top-full z-50 mt-2 w-[360px] max-h-[400px] overflow-y-auto rounded-xl border border-border bg-background shadow-lg">
+            <div className="border-b border-border px-4 py-3 text-sm font-medium text-foreground">
               Notifications
             </div>
             {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-400">
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                 No notifications yet
               </div>
             ) : (
               notifications.slice(0, 20).map(n => (
                 <div
                   key={n.id}
-                  className="border-b border-gray-50 px-4 py-3"
+                  className="border-b border-border px-4 py-3"
                   style={{ background: n.read ? 'transparent' : `${primaryColor}05` }}
                 >
-                  <p className={`text-sm text-gray-900 ${n.read ? '' : 'font-medium'}`}>
+                  <p className={`text-sm text-foreground ${n.read ? '' : 'font-medium'}`}>
                     {n.title}
                   </p>
                   {n.body && (
-                    <p className="mt-1 text-sm text-gray-500">{n.body}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{n.body}</p>
                   )}
                   <p style={{ fontSize: 14, color: 'var(--text-dim)', margin: '8px 0 0' }}>
                     {formatRelative(n.created_at)}

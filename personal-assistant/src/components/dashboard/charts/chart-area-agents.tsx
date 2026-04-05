@@ -53,7 +53,7 @@ export function ChartAreaAgents({ data, loading }: Props) {
         <CardHeader><CardTitle>Agent Activity</CardTitle></CardHeader>
         <CardContent className="flex h-[250px] flex-col items-center justify-center gap-2 text-muted-foreground text-sm">
           <span>{filteredData.length === 0 ? 'No agent activity yet' : `${filteredData[0]?.scheduled + filteredData[0]?.webhook + filteredData[0]?.manual} runs on ${new Date(filteredData[0]?.date).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}`}</span>
-          <span className="text-xs">Activity chart will appear with more data</span>
+          <span className="text-sm">Activity chart will appear with more data</span>
         </CardContent>
       </Card>
     )

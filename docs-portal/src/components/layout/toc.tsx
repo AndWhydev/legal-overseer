@@ -8,6 +8,31 @@ interface TocItem {
   level: number
 }
 
+function TocLink({ id, text, level, isActive }: TocItem & { isActive: boolean }) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <a
+      href={`#${id}`}
+      style={{
+        display: "block",
+        fontSize: "13px",
+        lineHeight: "20px",
+        padding: "4px 0",
+        paddingLeft: level === 3 ? "12px" : "0",
+        textDecoration: "none",
+        color: isActive ? "#171717" : hovered ? "#374151" : "#6b7280",
+        fontWeight: isActive ? 500 : 400,
+        transition: "color 150ms ease",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {text}
+    </a>
+  )
+}
+
 export function TableOfContents({ headings }: { headings: TocItem[] }) {
   const [activeId, setActiveId] = useState("")
 
@@ -20,7 +45,7 @@ export function TableOfContents({ headings }: { headings: TocItem[] }) {
           }
         }
       },
-      { rootMargin: "-120px 0px -60% 0px" }
+      { rootMargin: "-80px 0px -60% 0px" }
     )
 
     headings.forEach(({ id }) => {
@@ -36,53 +61,38 @@ export function TableOfContents({ headings }: { headings: TocItem[] }) {
   return (
     <aside
       style={{
-        display: "none",
-        width: "244px",
+        width: "220px",
         flexShrink: 0,
         position: "sticky",
-        top: "104px",
-        height: "calc(100vh - 104px)",
+        top: "56px",
+        height: "calc(100vh - 56px)",
         overflowY: "auto",
-        padding: "24px 20px",
-        backgroundColor: "rgb(253, 253, 247)",
-        borderRadius: "12px",
-        marginTop: "24px",
-        marginRight: "24px",
+        padding: "24px 16px",
+        backgroundColor: "transparent",
         alignSelf: "flex-start",
       }}
-      className="hidden min-[1320px]:block"
+      className="hidden min-[1280px]:block"
     >
       <div
         style={{
-          fontSize: "12px",
-          fontWeight: 500,
+          fontSize: "11px",
+          fontWeight: 600,
           textTransform: "uppercase",
           letterSpacing: "0.08em",
-          color: "rgb(140, 140, 140)",
+          color: "#9ca3af",
           marginBottom: "12px",
         }}
       >
         On this page
       </div>
       {headings.map(({ id, text, level }) => (
-        <a
+        <TocLink
           key={id}
-          href={`#${id}`}
-          style={{
-            display: "block",
-            fontSize: "13px",
-            lineHeight: "20px",
-            padding: "4px 0",
-            paddingLeft: level === 3 ? "12px" : "0",
-            textDecoration: "none",
-            color:
-              activeId === id ? "rgb(14, 14, 14)" : "rgb(80, 80, 80)",
-            fontWeight: activeId === id ? 500 : 400,
-            transition: "color 150ms",
-          }}
-        >
-          {text}
-        </a>
+          id={id}
+          text={text}
+          level={level}
+          isActive={activeId === id}
+        />
       ))}
     </aside>
   )

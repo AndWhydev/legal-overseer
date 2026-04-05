@@ -13,13 +13,10 @@ Core tools are the foundational operations BitBit uses for task management, memo
 
 Search the knowledge base using hybrid retrieval (sparse + dense + graph).
 
-<ApiRefTable
-  title="search_memory"
-  props={[
-    { name: "query", type: "string", required: true, description: "What to search for" },
-    { name: "category", type: "string", required: false, description: "Filter by memory type" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | string | What to search for |
+| `category` | string | Filter by memory type (optional) |
 
 The query is routed through the [Adaptive Query Router](/intelligence/confidence-routing) which selects the right-sized retrieval pipeline (simple, moderate, or complex) based on query complexity.
 
@@ -27,14 +24,11 @@ The query is routed through the [Adaptive Query Router](/intelligence/confidence
 
 Store a new knowledge entry in the Memory Palace.
 
-<ApiRefTable
-  title="add_memory"
-  props={[
-    { name: "content", type: "string", required: true, description: "The memory text to store" },
-    { name: "category", type: "string", required: true, description: "Type: preference, pattern, domain, contact, workflow" },
-    { name: "confidence", type: "number", required: false, description: "Initial confidence score (0-1)" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `content` | string | The memory text to store |
+| `category` | string | Type: preference, pattern, domain, contact, workflow |
+| `confidence` | number | Initial confidence score (0-1) |
 
 After writing, the entity extraction pipeline runs asynchronously to populate the knowledge graph.
 
@@ -42,14 +36,11 @@ After writing, the entity extraction pipeline runs asynchronously to populate th
 
 Create a new procedural memory (learned workflow).
 
-<ApiRefTable
-  title="create_procedure"
-  props={[
-    { name: "name", type: "string", required: true, description: 'Procedure name (e.g., "AWU email protocol")' },
-    { name: "trigger_pattern", type: "string", required: true, description: "Regex pattern to match against messages" },
-    { name: "steps", type: "string[]", required: true, description: "Ordered action sequence" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Procedure name (e.g., "AWU email protocol") |
+| `trigger_pattern` | string | Regex pattern to match against messages |
+| `steps` | string[] | Ordered action sequence |
 
 ## Task Tools
 
@@ -57,41 +48,32 @@ Create a new procedural memory (learned workflow).
 
 Create a kanban task with priority, column assignment, and metadata.
 
-<ApiRefTable
-  title="create_task"
-  props={[
-    { name: "title", type: "string", required: true, description: "Task title" },
-    { name: "description", type: "string", required: false, description: "Detailed description" },
-    { name: "priority", type: "string", required: true, description: "critical | high | medium | low" },
-    { name: "column_id", type: "string", required: false, description: "Target kanban column" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `title` | string | Task title |
+| `description` | string | Detailed description (optional) |
+| `priority` | string | critical, high, medium, low |
+| `column_id` | string | Target kanban column (optional) |
 
 ### update_task
 
 Modify an existing task's status, priority, column, or description.
 
-<ApiRefTable
-  title="update_task"
-  props={[
-    { name: "task_id", type: "string", required: true, description: "Task to update" },
-    { name: "status", type: "string", required: false, description: "pending | in_progress | completed | archived" },
-    { name: "priority", type: "string", required: false, description: "New priority" },
-    { name: "column_id", type: "string", required: false, description: "Move to column" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `task_id` | string | Task to update |
+| `status` | string | pending, in_progress, completed, archived |
+| `priority` | string | New priority (optional) |
+| `column_id` | string | Move to column (optional) |
 
 ### search_tasks
 
 Full-text search across all tasks in the organization.
 
-<ApiRefTable
-  title="search_tasks"
-  props={[
-    { name: "query", type: "string", required: true, description: "Search terms" },
-    { name: "status", type: "string", required: false, description: "Filter by status" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | string | Search terms |
+| `status` | string | Filter by status (optional) |
 
 ## Contact Tools
 
@@ -99,23 +81,17 @@ Full-text search across all tasks in the organization.
 
 Entity-resolved contact search across name, email, phone, and aliases.
 
-<ApiRefTable
-  title="search_contacts"
-  props={[
-    { name: "query", type: "string", required: true, description: "Name, email, phone, or alias to search" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | string | Name, email, phone, or alias to search |
 
 ### get_contact
 
 Retrieve a full contact profile including communication patterns and relationship data.
 
-<ApiRefTable
-  title="get_contact"
-  props={[
-    { name: "contact_id", type: "string", required: true, description: "Contact ID to retrieve" },
-  ]}
-/>
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `contact_id` | string | Contact ID to retrieve |
 
 <Tip>
 All CRUD tools automatically trigger Supabase Realtime broadcasts. When the agent creates a task, the kanban board updates instantly in the browser without polling.

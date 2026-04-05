@@ -37,17 +37,17 @@ interface SimNode {
 }
 
 const NODE_COLORS: Record<string, string> = {
-  Person: '#6b8fc9',
-  Organization: '#4ba383',
-  Topic: '#c4934a',
-  contact: '#6b8fc9',
-  project: '#4ba383',
-  invoice: '#c4934a',
-  task: '#9b88b8',
+  Person: 'var(--chart-1)',
+  Organization: 'var(--chart-2)',
+  Topic: 'var(--chart-3)',
+  contact: 'var(--chart-1)',
+  project: 'var(--chart-2)',
+  invoice: 'var(--chart-3)',
+  task: 'var(--chart-4)',
 }
 
 function getColor(type: string): string {
-  return NODE_COLORS[type] ?? '#6b8fc9'
+  return NODE_COLORS[type] ?? 'var(--chart-1)'
 }
 
 function truncate(s: string, max: number): string {
@@ -415,7 +415,7 @@ const GraphViewer: React.FC<Props> = ({ nodes, edges, onNodeClick, height = 420 
   const simNodes = renderKey >= 0 ? simRef.current.nodes : []
 
   return (
-    <div className="relative w-full overflow-hidden rounded-xl border border-slate-400/[0.08] bg-[rgba(10,14,20,0.7)]" style={{ height }}>
+    <div className="relative w-full overflow-hidden rounded-xl border border-border bg-card" style={{ height }}>
       <svg
         ref={svgRef}
         style={{ width: '100%', height: '100%', cursor: 'grab' }}
@@ -484,11 +484,11 @@ const GraphViewer: React.FC<Props> = ({ nodes, edges, onNodeClick, height = 420 
       </svg>
 
       {/* Legend */}
-      <div className="absolute bottom-3 left-3 flex gap-3 text-sm text-slate-400">
+      <div className="absolute bottom-3 left-3 flex gap-3 text-sm text-muted-foreground">
         {[
-          { type: 'Person', color: '#6b8fc9' },
-          { type: 'Organization', color: '#4ba383' },
-          { type: 'Topic', color: '#c4934a' },
+          { type: 'Person', color: 'var(--chart-1)' },
+          { type: 'Organization', color: 'var(--chart-2)' },
+          { type: 'Topic', color: 'var(--chart-3)' },
         ].map(({ type, color }) => (
           <div key={type} className="flex items-center gap-1">
             <div className="size-1.5 rounded-full" style={{ background: color }} />
@@ -498,7 +498,7 @@ const GraphViewer: React.FC<Props> = ({ nodes, edges, onNodeClick, height = 420 
       </div>
 
       {/* Stats */}
-      <div className="absolute bottom-3 right-3 text-sm text-slate-600">
+      <div className="absolute bottom-3 right-3 text-sm text-muted-foreground">
         {nodes.length} nodes · {edges.length} edges
       </div>
     </div>

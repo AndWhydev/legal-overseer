@@ -170,7 +170,7 @@ export function ChatSidebarPanel() {
               >
                 <Icon className="size-4 shrink-0" />
                 <span>{label}</span>
-                <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-sm text-muted-foreground">
                   {count}
                 </SidebarMenuBadge>
               </SidebarMenuButton>
@@ -187,7 +187,7 @@ export function ChatSidebarPanel() {
             <div className="space-y-1.5 pr-1">
               {[0, 1, 2].map(index => (
                 <div key={index} className="animate-pulse rounded-xl bg-sidebar-accent/35 px-4 py-3">
-                  <div className="h-4 w-4/5 rounded bg-sidebar-border/70" />
+                  <div className="h-4 w-4/5 rounded-lg bg-sidebar-border/70" />
                 </div>
               ))}
             </div>
@@ -233,7 +233,7 @@ export function ChatSidebarPanel() {
                         </SidebarMenuAction>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-sm">Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleThreadAction(thread.id, 'archive', isActive)}>
                           <IconArchive className="size-4" />

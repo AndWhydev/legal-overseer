@@ -14,7 +14,7 @@ export function SectionCard({ title, headerActions, children, className }: Secti
       className={cn('rounded-xl p-4', className)}
       style={{
         background: 'var(--bb-surface)',
-        border: '1px solid var(--glass-divider)',
+        border: '1px solid var(--border)',
       }}
     >
       {(title || headerActions) && (

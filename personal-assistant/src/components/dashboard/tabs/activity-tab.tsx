@@ -89,14 +89,14 @@ const actionTypeOptions = ACTION_TYPES.map((v) => ({ value: v, label: v === 'all
 
 function AuditRow({ entry }: { entry: AuditEntry }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50">
+    <div className="flex items-start gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-muted">
       <Badge variant={ACTION_BADGE_VARIANT[entry.action] ?? 'secondary'} className="mt-0.5 shrink-0">
         {entry.action}
       </Badge>
       <div className="min-w-0 flex-1">
         <div className="text-sm">{formatAction(entry)}</div>
         {entry.metadata && Object.keys(entry.metadata).length > 0 && (
-          <div className="mt-1 truncate text-xs text-muted-foreground">
+          <div className="mt-1 truncate text-sm text-muted-foreground">
             {Object.entries(entry.metadata)
               .slice(0, 3)
               .map(([k, v]) => `${k}: ${String(v)}`)
@@ -104,7 +104,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
           </div>
         )}
       </div>
-      <span className="shrink-0 text-xs text-muted-foreground">{formatTimestamp(entry.created_at)}</span>
+      <span className="shrink-0 text-sm text-muted-foreground">{formatTimestamp(entry.created_at)}</span>
     </div>
   );
 }

@@ -200,7 +200,7 @@ function CalendarView({
       {/* Day headers */}
       <div className="mb-1 grid grid-cols-7 gap-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-          <div key={d} className="py-2 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <div key={d} className="py-2 text-center text-sm font-medium uppercase tracking-wide text-muted-foreground">
             {d}
           </div>
         ))}
@@ -222,11 +222,11 @@ function CalendarView({
               key={day}
               className={cn(
                 'min-h-[80px] rounded-lg border p-2',
-                isToday ? 'border-primary/30 bg-muted/50' : 'border-border bg-card'
+                isToday ? 'border-primary/30 bg-muted' : 'border-border bg-card'
               )}
             >
               <div className={cn(
-                'mb-1 text-xs font-medium',
+                'mb-1 text-sm font-medium',
                 isToday ? 'text-foreground' : 'text-muted-foreground'
               )}>
                 {day}
@@ -236,20 +236,20 @@ function CalendarView({
                   <button
                     key={item.id}
                     title={`${TEMPLATE_LABELS[item.template_type]}: ${item.inputs.product_name}`}
-                    className="cursor-pointer truncate rounded-lg px-1.5 py-0.5 text-xs transition-colors"
+                    className="cursor-pointer truncate rounded-lg px-1.5 py-0.5 text-sm transition-colors"
                     onClick={() => {
                       const next: ContentStatus =
                         item.status === 'scheduled' ? 'published' : item.status === 'draft' ? 'scheduled' : 'draft'
                       onStatusChange(item.id, next)
                     }}
                   >
-                    <Badge variant={STATUS_VARIANT[item.status]} className="text-[10px]">
+                    <Badge variant={STATUS_VARIANT[item.status]} className="text-sm">
                       {item.inputs.product_name || TEMPLATE_LABELS[item.template_type]}
                     </Badge>
                   </button>
                 ))}
                 {dayItems.length > 3 && (
-                  <span className="text-xs text-muted-foreground">+{dayItems.length - 3} more</span>
+                  <span className="text-sm text-muted-foreground">+{dayItems.length - 3} more</span>
                 )}
               </div>
             </div>
@@ -260,7 +260,7 @@ function CalendarView({
       {/* Legend */}
       <div className="mt-4 flex justify-end gap-4">
         {(['draft', 'scheduled', 'published'] as ContentStatus[]).map((s) => (
-          <div key={s} className="flex items-center gap-2 text-xs">
+          <div key={s} className="flex items-center gap-2 text-sm">
             <Badge variant={STATUS_VARIANT[s]} className="size-2 rounded-full p-0" />
             <span className="capitalize text-muted-foreground">{s}</span>
           </div>
@@ -305,7 +305,7 @@ function HistoryItem({
               <div className="truncate text-sm font-medium text-foreground">
                 {TEMPLATE_LABELS[item.template_type]} — {item.inputs.product_name}
               </div>
-              <div className="mt-1 text-xs text-muted-foreground">
+              <div className="mt-1 text-sm text-muted-foreground">
                 {created} · {item.inputs.tone} · {item.inputs.length}
               </div>
             </div>
@@ -319,7 +319,7 @@ function HistoryItem({
 
         <CollapsibleContent>
           <div className="border-t border-border px-4 pb-4">
-            <pre className="mt-3 whitespace-pre-wrap rounded-xl border border-border bg-muted/50 p-3 font-sans text-sm leading-relaxed text-muted-foreground">
+            <pre className="mt-3 whitespace-pre-wrap rounded-xl border border-border bg-muted p-3 font-sans text-sm leading-relaxed text-muted-foreground">
               {item.output}
             </pre>
 
@@ -668,7 +668,7 @@ export default function CreatorStudioTab() {
                     </div>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-4">
-                    <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-muted/50 p-4 font-sans text-sm leading-relaxed text-muted-foreground">
+                    <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-border bg-muted p-4 font-sans text-sm leading-relaxed text-muted-foreground">
                       {generatedOutput.output}
                     </pre>
 

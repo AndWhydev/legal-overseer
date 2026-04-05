@@ -84,7 +84,7 @@ export function ScenarioPlannerUI() {
           </span>
 
           <div>
-            <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Scenario Name</span>
+            <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Scenario Name</span>
             <input
               className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
               placeholder="What if I raise rates 15%?"
@@ -94,7 +94,7 @@ export function ScenarioPlannerUI() {
           </div>
 
           <div>
-            <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Type</span>
+            <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Type</span>
             <Select value={type} onValueChange={v => setType(v)}>
               <SelectTrigger className="mt-1 w-full">
                 <SelectValue />
@@ -112,7 +112,7 @@ export function ScenarioPlannerUI() {
           {/* Type-specific fields */}
           {type === 'rate_change' && (
             <div>
-              <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Rate Change %</span>
+              <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Rate Change %</span>
               <input
                 className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
                 type="number"
@@ -126,7 +126,7 @@ export function ScenarioPlannerUI() {
           {type === 'new_client' && (
             <>
               <div>
-                <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Est. Monthly Revenue ($)</span>
+                <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Est. Monthly Revenue ($)</span>
                 <input
                   className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
                   type="number"
@@ -135,7 +135,7 @@ export function ScenarioPlannerUI() {
                 />
               </div>
               <div>
-                <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Probability (0-1)</span>
+                <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Probability (0-1)</span>
                 <input
                   className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
                   type="number"
@@ -151,7 +151,7 @@ export function ScenarioPlannerUI() {
 
           {type === 'capacity_change' && (
             <div>
-              <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Hours Delta (per week)</span>
+              <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Hours Delta (per week)</span>
               <input
                 className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
                 type="number"
@@ -163,7 +163,7 @@ export function ScenarioPlannerUI() {
 
           {type === 'custom' && (
             <div>
-              <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Revenue Impact ($)</span>
+              <span className="text-sm text-muted-foreground uppercase tracking-wider font-medium">Revenue Impact ($)</span>
               <input
                 className="w-full mt-1 px-3 py-2 rounded-lg border-none bg-input text-foreground text-sm outline-none"
                 type="number"
@@ -221,7 +221,7 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
         <span className="text-sm font-medium text-foreground">
           {scenario.name}
         </span>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded uppercase ${deltaBg} ${deltaColor}`}>
+        <span className={`text-sm font-medium px-2 py-0.5 rounded-lg uppercase ${deltaBg} ${deltaColor}`}>
           {isPositive ? '+' : ''}{scenario.revenue_delta_pct}%
         </span>
       </div>
@@ -236,19 +236,19 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
       {/* Results grid */}
       <div className="grid grid-cols-3 gap-4 mt-1">
         <div className="flex flex-col gap-0.5">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">Baseline</span>
+          <span className="text-sm text-muted-foreground uppercase tracking-wider">Baseline</span>
           <span className="text-base font-medium font-mono tracking-tight text-muted-foreground">
             {formatCents(scenario.baseline_revenue_cents ?? 0)}
           </span>
         </div>
         <div className="flex flex-col gap-0.5">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">Projected (P50)</span>
+          <span className="text-sm text-muted-foreground uppercase tracking-wider">Projected (P50)</span>
           <span className={`text-base font-medium font-mono tracking-tight ${deltaColor}`}>
             {formatCents(scenario.p50_revenue_cents ?? 0)}
           </span>
         </div>
         <div className="flex flex-col gap-0.5">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">Delta</span>
+          <span className="text-sm text-muted-foreground uppercase tracking-wider">Delta</span>
           <span className={`text-base font-medium font-mono tracking-tight ${deltaColor}`}>
             {isPositive ? '+' : ''}{formatCents(scenario.revenue_delta_cents ?? 0)}
           </span>
@@ -266,7 +266,7 @@ function ScenarioCard({ scenario }: { scenario: RevenueScenario }) {
       {scenario.risk_factors && scenario.risk_factors.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {scenario.risk_factors.map((rf, i) => (
-            <span key={i} className="text-xs px-2 py-0.5 rounded bg-red-500/10 text-red-500">
+            <span key={i} className="text-sm px-2 py-0.5 rounded-lg bg-red-500/10 text-red-500">
               {rf}
             </span>
           ))}

@@ -71,7 +71,7 @@ export function ProjectCard({ project, onPreview, onDeploy }: ProjectCardProps) 
       <CardContent>
         <p className="text-sm font-medium truncate">{project.name}</p>
         {project.description && (
-          <p className="mt-0.5 text-xs text-muted-foreground truncate">
+          <p className="mt-0.5 text-sm text-muted-foreground truncate">
             {project.description}
           </p>
         )}

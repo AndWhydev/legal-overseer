@@ -27,15 +27,15 @@ export function GraphDetailPanel({ node, onClose, onCorrection }: GraphDetailPan
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
-            <Badge variant="outline" className="mb-2 text-xs capitalize">
+            <Badge variant="outline" className="mb-2 text-sm capitalize">
               {node.type}
             </Badge>
             <h3 className="text-sm font-medium">{node.label}</h3>
             {node.sublabel && (
-              <p className="text-xs text-muted-foreground mt-0.5">{node.sublabel}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{node.sublabel}</p>
             )}
           </div>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
             <X className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -56,7 +56,7 @@ function DetailRow({ label, value }: { label: string; value: string | undefined 
   if (!value) return null
   return (
     <div>
-      <div className="text-xs text-muted-foreground uppercase tracking-wider">{label}</div>
+      <div className="text-sm text-muted-foreground uppercase tracking-wider">{label}</div>
       <div className="text-sm mt-0.5">{value}</div>
     </div>
   )
@@ -78,7 +78,7 @@ function PersonDetail({ data }: { data: RevealPerson }) {
         <>
           <Separator />
           <div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Outstanding</div>
+            <div className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Outstanding</div>
             {data.outstandingItems.map((item, i) => (
               <div key={i} className="text-sm text-muted-foreground mt-1">• {item}</div>
             ))}
@@ -99,7 +99,7 @@ function ProjectDetail({ data }: { data: RevealProject }) {
       )}
       {data.urls.length > 0 && (
         <div>
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">URLs</div>
+          <div className="text-sm text-muted-foreground uppercase tracking-wider">URLs</div>
           {data.urls.map((url, i) => (
             <div key={i} className="text-sm text-blue-400 mt-0.5 break-all">{url}</div>
           ))}

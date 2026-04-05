@@ -39,7 +39,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="border-t border-border/30 bg-[#0a0a0f] px-5 pb-10 pt-[60px]">
+    <footer className="border-t border-border bg-[#0a0a0f] px-5 pb-10 pt-[60px]">
       <div className="mx-auto max-w-[1200px]">
         {/* Main Footer Content */}
         <div className="mb-[60px] grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-12">
@@ -54,7 +54,7 @@ export default function Footer() {
 
           {/* Newsletter Column */}
           <div>
-            <h4 className="mb-5 text-xs font-medium uppercase tracking-[0.04em] text-foreground">
+            <h4 className="mb-5 text-sm font-medium uppercase tracking-[0.04em] text-foreground">
               Stay Updated
             </h4>
             <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
@@ -74,7 +74,7 @@ export default function Footer() {
                 </Button>
               </div>
               {subscribed && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Thanks for subscribing!
                 </p>
               )}
@@ -83,13 +83,13 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="mt-8 border-t border-border/30 pt-8">
+        <div className="mt-8 border-t border-border pt-8">
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div>
-              <p className="mb-1 text-xs text-muted-foreground/60">
+              <p className="mb-1 text-sm text-muted-foreground">
                 2026 BitBit. All rights reserved.
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Built in Australia
               </p>
             </div>
@@ -109,7 +109,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h4 className="mb-5 text-xs font-medium uppercase tracking-[0.04em] text-foreground">
+      <h4 className="mb-5 text-sm font-medium uppercase tracking-[0.04em] text-foreground">
         {title}
       </h4>
       <ul className="m-0 list-none p-0">

@@ -39,15 +39,15 @@ export function TodaysJobsWidget() {
           <Empty><EmptyTitle>No jobs today</EmptyTitle><EmptyDescription>Scheduled jobs will appear here.</EmptyDescription></Empty>
         ) : (
           jobs.map(job => (
-            <div key={job.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border">
+            <div key={job.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted border border-border">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{(job.title || job.description || 'Untitled Job') as string}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   {job.scheduled_at ? new Date(job.scheduled_at as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
                   {job.address ? ` · ${(job.address as string).slice(0, 30)}` : ''}
                 </p>
               </div>
-              <Badge variant="default" className="text-[10px]">
+              <Badge variant="default" className="text-sm">
                 {(job.status as string) || 'booked'}
               </Badge>
             </div>

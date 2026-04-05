@@ -9,7 +9,6 @@ import {
   KanbanItem,
   KanbanOverlay,
 } from '@/components/ui/kanban'
-import { Progress } from '@/components/ui/progress'
 import type { EnhancedLeadData, LeadStatus } from '@/lib/leads/types'
 import { LeadCard } from './lead-card'
 
@@ -35,7 +34,7 @@ function LeadsKanbanViewInner({
   grouped,
   onMoveLead,
   onSelectLead,
-  onAdvanceStage: _onAdvanceStage,
+  onAdvanceStage,
   movingLeadId: _movingLeadId,
 }: LeadsKanbanViewProps) {
   // Build the kanban value: Record<UniqueIdentifier, EnhancedLeadData[]>
@@ -84,9 +83,6 @@ function LeadsKanbanViewInner({
       >
         {BOARD_COLUMNS.map((column) => {
           const leads = kanbanValue[column.id] ?? []
-          const progressWidth = totalLeads > 0
-            ? Math.max(4, (leads.length / totalLeads) * 100)
-            : 0
 
           return (
             <KanbanColumn
@@ -97,26 +93,23 @@ function LeadsKanbanViewInner({
               aria-label={`${column.label} column, ${leads.length} leads`}
             >
               {/* Column header */}
-              <div className="px-2 pb-2">
-                <div className="mb-2 flex items-center gap-2">
-                  <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-                    {column.label}
-                  </h3>
-                  <span className="font-mono text-sm font-medium text-muted-foreground" aria-label={`${leads.length} leads`}>
-                    {leads.length}
-                  </span>
-                </div>
-                <Progress value={progressWidth} className="h-0.5" />
+              <div className="flex items-center gap-2 px-1 pb-2">
+                <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                  {column.label}
+                </h3>
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-lg bg-secondary px-1 font-mono text-sm text-muted-foreground">
+                  {leads.length}
+                </span>
               </div>
 
               {/* Drop zone */}
               <div
-                className="flex min-h-[120px] flex-1 flex-col gap-3 rounded-xl border border-dashed border-transparent p-2 transition-colors"
+                className="flex min-h-[120px] flex-1 flex-col gap-2 rounded-xl border border-dashed border-transparent p-2 transition-colors"
                 aria-label={`Drop zone for ${column.label}`}
               >
                 {leads.map((lead) => (
                   <KanbanItem key={lead.id} value={lead.id} asHandle>
-                    <LeadCard lead={lead} onClick={onSelectLead} />
+                    <LeadCard lead={lead} onClick={onSelectLead} onAdvanceStage={onAdvanceStage} />
                   </KanbanItem>
                 ))}
 

@@ -364,7 +364,7 @@ export default function MonitoringTab() {
                     const status = cron.error_count_24h > 0 ? 'down' : cron.success_rate_24h >= 90 ? 'healthy' : cron.success_rate_24h > 0 ? 'degraded' : 'down';
                     return (
                       <TableRow key={cron.route}>
-                        <TableCell className="font-mono text-xs">{cron.route}</TableCell>
+                        <TableCell className="font-mono text-sm">{cron.route}</TableCell>
                         <TableCell className="text-muted-foreground">{relativeTime(cron.last_run)}</TableCell>
                         <TableCell className={cn(
                           'text-right tabular-nums',
@@ -444,7 +444,7 @@ export default function MonitoringTab() {
                 }
 
                 return channels.map(ch => (
-                  <div key={ch.channel} className="rounded-xl border border-border bg-muted/50 p-4">
+                  <div key={ch.channel} className="rounded-xl border border-border bg-muted p-4">
                     <div className="mb-2 flex items-center gap-2">
                       <StatusDot status={ch.status} />
                       <span className="text-sm font-medium capitalize text-foreground">
@@ -457,8 +457,8 @@ export default function MonitoringTab() {
                     <div className="flex flex-col gap-0.5 text-sm text-muted-foreground">
                       <div>Latency: {ch.latency_ms}ms</div>
                       <div>Last check: {relativeTime(ch.last_sync)}</div>
-                      {ch.message && <div className="mt-1 text-xs">{ch.message}</div>}
-                      {ch.error && <div className="mt-1 text-xs text-destructive">{ch.error}</div>}
+                      {ch.message && <div className="mt-1 text-sm">{ch.message}</div>}
+                      {ch.error && <div className="mt-1 text-sm text-destructive">{ch.error}</div>}
                     </div>
                   </div>
                 ));
@@ -565,7 +565,7 @@ export default function MonitoringTab() {
                     const barWidth = Math.round((org.total_cost_24h / maxCost) * 100);
                     return (
                       <TableRow key={org.org_id}>
-                        <TableCell className="font-mono text-xs">{org.org_name}</TableCell>
+                        <TableCell className="font-mono text-sm">{org.org_name}</TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">
                           {formatTokenCount(org.total_tokens_24h)}
                         </TableCell>

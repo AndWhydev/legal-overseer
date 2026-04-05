@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     const externalId = body.message_handle || `sb-${Date.now()}-${fromNumber}`
     const { data: insertedMsg } = await supabase.from('channel_messages').insert({
       org_id: orgId,
-      channel: 'imessage', // TODO: change to 'sendblue' after DB constraint migration
+      channel: 'sendblue',
       external_id: externalId,
       sender: fromNumber,
       sender_email: fromNumber,
