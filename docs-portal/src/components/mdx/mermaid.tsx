@@ -11,12 +11,19 @@ export function Mermaid({ chart, caption }: { chart: string; caption?: string })
     let cancelled = false
 
     async function render() {
+      const trimmed = (chart ?? "").trim()
+      if (!trimmed) {
+        setError("Empty chart definition")
+        return
+      }
+
       try {
         const mermaid = (await import('mermaid')).default
         mermaid.initialize({
           startOnLoad: false,
+          securityLevel: 'loose',
           theme: 'neutral',
-          fontFamily: 'Inter, system-ui, sans-serif',
+          fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif',
           themeVariables: {
             primaryColor: '#f3f4f6',
             primaryTextColor: '#171717',
@@ -30,11 +37,7 @@ export function Mermaid({ chart, caption }: { chart: string; caption?: string })
           },
         })
 
-        const trimmed = (chart ?? "").trim()
         const id = 'mermaid-' + Math.random().toString(36).slice(2, 9)
-
-        // Validate before rendering
-        await mermaid.parse(trimmed)
 
         const { svg: rendered } = await mermaid.render(id, trimmed)
         if (!cancelled) {
@@ -44,7 +47,7 @@ export function Mermaid({ chart, caption }: { chart: string; caption?: string })
       } catch (err: unknown) {
         if (!cancelled) {
           const message = err instanceof Error ? err.message : String(err)
-          console.warn('Mermaid render failed:', message)
+          console.error('Mermaid render failed for chart:', trimmed.slice(0, 100), '\nError:', message)
           setError(message)
           setSvg(null)
         }
@@ -87,15 +90,17 @@ export function Mermaid({ chart, caption }: { chart: string; caption?: string })
             color: 'var(--text-faint)',
             fontWeight: 500,
           }}>
-            Diagram preview unavailable
+            Diagram source (render failed)
           </p>
           <pre style={{
             margin: 0,
-            fontSize: '12px',
+            fontSize: '13px',
+            lineHeight: '21px',
             whiteSpace: 'pre-wrap',
-            color: 'rgb(120, 120, 120)',
+            color: '#374151',
             background: 'none',
             padding: 0,
+            fontFamily: 'SFMono-Regular, ui-monospace, Menlo, monospace',
           }}>
             {chart?.trim() ?? ""}
           </pre>

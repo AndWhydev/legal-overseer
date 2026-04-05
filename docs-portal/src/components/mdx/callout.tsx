@@ -25,14 +25,16 @@ export function Callout({
 
   return (
     <div
+      data-callout={type}
       style={{
         backgroundColor: "#f9fafb",
         border: "1px solid #e5e7eb",
         borderRadius: "8px",
         padding: "16px 20px",
         margin: "24px 0",
-        fontSize: "14px",
+        fontSize: "16px",
         lineHeight: "28px",
+        fontFamily: "inherit",
       }}
     >
       <div
@@ -49,7 +51,7 @@ export function Callout({
         <Icon size={16} className="shrink-0" style={{ color: "#9ca3af", marginTop: "1px" }} />
         <span>{title || c.label}</span>
       </div>
-      <div style={{ color: "#374151" }}>{children}</div>
+      <div style={{ color: "#374151", fontFamily: "inherit" }}>{children}</div>
     </div>
   )
 }

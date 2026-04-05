@@ -77,11 +77,11 @@ function StepperItem({
             className={cn(
               "relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors",
               status === "completed" &&
-                "border-primary bg-primary text-primary-foreground",
+                "border-[#171717] bg-[#171717] text-white",
               status === "active" &&
-                "border-transparent bg-[#e5e4df] text-foreground",
+                "border-transparent bg-[#e5e7eb] text-foreground",
               status === "default" &&
-                "border-transparent bg-[#f0efeb] text-foreground"
+                "border-transparent bg-[#f3f4f6] text-foreground"
             )}
           >
             {icon ? (
@@ -96,10 +96,10 @@ function StepperItem({
           {/* Connector line — hidden on the last item via CSS */}
           <div
             className={cn(
-              "w-px h-4",
+              "w-px grow",
               status === "completed"
-                ? "bg-[#d0cfca]"
-                : "bg-[#e5e4df]",
+                ? "bg-[#d1d5db]"
+                : "bg-[#e5e7eb]",
               "group-last/step:hidden"
             )}
           />
@@ -107,11 +107,11 @@ function StepperItem({
 
         {/* Content */}
         <div
-          className="flex min-w-0 flex-col gap-1 pb-1 pt-0.5 group-last/step:pb-0"
+          className="flex min-w-0 flex-col gap-1 pb-4 pt-1 group-last/step:pb-0"
         >
           <div className="flex flex-col gap-0.5">
             <h3
-              className="text-sm font-bold leading-tight text-foreground" style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+              className="text-sm font-bold leading-tight text-foreground" style={{ fontFamily: "inherit" }}
             >
               {title}
             </h3>
@@ -188,9 +188,9 @@ function HorizontalStepper({
                   className={cn(
                     "flex size-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors",
                     status === "completed" &&
-                      "border-primary bg-primary text-primary-foreground",
+                      "border-[#171717] bg-[#171717] text-white",
                     status === "active" &&
-                      "border-primary bg-primary/10 text-primary",
+                      "border-[#171717] bg-[#171717]/10 text-[#171717]",
                     status === "default" &&
                       "border-border bg-background text-muted-foreground"
                   )}
@@ -220,7 +220,7 @@ function HorizontalStepper({
                 <div
                   className={cn(
                     "mb-5 h-px flex-1",
-                    status === "completed" ? "bg-primary" : "bg-border"
+                    status === "completed" ? "bg-[#171717]" : "bg-border"
                   )}
                 />
               )}

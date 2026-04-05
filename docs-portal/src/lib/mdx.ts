@@ -4,22 +4,6 @@ import matter from "gray-matter"
 
 const contentDir = path.join(process.cwd(), "content")
 
-/**
- * Escape curly braces inside fenced code blocks so MDX does not
- * interpret them as JSX expressions.
- */
-function escapeCodeBlocks(source: string): string {
-  return source.replace(
-    /```(\w*)\n([\s\S]*?)```/g,
-    (_match, lang: string, code: string) => {
-      const escaped = code
-        .replace(/\{/g, "&#123;")
-        .replace(/\}/g, "&#125;")
-      return "```" + lang + "\n" + escaped + "```"
-    }
-  )
-}
-
 export async function getDocBySlug(slug: string[]) {
   const filePath = path.join(contentDir, ...slug) + ".mdx"
 
@@ -28,12 +12,7 @@ export async function getDocBySlug(slug: string[]) {
   const raw = fs.readFileSync(filePath, "utf-8")
   const { data: frontmatter, content } = matter(raw)
 
-  // Pre-process: escape braces in fenced code blocks before MDX compilation
-  const escapedContent = escapeCodeBlocks(content)
-  // Rebuild the full source with frontmatter for compileMDX
-  const source = matter.stringify(escapedContent, frontmatter)
-
-  return { frontmatter, content, source }
+  return { frontmatter, content, source: raw }
 }
 
 export function getAllDocSlugs(): string[][] {

@@ -1,0 +1,59 @@
+---
+title: "Quickstart"
+description: "Get a custom connection running in 5 minutes"
+---
+
+# Quickstart
+
+Connect any data source to BitBit in three steps.
+
+## 1. Create a connection
+
+```bash
+curl -X POST https://app.bitbit.chat/api/connections \
+  -H "Content-Type: application/json" \
+  -H "Cookie: your-session-cookie" \
+  -d '{
+    "provider": "my-crm",
+    "display_name": "My CRM",
+    "transport": "bridge",
+    "template": "custom"
+  }'
+```
+
+The response includes your `connection.id` and `connection.bridge_token`.
+
+## 2. Push data
+
+Use the bridge token to push messages:
+
+```bash
+curl -X POST https://app.bitbit.chat/api/connections/{id}/ingest \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer {bridge_token}" \
+  -d '{
+    "messages": [
+      {
+        "id": "msg-001",
+        "sender": "Jane Doe",
+        "sender_email": "jane@example.com",
+        "subject": "New deal created",
+        "body": "A new deal worth $50,000 was created in the pipeline.",
+        "received_at": "2026-04-05T10:00:00Z"
+      }
+    ]
+  }'
+```
+
+## 3. Verify
+
+Check your connection in the BitBit dashboard under **Settings > Connections**. Click the connection card to see sync status, message count, and activity log.
+
+You can also test programmatically:
+
+```bash
+curl -X POST https://app.bitbit.chat/api/connections/{id}/test \
+  -H "Cookie: your-session-cookie"
+```
+
+That's it. Your data is now flowing through BitBit's intelligence pipeline.

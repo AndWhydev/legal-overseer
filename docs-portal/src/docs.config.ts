@@ -1,9 +1,22 @@
 export interface NavSection {
   title: string
+  visibility?: 'public' | 'internal'  // default: 'internal'
   items: { title: string; href: string }[]
 }
 
 export const navigation: NavSection[] = [
+  {
+    title: 'Connections',
+    visibility: 'public',
+    items: [
+      { title: 'Overview', href: '/docs/connections/overview' },
+      { title: 'Quickstart', href: '/docs/connections/quickstart' },
+      { title: 'Bridge Transport', href: '/docs/connections/bridge' },
+      { title: 'Webhook Transport', href: '/docs/connections/webhook' },
+      { title: 'Templates', href: '/docs/connections/templates' },
+      { title: 'API Reference', href: '/docs/connections/api-reference' },
+    ],
+  },
   {
     title: 'Getting Started',
     items: [

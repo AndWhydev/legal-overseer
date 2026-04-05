@@ -179,15 +179,18 @@
   font-size: 14px;
   display: block;
   overflow-x: auto;
+  overflow: hidden;
   table-layout: auto;
   -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
 .mdx-content table th {
   text-align: left;
   font-weight: 600;
   padding: 12px 16px;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
   color: var(--text-heading);
   background: #f9fafb;
   font-size: 13px;
@@ -402,10 +405,16 @@
   margin: 0;
 }
 
-/* Jalco components inside mdx-content should not inherit table/heading resets */
-.mdx-content [data-slot] table,
-.mdx-content [data-slot] th,
-.mdx-content [data-slot] td {
+/* Only revert jalco's own tables, not markdown tables inside step content */
+.mdx-content [data-slot="api-ref-table"] table,
+.mdx-content [data-slot="api-ref-table"] th,
+.mdx-content [data-slot="api-ref-table"] td,
+.mdx-content [data-slot="env-table"] table,
+.mdx-content [data-slot="env-table"] th,
+.mdx-content [data-slot="env-table"] td,
+.mdx-content [data-slot="cron-schedule"] table,
+.mdx-content [data-slot="cron-schedule"] th,
+.mdx-content [data-slot="cron-schedule"] td {
   all: revert;
 }
 
@@ -429,6 +438,11 @@
 /* Ensure jalco components have proper bottom margin when stacked */
 .mdx-content [data-slot] {
   margin-bottom: 24px;
+}
+
+/* Stepper items should not have individual margins - the stepper handles spacing */
+.mdx-content [data-slot="stepper-item"] {
+  margin-bottom: 0;
 }
 
 /* CodeBlock/CodeBlockCommand full width inside mdx-content */
@@ -469,4 +483,10 @@
 /* Callout severity transitions */
 .mdx-content [data-callout] {
   transition: border-color 150ms ease;
+}
+
+/* Inline code inside callouts needs contrast against light callout bg */
+.mdx-content [data-callout] code {
+  background: #e5e7eb;
+  color: #171717;
 }

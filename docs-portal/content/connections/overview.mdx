@@ -1,0 +1,50 @@
+---
+title: "Connections"
+description: "Connect any data source to BitBit's intelligence pipeline"
+---
+
+# Connections
+
+BitBit Connections let you pipe data from any source into BitBit's intelligence pipeline. Whether it's email from Outlook, messages from iMessage, events from Stripe, or data from your custom CRM — everything flows through the same normalised pipeline for classification, enrichment, and routing.
+
+## How it works
+
+Every connection uses one of three transport methods:
+
+| Transport | How it works | Best for |
+|-----------|-------------|----------|
+| **Bridge** | Your script pushes data to BitBit's API | Email (Outlook, iMessage), custom sources |
+| **Poll** | BitBit pulls data on a schedule | Gmail, Asana, Google Calendar |
+| **Webhook** | External service sends events to BitBit | Stripe, Calendly, custom CRMs |
+
+All transports normalise data into the same **Envelope** format before it enters the pipeline. The pipeline handles deduplication, AI classification, contact resolution, and action routing automatically.
+
+## Getting started
+
+1. Go to **Settings > Connections** in the BitBit dashboard
+2. Click **Connect** on a built-in provider, or click **Custom** to connect any data source
+3. Follow the setup guide for your chosen transport
+
+For a quick walkthrough, see the [Quickstart](/docs/connections/quickstart) guide.
+
+## Envelope format
+
+Every message entering BitBit follows this structure:
+
+```json
+{
+  "messages": [
+    {
+      "id": "unique-message-id",
+      "sender": "John Smith",
+      "sender_email": "john@example.com",
+      "subject": "Project update",
+      "body": "Here's the latest on the project...",
+      "received_at": "2026-04-05T10:30:00Z",
+      "metadata": {}
+    }
+  ]
+}
+```
+
+BitBit handles the rest — classification, urgency scoring, contact matching, and routing to the right inbox, task board, or approval queue.
