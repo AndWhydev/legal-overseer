@@ -36,7 +36,7 @@
  * 1. Swap `baileys-bridge.ts` for `cloud-api-bridge.ts` (same interfaces)
  * 2. Both paths write to `channel_messages` on receive and drain `whatsapp_outbox` on send
  * 3. The webhook route (`/api/channels/whatsapp/route.ts`) already handles Cloud API payloads
- * 4. Shared downstream: `processWhatsAppMessage` -> conversation-manager -> agent dispatch
+ * 4. Shared downstream: `processWhatsAppMessage` -> unified gateway pipeline (handleGatewayMessage)
  *
  * ### Recommendation
  * Use Baileys for development and MVP (immediate connectivity, no verification wait).

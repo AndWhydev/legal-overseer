@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { processWhatsAppMessage } from '@/lib/channels/whatsapp-parser'
 import { transcribeVoiceNote, downloadWhatsAppMedia } from '@/lib/channels/whatsapp-voice'
 import { verifyHmacSignature } from '@/lib/security/webhook-verification'
 import { resolveChannelIdentity } from '@/lib/conversation/identity-resolver'
-import { enrichInboundMessage } from '@/lib/conversation/inbound-enrichment'
-import { logger } from '@/lib/core/logger';
+import { handleGatewayMessage } from '@/lib/channels/gateway-handler'
+import { sendMessage as sendWhatsAppMessage } from '@/lib/channels/whatsapp'
+import { logger } from '@/lib/core/logger'
+
+// Allow up to 60s for agent engine response
+export const maxDuration = 60
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET
@@ -89,11 +93,19 @@ export async function POST(request: Request) {
         process.env.SUPABASE_SERVICE_ROLE_KEY || ''
     )
 
+    // Collect all messages to process in after()
+    const messagesToProcess: Array<{
+        phone: string
+        name: string
+        text: string
+        orgId: string
+        identity: { userId: string; orgId: string; displayName?: string } | null
+    }> = []
+
     for (const entry of payload.entry || []) {
         for (const change of entry.changes || []) {
             const value = change.value
             if (value?.messages && value.messages.length > 0) {
-                // Extract phone_number_id from the webhook metadata
                 const phoneNumberId: string | undefined = value.metadata?.phone_number_id
 
                 const orgId = await resolveOrgId(supabase, phoneNumberId)
@@ -104,7 +116,7 @@ export async function POST(request: Request) {
 
                 const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || ''
 
-                // Look up our own phone number to filter outbound messages
+                // Look up our own phone number to filter outbound echo messages
                 let ownNumber: string | null = null
                 if (phoneNumberId) {
                     const { data: config } = await supabase
@@ -121,8 +133,7 @@ export async function POST(request: Request) {
                     // Only handle text and audio message types
                     if (msg.type !== 'text' && msg.type !== 'audio') continue
 
-                    // Skip outbound messages (sent by us) — if msg.from matches
-                    // our own WhatsApp number, this is an echo of our outgoing message
+                    // Skip outbound echo messages
                     if (ownNumber && msg.from === ownNumber) {
                         logger.info(JSON.stringify({
                             event: 'whatsapp_outbound_skipped',
@@ -138,13 +149,6 @@ export async function POST(request: Request) {
                     const name = value.contacts?.[0]?.profile?.name || phone
 
                     let text: string
-                    let isActionable = true
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const metadata: Record<string, any> = {
-                        rawUrl: payload,
-                        phoneNumber: phone,
-                        phoneNumberId,
-                    }
 
                     if (msg.type === 'text') {
                         text = msg.text.body
@@ -163,105 +167,89 @@ export async function POST(request: Request) {
                             const transcription = await transcribeVoiceNote(audioBuffer, mimeType)
                             if (transcription) {
                                 text = transcription
-                                metadata.voice_note = true
-                                metadata.original_media_id = mediaId
                             } else {
-                                text = '[Voice note - transcription unavailable]'
-                                metadata.voice_note = true
-                                metadata.original_media_id = mediaId
-                                metadata.transcription_failed = true
-                                isActionable = false
+                                logger.warn('WhatsApp webhook: voice note transcription failed')
+                                continue
                             }
                         } else {
-                            text = '[Voice note - transcription unavailable]'
-                            metadata.voice_note = true
-                            metadata.original_media_id = mediaId
-                            metadata.download_failed = true
-                            isActionable = false
+                            logger.warn('WhatsApp webhook: voice note download failed')
+                            continue
                         }
                     } else {
                         continue
                     }
 
-                    // Resolve org from sender phone → contact mapping
-                    let targetOrgId = orgId
+                    // Resolve identity from sender phone
+                    let identity: { userId: string; orgId: string; displayName?: string } | null = null
                     try {
                         const resolved = await resolveChannelIdentity(supabase, {
                             channelType: 'whatsapp',
                             channelIdentifier: phone,
                         })
-                        if (resolved?.orgId) {
-                            targetOrgId = resolved.orgId
+                        if (resolved) {
+                            identity = {
+                                userId: resolved.userId,
+                                orgId: resolved.orgId,
+                                displayName: resolved.displayName,
+                            }
                         }
                     } catch {
-                        // Non-fatal — fall back to config-resolved org
+                        // Non-fatal — will use fallback org below
                     }
 
-                    // Log the incoming message to channel_messages
-                    const { data: insertedMsg, error } = await supabase
-                        .from('channel_messages')
-                        .insert({
-                            org_id: targetOrgId,
-                            channel: 'whatsapp',
-                            external_id: msg.id,
-                            sender: name,
-                            sender_email: phone,
-                            subject: 'WhatsApp Message',
-                            body: text,
-                            received_at: new Date(msg.timestamp * 1000).toISOString(),
-                            is_actionable: isActionable,
-                            priority: 'medium',
-                            direction: 'inbound',
-                            metadata,
-                        })
-                        .select('*')
-                        .single()
-
-                    if (!error && insertedMsg) {
-                        const processStartMs = Date.now()
-
-                        // Fire-and-forget: enrich with entity resolution, timeline,
-                        // relationship linking (unified pipeline intelligence layer)
-                        enrichInboundMessage(supabase, {
-                            messageId: insertedMsg.id as string,
-                            orgId: targetOrgId,
-                            channel: 'whatsapp',
-                            senderIdentifier: phone,
-                            senderName: name,
-                            subject: null,
-                            body: text,
-                            priority: 'medium',
-                        }).catch(e => {
-                            logger.error('WhatsApp enrichment failed (non-fatal):', e)
-                        })
-
-                        // Background process the message intent (existing flow:
-                        // command parser -> conversation manager -> agent dispatch)
-                        processWhatsAppMessage(supabase, targetOrgId, insertedMsg, text)
-                            .catch(e => {
-                                logger.error('Failed processing WhatsApp Message:', e)
-                            })
-                            .finally(() => {
-                                logger.info(JSON.stringify({
-                                    event: 'whatsapp_webhook_latency',
-                                    orgId: targetOrgId,
-                                    messageType: msg.type,
-                                    insertMs: processStartMs - webhookStartMs,
-                                    processMs: Date.now() - processStartMs,
-                                    totalMs: Date.now() - webhookStartMs,
-                                    source: 'cloud_api',
-                                }))
-                            })
-                    } else {
-                        logger.error('Failed to log WhatsApp message to database:', error)
-                    }
+                    messagesToProcess.push({
+                        phone,
+                        name,
+                        text,
+                        orgId,
+                        identity,
+                    })
                 }
             }
         }
     }
 
-    const webhookMs = Date.now() - webhookStartMs
+    // Use after() to process messages after returning 200 to Meta
+    if (messagesToProcess.length > 0) {
+        after(async () => {
+            for (const { phone, name, text, orgId, identity } of messagesToProcess) {
+                if (!identity) {
+                    logger.warn(`[webhook/whatsapp] No identity resolved for phone=${phone}`)
+                    await sendWhatsAppMessage(
+                        phone,
+                        "I don't recognize this number yet — link your WhatsApp in BitBit settings to get started",
+                    ).catch(() => {})
+                    continue
+                }
+
+                try {
+                    await handleGatewayMessage({
+                        channel: 'whatsapp',
+                        text,
+                        identity: {
+                            userId: identity.userId,
+                            orgId: identity.orgId,
+                            displayName: identity.displayName ?? name,
+                        },
+                        replyTo: phone,
+                    })
+                } catch (err) {
+                    logger.error('[webhook/whatsapp] Gateway handler background error', {
+                        error: err instanceof Error ? err.message : String(err),
+                    })
+                }
+
+                logger.info(JSON.stringify({
+                    event: 'whatsapp_webhook_processed',
+                    orgId: identity.orgId,
+                    totalMs: Date.now() - webhookStartMs,
+                    source: 'cloud_api',
+                }))
+            }
+        })
+    }
+
     return NextResponse.json({ status: 'success' }, {
-        headers: { 'X-WhatsApp-Process-Ms': String(webhookMs) },
+        headers: { 'X-WhatsApp-Process-Ms': String(Date.now() - webhookStartMs) },
     })
 }
