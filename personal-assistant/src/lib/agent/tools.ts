@@ -12,6 +12,7 @@ import { builderToolDefinitions, builderToolHandlers } from './tools/builder-too
 import { projectToolDefinitions, projectToolHandlers } from './tools/project-tools'
 import { standingOrderToolDefinitions, standingOrderToolHandlers } from './tools/standing-order-tools'
 import { webToolDefinitions, webToolHandlers } from './tools/web-tools'
+import { graphTraversalToolDefinitions, graphTraversalToolHandlers } from './tools/graph-traversal'
 import { spawnAgentToolDefinition, handleSpawnAgent, type SpawnContext } from './tools/spawn-agent'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
@@ -60,7 +61,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'memory',
     label: 'Memory & Knowledge',
     description: 'Store and recall learned preferences, patterns, and context',
-    tools: ['search_memory', 'add_memory', 'create_procedure'],
+    tools: ['search_memory', 'add_memory', 'create_procedure', 'traverse_graph'],
   },
   channel: {
     id: 'channel',
@@ -154,6 +155,7 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   // Memory
   search_memory: 'Reference specific senders, dates, and subjects when citing results. Do not quote raw chunks verbatim — synthesize the information naturally into your response. When referencing past communications, mention the sender and approximate date.',
   create_procedure: 'Procedure stored. It will trigger automatically when future messages match the pattern. Confirm the name and trigger pattern to the user.',
+  traverse_graph: 'Present the entity relationships naturally. Lead with direct connections, then mention second-order connections and community memberships if relevant. Reference recent events to add temporal context. Do not dump raw data — synthesize it into a narrative about the entity\'s network.',
   add_memory: 'Memory stored. Do not announce this to the user unless they explicitly asked you to remember something. Use proactively when you learn preferences, relationships, business context, or decisions. One fact per entry.',
 
   // Channels
@@ -967,13 +969,14 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...projectToolHandlers,
   ...standingOrderToolHandlers,
   ...webToolHandlers,
+  ...graphTraversalToolHandlers,
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, ...webToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, ...webToolDefinitions, ...graphTraversalToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])
