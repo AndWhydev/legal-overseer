@@ -564,9 +564,17 @@ export class ContextAssembler {
         compressible: true,
       },
       {
+        name: 'skillPrompts',
+        content: '', // Populated later by TAOR loop after skill resolution
+        priority: 4,
+        minTokens: 0,
+        maxTokens: 8000,
+        compressible: true,
+      },
+      {
         name: 'retrievedContext',
         content: retrievedContextText,
-        priority: 4,
+        priority: 5,
         minTokens: 0,
         maxTokens: 6000,
         compressible: true,
@@ -574,7 +582,7 @@ export class ContextAssembler {
       {
         name: 'entityContext',
         content: '', // Already embedded in systemPrompt by buildEntityAwarePrompt
-        priority: 5,
+        priority: 6,
         minTokens: 0,
         maxTokens: 0,
         compressible: false,
@@ -582,7 +590,7 @@ export class ContextAssembler {
       {
         name: 'compressedHistory',
         content: formatCompressedSummaries(summaries),
-        priority: 6,
+        priority: 7,
         minTokens: 0,
         maxTokens: 4000,
         compressible: true,
@@ -590,7 +598,7 @@ export class ContextAssembler {
       {
         name: 'keyFacts',
         content: formatKeyFactsPreamble(summaries),
-        priority: 7,
+        priority: 8,
         minTokens: 0,
         maxTokens: 2000,
         compressible: true,

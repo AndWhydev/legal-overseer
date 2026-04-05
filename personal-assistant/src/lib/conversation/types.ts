@@ -191,6 +191,7 @@ export interface TokenAllocation {
   keyFacts: number
   pendingActions: number
   retrievedContext: number
+  skillPrompts: number
   total: number
   budget: number
   overBudget: boolean
