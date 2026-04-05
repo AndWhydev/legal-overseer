@@ -8,6 +8,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import type { OrgConnection } from '@/lib/connections';
 import { IntegrationCard } from './integration-card';
 import {
   AVAILABLE_INTEGRATIONS,
@@ -28,9 +29,11 @@ interface ConnectionsGridProps {
   isLoading: boolean;
   onStatusChange: () => void;
   onWhatsAppConnect: () => void;
+  orgConnections?: OrgConnection[];
+  onConnectionInfoClick?: (connection: OrgConnection) => void;
 }
 
-export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWhatsAppConnect }: ConnectionsGridProps) {
+export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWhatsAppConnect, orgConnections, onConnectionInfoClick }: ConnectionsGridProps) {
   const [activeCategory, setActiveCategory] = useState<IntegrationCategory | 'all'>('all');
 
   const isConnected = (providerId: string): boolean => {
@@ -111,6 +114,14 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
               isConnected={isConnected(integration.id)}
               onStatusChange={onStatusChange}
               onWhatsAppConnect={onWhatsAppConnect}
+              onInfoClick={
+                onConnectionInfoClick && orgConnections
+                  ? (() => {
+                      const conn = orgConnections.find(c => c.provider === integration.id);
+                      if (conn) onConnectionInfoClick(conn);
+                    })
+                  : undefined
+              }
               style={{
                 animation: `bb-card-enter 300ms cubic-bezier(0.2, 0.9, 0.3, 1) ${idx * 30}ms both`,
               }}
@@ -121,7 +132,7 @@ export function ConnectionsGrid({ integrations, isLoading, onStatusChange, onWha
         {/* Custom connection card */}
         {!isLoading && (
           <a
-            href="https://docs.bitbit.chat/docs/connections/overview" rel="noopener"
+            href="https://docs.bitbit.chat/docs/connections/overview"
             target="_blank"
             rel="noopener"
             className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-card px-4 py-3 transition-colors hover:border-muted-foreground/40"

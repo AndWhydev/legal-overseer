@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { IconLoader2, IconX } from '@tabler/icons-react';
+import { IconLoader2, IconX, IconInfoCircle } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -62,9 +62,10 @@ interface IntegrationCardProps {
   onStatusChange?: () => void;
   onWhatsAppConnect?: () => void;
   style?: React.CSSProperties;
+  onInfoClick?: () => void;
 }
 
-export function IntegrationCard({ integration, isConnected = false, onStatusChange, onWhatsAppConnect, style: externalStyle }: IntegrationCardProps) {
+export function IntegrationCard({ integration, isConnected = false, onStatusChange, onWhatsAppConnect, style: externalStyle, onInfoClick }: IntegrationCardProps) {
   const BrandIcon = BRAND_ICONS[integration.id];
   const isComingSoon = integration.status === 'coming_soon';
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
@@ -169,6 +170,16 @@ export function IntegrationCard({ integration, isConnected = false, onStatusChan
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{integration.name}</span>
+            {connected && onInfoClick && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onInfoClick(); }}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                title="Connection details"
+              >
+                <IconInfoCircle size={14} />
+              </button>
+            )}
             <SuccessTick visible={showTick} />
             {isComingSoon && (
               <Badge variant="secondary">Soon</Badge>

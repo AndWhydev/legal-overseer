@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 import { BillingSettings } from '@/components/settings/billing-settings';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
 import { ConnectionsGrid } from '@/components/integrations/integration-grid';
+import { ConnectionDetailDrawer } from '@/components/connections/connection-detail-drawer';
+import type { OrgConnection } from '@/lib/connections';
 import { RagStatsWidget } from '@/components/dashboard/rag-stats-widget';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -196,6 +198,9 @@ export function SettingsConnectionsTab() {
   const [integrations, setIntegrations] = useState<OrgIntegration[]>([]);
   const [integrationsLoading, setIntegrationsLoading] = useState(true);
   const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
+  const [orgConnections, setOrgConnections] = useState<OrgConnection[]>([]);
+  const [selectedConnection, setSelectedConnection] = useState<OrgConnection | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const fetchIntegrations = useCallback(async () => {
     try {
@@ -204,6 +209,15 @@ export function SettingsConnectionsTab() {
       if (!response.ok) throw new Error('Failed to fetch integrations');
       const data = await response.json() as { integrations: OrgIntegration[] };
       setIntegrations(data.integrations);
+
+      // Also fetch org_connections for drawer info
+      try {
+        const connRes = await fetch('/api/connections');
+        if (connRes.ok) {
+          const connData = await connRes.json() as { connections: OrgConnection[] };
+          setOrgConnections(connData.connections || []);
+        }
+      } catch { /* non-fatal */ }
     } catch (err) {
       logger.error('Error fetching integrations:', err);
     } finally {
@@ -237,6 +251,22 @@ export function SettingsConnectionsTab() {
           isLoading={integrationsLoading}
           onStatusChange={fetchIntegrations}
           onWhatsAppConnect={() => setWhatsappModalOpen(true)}
+          orgConnections={orgConnections}
+          onConnectionInfoClick={(conn) => {
+            setSelectedConnection(conn);
+            setDrawerOpen(true);
+          }}
+        />
+
+        <ConnectionDetailDrawer
+          connection={selectedConnection}
+          open={drawerOpen}
+          onOpenChange={setDrawerOpen}
+          onDisconnect={() => {
+            setDrawerOpen(false);
+            setSelectedConnection(null);
+            fetchIntegrations();
+          }}
         />
       </div>
 
