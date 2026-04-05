@@ -8,6 +8,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/core/logger'
+import { embedDocuments } from '@/lib/rag/voyage-client'
 import type {
   MemorySearchOptions,
   MemorySearchResult,
@@ -57,27 +58,14 @@ export class MemorySearch {
     }
 
     try {
-      // 1. Full-text search on memory_palace_entries via RPC
-      const { data: memoryResults, error: memoryError } = await this.supabase
-        .rpc('search_memory_palace', {
-          p_org_id: orgId,
-          p_query: query,
-          p_category: category ?? null,
-          p_entity_id: entityId ?? null,
-          p_limit: limit,
-        })
-
-      if (memoryError) {
-        logger.warn('[memory-search] RPC search failed, falling back to ilike', {
-          error: memoryError.message,
-        })
-        // Fallback: simple ilike search
-        const fallback = await this.fallbackSearch(orgId, query, category, entityId, limit)
-        result.memories = fallback
-      } else if (memoryResults) {
-        result.memories = (memoryResults as (MemoryPalaceEntry & { rank: number })[])
-          .filter(m => m.confidence >= minConfidence)
-      }
+      // 1. Hybrid search: tsvector + vector in parallel, blended via RRF
+      const [tsvectorResults, vectorResults] = await Promise.all([
+        this.tsvectorSearch(options),
+        this.vectorSearch(options),
+      ])
+      result.memories = this.reciprocalRankFusion(tsvectorResults, vectorResults, 60)
+        .filter(m => m.confidence >= minConfidence)
+        .slice(0, limit)
 
       // 2. Search decisions
       if (includeDecisions) {
@@ -238,6 +226,100 @@ export class MemorySearch {
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────────
+
+  /**
+   * Full-text search via the search_memory_palace RPC (tsvector).
+   * Falls back to ilike if the RPC is unavailable.
+   */
+  private async tsvectorSearch(
+    options: MemorySearchOptions,
+  ): Promise<(MemoryPalaceEntry & { rank: number })[]> {
+    const { data, error } = await this.supabase.rpc('search_memory_palace', {
+      p_org_id: options.orgId,
+      p_query: options.query,
+      p_category: options.category ?? null,
+      p_entity_id: options.entityId ?? null,
+      p_limit: options.limit ?? 20,
+    })
+
+    if (error) {
+      logger.warn('[memory-search] RPC search failed, falling back to ilike', {
+        error: error.message,
+      })
+      return this.fallbackSearch(
+        options.orgId,
+        options.query,
+        options.category,
+        options.entityId,
+        options.limit ?? 20,
+      )
+    }
+
+    return (data ?? []) as (MemoryPalaceEntry & { rank: number })[]
+  }
+
+  /**
+   * Semantic vector search via Voyage embeddings + pgvector cosine similarity.
+   */
+  private async vectorSearch(
+    options: MemorySearchOptions,
+  ): Promise<(MemoryPalaceEntry & { rank: number })[]> {
+    try {
+      const vectors = await embedDocuments([options.query])
+      if (!vectors || vectors.length === 0 || vectors[0].length !== 1024) return []
+
+      const { data, error } = await this.supabase.rpc('search_memories_vector', {
+        p_org_id: options.orgId,
+        p_embedding: `[${vectors[0].join(',')}]`,
+        p_category: options.category ?? null,
+        p_entity_id: options.entityId ?? null,
+        p_min_confidence: options.minConfidence ?? 0,
+        p_limit: options.limit ?? 20,
+      })
+
+      if (error) return []
+
+      return ((data ?? []) as (MemoryPalaceEntry & { similarity: number })[]).map(
+        (m, i) => ({ ...m, rank: m.similarity ?? (1 - i * 0.05) }),
+      )
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * Reciprocal Rank Fusion — merge two ranked result lists into one.
+   * Higher k values dampen the effect of high-ranked items.
+   */
+  private reciprocalRankFusion(
+    tsvectorResults: (MemoryPalaceEntry & { rank: number })[],
+    vectorResults: (MemoryPalaceEntry & { rank: number })[],
+    k: number = 60,
+  ): (MemoryPalaceEntry & { rank: number })[] {
+    const scoreMap = new Map<string, { entry: MemoryPalaceEntry; rrfScore: number }>()
+
+    for (let i = 0; i < tsvectorResults.length; i++) {
+      const entry = tsvectorResults[i]
+      const existing = scoreMap.get(entry.id)
+      scoreMap.set(entry.id, {
+        entry,
+        rrfScore: (existing?.rrfScore ?? 0) + 1 / (k + i + 1),
+      })
+    }
+
+    for (let i = 0; i < vectorResults.length; i++) {
+      const entry = vectorResults[i]
+      const existing = scoreMap.get(entry.id)
+      scoreMap.set(entry.id, {
+        entry: existing?.entry ?? entry,
+        rrfScore: (existing?.rrfScore ?? 0) + 1 / (k + i + 1),
+      })
+    }
+
+    return [...scoreMap.values()]
+      .sort((a, b) => b.rrfScore - a.rrfScore)
+      .map(({ entry, rrfScore }) => ({ ...entry, rank: rrfScore }))
+  }
 
   /**
    * Fallback ilike search when tsvector RPC is unavailable.

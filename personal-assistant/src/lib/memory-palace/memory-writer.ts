@@ -8,6 +8,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/core/logger'
+import { embedDocuments } from '@/lib/rag/voyage-client'
 import type {
   MemoryPalaceEntry,
   StoreMemoryInput,
@@ -97,6 +98,9 @@ export class MemoryWriter {
         confidence,
         entityCount: (input.entityIds ?? []).length,
       })
+
+      // Fire-and-forget embedding (non-blocking)
+      this.embedMemory(data.id, input.content).catch(() => {})
 
       return data as MemoryPalaceEntry
     } catch (err) {
@@ -221,6 +225,18 @@ export class MemoryWriter {
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────────
+
+  /**
+   * Generate and store a vector embedding for a memory entry.
+   */
+  private async embedMemory(memoryId: string, content: string): Promise<void> {
+    const vectors = await embedDocuments([content])
+    if (!vectors || vectors.length === 0 || vectors[0].length !== 1024) return
+    await this.supabase
+      .from('memory_palace_entries')
+      .update({ content_embedding: `[${vectors[0].join(',')}]` })
+      .eq('id', memoryId)
+  }
 
   /**
    * Check if a near-duplicate memory already exists.
