@@ -143,12 +143,12 @@ async function stageSummarize(supabase: SupabaseClient, orgId: string): Promise<
   todayStart.setUTCHours(0, 0, 0, 0)
   const todayISO = todayStart.toISOString()
 
-  // Find entities that have event_tuples occurring today
+  // Find entities that have event_tuples created today
   const { data: entityRows, error: entityErr } = await supabase
     .from('event_tuples')
     .select('subject_id')
     .eq('org_id', orgId)
-    .gte('occurred_at', todayISO)
+    .gte('created_at', todayISO)
 
   if (entityErr || !entityRows || entityRows.length === 0) return 0
 
@@ -178,7 +178,7 @@ async function stageSummarize(supabase: SupabaseClient, orgId: string): Promise<
         .select('verb, object_text, occurred_at')
         .eq('org_id', orgId)
         .eq('subject_id', entityId)
-        .gte('occurred_at', todayISO)
+        .gte('created_at', todayISO)
         .order('occurred_at', { ascending: true })
 
       if (!events || events.length === 0) continue
@@ -334,7 +334,7 @@ async function stageDiscoverRelationships(
     .from('event_tuples')
     .select('subject_id, occurred_at')
     .eq('org_id', orgId)
-    .gte('occurred_at', todayISO)
+    .gte('created_at', todayISO)
 
   if (evtErr || !todayEvents || todayEvents.length < 2) return 0
 
