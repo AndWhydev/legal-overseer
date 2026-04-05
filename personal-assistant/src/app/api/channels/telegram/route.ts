@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { handleTelegramMessage } from '@/lib/channels/telegram-handler'
 import { timingSafeCompare } from '@/lib/security/webhook-verification'
 import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
-import { enrichInboundMessage } from '@/lib/conversation/inbound-enrichment'
+import { resolveChannelIdentity } from '@/lib/conversation/identity-resolver'
+import { handleGatewayMessage } from '@/lib/channels/gateway-handler'
+import { sendTelegramMessage } from '@/lib/channels/telegram'
 import { after } from 'next/server'
 import { logger } from '@/lib/core/logger'
 
@@ -46,64 +47,75 @@ export async function POST(request: NextRequest) {
 
   const chatId = String(message.chat.id)
   const text = message.text
-  const messageId = String(message.message_id)
+  const senderName = message.from?.first_name || message.from?.username || chatId
 
-  // Resolve org from Telegram webhook credentials
-  const orgId = await resolveOrgFromWebhook('telegram', chatId)
-  if (!orgId) {
-    logger.warn(
-      `[webhook/telegram] Could not resolve org for chat_id=${chatId}. Make sure Telegram channel is configured in channel_credentials.`
-    )
-    // Return 200 to prevent Telegram from retrying, but don't process
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    logger.error('[webhook/telegram] Missing Supabase env vars')
     return NextResponse.json({ ok: true })
   }
 
-  // Store in channel_messages
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (supabaseUrl && supabaseKey) {
-    const supabase = createClient(supabaseUrl, supabaseKey)
-    const senderName = message.from?.first_name || message.from?.username || chatId
+  const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const { data: insertedMsg } = await supabase.from('channel_messages').insert({
-      org_id: orgId,
-      channel: 'telegram',
-      external_id: messageId,
-      sender: senderName,
-      sender_email: chatId, // used for reply routing
-      body: text,
-      received_at: new Date().toISOString(),
-      metadata: {
-        chat_id: chatId,
-        from: message.from,
-      },
-    }).select('id').single()
+  // Try resolving via channel_identities first
+  let identity: { userId: string; orgId: string; displayName?: string } | null = null
 
-    // Fire-and-forget: enrich with entity resolution, timeline,
-    // relationship linking (unified pipeline intelligence layer)
-    if (insertedMsg) {
-      enrichInboundMessage(supabase, {
-        messageId: insertedMsg.id as string,
+  const channelIdentity = await resolveChannelIdentity(supabase, {
+    channelType: 'telegram' as never,
+    channelIdentifier: chatId,
+  })
+
+  if (channelIdentity) {
+    identity = {
+      userId: channelIdentity.userId,
+      orgId: channelIdentity.orgId,
+      displayName: channelIdentity.displayName,
+    }
+  } else {
+    // Fallback: try resolving org from legacy webhook credentials
+    const orgId = await resolveOrgFromWebhook('telegram', chatId)
+    if (orgId) {
+      identity = {
+        userId: 'system',
         orgId,
-        channel: 'telegram',
-        senderIdentifier: chatId,
-        senderName,
-        subject: null,
-        body: text,
-        priority: 'medium',
-      }).catch(err => {
-        logger.error('[webhook/telegram] Enrichment failed (non-fatal):', err)
-      })
+        displayName: senderName,
+      }
     }
   }
 
+  if (!identity) {
+    logger.warn(`[webhook/telegram] No identity resolved for chat_id=${chatId}`)
+    after(async () => {
+      await sendTelegramMessage(
+        chatId,
+        "I don't recognize this chat yet — link your Telegram in BitBit settings to get started",
+      )
+    })
+    return NextResponse.json({ ok: true })
+  }
+
+  const resolvedIdentity = identity
+
   // Use next/server after() to keep the function alive after returning 200.
-  // This lets Telegram get a fast response while the agent engine runs.
+  // This lets Telegram get a fast response while the pipeline runs.
   after(async () => {
     try {
-      await handleTelegramMessage(orgId, chatId, text)
+      await handleGatewayMessage({
+        channel: 'telegram',
+        text,
+        identity: {
+          userId: resolvedIdentity.userId,
+          orgId: resolvedIdentity.orgId,
+          displayName: resolvedIdentity.displayName,
+        },
+        replyTo: chatId,
+      })
     } catch (err) {
-      logger.error('[telegram] Handler background error', { error: err instanceof Error ? err.message : String(err) })
+      logger.error('[telegram] Gateway handler background error', {
+        error: err instanceof Error ? err.message : String(err),
+      })
     }
   })
 
