@@ -1,5 +1,4 @@
 import type { ProviderPlugin } from './types'
-import { beeperProvider } from './providers/beeper'
 import { blueBubblesProvider } from './providers/bluebubbles'
 
 /**
@@ -121,5 +120,4 @@ export const builtInProviders: ProviderPlugin[] = [
     capabilities: ['pull'],
     comingSoon: true,
   },
-  beeperProvider,
 ]

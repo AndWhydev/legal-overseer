@@ -15,6 +15,8 @@ const MAX_RETRIES = 3
 let voyageClient: any | null = null
 let initialized = false
 
+const runtimeRequireModule = (specifier: string) => (eval('require') as NodeJS.Require)(specifier) as { VoyageAIClient: new (options: { apiKey: string }) => any }
+
 /**
  * Initialize Voyage AI client (lazy, single-shot)
  * Uses require() to avoid Turbopack ESM directory import issues at bundle time.
@@ -36,9 +38,7 @@ function initializeVoyage(): void {
     // Completely opaque require to prevent ANY bundler from analyzing voyageai.
     // The package has broken ESM directory imports and optional deps (@huggingface/transformers)
     // that crash Turbopack's resolver. This pattern is invisible to static analysis.
-    const voyageaiModule = 'voyageai'
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { VoyageAIClient } = require(voyageaiModule)
+    const { VoyageAIClient } = runtimeRequireModule('voyageai')
     voyageClient = new VoyageAIClient({
       apiKey,
     })

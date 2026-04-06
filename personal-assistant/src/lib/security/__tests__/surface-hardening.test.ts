@@ -17,15 +17,15 @@ const REPO_ROOT = resolve(PROJECT_ROOT, '..')
 // ─── Test Group 1: Header Middleware ─────────────────────────────────────────
 
 describe('Header Middleware — AC-1', () => {
-  let middleware: (request: NextRequest) => Promise<NextResponse>
+  let proxyHandler: (request: NextRequest) => Promise<NextResponse>
 
   beforeEach(async () => {
     vi.resetModules()
-    // Stub Supabase env to avoid auth flow — empty means middleware early-returns
+    // Stub Supabase env to avoid auth flow — empty means the proxy early-returns
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '')
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', '')
-    const mod = await import('@/middleware')
-    middleware = mod.middleware
+    const mod = await import('@/proxy')
+    proxyHandler = mod.proxy
   })
 
   afterEach(() => {
@@ -43,26 +43,26 @@ describe('Header Middleware — AC-1', () => {
   }
 
   it('strips x-powered-by header and sets it to BitBit', async () => {
-    const response = await middleware(createMockRequest('/'))
+    const response = await proxyHandler(createMockRequest('/'))
     expect(response.headers.get('x-powered-by')).toBe('BitBit')
   })
 
   it('actively deletes server header in middleware source', () => {
-    // Verify the middleware source contains an active delete call for 'server'.
+    // Verify the proxy source contains an active delete call for 'server'.
     // Testing via response.headers.get('server') is vacuously true since
     // NextResponse.next() never sets it — we need to verify the code actively strips it.
-    const middlewarePath = resolve(PROJECT_ROOT, 'src/middleware.ts')
-    const source = readFileSync(middlewarePath, 'utf-8')
+    const proxyPath = resolve(PROJECT_ROOT, 'src/proxy.ts')
+    const source = readFileSync(proxyPath, 'utf-8')
     expect(source).toMatch(/headers\.delete\(['"]server['"]\)/)
   })
 
   it('sets x-powered-by to BitBit on non-API routes', async () => {
-    const response = await middleware(createMockRequest('/some-page'))
+    const response = await proxyHandler(createMockRequest('/some-page'))
     expect(response.headers.get('x-powered-by')).toBe('BitBit')
   })
 
   it('sets x-powered-by to BitBit on API routes', async () => {
-    const response = await middleware(createMockRequest('/api/health'))
+    const response = await proxyHandler(createMockRequest('/api/health'))
     expect(response.headers.get('x-powered-by')).toBe('BitBit')
   })
 })

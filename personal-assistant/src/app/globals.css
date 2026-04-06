@@ -4,7 +4,6 @@
 @import "../styles/theme-midnight.css";
 @import "../styles/theme-aurora.css";
 @import "../styles/theme-light.css";
-@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 

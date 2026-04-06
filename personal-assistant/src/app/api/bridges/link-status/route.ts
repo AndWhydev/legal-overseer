@@ -84,6 +84,10 @@ export async function POST(request: Request) {
     })
   }
 
+  if (!machineId) {
+    return NextResponse.json({ status: 'waiting', protocol: conn.provider })
+  }
+
   const provisioner = createProvisioner(supabase)
   try {
     const health = await provisioner.checkHealth(machineId)

@@ -17,6 +17,7 @@ import type { SkillIndexEntry, ResolvedSkill } from './types'
 
 const MAX_CACHE_SIZE = 20
 const resolveCache = new Map<string, ResolvedSkill>()
+const runtimeImportModule = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>
 
 function cacheGet(id: string): ResolvedSkill | undefined {
   const entry = resolveCache.get(id)
@@ -161,7 +162,7 @@ export async function resolveSkill(skillId: string): Promise<ResolvedSkill | nul
     let tools: ResolvedSkill['tools']
     if (entry.toolsPath) {
       try {
-        const toolModule = await import(entry.toolsPath)
+        const toolModule = await runtimeImportModule(entry.toolsPath)
         tools = toolModule.default ?? toolModule.tools
       } catch (err) {
         logger.warn('[skill-registry] Failed to import tools.ts', {

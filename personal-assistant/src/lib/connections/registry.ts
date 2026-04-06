@@ -1,3 +1,4 @@
+import { builtInProviders } from './built-in-providers'
 import type { ProviderPlugin } from './types'
 
 export class ProviderRegistry {
@@ -29,4 +30,21 @@ export class ProviderRegistry {
   listConnectable(): ProviderPlugin[] {
     return this.list().filter(p => !p.comingSoon)
   }
+}
+
+
+const providerRegistry = new ProviderRegistry()
+let providerRegistryInitialized = false
+
+export function getProviderRegistry(): ProviderRegistry {
+  if (!providerRegistryInitialized) {
+    for (const provider of builtInProviders) {
+      if (!providerRegistry.has(provider.id)) {
+        providerRegistry.register(provider)
+      }
+    }
+    providerRegistryInitialized = true
+  }
+
+  return providerRegistry
 }

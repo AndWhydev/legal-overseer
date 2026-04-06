@@ -96,7 +96,8 @@ export async function processAttachment(buffer: Buffer, mimeType: string): Promi
 async function extractPdfText(buffer: Buffer): Promise<string> {
   try {
     // Lazy load pdf-parse to avoid runtime dependency if not used
-    const pdfParse = (await import('pdf-parse')).default
+    const pdfParseModule = await import('pdf-parse')
+    const pdfParse = ((pdfParseModule as unknown as { default?: (input: Buffer) => Promise<{ text?: string }> }).default ?? pdfParseModule) as (input: Buffer) => Promise<{ text?: string }>
     const data = await pdfParse(buffer)
 
     // Concatenate all page text

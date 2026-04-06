@@ -16,7 +16,7 @@ export function getStripe(): Stripe {
     const key = process.env.STRIPE_SECRET_KEY?.trim()
     if (!key) throw new Error('STRIPE_SECRET_KEY is not set')
     _stripe = new Stripe(key, {
-      apiVersion: '2025-03-31.basil' as Stripe.LatestApiVersion,
+      apiVersion: '2025-03-31.basil',
     })
   }
   return _stripe

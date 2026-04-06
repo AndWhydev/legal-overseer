@@ -70,11 +70,13 @@ type PostgrestLikeError = {
 let _baileys: BaileysModule | null = null
 let _baileysChecked = false
 
+const runtimeImportModule = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<BaileysModule>
+
 async function loadBaileys(): Promise<BaileysModule | null> {
   if (_baileysChecked) return _baileys
   _baileysChecked = true
   try {
-    _baileys = await import('@whiskeysockets/baileys')
+    _baileys = await runtimeImportModule('@whiskeysockets/baileys')
     return _baileys
   } catch {
     logger.warn('[baileys-bridge] @whiskeysockets/baileys not installed — bridge unavailable')

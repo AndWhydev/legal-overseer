@@ -130,7 +130,7 @@ export function BridgeLinkModal({ open, onOpenChange, protocol, onSuccess }: Bri
 
     const connectVnc = async () => {
       try {
-        const { default: RFB } = await import('@novnc/novnc/core/rfb')
+        const { default: RFB } = await import('@novnc/novnc/lib/rfb')
         if (cancelled || !vncContainerRef.current) return
 
         // Clean up any existing connection

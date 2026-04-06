@@ -343,7 +343,7 @@ export class MemorySearch {
           return scoreDiff
         })
         .slice(0, limit)
-        .map(s => s.memory)
+        .map(s => ({ ...s.memory, rank: s.score }))
 
       // 4. Decisions (temporal-ordered)
       if (includeDecisions) {

@@ -1,4 +1,4 @@
-export { ProviderRegistry } from './registry'
+export { ProviderRegistry, getProviderRegistry } from './registry'
 export { builtInProviders } from './built-in-providers'
 export { connectionTemplates } from './templates'
 export { envelopeToChannelMessage, generateBridgeToken, generateWebhookSecret, generateDedupKey, verifyWebhookSignature } from './envelope'
