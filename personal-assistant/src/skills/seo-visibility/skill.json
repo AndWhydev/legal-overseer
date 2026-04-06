@@ -1,0 +1,10 @@
+{
+  "name": "SEO & AI Visibility",
+  "description": "Audit AI search visibility across engines, generate optimized content, and create schema markup.",
+  "tags": ["seo", "visibility", "schema", "rankings", "search", "ai-search", "content-optimization"],
+  "triggerKeywords": ["seo", "visibility", "audit", "rankings", "schema markup", "search performance", "perplexity", "chatgpt ranking", "ai search", "structured data", "json-ld", "meta description", "serp"],
+  "roleAffinity": ["operations", "research"],
+  "toolGroup": "seo",
+  "estimatedTokens": 1200,
+  "planGate": "growth"
+}

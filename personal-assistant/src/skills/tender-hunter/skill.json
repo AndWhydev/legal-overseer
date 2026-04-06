@@ -1,0 +1,10 @@
+{
+  "name": "Tender Hunter",
+  "description": "Search government tenders, score fit against capabilities, and generate draft responses.",
+  "tags": ["tenders", "government", "procurement", "rfp", "rfq", "bid", "proposal"],
+  "triggerKeywords": ["tender", "government contract", "rfp", "rfq", "procurement", "bid", "proposal", "austender", "government work", "public sector"],
+  "roleAffinity": ["sales", "research"],
+  "toolGroup": "tenders",
+  "estimatedTokens": 1100,
+  "planGate": "growth"
+}
