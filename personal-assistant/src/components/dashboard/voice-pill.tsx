@@ -308,7 +308,7 @@ export function VoicePill({
           'relative z-auto',
           'flex flex-col items-stretch',
           'w-full max-w-[860px] mx-auto',
-          'rounded-3xl border border-border bg-card',
+          'rounded-[24px] border border-border bg-card',
           'shadow-xs',
           'opacity-100 visible pointer-events-auto',
           'transition-[min-height,padding] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
