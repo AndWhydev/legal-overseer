@@ -313,8 +313,8 @@ export function VoicePill({
           'opacity-100 visible pointer-events-auto',
           'transition-[min-height,padding] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
         ],
-        docked && compactDocked && !isDockedExpanded && 'min-h-[88px] px-5 py-3',
-        docked && (!compactDocked || isDockedExpanded) && 'min-h-[120px] px-5 pt-3.5 pb-3',
+        docked && compactDocked && !isDockedExpanded && 'p-0 pt-1',
+        docked && (!compactDocked || isDockedExpanded) && 'p-0 pt-1',
 
         // ── Floating visible ──
         !docked && isVisible && !isExiting && [
@@ -423,12 +423,11 @@ export function VoicePill({
                   className={cn(
                     'w-full flex-1 resize-none overflow-y-auto',
                     'bg-transparent border-0 outline-none shadow-none',
-                    'text-base leading-[1.55] text-foreground',
+                    'text-base leading-[1.3] text-foreground',
                     'placeholder:text-muted-foreground',
                     'focus-visible:ring-0 focus-visible:border-0',
-                    'max-h-[188px] pl-1 pr-0.5',
-                    'transition-[min-height] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                    compactDocked && !isDockedExpanded ? 'min-h-[44px]' : 'min-h-[72px]',
+                    'max-h-[188px] pt-3 pl-4',
+                    'min-h-[44px]',
                   )}
                   placeholder="Message BitBit..."
                   value={textValue}
@@ -462,7 +461,7 @@ export function VoicePill({
               </div>
 
               {/* Action buttons row */}
-              <div className="flex w-full items-center justify-between gap-2 pt-1">
+              <div className="mt-5 flex w-full items-center justify-between gap-2 px-3 pb-3">
                 <div className="flex items-center gap-1.5">
                   <Button
                     variant="outline"
