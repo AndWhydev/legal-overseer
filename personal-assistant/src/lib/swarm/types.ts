@@ -85,7 +85,7 @@ export interface CapabilityBoundary {
 export const DEFAULT_CAPABILITIES: Record<AgentRole, CapabilityBoundary> = {
   sales: {
     allowedToolGroups: ['core', 'memory', 'channel'],
-    allowedSkills: [],
+    allowedSkills: ['ad-scripts', 'tender-hunter', 'website-builder'],
     deniedTools: ['generate_invoice', 'send_email'],
   },
   finance: {
@@ -96,18 +96,18 @@ export const DEFAULT_CAPABILITIES: Record<AgentRole, CapabilityBoundary> = {
   },
   comms: {
     allowedToolGroups: ['core', 'memory', 'channel', 'comms'],
-    allowedSkills: [],
+    allowedSkills: ['ad-scripts', 'content-social'],
     deniedTools: ['generate_invoice'],
     requiresApproval: ['send_email', 'send_sms', 'send_whatsapp'],
   },
   operations: {
     allowedToolGroups: ['core', 'memory', 'channel'],
-    allowedSkills: [],
+    allowedSkills: ['seo-visibility', 'content-social', 'tender-hunter'],
     deniedTools: ['send_email', 'generate_invoice'],
   },
   research: {
     allowedToolGroups: ['core', 'memory', 'web'],
-    allowedSkills: [],
+    allowedSkills: ['seo-visibility', 'tender-hunter'],
     deniedTools: ['send_email', 'send_sms', 'generate_invoice', 'create_task'],
   },
   coordinator: {
