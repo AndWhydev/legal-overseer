@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { generateImage } from 'ai'
+import { generateImage, gateway } from 'ai'
 import { logger } from '@/lib/core/logger'
 import type { AgentToolHandler } from '../tools'
 
@@ -92,7 +92,7 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
 
     try {
       const { image } = await generateImage({
-        model: modelId,
+        model: gateway(modelId),
         prompt: fullPrompt,
         aspectRatio: (aspect_ratio || '1:1') as `${number}:${number}`,
       })
@@ -127,7 +127,7 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
 
     try {
       const { images } = await generateImage({
-        model: modelId,
+        model: gateway(modelId),
         prompt,
         aspectRatio: (aspect_ratio || '1:1') as `${number}:${number}`,
         n,
