@@ -1183,6 +1183,28 @@ export function ChatInterface() {
                 break
               }
 
+              case 'image_generated': {
+                const imgEvt = event.data as { imageData: string | Array<{ base64: string; index?: number }>; prompt?: string; model?: string }
+                const images: Array<{ base64: string; index?: number }> = []
+                if (typeof imgEvt.imageData === 'string') {
+                  images.push({ base64: imgEvt.imageData })
+                } else if (Array.isArray(imgEvt.imageData)) {
+                  for (const img of imgEvt.imageData) {
+                    if (img.base64) images.push({ base64: img.base64, index: img.index })
+                  }
+                }
+                if (images.length > 0) {
+                  setImageArtifacts(prev => [...prev, {
+                    id: `img-${Date.now()}`,
+                    images,
+                    prompt: imgEvt.prompt || '',
+                    model: imgEvt.model || '',
+                    afterMessageId: assistantId,
+                  }])
+                }
+                break
+              }
+
               case 'error':
                 setIsThinkingStreaming(false)
                 setShowReasoning(false)

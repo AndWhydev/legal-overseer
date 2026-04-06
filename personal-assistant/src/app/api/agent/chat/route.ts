@@ -184,9 +184,44 @@ export async function POST(request: NextRequest) {
           }
         )
         for await (const event of events) {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
-          )
+          // For tool_result events with __image_data, split into two events:
+          // 1. The tool_result without image data (small, for model status)
+          // 2. A separate image_generated event with the actual image data
+          if (
+            event.type === 'tool_result' &&
+            typeof event.data === 'object' &&
+            event.data !== null &&
+            'result' in event.data &&
+            typeof (event.data as Record<string, unknown>).result === 'object' &&
+            (event.data as Record<string, unknown>).result !== null &&
+            '__image_data' in ((event.data as Record<string, unknown>).result as Record<string, unknown>)
+          ) {
+            const toolData = event.data as Record<string, unknown>
+            const result = { ...(toolData.result as Record<string, unknown>) }
+            const imageData = result.__image_data
+            delete result.__image_data
+            // Send tool_result without image data
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ ...event, data: { ...toolData, result } })}\n\n`)
+            )
+            // Send image data as separate event
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({
+                type: 'image_generated',
+                data: {
+                  callId: toolData.callId,
+                  name: toolData.name,
+                  imageData,
+                  prompt: result.prompt_used,
+                  model: result.model_used,
+                },
+              })}\n\n`)
+            )
+          } else {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify(event)}\n\n`)
+            )
+          }
         }
       } catch (error) {
         logger.error('[chat] Stream error:', error)
