@@ -1,9 +1,9 @@
 {
-  "name": "SEO Content",
-  "description": "Create search-optimized articles that rank in Google and engage readers using E-E-A-T principles.",
+  "name": "SEO Writer",
+  "description": "Write SEO-optimized articles, meta descriptions, and content briefs with keyword targeting.",
   "tags": ["SEO content", "search engine optimization", "content marketing", "ranking content", "organic traffic", "search intent", "content strategy", "E-E-A-T", "topical authority"],
-  "triggerKeywords": ["write SEO article", "SEO content", "rank on Google", "blog post SEO", "content brief", "SEO writing", "optimize content", "organic traffic", "on-page SEO", "meta description", "title tag", "content for search"],
+  "triggerKeywords": ["write seo content", "seo article", "meta description", "content brief", "seo copy", "optimize content", "target keyword"],
   "roleAffinity": ["research", "operations"],
-  "estimatedTokens": 3624,
+  "estimatedTokens": 3800,
   "planGate": "growth"
 }

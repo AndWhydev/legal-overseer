@@ -1,8 +1,8 @@
 {
   "name": "SEO Strategy",
-  "description": "Build a complete SEO strategy with winnable keyword research, link building, and 90-day action plans.",
+  "description": "Plan SEO campaigns with keyword research strategy, site architecture, and competitive positioning.",
   "tags": ["SEO strategy", "keyword research", "link building", "domain authority", "programmatic SEO", "topical authority", "E-E-A-T", "content strategy"],
-  "triggerKeywords": ["SEO strategy", "improve search rankings", "grow organic traffic", "link building", "domain authority", "SEO plan", "90 day SEO", "topical authority", "SEO roadmap", "backlink strategy", "technical SEO", "programmatic SEO"],
+  "triggerKeywords": ["seo strategy", "seo plan", "keyword strategy", "site architecture", "link building", "technical seo", "seo roadmap", "search strategy"],
   "roleAffinity": ["research", "operations"],
   "estimatedTokens": 3320,
   "planGate": "growth"

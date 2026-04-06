@@ -1,9 +1,0 @@
-{
-  "name": "Tweet Writer",
-  "description": "Write viral tweets and threads using proven hook formulas, X algorithm insights, and niche research.",
-  "tags": ["twitter", "X", "tweets", "threads", "viral content", "social media", "engagement", "hooks", "copywriting"],
-  "triggerKeywords": ["write tweet", "twitter thread", "X post", "viral tweet", "tweet hook", "social media post", "write a thread", "tweet ideas", "twitter strategy", "tweet copy", "grow twitter", "X content"],
-  "roleAffinity": ["sales", "comms"],
-  "estimatedTokens": 3358,
-  "planGate": "growth"
-}

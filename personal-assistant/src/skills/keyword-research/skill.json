@@ -1,8 +1,8 @@
 {
   "name": "Keyword Research",
-  "description": "Identify high-impact keywords using the 6 Circles Method aligned with your positioning and audience intent.",
+  "description": "Discover high-value keywords with search volume, difficulty, and intent analysis.",
   "tags": ["keyword research", "SEO keywords", "search volume", "keyword strategy", "content planning", "search intent", "keyword analysis"],
-  "triggerKeywords": ["keyword research", "find keywords", "what to write about", "SEO keywords", "search volume", "keyword strategy", "content ideas", "search intent", "keyword gaps", "competitor keywords", "long tail keywords", "keyword opportunities"],
+  "triggerKeywords": ["keyword research", "find keywords", "search volume", "keyword difficulty", "keyword opportunities", "long tail keywords"],
   "roleAffinity": ["research", "operations"],
   "estimatedTokens": 1202,
   "planGate": "growth"
