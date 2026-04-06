@@ -263,7 +263,29 @@ export async function* runTAORLoop(
         }
       }
 
-      // Register skill tools into active tool set
+      // Merge skill tool groups into planner's tool groups for coordinated routing
+      const combinedToolGroups = [...(raceResult.plan.toolGroups ?? [])]
+      for (const skill of resolvedSkills) {
+        if (skill.entry.toolGroup && !combinedToolGroups.includes(skill.entry.toolGroup)) {
+          combinedToolGroups.push(skill.entry.toolGroup)
+        }
+      }
+
+      // Apply combined tool groups (planner + skill tool groups)
+      if (combinedToolGroups.length > 0) {
+        tools = getAgentTools(combinedToolGroups as ToolGroup[])
+        toolNames = tools.map(t => t.name)
+        toolGroupsApplied = true
+        logger.info('[engine] Tool groups selected', {
+          toolGroups: combinedToolGroups,
+          fromPlanner: raceResult.plan.toolGroups,
+          fromSkills: resolvedSkills.filter(s => s.entry.toolGroup).map(s => s.entry.toolGroup),
+          toolCount: tools.length,
+          totalAvailable: totalToolCount,
+        })
+      }
+
+      // Register skill-specific tools that aren't part of a standard tool group
       for (const skill of resolvedSkills) {
         if (skill.tools && skill.tools.length > 0) {
           const skillTools: Anthropic.Tool[] = skill.tools.map(t => ({
@@ -288,7 +310,7 @@ export async function* runTAORLoop(
             content: JSON.stringify({
               stages: planStages,
               userMessage: message.slice(0, 200),
-              toolGroups: raceResult.plan.toolGroups ?? [],
+              toolGroups: combinedToolGroups,
             }),
             typeMetadata: {
               plan_type: 'taor_execution',
@@ -303,17 +325,6 @@ export async function* runTAORLoop(
         } catch {
           // Plan memory creation is non-critical
         }
-      }
-
-      if (raceResult.plan.toolGroups.length > 0) {
-        tools = getAgentTools(raceResult.plan.toolGroups as ToolGroup[])
-        toolNames = tools.map(t => t.name)
-        toolGroupsApplied = true
-        logger.info('[engine] Tool groups selected', {
-          toolGroups: raceResult.plan.toolGroups,
-          toolCount: tools.length,
-          totalAvailable: totalToolCount,
-        })
       }
 
       planPromise = null
