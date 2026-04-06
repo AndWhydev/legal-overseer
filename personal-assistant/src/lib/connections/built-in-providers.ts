@@ -1,5 +1,12 @@
 import type { ProviderPlugin } from './types'
+import { beeperProvider } from './providers/beeper'
+import { blueBubblesProvider } from './providers/bluebubbles'
 
+/**
+ * Built-in provider definitions. These ship with BitBit and have
+ * adapter code in src/lib/channels/. Custom providers are registered
+ * at runtime from org_connections rows.
+ */
 export const builtInProviders: ProviderPlugin[] = [
   {
     id: 'gmail',
@@ -19,15 +26,7 @@ export const builtInProviders: ProviderPlugin[] = [
     defaultTransport: 'bridge',
     capabilities: ['push', 'send'],
   },
-  {
-    id: 'imessage',
-    name: 'iMessage',
-    description: 'Send and receive iMessages',
-    category: 'communication',
-    auth: { method: 'bridge' },
-    defaultTransport: 'bridge',
-    capabilities: ['push'],
-  },
+  blueBubblesProvider,
   {
     id: 'whatsapp',
     name: 'WhatsApp',
@@ -122,4 +121,5 @@ export const builtInProviders: ProviderPlugin[] = [
     capabilities: ['pull'],
     comingSoon: true,
   },
+  beeperProvider,
 ]
