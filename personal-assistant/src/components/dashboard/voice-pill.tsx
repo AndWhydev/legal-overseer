@@ -402,133 +402,131 @@ export function VoicePill({
           />
 
           {docked ? (
-            <PromptInput
-              value={textValue}
-              onValueChange={(val) => {
-                setTextValue(val);
-                if (val.startsWith('/') && val.length > 1) {
-                  setShowCommands(true);
-                  setCommandQuery(val.slice(1));
-                } else {
-                  setShowCommands(false);
-                  setCommandQuery('');
-                }
-              }}
-              onSubmit={handleSubmit}
-              className="!border-none !bg-transparent !p-0 !shadow-none !rounded-none"
-            >
-              <div className="flex flex-col w-full">
-                {/* Upload progress indicators */}
-                {hasUploads && (
-                  <div className="flex flex-row flex-wrap gap-2 px-3 pt-2 w-full">
-                    {fileUpload.uploads.map((item) => (
-                      <UploadProgressItem
-                        key={item.id}
-                        item={item}
-                        onRemove={() => fileUpload.removeUpload(item.id)}
-                      />
-                    ))}
-                  </div>
-                )}
+            <>
+              {/* Upload progress indicators */}
+              {hasUploads && (
+                <div className="flex flex-row flex-wrap gap-2 px-1 pt-1 w-full">
+                  {fileUpload.uploads.map((item) => (
+                    <UploadProgressItem
+                      key={item.id}
+                      item={item}
+                      onRemove={() => fileUpload.removeUpload(item.id)}
+                    />
+                  ))}
+                </div>
+              )}
 
-                {/* Command palette container */}
-                <div className="relative w-full">
-                  <PromptInputTextarea
-                    placeholder="Message BitBit..."
-                    className={cn(
-                      'text-base leading-[1.55] pl-4 pt-3',
-                      'max-h-[188px]',
-                      'transition-[min-height] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                      compactDocked && !isDockedExpanded ? 'min-h-[52px]' : 'min-h-[88px]',
-                    )}
-                    onKeyDown={handleKeyDown}
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
+              {/* Command palette container */}
+              <div className="relative w-full">
+                <textarea
+                  ref={textareaRef}
+                  className={cn(
+                    'w-full flex-1 resize-none overflow-y-auto',
+                    'bg-transparent border-0 outline-none shadow-none',
+                    'text-base leading-[1.55] text-foreground',
+                    'placeholder:text-muted-foreground',
+                    'focus-visible:ring-0 focus-visible:border-0',
+                    'max-h-[188px] pl-1 pr-0.5',
+                    'transition-[min-height] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                    compactDocked && !isDockedExpanded ? 'min-h-[44px]' : 'min-h-[72px]',
+                  )}
+                  placeholder="Message BitBit..."
+                  value={textValue}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTextValue(val);
+                    if (val.startsWith('/') && val.length > 1) {
+                      setShowCommands(true);
+                      setCommandQuery(val.slice(1));
+                    } else {
+                      setShowCommands(false);
+                      setCommandQuery('');
+                    }
+                  }}
+                  onKeyDown={handleKeyDown}
+                  autoComplete="off"
+                  spellCheck={false}
+                  rows={1}
+                />
 
-                  {/* Command palette - appears above the textarea */}
-                  <AnimatePresence>
-                    {showCommands && (
-                      <CommandPalette
-                        query={commandQuery}
-                        commands={DEFAULT_CHAT_COMMANDS}
-                        onSelect={handleCommandSelect}
-                      />
-                    )}
-                  </AnimatePresence>
+                {/* Command palette - appears above the textarea */}
+                <AnimatePresence>
+                  {showCommands && (
+                    <CommandPalette
+                      query={commandQuery}
+                      commands={DEFAULT_CHAT_COMMANDS}
+                      onSelect={handleCommandSelect}
+                    />
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Action buttons row */}
+              <div className="flex w-full items-center justify-between gap-2 pt-1">
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-9 rounded-full"
+                    onClick={handlePaperclipClick}
+                    type="button"
+                    aria-label="Attach file"
+                  >
+                    <Plus size={18} />
+                  </Button>
+
+                  <Button variant="outline" className="rounded-full h-9 px-3 text-sm">
+                    <Globe size={16} />
+                    Search
+                  </Button>
+
+                  {onVoiceModeToggle && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className={cn(
+                        'size-9 rounded-full',
+                        voiceModeEnabled && 'bg-foreground/10 border-foreground/20',
+                        isSpeaking && 'animate-pulse',
+                      )}
+                      onClick={onVoiceModeToggle}
+                      type="button"
+                      aria-label={voiceModeEnabled ? 'Disable voice responses' : 'Enable voice responses'}
+                    >
+                      {voiceModeEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                    </Button>
+                  )}
                 </div>
 
-                {/* Action buttons row */}
-                <PromptInputActions className="flex w-full items-center justify-between gap-2 px-3 pb-3 mt-2">
-                  <div className="flex items-center gap-1.5">
-                    <PromptInputAction tooltip="Attach file">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="size-9 rounded-full"
-                        onClick={handlePaperclipClick}
-                        type="button"
-                      >
-                        <Plus size={18} />
-                      </Button>
-                    </PromptInputAction>
-
-                    <PromptInputAction tooltip="Web search">
-                      <Button variant="outline" className="rounded-full h-9 px-3 text-sm">
-                        <Globe size={16} />
-                        Search
-                      </Button>
-                    </PromptInputAction>
-
-                    {onVoiceModeToggle && (
-                      <PromptInputAction tooltip={voiceModeEnabled ? 'Disable voice responses' : 'Enable voice responses'}>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className={cn(
-                            'size-9 rounded-full',
-                            voiceModeEnabled && 'bg-foreground/10 border-foreground/20',
-                            isSpeaking && 'animate-pulse',
-                          )}
-                          onClick={onVoiceModeToggle}
-                          type="button"
-                        >
-                          {voiceModeEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-                        </Button>
-                      </PromptInputAction>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    {voice.isSupported && (
-                      <PromptInputAction tooltip={voice.isListening ? 'Stop listening' : 'Voice input'}>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className={cn(
-                            'size-9 rounded-full',
-                            voice.isListening && 'text-destructive border-destructive/30 bg-destructive/10',
-                          )}
-                          onClick={voice.toggleListening}
-                          type="button"
-                        >
-                          <Mic size={18} />
-                        </Button>
-                      </PromptInputAction>
-                    )}
-
+                <div className="flex items-center gap-1.5">
+                  {voice.isSupported && (
                     <Button
+                      variant="outline"
                       size="icon"
-                      disabled={!canSend || fileUpload.isUploading}
-                      onClick={handleSubmit}
-                      className="size-9 rounded-full"
+                      className={cn(
+                        'size-9 rounded-full',
+                        voice.isListening && 'text-destructive border-destructive/30 bg-destructive/10',
+                      )}
+                      onClick={voice.toggleListening}
+                      type="button"
+                      aria-label={voice.isListening ? 'Stop listening' : 'Voice input'}
                     >
-                      <ArrowUp size={18} />
+                      <Mic size={18} />
                     </Button>
-                  </div>
-                </PromptInputActions>
+                  )}
+
+                  <Button
+                    size="icon"
+                    disabled={!canSend || fileUpload.isUploading}
+                    onClick={handleSubmit}
+                    className="size-9 rounded-full"
+                    aria-label="Send"
+                  >
+                    <ArrowUp size={18} />
+                  </Button>
+                </div>
               </div>
-            </PromptInput>
+            </>
           ) : (
             /* ── Floating text input ── */
             <div className="relative w-full flex items-center">
