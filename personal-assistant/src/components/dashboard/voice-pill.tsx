@@ -415,7 +415,7 @@ export function VoicePill({
                 }
               }}
               onSubmit={handleSubmit}
-              className="border-0 bg-transparent p-0 shadow-none rounded-none"
+              className="!border-none !bg-transparent !p-0 !shadow-none !rounded-none"
             >
               <div className="flex flex-col w-full">
                 {/* Upload progress indicators */}
