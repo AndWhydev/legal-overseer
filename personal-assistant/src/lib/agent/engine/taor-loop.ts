@@ -264,10 +264,11 @@ export async function* runTAORLoop(
       }
 
       // Merge skill tool groups into planner's tool groups for coordinated routing
-      const combinedToolGroups = [...(raceResult.plan.toolGroups ?? [])]
+      const combinedToolGroups: ToolGroup[] = [...(raceResult.plan.toolGroups as ToolGroup[] ?? [])]
       for (const skill of resolvedSkills) {
-        if (skill.entry.toolGroup && !combinedToolGroups.includes(skill.entry.toolGroup)) {
-          combinedToolGroups.push(skill.entry.toolGroup)
+        const skillGroup = skill.entry.toolGroup as ToolGroup | undefined
+        if (skillGroup && !combinedToolGroups.includes(skillGroup)) {
+          combinedToolGroups.push(skillGroup)
         }
       }
 
