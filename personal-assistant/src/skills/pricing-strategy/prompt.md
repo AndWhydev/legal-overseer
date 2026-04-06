@@ -703,3 +703,9 @@ If you need more context:
 - **marketing-psychology**: For pricing psychology principles
 - **ab-test-setup**: For testing pricing changes
 - **analytics-tracking**: For tracking pricing metrics
+
+## Memory Integration
+
+- Before starting, use `search_memory` to recall current pricing, past pricing decisions, competitor pricing data, and known willingness-to-pay signals.
+- After completing the analysis, use `add_memory` to store pricing tier definitions, value metrics, and key pricing rationale as high-confidence facts.
+- Tag with product/service entity names for recall during future billing or sales discussions.

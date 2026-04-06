@@ -94,3 +94,9 @@ Brand Voice is the foundation for:
 ## Next Steps
 
 Once you've defined your Brand Voice, move to Skill 02: Positioning Angles to find your unique differentiation.
+
+## Memory Integration
+
+- Before starting, use `search_memory` to recall any existing brand guidelines, voice decisions, or tone preferences from past sessions.
+- After defining the voice, use `add_memory` to store the brand voice profile (archetype, dimensions, guidelines) as a persistent convention.
+- This memory should have `decay_rate: 'never'` — brand voice is foundational and rarely changes.

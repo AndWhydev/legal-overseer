@@ -245,3 +245,9 @@ Orchestrator coordinates all 9 other skills:
 ## Next Steps
 
 Use this skill to diagnose your situation and create your personalized skill sequence. Then start with your first skill.
+
+## Memory Integration
+
+- Before orchestrating, use `search_memory` to recall the current marketing situation: past campaigns, channel performance, and strategic context.
+- After sequencing the marketing plan, use `add_memory` to store the campaign structure and skill sequence for continuity.
+- Cross-reference entity knowledge graph for client/product context.

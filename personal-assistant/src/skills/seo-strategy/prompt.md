@@ -362,3 +362,9 @@ Less than 30% of sites implement properly.
 5. **Reference the Playbook** — See `references/Complete_SEO_Playbook.md` for full details
 
 For detailed tactics, metrics, examples, and the complete 10-part framework, reference the full playbook in the references folder.
+
+## Memory Integration
+
+- Before starting, use `search_memory` to recall prior SEO audits, known rankings, and historical keyword performance.
+- After completing the strategy, use `add_memory` to store key decisions: target keywords, content priorities, and technical fixes.
+- Tag with domain/website entity names for cross-session continuity.

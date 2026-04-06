@@ -1,9 +1,31 @@
 {
   "name": "Product Hunt Launch",
   "description": "Optimize Product Hunt listings with gallery specs, tagline formulas, timing strategy, and launch day playbook.",
-  "tags": ["product", "launch", "product-hunt", "startup", "growth"],
-  "triggerKeywords": ["product hunt", "ph launch", "product hunt launch", "launch strategy", "product hunt tips", "product hunt gallery", "ph optimization", "launch day", "product hunt maker", "ph gallery", "maker comment", "first comment"],
-  "roleAffinity": ["sales", "research"],
+  "tags": [
+    "product",
+    "launch",
+    "product-hunt",
+    "startup",
+    "growth"
+  ],
+  "triggerKeywords": [
+    "product hunt",
+    "ph launch",
+    "product hunt launch",
+    "launch strategy",
+    "product hunt tips",
+    "product hunt gallery",
+    "ph optimization",
+    "launch day",
+    "product hunt maker",
+    "ph gallery",
+    "maker comment",
+    "first comment"
+  ],
+  "roleAffinity": [
+    "sales",
+    "research"
+  ],
   "estimatedTokens": 1900,
   "planGate": "growth"
 }

@@ -743,3 +743,9 @@ If you need more context:
 - **copywriting**: For writing compelling comparison copy
 - **seo-audit**: For optimizing competitor pages
 - **schema-markup**: For FAQ and comparison schema
+
+## Memory Integration
+
+- Before starting, use `search_memory` to recall any prior competitive intel, existing competitor profiles, or positioning research already gathered.
+- After completing competitor research or page content, use `add_memory` to store key findings — pricing, feature gaps, strengths, weaknesses — for future reference.
+- Tag memories with competitor names, product names, and market category so they surface in relevant future sessions.

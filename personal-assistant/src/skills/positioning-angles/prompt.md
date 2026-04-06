@@ -192,3 +192,9 @@ Positioning Angles works with:
 ## Next Steps
 
 Once you've found your positioning angle, move to **Keyword Research** to identify what content to create around your positioning.
+
+## Memory Integration
+
+- Before starting, use `search_memory` to recall any prior brand positioning history, previously tested angles, or market stage assessments for this product.
+- After completing a positioning exercise, use `add_memory` to store the chosen angle, mechanism name, and market stage conclusion for future reference.
+- Tag memories with the product name, brand name, and market category to enable consistent positioning across future sessions.

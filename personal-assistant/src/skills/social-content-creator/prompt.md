@@ -280,3 +280,9 @@ First 60 minutes after posting are critical. Engage with every reply immediately
 - Carousel with too much text per slide — 30–40 words max
 - Thread hook that only works with the thread — it must stand alone in the timeline
 - Scheduling without confirming the user's timezone
+
+## Memory Integration
+
+- Before creating content, use `search_memory` to recall posting history, engagement patterns, preferred hashtags, and brand voice.
+- After creating a content calendar, use `add_memory` to store the calendar and any platform-specific learnings.
+- Tag with brand entity names for consistent voice across sessions.
