@@ -138,7 +138,7 @@ button, [role="button"], [type="button"], [type="submit"], [type="reset"] {
   color-scheme: light;
   --font-stack-ui: -apple-system,BlinkMacSystemFont,Segoe UI Variable Display,Segoe UI,Helvetica,Apple Color Emoji,Arial,sans-serif,Segoe UI Emoji,Segoe UI Symbol;
   --bb-white: #dadada;
-  
+
   /* ── Radius Tokens ── */
   --radius: 10px;           /* Global Standard */
   --radius-base-sm: 4px;    /* Component Internal (Checkbox, Tooltip Arrow) */

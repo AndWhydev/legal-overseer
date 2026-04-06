@@ -575,6 +575,10 @@ export function ChatInterface() {
     total: string; dueDate: string; description: string
     html: string; subject: string; afterMessageId: string
   }>>([])
+  const [imageArtifacts, setImageArtifacts] = useState<Array<{
+    id: string; images: Array<{ base64: string; index?: number }>
+    prompt: string; model: string; afterMessageId: string
+  }>>([])
   // Whispers visible state (hides when typing or conversation starts)
   const [whispersVisible, setWhispersVisible] = useState(true)
   // Loading state for thread history (shows spinner when switching conversations)
@@ -1016,6 +1020,36 @@ export function ChatInterface() {
                       messageId: assistantId,
                       projectId,
                     })
+                  }
+                }
+
+                // Capture generated images for inline rendering
+                if (
+                  (event.data.name === 'generate_image' || event.data.name === 'generate_images') &&
+                  event.data.success &&
+                  event.data.result
+                ) {
+                  const r = event.data.result as Record<string, unknown>
+                  const images: Array<{ base64: string; index?: number }> = []
+
+                  if (r.image_base64) {
+                    // Single image from generate_image
+                    images.push({ base64: r.image_base64 as string })
+                  } else if (Array.isArray(r.images)) {
+                    // Multiple images from generate_images
+                    for (const img of r.images as Array<Record<string, unknown>>) {
+                      if (img.base64) images.push({ base64: img.base64 as string, index: img.index as number })
+                    }
+                  }
+
+                  if (images.length > 0) {
+                    setImageArtifacts(prev => [...prev, {
+                      id: `img-${Date.now()}`,
+                      images,
+                      prompt: (r.prompt_used as string) || '',
+                      model: (r.model_used as string) || '',
+                      afterMessageId: assistantId,
+                    }])
                   }
                 }
 
@@ -1737,6 +1771,7 @@ export function ChatInterface() {
     setActiveCitations([])
     setPendingApprovals([])
     setInvoiceArtifacts([])
+    setImageArtifacts([])
     setPlanData(null)
     smoothStream.reset()
     currentAssistantIdRef.current = null
@@ -1747,6 +1782,7 @@ export function ChatInterface() {
     // Clear messages immediately so the skeleton shows while fetching.
     setMessages([])
     setInvoiceArtifacts([])
+    setImageArtifacts([])
     setFollowUps([])
     setWhispersVisible(false)
     setIsLoadingHistory(true)
@@ -2104,6 +2140,52 @@ export function ChatInterface() {
                     {invoiceArtifacts.filter(inv => inv.afterMessageId === msg.id).map(inv => (
                       <motion.div key={inv.invoiceNumber} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} style={{ marginTop: 8 }}>
                         <InvoiceArtifact invoiceNumber={inv.invoiceNumber} recipient={inv.recipient} recipientEmail={inv.recipientEmail} total={inv.total} dueDate={inv.dueDate} description={inv.description} html={inv.html} subject={inv.subject} />
+                      </motion.div>
+                    ))}
+                    {/* Generated images — inline gallery */}
+                    {imageArtifacts.filter(img => img.afterMessageId === msg.id).map(imgSet => (
+                      <motion.div
+                        key={imgSet.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="mt-3"
+                      >
+                        <div className={cn(
+                          'grid gap-2',
+                          imgSet.images.length === 1 && 'grid-cols-1 max-w-md',
+                          imgSet.images.length === 2 && 'grid-cols-2 max-w-lg',
+                          imgSet.images.length >= 3 && 'grid-cols-2 max-w-lg',
+                        )}>
+                          {imgSet.images.map((img, i) => (
+                            <div
+                              key={i}
+                              className="group relative overflow-hidden rounded-xl border border-border bg-card cursor-pointer"
+                              onClick={() => {
+                                // Open full-size in new tab
+                                const w = window.open()
+                                if (w) {
+                                  w.document.write(`<img src="data:image/png;base64,${img.base64}" style="max-width:100%;height:auto" />`)
+                                  w.document.title = imgSet.prompt || 'Generated Image'
+                                }
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={`data:image/png;base64,${img.base64}`}
+                                alt={imgSet.prompt || 'Generated image'}
+                                className="w-full h-auto rounded-xl transition-transform duration-200 group-hover:scale-[1.02]"
+                              />
+                              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <p className="text-white text-xs truncate">{imgSet.prompt}</p>
+                                <p className="text-white/60 text-xs">{imgSet.model}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {imgSet.images.length > 1 && (
+                          <p className="text-muted-foreground text-xs mt-1.5">Click to view full size</p>
+                        )}
                       </motion.div>
                     ))}
                   </div>
