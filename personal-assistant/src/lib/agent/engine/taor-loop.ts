@@ -31,6 +31,9 @@ import { detectTopicShift } from '@/lib/agent/citation-extractor'
 import { evaluateTurnQuality } from './turn-evaluator'
 
 import { MemoryPalaceService } from '@/lib/memory-palace/service'
+import { getAllSkills, resolveSkill, initializeSkillRegistry } from '@/lib/skills/registry'
+import { selectRelevantSkills as selectRelevantSkillsRAG } from '@/lib/skills/skill-rag'
+import type { ResolvedSkill } from '@/lib/skills/types'
 
 import type { EngineConfig, AgentEvent } from './types'
 import { preFlightChecks } from './pre-flight'
@@ -78,6 +81,13 @@ function estimateComplexity(
 
 /** Safety ceiling — only for runaway cost protection. The model decides when to stop. */
 const SAFETY_CEILING = 50
+
+let skillRegistryInitialized = false
+async function ensureSkillRegistry(): Promise<void> {
+  if (skillRegistryInitialized) return
+  await initializeSkillRegistry()
+  skillRegistryInitialized = true
+}
 
 // ---------------------------------------------------------------------------
 // TAOR Loop
@@ -202,6 +212,20 @@ export async function* runTAORLoop(
   const entityCtxMatch = systemPrompt.match(/## Entity Context\n\n([\s\S]*?)(?:\n## |$)/)
   const entityContext = entityCtxMatch?.[1]?.trim() || ''
 
+  // ── 4b. Skill RAG: select relevant skill candidates ──────────────────
+  await ensureSkillRegistry()
+  const skillIndex = config.toolGroups ? [] : getAllSkills() // Swarm agents: skills handled via allowedSkills separately
+  const skillRAGResult = selectRelevantSkillsRAG(message, skillIndex)
+  const skillCandidates = skillRAGResult.candidates.length > 0
+    ? skillRAGResult.candidates.map(c => ({ id: c.id, description: c.description }))
+    : undefined
+
+  if (skillRAGResult.candidates.length > 0) {
+    logger.info('[engine] Skill RAG candidates', {
+      candidates: skillRAGResult.candidates.map(c => `${c.id}(${c.score})`),
+    })
+  }
+
   let planStages: PlanStage[] = []
   const activatedStages = new Set<string>()
   let toolGroupsApplied = false
@@ -209,11 +233,12 @@ export async function* runTAORLoop(
   // Haiku planner (non-blocking, 1500ms race window)
   let planPromise: Promise<PlanOutput> | null = null
   if (!isTrivialMessage(message)) {
-    planPromise = generatePlan(message, entityContext, toolNames)
-      .catch(() => ({ stages: [], toolGroups: [], complexity: 'medium' as const }) as PlanOutput)
+    planPromise = generatePlan(message, entityContext, toolNames, skillCandidates)
+      .catch(() => ({ stages: [], toolGroups: [], complexity: 'medium' as const, skills: [] }) as PlanOutput)
   }
 
   let planComplexity: 'low' | 'medium' | 'high' | null = null
+  let resolvedSkills: ResolvedSkill[] = []
 
   if (planPromise) {
     const raceResult = await Promise.race([
@@ -223,6 +248,34 @@ export async function* runTAORLoop(
     if (raceResult.ready && raceResult.plan.stages.length > 0) {
       planStages = raceResult.plan.stages
       planComplexity = raceResult.plan.complexity
+
+      // Resolve skills selected by planner
+      if (raceResult.plan.skills && raceResult.plan.skills.length > 0) {
+        for (const skillId of raceResult.plan.skills.slice(0, 2)) {
+          const resolved = await resolveSkill(skillId)
+          if (resolved) resolvedSkills.push(resolved)
+        }
+        if (resolvedSkills.length > 0) {
+          logger.info('[engine] Skills activated', {
+            skills: resolvedSkills.map(s => s.entry.id),
+            totalTokens: resolvedSkills.reduce((sum, s) => sum + s.entry.estimatedTokens, 0),
+          })
+        }
+      }
+
+      // Register skill tools into active tool set
+      for (const skill of resolvedSkills) {
+        if (skill.tools && skill.tools.length > 0) {
+          const skillTools: Anthropic.Tool[] = skill.tools.map(t => ({
+            name: t.name,
+            description: t.description,
+            input_schema: t.input_schema as Anthropic.Tool.InputSchema,
+          }))
+          tools = [...tools, ...skillTools.filter(st => !tools.some(t => t.name === st.name))]
+          toolNames = tools.map(t => t.name)
+        }
+      }
+
       yield { type: 'plan', data: { stages: planStages } }
 
       // Persist plan as a pattern memory (fast decay — unproven until completed)
@@ -288,6 +341,15 @@ export async function* runTAORLoop(
       .map((s, i) => `${i + 1}. ${s.icon} ${s.label}${s.sublabel ? ` (${s.sublabel})` : ''}${s.toolHint ? ` [tool: ${s.toolHint}]` : ''}`)
       .join('\n')
     fullSystemPrompt += `\n\n## Execution Plan\nFollow this plan to fulfill the user's request:\n${planDescription}\n`
+  }
+
+  // Inject activated skill prompts
+  if (resolvedSkills.length > 0) {
+    let skillSection = '\n\n### Active Skills\nThe following domain skills are active for this turn:\n'
+    for (const skill of resolvedSkills) {
+      skillSection += `\n#### ${skill.entry.name}\n${skill.prompt}\n`
+    }
+    fullSystemPrompt += skillSection
   }
 
   if (toolRagResult.toolSummary) {
