@@ -492,6 +492,52 @@ After publishing, monitor via Google Search Console:
 | Dwell time (GA) | Content engagement | >2 minutes |
 
 
+## Word Count Targets
+
+| Content Type | Word Count | When |
+|-------------|-----------|------|
+| Short-form blog | 800–1,200 | News, updates, opinions |
+| Standard blog | 1,500–2,000 | How-tos, tutorials |
+| Long-form guide | 2,500–4,000 | Comprehensive guides, comparisons |
+| Pillar content | 4,000–7,000 | Definitive guides, hub pages |
+| Glossary/definition | 300–800 | Quick reference terms |
+
+**Rule: match or exceed the average word count of the top 3 ranking results. Don't pad — every word should add value.**
+
+---
+
+## Internal Linking Strategy
+
+| Type | Purpose |
+|------|---------|
+| Hub → Spoke | Pillar page links to all subtopic articles |
+| Spoke → Hub | Subtopic articles link back to pillar page |
+| Spoke → Spoke | Related articles cross-link to each other |
+| Contextual | Natural in-text links where topic is mentioned |
+
+**Rules:**
+- 3–5 internal links minimum per article
+- Anchor text should be descriptive (not "click here")
+- Update old articles to link to new ones
+- Most important pages should have the most internal links
+
+---
+
+## Content Differentiation
+
+When competing content already covers the topic, win on angle:
+
+| Angle | Example |
+|-------|---------|
+| Original data | "We surveyed 500 PMs — here's what they use" |
+| Expert quotes | Interview practitioners for original insights |
+| Real examples | Screenshots, case studies, not just descriptions |
+| More comprehensive | Cover subtopics competitors skip |
+| More current | Updated data, newer tools, recent changes |
+| Better visuals | Comparison tables, infographics, decision trees |
+
+---
+
 ## How to Use This Skill
 
 1. **Get keyword from user** — What are they targeting?
@@ -503,4 +549,4 @@ After publishing, monitor via Google Search Console:
 7. **Add schema markup** — FAQ or Article
 8. **Recommend tracking** — GSC metrics to monitor
 
-For complete keyword research methodology and 90-day SEO plans, use the `/seo-strategy` skill.
+For keyword research methodology, 90-day SEO plans, and link building strategy, use the `seo-strategy` skill.
