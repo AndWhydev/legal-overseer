@@ -1,106 +1,144 @@
 ---
 title: "What's Built"
-description: "A complete inventory of what BitBit ships today, how it compares to the market, and what makes it different."
+description: "What BitBit ships today, how it stacks up, and why it works differently."
 ---
 
 # What's Built
 
-Every platform on the market solves one problem. Lindy builds workflows. Superhuman handles email. Motion schedules your calendar. Jasper writes copy. None of them talk to each other.
+Every AI tool on the market does one thing. Superhuman triages your email. Motion manages your calendar. Jasper writes your blog posts. Lindy chains together workflows. They all live in separate tabs, none of them talk to each other, and the moment you need something across two of them, you're back to copy paste.
 
-BitBit is one system that owns your entire business operation. It reads every channel, knows every contact, handles invoicing, triages messages, writes proposals, and works while you sleep. This page covers what's live today.
+BitBit replaces the lot. One system that reads every channel, knows every contact, handles your invoicing, triages your messages, writes your proposals, and keeps working after you close your laptop.
 
-## How BitBit Compares
+## How BitBit stacks up
 
-| What you need | Market solution | BitBit |
-|---------------|----------------|--------|
-| Email triage and drafting | Superhuman ($30/mo, email only) | Built in. Plus WhatsApp, SMS, Slack, iMessage. |
-| Calendar management | Motion ($34/mo, calendar only) | Built in. Cross referenced with contacts and projects. |
-| Sales outreach | Artisan Ava ($900+/mo, outbound only) | Built in. Lead qualification, proposals, nurture sequences. |
-| Content creation | Jasper ($49/mo, copy only) | Built in. Blog, social, ad scripts, platform adapted. |
-| Support automation | Intercom Fin ($0.99/resolution) | Built in. Proactive, not reactive. |
-| CRM and pipeline | HubSpot ($800+/mo, locked ecosystem) | Built in. Learns from real conversations, not manual entry. |
-| Workflow automation | Lindy ($50/mo, no code builder) | Built in. Natural language rules, no workflow builder needed. |
+| What you need | What exists today | What BitBit does |
+|---|---|---|
+| Email triage and drafting | Superhuman ($30/mo, email only) | Built in across Gmail, Outlook, WhatsApp, SMS, iMessage, Slack |
+| Calendar management | Motion ($34/mo, calendar only) | Built in, cross referenced with contacts and active projects |
+| Sales outreach | Artisan Ava ($900+/mo, outbound only) | Built in with lead qualification, proposals from meeting transcripts, nurture sequences |
+| Content creation | Jasper ($49/mo, writing only) | Built in with blog, social, ad scripts adapted per platform |
+| Customer support | Intercom Fin ($0.99/resolution, reactive) | Built in, proactive not reactive |
+| CRM and pipeline | HubSpot ($800+/mo, locked ecosystem) | Built in, learns from real conversations instead of manual data entry |
+| Workflow automation | Lindy ($50/mo, visual builder) | Built in, natural language rules, no drag and drop required |
 
-The difference: those tools react to instructions. BitBit thinks ahead. When a new email arrives, BitBit already knows who sent it, what project it relates to, whether there's an outstanding invoice, and whether it needs your attention.
+<Tip>
+The real difference is not features. It is that BitBit thinks ahead. When a new email arrives, BitBit already knows who sent it, what project it connects to, whether there is an outstanding invoice, and whether it actually needs your attention.
+</Tip>
 
-## Core Capabilities
+## Connections
 
-### Connections
+13 channels connected. One click or one QR scan to link each one.
 
-13 channels wired. Gmail, Outlook, WhatsApp, Android Messages, iMessage, SMS, Slack, Asana, Calendly, Stripe, Xero, Facebook Messenger, Instagram. Connect with a click or a QR scan. iMessage connects through a secure sign in experience.
+<CardGroup cols={3}>
+  <Card title="Email" description="Gmail and Outlook via OAuth. Read, send, search, draft." />
+  <Card title="WhatsApp" description="Your real account via per user bridge. QR scan to link." />
+  <Card title="Android Messages" description="Same bridge infrastructure as WhatsApp. QR scan." />
+  <Card title="iMessage" description="BlueBubbles on a Mac VPS. Sign in through a secure embedded viewer." />
+  <Card title="SMS" description="Telnyx powered. Send and receive from your own number." />
+  <Card title="Slack" description="OAuth connected. Read channels and DMs." />
+  <Card title="Asana" description="Task sync. Create and update from conversation." />
+  <Card title="Calendly" description="Webhook events for new bookings." />
+  <Card title="Stripe" description="Payment notifications and invoice sync." />
+  <Card title="Xero" description="Accounting data for financial intelligence." />
+  <Card title="Facebook Messenger" description="Webhook integration for page messages." />
+  <Card title="Instagram" description="Webhook integration for DMs and mentions." />
+  <Card title="Custom Webhook" description="Connect anything with an HTTP endpoint." />
+</CardGroup>
 
-Messaging bridges run per user instances on your actual accounts. Not API wrappers. Your real conversations, your real identity.
+Messaging bridges run dedicated instances on your actual accounts. Not API wrappers. Your real conversations, your real phone number, your real identity.
 
-### Agent Engine
+## Agent engine
 
-Every request goes through a Think, Act, Observe, Reflect loop with no iteration cap. The model decides when it's done.
+Every request runs through a Think, Act, Observe, Reflect loop. No iteration cap. The model decides when the job is done.
 
-A fast classifier reads your intent and selects only the relevant tools (5 to 12 out of 26 total). This keeps responses fast and costs low with 90%+ cache hit rates.
+A fast classifier picks only the tools that matter for each request (5 to 12 out of 26 total), which keeps responses fast and costs low with 90%+ cache reuse.
 
-Three tier confidence routing controls what happens autonomously:
-- High confidence: execute and report
-- Medium confidence: queue for your approval
-- Low confidence: ask you directly
+<Mermaid chart="Z3JhcGggVEQKICBBW1VzZXIgcmVxdWVzdF0gLS0+IEJbQ2xhc3NpZnkgaW50ZW50XQogIEIgLS0+IENbU2VsZWN0IHRvb2wgZ3JvdXBdCiAgQyAtLT4gRFtUaGlua10KICBEIC0tPiBFW0FjdF0KICBFIC0tPiBGW09ic2VydmVdCiAgRiAtLT4gR1tSZWZsZWN0XQogIEcgLS0+fE5vdCBkb25lfCBECiAgRyAtLT58RG9uZXwgSFtSZXNwb25kXQ==" />
 
-### Autonomous Roles
+Three confidence tiers control autonomy:
 
-Six specialist roles that own entire domains. Not chatbot responses. Continuous autonomous operation.
+| Confidence | What happens |
+|---|---|
+| Above 85% | Execute and report after |
+| 55% to 85% | Queue for your approval |
+| Below 55% | Ask you directly |
 
-**Finance** handles invoicing, collections, cash flow tracking, and payment timing. It knows which clients pay late.
+## Autonomous roles
 
-**Comms** triages every channel, drafts responses that match each conversation's tone, and manages follow ups automatically.
+Six specialists that own entire business domains. Not chatbot tricks. Real continuous operation.
 
-**Sales** qualifies leads, manages your pipeline, generates proposals from meeting transcripts, and runs nurture sequences.
+<CardGroup cols={2}>
+  <Card title="Finance" description="Invoicing, collections, cash flow tracking, payment timing. Knows which clients pay late and when to nudge." />
+  <Card title="Comms" description="Triages every channel, drafts replies that match each conversation's tone, runs follow ups automatically." />
+  <Card title="Sales" description="Qualifies leads, manages pipeline, generates proposals from meeting notes, runs nurture sequences." />
+  <Card title="Content Creator" description="Blog posts, social content, content calendar. Scheduling to connected platforms." />
+  <Card title="Ad Scripts" description="Platform adapted copy for Meta, Google, LinkedIn. Daily budget caps and spend tracking." />
+  <Card title="SEO and Tender Hunter" description="SEO audits, content recommendations, schema validation. Tender discovery, eligibility checks, fast response generation." />
+</CardGroup>
 
-**Ad Scripts** generates platform adapted copy for Meta, Google, and LinkedIn with daily budget caps.
+**Builder role** generates websites through conversation with WordPress and Elementor integration. Preview in a sandbox, deploy from chat.
 
-**SEO and Tender Hunter** runs audits, recommends content, validates schemas, finds tenders, checks eligibility, and generates responses. The tender capability is the premium play.
+Each role runs at one of three levels you control:
 
-**Content Creator** writes blog posts, social content, and manages a content calendar with scheduling.
+| Level | Behaviour |
+|---|---|
+| Observer | Watches and reports. Takes no action. |
+| Co pilot | Drafts and proposes. You approve before anything happens. |
+| Autopilot | Acts on its own. Reports after. Escalates when uncertain. |
 
-**Builder** generates websites through conversation with WordPress and Elementor integration. Preview in a sandbox, deploy from chat.
+Tools auto graduate from Co pilot to Autopilot based on your approval history. Approve the same type of action enough times and BitBit stops asking.
 
-Each role runs at one of three autonomy levels: Observer (watch only), Co pilot (draft and approve), or Autopilot (act and report). Tools auto graduate from Co pilot to Autopilot based on your approval history.
+## Knowledge and memory
 
-### Knowledge Graph
+<CardGroup cols={2}>
+  <Card title="Knowledge graph" description="Every person, company, project, and invoice BitBit encounters gets mapped into a connected graph. When you say 'invoice Sezer for the White House RE work,' it already knows who, what, how much, and whether it has been done." />
+  <Card title="Memory system" description="Six layers from verbatim recent turns to compressed long term facts. A background process strengthens important connections during quiet hours. Cross channel identity resolution ties your WhatsApp, email, SMS, and Slack contacts into one profile." />
+</CardGroup>
 
-BitBit builds a graph of every person, company, project, and invoice it encounters. Fact extraction fires on every conversation. When you say "invoice Sezer for the White House RE work," BitBit already knows who Sezer is, what the work was, the rate, and whether it's been invoiced.
+### Proactive intelligence
 
-### Memory System
+Four modules that run continuously on real data:
 
-Six layer memory with sleep consolidation. Recent conversations are kept verbatim. Older ones compress to key facts: commitments, decisions, deadlines, amounts. A background process strengthens important connections during low activity. Cross channel identity resolution ties your WhatsApp, email, SMS, and Slack contacts together.
+| Module | What it does |
+|---|---|
+| Revenue Radar | Spots upsell opportunities from customer spending patterns |
+| Client Health Score | Rates every relationship 0 to 100 from real engagement signals |
+| Cash Flow Prophet | Projects your finances forward with confidence intervals |
+| Capacity Oracle | Warns before you take on more than you can handle |
 
-### Proactive Intelligence
+<Note>
+All four modules enforce minimum data thresholds. If the data is not sufficient to make a reliable prediction, BitBit will not show one.
+</Note>
 
-Four always on modules that compute from real data with minimum thresholds:
+## Billing
 
-- **Revenue Radar** identifies upsell opportunities from spending patterns
-- **Client Health Score** rates every relationship 0 to 100 from engagement signals
-- **Cash Flow Prophet** projects finances forward with confidence intervals
-- **Capacity Oracle** warns before you overcommit
+| Tier | Price | What you get |
+|---|---|---|
+| Base | ~$10/mo | Core agents, 3 channels |
+| Growth | ~$150 to $200/mo | All roles, unlimited channels |
+| Premium | ~$400/mo | Builder role, proposal generation |
+| Enterprise | $1,000 to $2,000/mo | Tender Hunter, priority support |
 
-### Billing
+30 day free trial. Stripe checkout with self serve customer portal.
 
-Four tiers from $10/mo (core agents) to $2,000/mo (tender hunting). 30 day free trial. Stripe checkout with customer portal.
+## Mobile
 
-### Mobile
+Native app with push notifications, voice input via push to talk, offline queue that syncs when you are back online, and swipeable approvals (left for yes, right for no).
 
-React Native app with push notifications, voice input via push to talk, offline queue that syncs when reconnected, and swipeable approvals.
+## Under the hood
 
-## Infrastructure
+<CardGroup cols={3}>
+  <Card title="Vercel" description="Dashboard and API hosting" />
+  <Card title="Supabase" description="PostgreSQL database, auth, realtime subscriptions" />
+  <Card title="Fly.io" description="Bridge machines and background workers in Sydney" />
+  <Card title="LightNode" description="Mac VPS instances for iMessage bridges" />
+  <Card title="Pinecone" description="Vector search for semantic retrieval" />
+  <Card title="Stripe" description="Subscription billing and checkout" />
+  <Card title="Sentry" description="Error tracking with PII filtering" />
+</CardGroup>
 
-| Service | Role |
-|---------|------|
-| Vercel | Dashboard and API |
-| Supabase | Database, auth, realtime |
-| Fly.io | Bridge machines, workers |
-| LightNode | Mac VPS for iMessage |
-| Pinecone | Vector search |
-| Stripe | Billing |
-| Sentry | Error tracking |
+28 background jobs running on schedule. 2,000+ automated tests. Row level security on every database table. Webhook signature verification on all inbound traffic.
 
-28 background jobs. 2,000+ tests. Row level security on every table. Webhook signature verification on all inbound.
+## What is next
 
-## What's Next
-
-v2.0 is in early planning. Focus: fully autonomous multi day operations with minimal intervention.
+v2.0 is in early planning. The focus is fully autonomous multi day operations. Roles that can run complex business processes end to end with minimal check ins.

@@ -174,16 +174,14 @@
 /* Markdown tables (from remark-gfm) -- NOT jalco tables */
 .mdx-content table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   margin: 24px 0;
   font-size: 14px;
-  display: block;
-  overflow-x: auto;
-  overflow: hidden;
-  table-layout: auto;
-  -webkit-overflow-scrolling: touch;
+  table-layout: fixed;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
+  overflow: hidden;
 }
 
 .mdx-content table th {
