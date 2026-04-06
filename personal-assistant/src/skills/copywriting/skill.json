@@ -1,11 +1,20 @@
 {
   "name": "Copywriting",
   "description": "Write clear, compelling marketing copy for web pages including headlines, body copy, CTAs, and landing page sections.",
-  "tags": ["copywriting", "marketing", "landing-pages", "headlines", "CTAs", "conversion", "messaging", "web-copy"],
+  "tags": [
+    "copywriting",
+    "marketing",
+    "landing-pages",
+    "headlines",
+    "CTAs",
+    "conversion",
+    "messaging",
+    "web-copy"
+  ],
   "triggerKeywords": [
     "write copy",
     "homepage copy",
-    "landing page copy",
+    "website copy",
     "headline writing",
     "CTA copy",
     "marketing copy",
@@ -16,7 +25,10 @@
     "improve messaging",
     "value proposition copy"
   ],
-  "roleAffinity": ["sales", "comms"],
+  "roleAffinity": [
+    "sales",
+    "comms"
+  ],
   "estimatedTokens": 3614,
   "planGate": "growth"
 }
