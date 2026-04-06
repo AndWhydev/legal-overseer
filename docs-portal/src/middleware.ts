@@ -16,6 +16,7 @@ const PUBLIC_PATHS = [
   "/docs/connections",
   "/docs/overview",
   "/docs/getting-started/quick-start",
+  "/docs/getting-started/whats-built",
 ]
 
 function isPublicPath(pathname: string): boolean {
