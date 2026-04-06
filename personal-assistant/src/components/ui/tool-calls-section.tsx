@@ -6,11 +6,14 @@ import {
   IconChevronDown,
   IconLoader2,
 } from "@tabler/icons-react"
+import { Icon } from "@iconify/react"
 
 import { Badge } from "@/components/ui/badge"
 import { Shimmer } from "@/components/ai-elements/shimmer"
+import { Loader } from "@/components/ui/loader"
 import { cn } from "@/lib/utils"
 import {
+  BRANDED_ICON_MAP,
   getToolCategoryIcon,
   type IntegrationInfo,
   type ToolCallEntry,
@@ -94,7 +97,7 @@ function ToolCallRow({
                 <Shimmer duration={1.4} as="span" className="text-foreground">
                   {call.message || call.tool_name}
                 </Shimmer>
-                <IconLoader2 size={13} className="inline-block shrink-0 animate-spin text-foreground" />
+                <Loader variant="pulse-dot" size="sm" className="inline-block shrink-0" />
               </span>
             ) : isError ? (
               <span className="inline-flex items-center gap-1.5">
@@ -136,8 +139,15 @@ function renderCallIcon({
     return <img src={customIcon} alt="" className="rounded-full object-cover" style={{ width: iconSize, height: iconSize }} />
   }
 
-  const Icon = getToolCategoryIcon(call.tool_category)
-  return <Icon size={iconSize} className="text-foreground" />
+  // Prefer branded Iconify icons for known services
+  const brandedIcon = BRANDED_ICON_MAP[call.tool_category]
+  if (brandedIcon) {
+    return <Icon icon={brandedIcon} width={iconSize} height={iconSize} />
+  }
+
+  // Fall back to Tabler icons for generic categories
+  const TablerIcon = getToolCategoryIcon(call.tool_category)
+  return <TablerIcon size={iconSize} className="text-foreground" />
 }
 
 // ── Main component ──────────────────────────────────────────────────────────

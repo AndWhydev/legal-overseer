@@ -4,8 +4,6 @@ import {
   IconBolt,
   IconBrain,
   IconBrandGithub,
-  IconBrandGmail,
-  IconCalendarEvent,
   IconChecklist,
   IconMessage,
   IconReceipt,
@@ -14,6 +12,8 @@ import {
   IconTool,
   IconUsers,
   IconWorld,
+  IconCamera,
+  IconCode,
 } from '@tabler/icons-react'
 
 export type AgentToolCallStatus = 'running' | 'done' | 'error'
@@ -74,6 +74,14 @@ const TOOL_DISPLAY_NAMES: Record<string, string> = {
   web_read: 'Reading page',
   web_extract: 'Extracting data',
   web_crawl: 'Crawling site',
+  generate_image: 'Generating image',
+  generate_images: 'Generating images',
+  execute_code: 'Running code',
+  get_upcoming: 'Checking schedule',
+  schedule_event: 'Scheduling event',
+  create_reminder: 'Setting reminder',
+  spawn_agent: 'Delegating sub-task',
+  resolve_tool: 'Loading tools',
 }
 
 const TOOL_CATEGORY_OVERRIDES: Record<string, string> = {
@@ -114,6 +122,9 @@ const TOOL_CATEGORY_OVERRIDES: Record<string, string> = {
   web_read: 'web',
   web_extract: 'web',
   web_crawl: 'web',
+  generate_image: 'creative',
+  generate_images: 'creative',
+  execute_code: 'executor',
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -143,15 +154,27 @@ const CATEGORY_INTEGRATIONS: Record<string, string | undefined> = {
   memory: 'Memory',
 }
 
+/** Iconify icon IDs for brand-colored categories (rendered via @iconify/react) */
+export const BRANDED_ICON_MAP: Record<string, string> = {
+  gmail: 'logos:google-gmail',
+  google_calendar: 'logos:google-calendar',
+  github: 'logos:github-icon',
+  communication: 'logos:whatsapp-icon',
+  finance: 'logos:stripe',
+  creative: 'logos:google-photos',
+}
+
+/** Fallback Tabler icons for non-branded categories */
 const CATEGORY_ICON_MAP = {
   approval: IconShieldCheck,
   automation: IconTool,
   communication: IconMessage,
-  executor: IconTool,
+  executor: IconCode,
   finance: IconReceipt,
-  gmail: IconBrandGmail,
+  gmail: IconSearch,       // fallback if Iconify not available
   github: IconBrandGithub,
-  google_calendar: IconCalendarEvent,
+  google_calendar: IconSearch,
+  creative: IconCamera,
   handoff: IconArrowsTransferUpDown,
   memory: IconBrain,
   people: IconUsers,
