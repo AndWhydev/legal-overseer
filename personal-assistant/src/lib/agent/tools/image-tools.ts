@@ -77,19 +77,34 @@ const STYLE_SUFFIXES: Record<string, string> = {
 
 const IMAGE_MODEL = 'google/gemini-3.1-flash-image-preview'
 
-async function generateImageViaGateway(prompt: string): Promise<{ base64: string; mediaType: string }[]> {
-  const result = await generateText({
-    model: gateway(IMAGE_MODEL),
-    prompt,
-    abortSignal: AbortSignal.timeout(60_000), // 60s timeout for image gen
-  })
-  const images = (result.files || []).filter(
-    (f: { mediaType?: string }) => f.mediaType?.startsWith('image/')
-  )
-  return images.map((f: { base64Data?: string; uint8ArrayData?: Uint8Array; mediaType?: string }) => ({
-    base64: f.base64Data || (f.uint8ArrayData ? Buffer.from(f.uint8ArrayData).toString('base64') : ''),
-    mediaType: f.mediaType || 'image/png',
-  }))
+async function generateImageViaGateway(prompt: string, retries = 2): Promise<{ base64: string; mediaType: string }[]> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const result = await generateText({
+        model: gateway(IMAGE_MODEL),
+        prompt,
+        abortSignal: AbortSignal.timeout(60_000),
+      })
+      const images = (result.files || []).filter(
+        (f: { mediaType?: string }) => f.mediaType?.startsWith('image/')
+      )
+      if (images.length > 0) {
+        return images.map((f: { base64Data?: string; uint8ArrayData?: Uint8Array; mediaType?: string }) => ({
+          base64: f.base64Data || (f.uint8ArrayData ? Buffer.from(f.uint8ArrayData).toString('base64') : ''),
+          mediaType: f.mediaType || 'image/png',
+        }))
+      }
+      // No images returned — retry
+      logger.warn('[generate_image] No images in response, retrying', { attempt })
+    } catch (err) {
+      if (attempt < retries - 1) {
+        logger.warn('[generate_image] Attempt failed, retrying', { attempt, error: (err as Error).name })
+        continue
+      }
+      throw err
+    }
+  }
+  return []
 }
 
 export const imageToolHandlers: Record<string, AgentToolHandler> = {
