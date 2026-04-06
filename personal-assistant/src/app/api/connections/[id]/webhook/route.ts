@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { verifyWebhookSignature } from '@/lib/connections'
+import { verifyWebhookSignature, getProviderRegistry } from '@/lib/connections'
+import type { OrgConnection } from '@/lib/connections'
 import { computeContentHash } from '@/lib/channels/dedup'
-import { logger } from '@/lib/core/logger'
 
-export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
-/**
- * POST /api/connections/[id]/webhook
- * Generic webhook receiver — no session auth.
- * Uses HMAC signature verification when webhook_secret is set.
- */
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -24,60 +19,139 @@ export async function POST(
   }
   const supabase = createServiceClient(supabaseUrl, serviceKey)
 
-  const { data: conn, error: connErr } = await supabase
+  const { data: conn } = await supabase
     .from('org_connections')
     .select('*')
     .eq('id', id)
     .single()
 
-  if (connErr || !conn) {
-    return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
-  }
-
-  if (conn.status !== 'connected') {
+  if (!conn) return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
+  if (conn.status !== 'connected' && !(conn.provider === 'imessage' && conn.status === 'provisioning')) {
     return NextResponse.json({ error: `Connection status: ${conn.status}` }, { status: 409 })
   }
 
-  // Read raw body for signature verification
+  // Clone request for potential provider-specific parsing
   const rawBody = await request.text()
 
-  // Verify webhook signature if secret is configured
+  // Verify signature if webhook_secret is set
   if (conn.webhook_secret) {
-    const signature =
-      request.headers.get('x-webhook-signature') ||
-      request.headers.get('x-hub-signature-256')?.replace('sha256=', '') ||
-      request.headers.get('stripe-signature')
+    const signature = request.headers.get('x-webhook-signature')
+      || request.headers.get('x-hub-signature-256')
+      || request.headers.get('stripe-signature')
 
-    if (!signature) {
-      return NextResponse.json({ error: 'Missing webhook signature' }, { status: 401 })
-    }
-
-    const valid = verifyWebhookSignature(rawBody, signature, conn.webhook_secret)
-    if (!valid) {
-      return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 })
+    if (!signature || !verifyWebhookSignature(rawBody, signature, conn.webhook_secret)) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
   }
 
-  // Parse payload
-  let payload: Record<string, unknown>
-  try {
-    payload = JSON.parse(rawBody)
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 })
+  // For iMessage (BlueBubbles): verify token from query param
+  if (conn.provider === 'imessage') {
+    const url = new URL(request.url)
+    const token = url.searchParams.get('token')
+    const expectedToken = (conn.config as Record<string, unknown>).bb_password as string
+    if (!token || token !== expectedToken) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
   }
 
-  const externalId = `webhook-${id}-${Date.now()}`
-  const contentHash = computeContentHash('webhook', undefined, JSON.stringify(payload).slice(0, 200))
-  const start = Date.now()
+  const orgId = conn.org_id as string
+
+  // Check if provider has a custom webhookParse handler
+  const registry = getProviderRegistry()
+  const provider = registry.get(conn.provider)
+
+  if (provider?.webhookParse) {
+    // Use provider-specific webhook parser (e.g., Beeper/Matrix)
+    const fakeReq = new Request(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: rawBody,
+    })
+    const envelopes = await provider.webhookParse(fakeReq, conn as unknown as OrgConnection)
+
+    let inserted = 0
+    let duplicates = 0
+
+    for (const envelope of envelopes) {
+      const contentHash = computeContentHash(
+        envelope.payload.sender?.name || conn.provider,
+        envelope.payload.subject,
+        envelope.payload.body,
+      )
+
+      const { error: insertErr } = await supabase
+        .from('channel_messages')
+        .upsert({
+          org_id: orgId,
+          channel: conn.provider,
+          external_id: envelope.dedup_key,
+          sender: envelope.payload.sender?.name || 'Unknown',
+          sender_email: envelope.payload.sender?.email || null,
+          subject: envelope.payload.subject || null,
+          body: envelope.payload.body,
+          received_at: envelope.timestamp,
+          is_actionable: true,
+          priority: 'medium',
+          processed: false,
+          metadata: {
+            _webhook: true,
+            _connection_id: id,
+            _ingested_at: new Date().toISOString(),
+            ...envelope.payload.metadata,
+          },
+          content_hash: contentHash,
+        }, { onConflict: 'org_id,channel,external_id', ignoreDuplicates: true })
+
+      if (insertErr) {
+        if (insertErr.code === '23505') duplicates++
+        else console.error('[webhook] insert failed', insertErr.message)
+      } else {
+        inserted++
+      }
+    }
+
+    // Update connection stats
+    if (inserted > 0) {
+      await supabase
+        .from('org_connections')
+        .update({
+          last_sync_at: new Date().toISOString(),
+          message_count: (conn.message_count || 0) + inserted,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+    }
+
+    // Log sync
+    await supabase.from('connection_sync_logs').insert({
+      connection_id: id,
+      status: inserted > 0 ? 'success' : 'partial',
+      messages_found: envelopes.length,
+      messages_inserted: inserted,
+      duplicates,
+    })
+
+    return NextResponse.json({ ok: true, inserted, duplicates })
+  }
+
+  // Generic webhook handler (no provider-specific parser)
+  const payload = JSON.parse(rawBody)
+  const externalId = payload.id || payload.event_id || `webhook-${Date.now()}`
+  const contentHash = computeContentHash(
+    conn.provider,
+    payload.type || 'webhook_event',
+    JSON.stringify(payload).slice(0, 500),
+  )
 
   const { error: insertErr } = await supabase
     .from('channel_messages')
-    .insert({
-      org_id: conn.org_id,
+    .upsert({
+      org_id: orgId,
       channel: conn.provider,
       external_id: externalId,
-      sender: 'webhook',
-      body: JSON.stringify(payload),
+      sender: conn.provider,
+      subject: payload.type || 'Webhook Event',
+      body: JSON.stringify(payload, null, 2).slice(0, 5000),
       received_at: new Date().toISOString(),
       is_actionable: true,
       priority: 'medium',
@@ -85,25 +159,15 @@ export async function POST(
       metadata: {
         _webhook: true,
         _connection_id: id,
+        _event_type: payload.type,
         _ingested_at: new Date().toISOString(),
       },
       content_hash: contentHash,
-    })
-
-  const durationMs = Date.now() - start
+    }, { onConflict: 'org_id,channel,external_id', ignoreDuplicates: true })
 
   if (insertErr) {
-    logger.error(`[webhook] connection=${id} insert error: ${insertErr.message}`)
-    await supabase.from('connection_sync_logs').insert({
-      connection_id: id,
-      status: 'error',
-      messages_found: 1,
-      messages_inserted: 0,
-      duplicates: 0,
-      error_message: insertErr.message,
-      duration_ms: durationMs,
-    })
-    return NextResponse.json({ error: 'Failed to store webhook payload' }, { status: 500 })
+    console.error('[webhook] insert failed', insertErr.message)
+    return NextResponse.json({ error: insertErr.message }, { status: 500 })
   }
 
   await supabase.from('connection_sync_logs').insert({
@@ -112,11 +176,7 @@ export async function POST(
     messages_found: 1,
     messages_inserted: 1,
     duplicates: 0,
-    error_message: null,
-    duration_ms: durationMs,
   })
-
-  logger.info(`[webhook] connection=${id} provider=${conn.provider} stored in ${durationMs}ms`)
 
   return NextResponse.json({ ok: true })
 }

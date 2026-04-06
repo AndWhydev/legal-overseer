@@ -1,0 +1,11 @@
+app = "bitbit-bridges"
+primary_region = "syd"
+
+[build]
+  dockerfile = "bridges/Dockerfile"
+
+[env]
+  LOG_LEVEL = "info"
+
+# Machines are created individually via API, not fly deploy.
+# This toml is for `fly apps create` and image builds only.

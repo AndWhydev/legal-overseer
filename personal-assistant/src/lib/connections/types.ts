@@ -1,7 +1,7 @@
 export type TransportType = 'poll' | 'bridge' | 'webhook'
 export type PayloadType = 'message' | 'event' | 'record' | 'signal'
 export type Capability = 'pull' | 'push' | 'send' | 'webhook' | 'search' | 'delete'
-export type ConnectionStatus = 'pending' | 'connected' | 'error' | 'disabled'
+export type ConnectionStatus = 'pending' | 'provisioning' | 'connected' | 'suspended' | 'error' | 'disabled'
 export type TemplateSlug = 'email' | 'crm' | 'task-tracker' | 'webhook' | 'custom'
 
 export interface Envelope {
