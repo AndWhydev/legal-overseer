@@ -11,7 +11,7 @@ export type ModelPurpose =
   | 'synthesis'        // heavy: planning, ad scripts, complex analysis
 
 const MODELS: Record<ModelPurpose, string> = {
-  classification: process.env.MODEL_CLASSIFY || 'claude-haiku-4-5-20251001',
+  classification: process.env.MODEL_CLASSIFY || 'gemini-2.5-flash',
   conversation:   process.env.MODEL_CONVERSE || 'claude-sonnet-4-5-20250929',
   synthesis:      process.env.MODEL_SYNTH    || 'claude-opus-4-20250514',
 }
@@ -23,7 +23,7 @@ const TOKEN_LIMITS: Record<ModelPurpose, number> = {
 }
 
 const COST_PER_MILLION: Record<ModelPurpose, { input: number; output: number }> = {
-  classification: { input: 0.80,  output: 4.00  },
+  classification: { input: 0.15,  output: 0.60  }, // Gemini 2.5 Flash
   conversation:   { input: 3.00,  output: 15.00 },
   synthesis:      { input: 15.00, output: 75.00 },
 }

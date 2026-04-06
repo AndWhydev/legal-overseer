@@ -11,7 +11,7 @@
  */
 export const models = {
   /** Classification, triage, quick parsing — cheapest and fastest */
-  fast: 'anthropic/claude-haiku-4.5' as const,
+  fast: 'google/gemini-2.5-flash' as const, // 6-8x cheaper than Haiku, faster, 1M context
   /** Conversation, general tasks — balanced cost/quality */
   balanced: 'anthropic/claude-sonnet-4.6' as const,
   /** Synthesis, deep analysis, complex reasoning — highest quality */
