@@ -16,33 +16,40 @@ A .docx file is a ZIP archive containing XML files.
 
 Legacy `.doc` files must be converted before editing:
 
-```bash
-python scripts/office/soffice.py --headless --convert-to docx document.doc
+```python
+import subprocess
+subprocess.run(["soffice", "--headless", "--convert-to", "docx", "document.doc"])
 ```
 
 ### Reading Content
 
-```bash
-# Text extraction with tracked changes
-pandoc --track-changes=all document.docx -o output.md
+```python
+import subprocess, zipfile, xml.dom.minidom
 
-# Raw XML access
-python scripts/office/unpack.py document.docx unpacked/
+# Text extraction with tracked changes
+subprocess.run(["pandoc", "--track-changes=all", "document.docx", "-o", "output.md"])
+
+# Raw XML access — unzip and pretty-print
+with zipfile.ZipFile("document.docx", "r") as z:
+    z.extractall("unpacked/")
 ```
 
 ### Converting to Images
 
-```bash
-python scripts/office/soffice.py --headless --convert-to pdf document.docx
-pdftoppm -jpeg -r 150 document.pdf page
+```python
+import subprocess
+subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "document.docx"])
+subprocess.run(["pdftoppm", "-jpeg", "-r", "150", "document.pdf", "page"])
 ```
 
 ### Accepting Tracked Changes
 
 To produce a clean document with all tracked changes accepted (requires LibreOffice):
 
-```bash
-python scripts/accept_changes.py input.docx output.docx
+```python
+import subprocess
+subprocess.run(["soffice", "--headless", "--convert-to", "docx", "input.docx"])
+# LibreOffice accepts all changes during conversion
 ```
 
 ---
@@ -67,8 +74,14 @@ Packer.toBuffer(doc).then(buffer => fs.writeFileSync("doc.docx", buffer));
 
 ### Validation
 After creating the file, validate it. If validation fails, unpack, fix the XML, and repack.
-```bash
-python scripts/office/validate.py doc.docx
+```python
+# Validate by checking the DOCX can be opened and XML is well-formed
+import zipfile, xml.etree.ElementTree as ET
+with zipfile.ZipFile("doc.docx", "r") as z:
+    for name in z.namelist():
+        if name.endswith(".xml"):
+            ET.fromstring(z.read(name))  # Raises on malformed XML
+    print("Validation passed")
 ```
 
 ### Page Size
@@ -394,10 +407,23 @@ sections: [{
 **Follow all 3 steps in order.**
 
 ### Step 1: Unpack
-```bash
-python scripts/office/unpack.py document.docx unpacked/
+```python
+import zipfile, os, xml.dom.minidom
+
+with zipfile.ZipFile("document.docx", "r") as z:
+    z.extractall("unpacked/")
+
+# Pretty-print XML for readability
+for root, dirs, files in os.walk("unpacked/"):
+    for f in files:
+        if f.endswith(".xml"):
+            path = os.path.join(root, f)
+            with open(path, "r") as fh:
+                dom = xml.dom.minidom.parseString(fh.read())
+            with open(path, "w") as fh:
+                fh.write(dom.toprettyxml(indent="  "))
 ```
-Extracts XML, pretty-prints, merges adjacent runs, and converts smart quotes to XML entities (`&#x201C;` etc.) so they survive editing. Use `--merge-runs false` to skip run merging.
+Extracts XML and pretty-prints for editing. Smart quotes should use XML entities (`&#x201C;` etc.) so they survive editing.
 
 ### Step 2: Edit XML
 
@@ -405,7 +431,7 @@ Edit files in `unpacked/word/`. See XML Reference below for patterns.
 
 **Use "Claude" as the author** for tracked changes and comments, unless the user explicitly requests use of a different name.
 
-**Use the Edit tool directly for string replacement. Do not write Python scripts.** Scripts introduce unnecessary complexity. The Edit tool shows exactly what is being replaced.
+**Edit XML directly using string replacement in your code.** Do not write complex Python scripts for simple edits — use targeted find-and-replace operations via `execute_code`.
 
 **CRITICAL: Use smart quotes for new content.** When adding text with apostrophes or quotes, use XML entities to produce smart quotes:
 ```xml
@@ -419,19 +445,20 @@ Edit files in `unpacked/word/`. See XML Reference below for patterns.
 | `&#x201C;` | “ (left double) |
 | `&#x201D;` | ” (right double) |
 
-**Adding comments:** Use `comment.py` to handle boilerplate across multiple XML files (text must be pre-escaped XML):
-```bash
-python scripts/comment.py unpacked/ 0 "Comment text with &amp; and &#x2019;"
-python scripts/comment.py unpacked/ 1 "Reply text" --parent 0  # reply to comment 0
-python scripts/comment.py unpacked/ 0 "Text" --author "Custom Author"  # custom author name
-```
-Then add markers to document.xml (see Comments in XML Reference).
+**Adding comments:** Manually edit the XML to add comments. Add entries to `unpacked/word/comments.xml` and insert `commentRangeStart`/`commentRangeEnd` markers in `document.xml`. Use "Claude" as the author unless the user specifies otherwise. Text must be pre-escaped XML (e.g., `&amp;` for &, `&#x2019;` for ').
 
 ### Step 3: Pack
-```bash
-python scripts/office/pack.py unpacked/ output.docx --original document.docx
+```python
+import zipfile, os
+
+with zipfile.ZipFile("output.docx", "w", zipfile.ZIP_DEFLATED) as zout:
+    for root, dirs, files in os.walk("unpacked/"):
+        for f in files:
+            file_path = os.path.join(root, f)
+            arcname = os.path.relpath(file_path, "unpacked/")
+            zout.write(file_path, arcname)
 ```
-Validates with auto-repair, condenses XML, and creates DOCX. Use `--validate false` to skip.
+Creates DOCX from the unpacked directory. Verify the output opens correctly.
 
 **Auto-repair will fix:**
 - `durableId` >= 0x7FFFFFFF (regenerates valid ID)
@@ -580,5 +607,5 @@ After running `comment.py` (see Step 2), add markers to document.xml. For replie
 
 - **pandoc**: Text extraction
 - **docx**: `npm install -g docx` (new documents)
-- **LibreOffice**: PDF conversion (auto-configured for sandboxed environments via `scripts/office/soffice.py`)
+- **LibreOffice**: PDF conversion (invoke via `execute_code` with `subprocess`)
 - **Poppler**: `pdftoppm` for images

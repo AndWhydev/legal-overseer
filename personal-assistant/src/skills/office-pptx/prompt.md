@@ -5,38 +5,37 @@
 | Task | Guide |
 |------|-------|
 | Read/analyze content | `python -m markitdown presentation.pptx` |
-| Edit or create from template | Read [editing.md](editing.md) |
-| Create from scratch | Read [pptxgenjs.md](pptxgenjs.md) |
+| Edit or create from template | Unpack → edit XML → repack (see Editing Workflow) |
+| Create from scratch | Use `python-pptx` or `pptxgenjs` (see Creating from Scratch) |
 
 ---
 
 ## Reading Content
 
-```bash
+```python
 # Text extraction
-python -m markitdown presentation.pptx
+import subprocess
+result = subprocess.run(["python", "-m", "markitdown", "presentation.pptx"], capture_output=True, text=True)
+print(result.stdout)
 
-# Visual overview
-python scripts/thumbnail.py presentation.pptx
-
-# Raw XML
-python scripts/office/unpack.py presentation.pptx unpacked/
+# Raw XML access
+import zipfile
+with zipfile.ZipFile("presentation.pptx", "r") as z:
+    z.extractall("unpacked/")
 ```
 
 ---
 
 ## Editing Workflow
 
-**Read [editing.md](editing.md) for full details.**
-
-1. Analyze template with `thumbnail.py`
+1. Analyze template structure by extracting and reading slide XML
 2. Unpack → manipulate slides → edit content → clean → pack
 
 ---
 
 ## Creating from Scratch
 
-**Read [pptxgenjs.md](pptxgenjs.md) for full details.**
+Use `python-pptx` or `pptxgenjs` (Node.js) to create presentations from scratch.
 
 Use when no template or reference presentation is available.
 
@@ -202,25 +201,27 @@ Report ALL issues found, including minor ones.
 
 Convert presentations to individual slide images for visual inspection:
 
-```bash
-python scripts/office/soffice.py --headless --convert-to pdf output.pptx
-pdftoppm -jpeg -r 150 output.pdf slide
+```python
+import subprocess
+subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "output.pptx"])
+subprocess.run(["pdftoppm", "-jpeg", "-r", "150", "output.pdf", "slide"])
 ```
 
 This creates `slide-01.jpg`, `slide-02.jpg`, etc.
 
 To re-render specific slides after fixes:
 
-```bash
-pdftoppm -jpeg -r 150 -f N -l N output.pdf slide-fixed
+```python
+subprocess.run(["pdftoppm", "-jpeg", "-r", "150", "-f", "N", "-l", "N", "output.pdf", "slide-fixed"])
 ```
 
 ---
 
 ## Dependencies
 
-- `pip install "markitdown[pptx]"` - text extraction
-- `pip install Pillow` - thumbnail grids
-- `npm install -g pptxgenjs` - creating from scratch
-- LibreOffice (`soffice`) - PDF conversion (auto-configured for sandboxed environments via `scripts/office/soffice.py`)
-- Poppler (`pdftoppm`) - PDF to images
+Install dependencies via `execute_code` as needed:
+- `markitdown[pptx]` — text extraction
+- `Pillow` — thumbnail grids
+- `python-pptx` — reading/writing PPTX natively
+- LibreOffice (`soffice`) — PDF conversion (invoke via `execute_code` with `subprocess`)
+- Poppler (`pdftoppm`) — PDF to images (invoke via `execute_code` with `subprocess`)
