@@ -204,14 +204,20 @@ export async function POST(request: NextRequest) {
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify({ ...event, data: { ...toolData, result } })}\n\n`)
             )
-            // Send image data as separate event
+            // TODO: Image data is too large for SSE (~2MB). Store server-side and send URL instead.
+            // For now, skip sending image data via SSE — model reports success, frontend rendering deferred.
+            logger.info('[chat] Image generated, skipping SSE data transfer (too large)', {
+              callId: toolData.callId,
+              imageSize: typeof imageData === 'string' ? imageData.length : JSON.stringify(imageData).length,
+            })
+            void imageData // suppress unused warning
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify({
                 type: 'image_generated',
                 data: {
                   callId: toolData.callId,
                   name: toolData.name,
-                  imageData,
+                  imageData: null, // deferred — too large for SSE
                   prompt: result.prompt_used,
                   model: result.model_used,
                 },
