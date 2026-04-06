@@ -1,0 +1,22 @@
+{
+  "name": "Performance Optimization",
+  "description": "Optimize perceived performance through optimistic UI, skeleton screens, Core Web Vitals, and latency masking strategies.",
+  "tags": ["performance", "optimistic-UI", "Core-Web-Vitals", "latency", "skeleton-screens", "staggered-animations", "LCP", "perceived-speed"],
+  "triggerKeywords": [
+    "optimistic UI",
+    "perceived performance",
+    "Core Web Vitals",
+    "loading feels slow",
+    "LCP optimization",
+    "instant feedback",
+    "staggered animations",
+    "request batching",
+    "preloading",
+    "performance optimization",
+    "make it feel faster",
+    "latency masking"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 3577,
+  "planGate": "growth"
+}

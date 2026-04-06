@@ -1,0 +1,22 @@
+{
+  "name": "Layout System",
+  "description": "Build mobile-first responsive layouts using CSS Grid, Flexbox, and container queries with accessible breakpoint strategies.",
+  "tags": ["layout", "responsive-design", "CSS-grid", "flexbox", "mobile-first", "breakpoints", "container-queries", "tailwind"],
+  "triggerKeywords": [
+    "responsive layout",
+    "mobile-first design",
+    "CSS Grid",
+    "Flexbox layout",
+    "breakpoints",
+    "container queries",
+    "sidebar layout",
+    "card grid",
+    "hero section layout",
+    "responsive design",
+    "layout system",
+    "aspect ratio"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 3491,
+  "planGate": "growth"
+}

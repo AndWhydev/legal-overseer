@@ -1,0 +1,22 @@
+{
+  "name": "Color System",
+  "description": "Design accessible, harmonious color systems with theming, dark mode, and WCAG-compliant contrast ratios.",
+  "tags": ["color", "design-system", "dark-mode", "theming", "accessibility", "contrast", "color-theory", "tailwind"],
+  "triggerKeywords": [
+    "color system",
+    "dark mode",
+    "color palette",
+    "contrast ratio",
+    "color tokens",
+    "color-blind friendly",
+    "semantic colors",
+    "brand colors",
+    "color harmony",
+    "color scheme",
+    "theme colors",
+    "color accessibility"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 3238,
+  "planGate": "growth"
+}

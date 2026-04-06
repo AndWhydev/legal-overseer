@@ -1,0 +1,22 @@
+{
+  "name": "Typography System",
+  "description": "Design harmonious type scales, font pairings, and fluid responsive typography with accessibility-compliant readability.",
+  "tags": ["typography", "type-scale", "fonts", "readability", "line-height", "modular-scale", "fluid-typography", "variable-fonts"],
+  "triggerKeywords": [
+    "type scale",
+    "font pairing",
+    "typography system",
+    "fluid typography",
+    "modular scale",
+    "line height",
+    "font size hierarchy",
+    "readable typography",
+    "responsive typography",
+    "variable fonts",
+    "letter spacing",
+    "heading sizes"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 3460,
+  "planGate": "growth"
+}

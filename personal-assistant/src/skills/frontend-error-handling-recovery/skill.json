@@ -1,0 +1,22 @@
+{
+  "name": "Error Handling & Recovery",
+  "description": "Design error states and recovery workflows that guide users to resolution with accessible, human-friendly messaging.",
+  "tags": ["error-handling", "UX", "validation", "recovery", "accessibility", "forms", "network-errors", "empty-states"],
+  "triggerKeywords": [
+    "error handling",
+    "error message",
+    "error state",
+    "form validation errors",
+    "network error",
+    "recovery workflow",
+    "graceful degradation",
+    "permission denied",
+    "404 page",
+    "validation feedback",
+    "user error",
+    "error design"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 3246,
+  "planGate": "growth"
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Interaction Physics",
+  "description": "Design intentional microinteractions, animations, and transitions with correct timing, easing, and accessible motion.",
+  "tags": ["animations", "microinteractions", "transitions", "easing", "CSS-animations", "motion", "UX", "hover-states"],
+  "triggerKeywords": [
+    "button hover state",
+    "microinteractions",
+    "CSS animations",
+    "transition timing",
+    "easing functions",
+    "page transitions",
+    "animation performance",
+    "reduced motion",
+    "loading spinner",
+    "notification animation",
+    "form validation animation",
+    "interaction feedback"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 4028,
+  "planGate": "growth"
+}
