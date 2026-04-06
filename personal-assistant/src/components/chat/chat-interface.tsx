@@ -1822,7 +1822,8 @@ export function ChatInterface() {
     loadThreadHistory(selectionRequest.threadId)
   }, [loadThreadHistory, selectionRequest.nonce, selectionRequest.threadId])
 
-  const handleNewConversation = useCallback((threadToArchive: string | null) => {
+  const handleNewConversationRef = useRef<(t: string | null) => void>(() => {})
+  handleNewConversationRef.current = (threadToArchive: string | null) => {
     // Archive current thread and start fresh
     if (threadToArchive) {
       fetch('/api/agent/chat/history', {
@@ -1837,12 +1838,13 @@ export function ChatInterface() {
     }
     setThreadId(null)
     resetConversationState(true)
-  }, [refreshThreads, resetConversationState, setThreadId])
+  }
 
   useEffect(() => {
     if (!newConversationRequest.nonce) return
-    handleNewConversation(newConversationRequest.fromThreadId)
-  }, [handleNewConversation, newConversationRequest.fromThreadId, newConversationRequest.nonce])
+    handleNewConversationRef.current(newConversationRequest.fromThreadId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newConversationRequest.nonce])
 
   // Listen for slash command events
   useEffect(() => {
