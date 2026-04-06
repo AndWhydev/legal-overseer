@@ -1,0 +1,9 @@
+{
+  "name": "Creative Strategist",
+  "description": "Define visual direction and brand aesthetics to ensure consistent style across all creative asset generation.",
+  "tags": ["visual direction", "creative strategy", "brand aesthetics", "style guide", "visual identity", "creative planning", "mood boards"],
+  "triggerKeywords": ["visual direction", "brand aesthetics", "style guide", "creative strategy", "visual identity", "creative direction", "mood board", "brand style", "color palette", "photography style", "design aesthetic", "visual brand"],
+  "roleAffinity": ["comms", "operations"],
+  "estimatedTokens": 3071,
+  "planGate": "growth"
+}

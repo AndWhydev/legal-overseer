@@ -1,0 +1,9 @@
+{
+  "name": "Creative: Social Graphics",
+  "description": "Generate platform-optimized social media graphics for Instagram, LinkedIn, Twitter, TikTok, and Pinterest.",
+  "tags": ["social media graphics", "social posts", "platform-optimized", "Instagram graphics", "LinkedIn posts", "Twitter graphics", "TikTok graphics", "social content"],
+  "triggerKeywords": ["social media graphic", "Instagram post", "LinkedIn graphic", "Twitter image", "TikTok visual", "social post design", "platform graphic", "social media design", "generate social graphic", "Pinterest pin", "social banner", "post graphic"],
+  "roleAffinity": ["comms", "operations"],
+  "estimatedTokens": 2377,
+  "planGate": "growth"
+}

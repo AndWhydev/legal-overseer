@@ -1,0 +1,9 @@
+{
+  "name": "Creative: Remotion Script Writer",
+  "description": "Write detailed JSON video scripts for Remotion-based animated videos including product demos and coding tutorials.",
+  "tags": ["remotion", "video", "script", "animation", "tutorial", "demo", "product"],
+  "triggerKeywords": ["remotion script", "video script", "remotion video", "animated video script", "product demo script", "coding tutorial video", "remotion JSON", "video sequence", "scene script", "remotion animation", "generate video script", "data visualization video"],
+  "roleAffinity": ["comms", "operations"],
+  "estimatedTokens": 1797,
+  "planGate": "growth"
+}

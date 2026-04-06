@@ -1,0 +1,9 @@
+{
+  "name": "Creative: Image Generation",
+  "description": "Generate professional-quality images using FAL.ai with structured prompt engineering for any visual content.",
+  "tags": ["image generation", "nanobanana pro", "prompt engineering", "AI art", "visual content creation", "asset generation", "automation"],
+  "triggerKeywords": ["generate image", "AI image", "create visual", "image prompt", "FAL.ai", "text to image", "generate photo", "AI art", "create image", "prompt engineering", "visual generation", "generate asset"],
+  "roleAffinity": ["comms", "operations"],
+  "estimatedTokens": 3149,
+  "planGate": "growth"
+}

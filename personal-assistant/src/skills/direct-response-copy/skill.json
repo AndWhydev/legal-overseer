@@ -1,0 +1,9 @@
+{
+  "name": "Direct Response Copy",
+  "description": "Write persuasive sales copy using proven direct response frameworks that convert readers into buyers.",
+  "tags": ["copywriting", "sales copy", "persuasion", "conversion copy", "landing page copy", "direct response", "copywriting principles"],
+  "triggerKeywords": ["write sales copy", "landing page copy", "conversion copy", "direct response", "write an ad", "persuasive copy", "sales page", "copywriting", "write a hook", "CTA copy", "write headline", "convert visitors"],
+  "roleAffinity": ["sales", "comms"],
+  "estimatedTokens": 1350,
+  "planGate": "growth"
+}

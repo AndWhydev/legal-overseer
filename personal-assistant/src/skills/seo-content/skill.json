@@ -1,0 +1,9 @@
+{
+  "name": "SEO Content",
+  "description": "Create search-optimized articles that rank in Google and engage readers using E-E-A-T principles.",
+  "tags": ["SEO content", "search engine optimization", "content marketing", "ranking content", "organic traffic", "search intent", "content strategy", "E-E-A-T", "topical authority"],
+  "triggerKeywords": ["write SEO article", "SEO content", "rank on Google", "blog post SEO", "content brief", "SEO writing", "optimize content", "organic traffic", "on-page SEO", "meta description", "title tag", "content for search"],
+  "roleAffinity": ["research", "operations"],
+  "estimatedTokens": 3624,
+  "planGate": "growth"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Marketing Orchestrator",
+  "description": "Diagnose your marketing situation and sequence all other marketing skills in the optimal strategic order.",
+  "tags": ["marketing strategy", "skill sequencing", "marketing planning", "strategy optimization", "marketing diagnosis", "strategic planning"],
+  "triggerKeywords": ["marketing strategy", "where to start marketing", "marketing plan", "what skills to use", "marketing diagnosis", "marketing audit", "improve marketing", "marketing roadmap", "marketing sequence", "marketing system", "what should I focus on", "marketing overview"],
+  "roleAffinity": ["coordinator"],
+  "estimatedTokens": 2010,
+  "planGate": "growth"
+}
