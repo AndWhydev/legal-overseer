@@ -1,4 +1,4 @@
-import { generateObject, generateText } from 'ai'
+import { generateText, Output } from 'ai'
 import { models } from '@/lib/ai'
 import { z } from 'zod'
 import { logger } from '@/lib/core/logger'
@@ -83,9 +83,6 @@ const PlanOutputSchema = z.object({
 
 export { PlanOutputSchema }
 
-/** Whether to use structured output (tool_use) for planning. Opt-in via env var. */
-const USE_STRUCTURED_PLANNER = process.env.BITBIT_STRUCTURED_PLANNER === 'true'
-
 const PLANNER_SYSTEM = `You are a planning assistant for BitBit, an AI operations platform. Given a user request and context, output a JSON object with execution stages and tool group selections.
 
 Each stage object has:
@@ -127,29 +124,10 @@ Output ONLY the JSON object, no markdown fences or explanation.`
 
 /**
  * Call Haiku to generate a user-meaningful execution plan with tool group selections.
- * Returns stages (2-4 UI steps) and toolGroups (which tool groups to load).
+ * Uses AI SDK v6 structured output (Output.object + Zod schema) for reliable parsing.
  * Falls back to empty stages/toolGroups on failure (caller handles fallback).
- *
- * When BITBIT_STRUCTURED_PLANNER=true, uses Zod-validated structured output
- * via tool_use for reliable parsing. Otherwise falls back to text-based JSON parsing.
  */
 export async function generatePlan(
-  message: string,
-  entityContext: string,
-  toolNames: string[],
-  skillCandidates?: Array<{ id: string; description: string }>,
-): Promise<PlanOutput> {
-  if (USE_STRUCTURED_PLANNER) {
-    return generatePlanStructured(message, entityContext, toolNames, skillCandidates)
-  }
-  return generatePlanLegacy(message, entityContext, toolNames, skillCandidates)
-}
-
-/**
- * Structured output path: uses generateObject with Zod schema validation.
- * AI SDK forces output matching PlanOutputSchema.
- */
-async function generatePlanStructured(
   message: string,
   entityContext: string,
   toolNames: string[],
@@ -170,9 +148,9 @@ async function generatePlanStructured(
   const timeout = setTimeout(() => controller.abort(), 3000)
 
   try {
-    const { object: data } = await generateObject({
+    const { output: data } = await generateText({
       model: models.fast,
-      schema: PlanOutputSchema,
+      output: Output.object({ schema: PlanOutputSchema }),
       maxOutputTokens: 512,
       system: systemPrompt,
       prompt: userPrompt,
@@ -181,8 +159,11 @@ async function generatePlanStructured(
 
     clearTimeout(timeout)
 
-    // Map validated output to PlanOutput format
-    const stages: PlanStage[] = data.stages.map((s: z.infer<typeof PlanStageSchema>) => ({
+    if (!data) {
+      return { stages: [], toolGroups: [], complexity: 'medium' as const, skills: [] }
+    }
+
+    const stages: PlanStage[] = data.stages.map((s) => ({
       id: s.id,
       label: s.label,
       sublabel: s.sublabel,
@@ -195,102 +176,13 @@ async function generatePlanStructured(
       (g: string): g is ToolGroup => typeof g === 'string' && g !== 'core' && VALID_TOOL_GROUPS.has(g as ToolGroup)
     )
 
-    logger.info('[planner] Structured plan generated', {
+    logger.info('[planner] Plan generated via structured output', {
       stageCount: stages.length,
       toolGroups,
+      complexity: data.complexity,
     })
 
     return { stages, toolGroups, complexity: data.complexity ?? 'medium', skills: data.skills ?? [] }
-  } catch {
-    clearTimeout(timeout)
-    return { stages: [], toolGroups: [], complexity: 'medium' as const, skills: [] }
-  }
-}
-
-/**
- * Legacy text-based path: parses free-form JSON from Claude's text response.
- * Kept as fallback when structured output is not enabled.
- */
-async function generatePlanLegacy(
-  message: string,
-  entityContext: string,
-  toolNames: string[],
-  skillCandidates?: Array<{ id: string; description: string }>,
-): Promise<PlanOutput> {
-  const systemPrompt = PLANNER_SYSTEM.replace('TOOL_NAMES', toolNames.join(', '))
-  let userPrompt = entityContext
-    ? `User request: "${message}"\n\nKnown context:\n${entityContext}`
-    : `User request: "${message}"`
-
-  if (skillCandidates && skillCandidates.length > 0) {
-    userPrompt += '\n\nCandidate skills:\n' + skillCandidates
-      .map(s => `- ${s.id}: ${s.description}`)
-      .join('\n')
-  }
-
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 3000)
-
-  try {
-    const { text } = await generateText({
-      model: models.fast,
-      maxOutputTokens: 512,
-      system: systemPrompt,
-      prompt: userPrompt,
-      abortSignal: controller.signal,
-    })
-
-    clearTimeout(timeout)
-
-    // Parse JSON, stripping any accidental markdown fences
-    const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
-    const parsed = JSON.parse(cleaned)
-
-    // Handle both new object format { stages, toolGroups } and legacy array format
-    let rawStages: unknown[]
-    let rawToolGroups: string[] = []
-
-    if (Array.isArray(parsed)) {
-      // Legacy format: Haiku returned a plain array of stages
-      rawStages = parsed
-    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.stages)) {
-      // New format: { stages: [...], toolGroups: [...] }
-      rawStages = parsed.stages
-      if (Array.isArray(parsed.toolGroups)) {
-        rawToolGroups = parsed.toolGroups
-      }
-    } else {
-      return { stages: [], toolGroups: [], complexity: 'medium' as const, skills: [] }
-    }
-
-    if (rawStages.length === 0) return { stages: [], toolGroups: [], complexity: 'medium' as const, skills: [] }
-
-    const stages = rawStages.slice(0, 4).map((s: any) => ({
-      id: String(s.id || ''),
-      label: String(s.label || ''),
-      sublabel: s.sublabel ? String(s.sublabel) : undefined,
-      icon: String(s.icon || ''),
-      toolHint: s.toolHint ? String(s.toolHint) : undefined,
-    }))
-
-    // Validate tool groups: filter to only known valid groups, exclude 'core' (always added by caller)
-    const toolGroups = rawToolGroups.filter(
-      (g): g is ToolGroup => typeof g === 'string' && g !== 'core' && VALID_TOOL_GROUPS.has(g as ToolGroup)
-    )
-
-    const rawComplexity = typeof parsed === 'object' && parsed !== null
-      ? (parsed as Record<string, unknown>).complexity
-      : undefined
-    const complexity: 'low' | 'medium' | 'high' =
-      rawComplexity === 'low' || rawComplexity === 'medium' || rawComplexity === 'high'
-        ? rawComplexity
-        : 'medium'
-
-    const rawSkills = typeof parsed === 'object' && parsed !== null && Array.isArray((parsed as Record<string, unknown>).skills)
-      ? ((parsed as Record<string, unknown>).skills as unknown[]).filter((s): s is string => typeof s === 'string')
-      : []
-
-    return { stages, toolGroups, complexity, skills: rawSkills }
   } catch {
     clearTimeout(timeout)
     return { stages: [], toolGroups: [], complexity: 'medium' as const, skills: [] }

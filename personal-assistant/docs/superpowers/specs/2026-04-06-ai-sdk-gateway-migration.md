@@ -70,15 +70,15 @@ BitBit provides the SOTA intelligence layer on top.
 - Tool definitions updated to v6 format (`inputSchema`)
 **Risk**: Low
 
-### Phase 1: TAOR → ToolLoopAgent
-**Scope**: Replace custom async generator with AI SDK agent
+### Phase 1: Optimize TAOR with AI SDK v6 Features
+**Scope**: Keep TAOR loop (more capable than ToolLoopAgent), adopt v6 features where they help
 **Changes**:
-- Create ToolLoopAgent with BitBit's hooks wired in
-- prepareStep: run planner, Tool RAG, Skill RAG, context assembly
-- onStepFinish: reflection, correction detection
-- onFinish: plan persistence, memory corroboration
-- Feature flag for A/B testing old vs new
-**Risk**: High (mitigated by feature flag)
+- Planner: `Output.object({ schema: PlanOutputSchema })` — kill regex JSON fallback
+- Token tracking: AI SDK `usage` on results — replace manual counting
+- Tool definitions: `tool()` helper with `inputSchema` for cleaner typing
+- Keep: async generator, pre-flight planner race, complexity-gated thinking,
+  custom streaming events, correction detection, plan persistence
+**Risk**: Low (incremental improvements, no behavior change)
 
 ### Phase 2: Tools + Skills Completion
 **Scope**: Add image gen tools, port remaining skills, audit
@@ -134,9 +134,9 @@ BitBit provides the SOTA intelligence layer on top.
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Model call boilerplate | 86 LOC | 0 (Gateway strings) |
-| TAOR loop complexity | 850 LOC | ~350 LOC (ToolLoopAgent + hooks) |
+| Model call boilerplate | 86 LOC | 0 (Gateway strings) — DONE |
+| TAOR loop | 850 LOC | ~800 LOC (keep loop, optimize planner parsing) |
 | Structured output parsing | Manual JSON + regex fallback | `Output.object()` (zero parsing code) |
-| Model switching | Code change + deploy | Change string |
+| Model switching | Code change + deploy | Change string — DONE |
 | Observability | Manual logging | Gateway dashboard + DevTools + OTel |
-| Novel architecture | Preserved | Preserved + better foundation |
+| Novel architecture | Preserved | Preserved — TAOR, Memory Palace, Skills all kept |
