@@ -14,6 +14,7 @@ import { standingOrderToolDefinitions, standingOrderToolHandlers } from './tools
 import { webToolDefinitions, webToolHandlers } from './tools/web-tools'
 import { graphTraversalToolDefinitions, graphTraversalToolHandlers } from './tools/graph-traversal'
 import { spawnAgentToolDefinition, handleSpawnAgent, type SpawnContext } from './tools/spawn-agent'
+import { imageToolDefinitions, imageToolHandlers } from './tools/image-tools'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -41,7 +42,7 @@ import { getOrgPlan, checkToolPlanGate, TOOL_PLAN_REQUIREMENTS } from '@/lib/bil
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo' | 'tenders' | 'content' | 'builder'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo' | 'tenders' | 'content' | 'builder' | 'creative'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -116,6 +117,12 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     label: 'Website Builder',
     description: 'Generate, preview, and deploy professional websites from templates or descriptions',
     tools: ['generate_website', 'list_website_templates', 'revise_website', 'deploy_website', 'preview_website'],
+  },
+  creative: {
+    id: 'creative',
+    label: 'Creative & Image Generation',
+    description: 'Generate images, graphics, and visual assets using AI image models via Gateway',
+    tools: ['generate_image', 'generate_images'],
   },
 }
 
@@ -996,13 +1003,14 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...standingOrderToolHandlers,
   ...webToolHandlers,
   ...graphTraversalToolHandlers,
+  ...imageToolHandlers,
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, ...webToolDefinitions, ...graphTraversalToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, ...webToolDefinitions, ...graphTraversalToolDefinitions, ...imageToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])

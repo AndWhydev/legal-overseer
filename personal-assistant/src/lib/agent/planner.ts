@@ -11,7 +11,7 @@ export interface PlanOutput {
   skills: string[]
 }
 
-const VALID_TOOL_GROUPS = new Set<ToolGroup>(['core', 'memory', 'channel', 'web', 'comms', 'agentic'])
+const VALID_TOOL_GROUPS = new Set<ToolGroup>(['core', 'memory', 'channel', 'web', 'comms', 'agentic', 'creative'])
 
 export interface PlanStage {
   id: string
@@ -95,7 +95,7 @@ Each stage object has:
 Focus on what matters to the user, not internal steps. Show entities by name when possible.
 
 Also select which tool groups are needed for this request.
-Available groups: core (always included automatically), memory, channel, web, comms
+Available groups: core (always included automatically), memory, channel, web, comms, creative
 Select 1-3 additional groups beyond core.
 
 Also classify the overall complexity of this request:

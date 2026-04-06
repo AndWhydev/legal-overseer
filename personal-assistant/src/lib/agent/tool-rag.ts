@@ -92,6 +92,10 @@ const INTENT_KEYWORDS: Record<string, string[]> = {
 
   // Creator studio
   compose_creator_notification_mockup: ['mockup', 'creator', 'notification', 'preview', 'studio', 'demo'],
+
+  // Image generation
+  generate_image: ['image', 'picture', 'photo', 'graphic', 'visual', 'illustration', 'banner', 'hero', 'logo', 'icon', 'generate', 'create', 'design', 'art'],
+  generate_images: ['images', 'variations', 'options', 'multiple', 'gallery', 'set'],
 }
 
 // ---------------------------------------------------------------------------

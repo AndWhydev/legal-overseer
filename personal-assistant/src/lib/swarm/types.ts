@@ -99,22 +99,22 @@ export const DEFAULT_CAPABILITIES: Record<AgentRole, CapabilityBoundary> = {
     requiresApproval: ['generate_invoice'],
   },
   comms: {
-    allowedToolGroups: ['core', 'memory', 'channel', 'comms'],
+    allowedToolGroups: ['core', 'memory', 'channel', 'comms', 'creative'],
     allowedSkills: [
       'ad-scripts', 'content-social',
       'email-sequences', 'newsletter', 'tweet-writer', 'brand-voice', 'content-atomizer',
       'creative-social-graphics', 'creative-brand-asset', 'creative-talking-head',
-      'copywriting', 'b2b-copywriting',
+      'creative-image-generation', 'copywriting', 'b2b-copywriting',
     ],
     deniedTools: ['generate_invoice'],
     requiresApproval: ['send_email', 'send_sms', 'send_whatsapp'],
   },
   operations: {
-    allowedToolGroups: ['core', 'memory', 'channel'],
+    allowedToolGroups: ['core', 'memory', 'channel', 'creative'],
     allowedSkills: [
       'seo-visibility', 'content-social', 'tender-hunter',
       'seo-content', 'seo-strategy', 'keyword-research',
-      'creative-product-video', 'creative-remotion-script-writer',
+      'creative-product-video', 'creative-remotion-script-writer', 'creative-image-generation',
       'frontend-design-foundation', 'frontend-layout-system', 'frontend-component-architecture',
       'frontend-performance-optimization', 'frontend-accessibility-excellence',
       'frontend-adapt', 'frontend-bolder', 'frontend-quieter', 'frontend-clarify',
