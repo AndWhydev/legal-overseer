@@ -37,6 +37,7 @@ import {
   ConfirmationAction,
 } from '@/components/ai-elements/confirmation'
 import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
+import { cn } from '@/lib/utils'
 import { InvoiceArtifact } from './invoice-artifact'
 import { ChatAttachmentList } from './chat-attachment'
 import { SourcesFooter } from './sources-footer'
