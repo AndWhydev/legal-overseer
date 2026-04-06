@@ -18,7 +18,14 @@ import {
   InlineCitationCardBody,
   InlineCitationSource,
 } from '@/components/ai-elements/inline-citation'
+import { EntityChip } from './entity-chip'
 import type { Citation } from './chat-interface'
+
+export interface EntityRef {
+  name: string
+  type: string
+  subtitle?: string
+}
 
 interface ToolCall {
   name: string
@@ -88,7 +95,54 @@ function renderTextWithCitations(text: string, citations: Citation[]): React.Rea
   return parts
 }
 
-export function MessageBubble({ message, citations, onRegenerate, onFeedback, onEdit, onOpenArtifact, isStreaming = false }: { message: Message; citations?: Citation[]; onRegenerate?: () => void; onFeedback?: (type: 'up' | 'down') => void; onEdit?: (messageId: string, newContent: string) => void; onOpenArtifact?: (content: string, lang: string) => void; isStreaming?: boolean }) {
+/** Replace known entity names in text with EntityChip components */
+function renderTextWithEntities(nodes: React.ReactNode[], entities: EntityRef[]): React.ReactNode[] {
+  if (!entities || entities.length === 0) return nodes
+
+  // Sort by name length descending to match longest first
+  const sorted = [...entities].sort((a, b) => b.name.length - a.name.length)
+
+  return nodes.flatMap((node, nodeIdx) => {
+    if (typeof node !== 'string') return [node]
+
+    let text = node
+    const result: React.ReactNode[] = []
+    let keyCounter = 0
+
+    for (const entity of sorted) {
+      if (entity.name.length < 3) continue // Skip very short names
+      const parts = (text as string).split(new RegExp(`\\b(${entity.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'gi'))
+      if (parts.length <= 1) continue
+
+      const newParts: React.ReactNode[] = []
+      for (let i = 0; i < parts.length; i++) {
+        if (i % 2 === 0) {
+          if (parts[i]) newParts.push(parts[i])
+        } else {
+          newParts.push(
+            <EntityChip
+              key={`entity-${nodeIdx}-${keyCounter++}`}
+              name={entity.name}
+              type={entity.type}
+              subtitle={entity.subtitle}
+            />
+          )
+        }
+      }
+      // Only process first match per entity to avoid over-chipping
+      if (newParts.length > 1) {
+        result.push(...newParts)
+        text = '' // consumed
+        break
+      }
+    }
+
+    if (text) result.push(text)
+    return result
+  })
+}
+
+export function MessageBubble({ message, citations, entities, onRegenerate, onFeedback, onEdit, onOpenArtifact, isStreaming = false }: { message: Message; citations?: Citation[]; entities?: EntityRef[]; onRegenerate?: () => void; onFeedback?: (type: 'up' | 'down') => void; onEdit?: (messageId: string, newContent: string) => void; onOpenArtifact?: (content: string, lang: string) => void; isStreaming?: boolean }) {
   const isUser = message.role === 'user'
   const msgCitations = citations || message.citations
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(message.feedback || null)
@@ -133,36 +187,56 @@ export function MessageBubble({ message, citations, onRegenerate, onFeedback, on
     pre: ({ children }) => {
       return <>{children}</>
     },
+    table: ({ children }) => (
+      <div className="my-3 overflow-x-auto rounded-lg border border-border">
+        <table className="w-full text-sm">
+          {children}
+        </table>
+      </div>
+    ),
+    thead: ({ children }) => (
+      <thead className="bg-muted/50 border-b border-border">
+        {children}
+      </thead>
+    ),
+    th: ({ children }) => (
+      <th className="px-3 py-2 text-left font-medium text-foreground text-xs uppercase tracking-wider">
+        {children}
+      </th>
+    ),
+    td: ({ children }) => (
+      <td className="px-3 py-2 text-foreground border-t border-border/50">
+        {children}
+      </td>
+    ),
   }
 
-  const citationComponents = msgCitations && msgCitations.length > 0
+  const hasCitations = msgCitations && msgCitations.length > 0
+  const hasEntities = entities && entities.length > 0
+
+  /** Process text children through citation + entity pipelines */
+  const processTextChild = (child: React.ReactNode): React.ReactNode => {
+    if (typeof child !== 'string') return child
+    let nodes: React.ReactNode[] = [child]
+    if (hasCitations) nodes = renderTextWithCitations(child, msgCitations)
+    if (hasEntities) nodes = renderTextWithEntities(nodes, entities)
+    return nodes.length === 1 && typeof nodes[0] === 'string' ? nodes[0] : <>{nodes}</>
+  }
+
+  const richTextComponents = (hasCitations || hasEntities)
     ? {
         p: ({ children }: { children?: React.ReactNode }) => {
-          const processed = React.Children.map(children, child => {
-            if (typeof child === 'string') {
-              const nodes = renderTextWithCitations(child, msgCitations)
-              return nodes.length === 1 && typeof nodes[0] === 'string' ? nodes[0] : <>{nodes}</>
-            }
-            return child
-          })
-          return <p>{processed}</p>
+          return <p>{React.Children.map(children, processTextChild)}</p>
         },
         li: ({ children }: { children?: React.ReactNode }) => {
-          const processed = React.Children.map(children, child => {
-            if (typeof child === 'string') {
-              const nodes = renderTextWithCitations(child, msgCitations)
-              return nodes.length === 1 && typeof nodes[0] === 'string' ? nodes[0] : <>{nodes}</>
-            }
-            return child
-          })
-          return <li>{processed}</li>
+          return <li>{React.Children.map(children, processTextChild)}</li>
         },
       }
     : {}
 
   const markdownComponents = {
     ...baseComponents,
-    ...citationComponents,
+    ...richTextComponents,
   } as Components
 
   return (
