@@ -11,7 +11,7 @@ export type ModelPurpose =
   | 'synthesis'        // heavy: planning, ad scripts, complex analysis
 
 const MODELS: Record<ModelPurpose, string> = {
-  classification: process.env.MODEL_CLASSIFY || 'gemini-2.5-flash',
+  classification: process.env.MODEL_CLASSIFY || 'gemini-3-flash',
   conversation:   process.env.MODEL_CONVERSE || 'claude-sonnet-4-5-20250929',
   synthesis:      process.env.MODEL_SYNTH    || 'claude-opus-4-20250514',
 }
