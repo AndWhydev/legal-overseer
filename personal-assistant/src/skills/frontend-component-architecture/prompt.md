@@ -657,6 +657,44 @@ Comprehensive documentation helps your team use components effectively.
 - [ ] Components are accessible (keyboard, screen reader, focus)
 - [ ] Components have comprehensive documentation
 - [ ] Component library is organized (atoms, molecules, organisms)
+
+## Design System Normalization
+
+When features drift from design system standards, systematically realign:
+
+### Normalization Process
+1. **Discover**: Identify the design system tokens, spacing scale, and component library
+2. **Analyze**: Find deviations — hardcoded values, custom components where system equivalents exist, inconsistent patterns
+3. **Normalize**: Replace hardcoded values with tokens, swap custom components for system ones, align typography/color/spacing
+
+### Priority Order
+1. Typography (font families, sizes, weights, line heights)
+2. Color and theming (use tokens, not hex values)
+3. Spacing (use scale, not arbitrary px)
+4. Components (use system components, not custom clones)
+5. Motion and transitions (consistent timing/easing)
+6. Responsive behavior (consistent breakpoints)
+7. Accessibility (consistent focus styles, ARIA patterns)
+
+**Never**: Create custom components when system equivalents exist, hardcode values instead of tokens, introduce divergent patterns.
+
+## Component Extraction
+
+When repeated patterns emerge, extract them into reusable components:
+
+### Extraction Criteria
+- Used 3+ times in the codebase
+- Clear consistency benefit
+- Stable enough to standardize (not still evolving)
+
+### Extraction Process
+1. Identify repeated patterns across pages/features
+2. Document the common interface (props, variants, states)
+3. Build with proper TypeScript types, accessibility, and documentation
+4. Migrate existing uses systematically
+5. Test for visual parity after migration
+
+**Never**: Extract one-off implementations, create overly generic "god components", skip TypeScript types, extract without understanding existing conventions.
 - [ ] Components are reusable across the product
 - [ ] Components are tested (unit tests, visual tests)
 

@@ -1,0 +1,33 @@
+{
+  "name": "UX Copy Clarity",
+  "description": "Improve unclear UX copy, error messages, microcopy, labels, and interface instructions.",
+  "tags": [
+    "microcopy",
+    "ux-writing",
+    "error-messages",
+    "labels",
+    "clarity",
+    "interface-text"
+  ],
+  "triggerKeywords": [
+    "confusing error message",
+    "unclear button label",
+    "improve microcopy",
+    "ux writing review",
+    "better form labels",
+    "clearer interface text",
+    "help text improvement",
+    "empty state copy",
+    "loading state message",
+    "confirmation dialog text",
+    "tooltip copy",
+    "interface clarity audit"
+  ],
+  "roleAffinity": [
+    "operations",
+    "comms"
+  ],
+  "toolGroup": "code",
+  "estimatedTokens": 1400,
+  "planGate": "growth"
+}
