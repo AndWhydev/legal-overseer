@@ -21,6 +21,7 @@ export const navigation: NavSection[] = [
     title: 'Getting Started',
     items: [
       { title: 'Overview', href: '/docs/overview' },
+      { title: "What's Built", href: '/docs/getting-started/whats-built' },
       { title: 'Architecture', href: '/docs/getting-started/architecture' },
       { title: 'Quick Start', href: '/docs/getting-started/quick-start' },
     ],

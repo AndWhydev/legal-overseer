@@ -16,40 +16,33 @@ A .docx file is a ZIP archive containing XML files.
 
 Legacy `.doc` files must be converted before editing:
 
-```python
-import subprocess
-subprocess.run(["soffice", "--headless", "--convert-to", "docx", "document.doc"])
+```bash
+python scripts/office/soffice.py --headless --convert-to docx document.doc
 ```
 
 ### Reading Content
 
-```python
-import subprocess, zipfile, xml.dom.minidom
-
+```bash
 # Text extraction with tracked changes
-subprocess.run(["pandoc", "--track-changes=all", "document.docx", "-o", "output.md"])
+pandoc --track-changes=all document.docx -o output.md
 
-# Raw XML access — unzip and pretty-print
-with zipfile.ZipFile("document.docx", "r") as z:
-    z.extractall("unpacked/")
+# Raw XML access
+python scripts/office/unpack.py document.docx unpacked/
 ```
 
 ### Converting to Images
 
-```python
-import subprocess
-subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "document.docx"])
-subprocess.run(["pdftoppm", "-jpeg", "-r", "150", "document.pdf", "page"])
+```bash
+python scripts/office/soffice.py --headless --convert-to pdf document.docx
+pdftoppm -jpeg -r 150 document.pdf page
 ```
 
 ### Accepting Tracked Changes
 
 To produce a clean document with all tracked changes accepted (requires LibreOffice):
 
-```python
-import subprocess
-subprocess.run(["soffice", "--headless", "--convert-to", "docx", "input.docx"])
-# LibreOffice accepts all changes during conversion
+```bash
+python scripts/accept_changes.py input.docx output.docx
 ```
 
 ---
@@ -74,14 +67,8 @@ Packer.toBuffer(doc).then(buffer => fs.writeFileSync("doc.docx", buffer));
 
 ### Validation
 After creating the file, validate it. If validation fails, unpack, fix the XML, and repack.
-```python
-# Validate by checking the DOCX can be opened and XML is well-formed
-import zipfile, xml.etree.ElementTree as ET
-with zipfile.ZipFile("doc.docx", "r") as z:
-    for name in z.namelist():
-        if name.endswith(".xml"):
-            ET.fromstring(z.read(name))  # Raises on malformed XML
-    print("Validation passed")
+```bash
+python scripts/office/validate.py doc.docx
 ```
 
 ### Page Size
@@ -407,31 +394,18 @@ sections: [{
 **Follow all 3 steps in order.**
 
 ### Step 1: Unpack
-```python
-import zipfile, os, xml.dom.minidom
-
-with zipfile.ZipFile("document.docx", "r") as z:
-    z.extractall("unpacked/")
-
-# Pretty-print XML for readability
-for root, dirs, files in os.walk("unpacked/"):
-    for f in files:
-        if f.endswith(".xml"):
-            path = os.path.join(root, f)
-            with open(path, "r") as fh:
-                dom = xml.dom.minidom.parseString(fh.read())
-            with open(path, "w") as fh:
-                fh.write(dom.toprettyxml(indent="  "))
+```bash
+python scripts/office/unpack.py document.docx unpacked/
 ```
-Extracts XML and pretty-prints for editing. Smart quotes should use XML entities (`&#x201C;` etc.) so they survive editing.
+Extracts XML, pretty-prints, merges adjacent runs, and converts smart quotes to XML entities (`&#x201C;` etc.) so they survive editing. Use `--merge-runs false` to skip run merging.
 
 ### Step 2: Edit XML
 
 Edit files in `unpacked/word/`. See XML Reference below for patterns.
 
-**Use "BitBit" as the author** for tracked changes and comments, unless the user explicitly requests use of a different name.
+**Use "Claude" as the author** for tracked changes and comments, unless the user explicitly requests use of a different name.
 
-**Edit XML directly using string replacement in your code.** Do not write complex Python scripts for simple edits — use targeted find-and-replace operations via `execute_code`.
+**Use the Edit tool directly for string replacement. Do not write Python scripts.** Scripts introduce unnecessary complexity. The Edit tool shows exactly what is being replaced.
 
 **CRITICAL: Use smart quotes for new content.** When adding text with apostrophes or quotes, use XML entities to produce smart quotes:
 ```xml
@@ -445,20 +419,19 @@ Edit files in `unpacked/word/`. See XML Reference below for patterns.
 | `&#x201C;` | “ (left double) |
 | `&#x201D;` | ” (right double) |
 
-**Adding comments:** Manually edit the XML to add comments. Add entries to `unpacked/word/comments.xml` and insert `commentRangeStart`/`commentRangeEnd` markers in `document.xml`. Use "BitBit" as the author unless the user specifies otherwise. Text must be pre-escaped XML (e.g., `&amp;` for &, `&#x2019;` for ').
+**Adding comments:** Use `comment.py` to handle boilerplate across multiple XML files (text must be pre-escaped XML):
+```bash
+python scripts/comment.py unpacked/ 0 "Comment text with &amp; and &#x2019;"
+python scripts/comment.py unpacked/ 1 "Reply text" --parent 0  # reply to comment 0
+python scripts/comment.py unpacked/ 0 "Text" --author "Custom Author"  # custom author name
+```
+Then add markers to document.xml (see Comments in XML Reference).
 
 ### Step 3: Pack
-```python
-import zipfile, os
-
-with zipfile.ZipFile("output.docx", "w", zipfile.ZIP_DEFLATED) as zout:
-    for root, dirs, files in os.walk("unpacked/"):
-        for f in files:
-            file_path = os.path.join(root, f)
-            arcname = os.path.relpath(file_path, "unpacked/")
-            zout.write(file_path, arcname)
+```bash
+python scripts/office/pack.py unpacked/ output.docx --original document.docx
 ```
-Creates DOCX from the unpacked directory. Verify the output opens correctly.
+Validates with auto-repair, condenses XML, and creates DOCX. Use `--validate false` to skip.
 
 **Auto-repair will fix:**
 - `durableId` >= 0x7FFFFFFF (regenerates valid ID)
@@ -486,14 +459,14 @@ Creates DOCX from the unpacked directory. Verify the output opens correctly.
 
 **Insertion:**
 ```xml
-<w:ins w:id="1" w:author="BitBit" w:date="2025-01-01T00:00:00Z">
+<w:ins w:id="1" w:author="Claude" w:date="2025-01-01T00:00:00Z">
   <w:r><w:t>inserted text</w:t></w:r>
 </w:ins>
 ```
 
 **Deletion:**
 ```xml
-<w:del w:id="2" w:author="BitBit" w:date="2025-01-01T00:00:00Z">
+<w:del w:id="2" w:author="Claude" w:date="2025-01-01T00:00:00Z">
   <w:r><w:delText>deleted text</w:delText></w:r>
 </w:del>
 ```
@@ -504,10 +477,10 @@ Creates DOCX from the unpacked directory. Verify the output opens correctly.
 ```xml
 <!-- Change "30 days" to "60 days" -->
 <w:r><w:t>The term is </w:t></w:r>
-<w:del w:id="1" w:author="BitBit" w:date="...">
+<w:del w:id="1" w:author="Claude" w:date="...">
   <w:r><w:delText>30</w:delText></w:r>
 </w:del>
-<w:ins w:id="2" w:author="BitBit" w:date="...">
+<w:ins w:id="2" w:author="Claude" w:date="...">
   <w:r><w:t>60</w:t></w:r>
 </w:ins>
 <w:r><w:t> days.</w:t></w:r>
@@ -519,10 +492,10 @@ Creates DOCX from the unpacked directory. Verify the output opens correctly.
   <w:pPr>
     <w:numPr>...</w:numPr>  <!-- list numbering if present -->
     <w:rPr>
-      <w:del w:id="1" w:author="BitBit" w:date="2025-01-01T00:00:00Z"/>
+      <w:del w:id="1" w:author="Claude" w:date="2025-01-01T00:00:00Z"/>
     </w:rPr>
   </w:pPr>
-  <w:del w:id="2" w:author="BitBit" w:date="2025-01-01T00:00:00Z">
+  <w:del w:id="2" w:author="Claude" w:date="2025-01-01T00:00:00Z">
     <w:r><w:delText>Entire paragraph content being deleted...</w:delText></w:r>
   </w:del>
 </w:p>
@@ -532,7 +505,7 @@ Without the `<w:del/>` in `<w:pPr><w:rPr>`, accepting changes leaves an empty pa
 **Rejecting another author's insertion** - nest deletion inside their insertion:
 ```xml
 <w:ins w:author="Jane" w:id="5">
-  <w:del w:author="BitBit" w:id="10">
+  <w:del w:author="Claude" w:id="10">
     <w:r><w:delText>their inserted text</w:delText></w:r>
   </w:del>
 </w:ins>
@@ -543,7 +516,7 @@ Without the `<w:del/>` in `<w:pPr><w:rPr>`, accepting changes leaves an empty pa
 <w:del w:author="Jane" w:id="5">
   <w:r><w:delText>deleted text</w:delText></w:r>
 </w:del>
-<w:ins w:author="BitBit" w:id="10">
+<w:ins w:author="Claude" w:id="10">
   <w:r><w:t>deleted text</w:t></w:r>
 </w:ins>
 ```
@@ -557,7 +530,7 @@ After running `comment.py` (see Step 2), add markers to document.xml. For replie
 ```xml
 <!-- Comment markers are direct children of w:p, never inside w:r -->
 <w:commentRangeStart w:id="0"/>
-<w:del w:id="1" w:author="BitBit" w:date="2025-01-01T00:00:00Z">
+<w:del w:id="1" w:author="Claude" w:date="2025-01-01T00:00:00Z">
   <w:r><w:delText>deleted</w:delText></w:r>
 </w:del>
 <w:r><w:t> more text</w:t></w:r>
@@ -607,5 +580,5 @@ After running `comment.py` (see Step 2), add markers to document.xml. For replie
 
 - **pandoc**: Text extraction
 - **docx**: `npm install -g docx` (new documents)
-- **LibreOffice**: PDF conversion (invoke via `execute_code` with `subprocess`)
+- **LibreOffice**: PDF conversion (auto-configured for sandboxed environments via `scripts/office/soffice.py`)
 - **Poppler**: `pdftoppm` for images

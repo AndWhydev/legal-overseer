@@ -65,7 +65,7 @@ A user may ask you to create, edit, or analyze the contents of an .xlsx file. Yo
 
 ## Important Requirements
 
-**LibreOffice Required for Formula Recalculation**: If LibreOffice is available, use it via `execute_code` to recalculate formula values. openpyxl writes formulas as strings without computed values — LibreOffice can recalculate them.
+**LibreOffice Required for Formula Recalculation**: You can assume LibreOffice is installed for recalculating formula values using the `scripts/recalc.py` script. The script automatically configures LibreOffice on first run, including in sandboxed environments where Unix sockets are restricted (handled by `scripts/office/soffice.py`)
 
 ## Reading and analyzing data
 
@@ -128,10 +128,9 @@ This applies to ALL calculations - totals, percentages, ratios, differences, etc
 2. **Create/Load**: Create new workbook or load existing file
 3. **Modify**: Add/edit data, formulas, and formatting
 4. **Save**: Write to file
-5. **Recalculate formulas (MANDATORY IF USING FORMULAS)**: Use LibreOffice via `execute_code`:
-   ```python
-   import subprocess
-   subprocess.run(["soffice", "--headless", "--calc", "--convert-to", "xlsx", "output.xlsx"])
+5. **Recalculate formulas (MANDATORY IF USING FORMULAS)**: Use the scripts/recalc.py script
+   ```bash
+   python scripts/recalc.py output.xlsx
    ```
 6. **Verify and fix any errors**: 
    - The script returns JSON with error details
@@ -201,30 +200,22 @@ wb.save('modified.xlsx')
 
 ## Recalculating formulas
 
-Excel files created or modified by openpyxl contain formulas as strings but not calculated values. Use LibreOffice via `execute_code` to recalculate:
+Excel files created or modified by openpyxl contain formulas as strings but not calculated values. Use the provided `scripts/recalc.py` script to recalculate formulas:
 
-```python
-import subprocess, json
-
-# Recalculate formulas with LibreOffice
-result = subprocess.run(
-    ["soffice", "--headless", "--calc", "--convert-to", "xlsx", "output.xlsx"],
-    capture_output=True, text=True, timeout=30
-)
-
-# Then verify: reopen with openpyxl and check for error values
-from openpyxl import load_workbook
-wb = load_workbook("output.xlsx", data_only=True)
-for ws in wb.worksheets:
-    for row in ws.iter_rows():
-        for cell in row:
-            if isinstance(cell.value, str) and cell.value.startswith("#"):
-                print(f"Error at {cell.coordinate}: {cell.value}")
+```bash
+python scripts/recalc.py <excel_file> [timeout_seconds]
 ```
 
-This approach:
+Example:
+```bash
+python scripts/recalc.py output.xlsx 30
+```
+
+The script:
+- Automatically sets up LibreOffice macro on first run
 - Recalculates all formulas in all sheets
-- Lets you scan for Excel errors (#REF!, #DIV/0!, etc.)
+- Scans ALL cells for Excel errors (#REF!, #DIV/0!, etc.)
+- Returns JSON with detailed error locations and counts
 - Works on both Linux and macOS
 
 ## Formula Verification Checklist
@@ -249,8 +240,8 @@ Quick checks to ensure formulas work correctly:
 - [ ] **Verify dependencies**: Check all cells referenced in formulas exist
 - [ ] **Test edge cases**: Include zero, negative, and very large values
 
-### Interpreting Recalculation Output
-After recalculating with LibreOffice, verify results by checking for error values:
+### Interpreting scripts/recalc.py Output
+The script returns JSON with error details:
 ```json
 {
   "status": "success",           // or "errors_found"
@@ -276,7 +267,7 @@ After recalculating with LibreOffice, verify results by checking for error value
 - Use `data_only=True` to read calculated values: `load_workbook('file.xlsx', data_only=True)`
 - **Warning**: If opened with `data_only=True` and saved, formulas are replaced with values and permanently lost
 - For large files: Use `read_only=True` for reading or `write_only=True` for writing
-- Formulas are preserved but not evaluated — use LibreOffice via `execute_code` to recalculate values
+- Formulas are preserved but not evaluated - use scripts/recalc.py to update values
 
 ### Working with pandas
 - Specify data types to avoid inference issues: `pd.read_excel('file.xlsx', dtype={'id': str})`
