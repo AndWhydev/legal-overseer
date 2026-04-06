@@ -1,3 +1,5 @@
+'use client'
+
 import { ReactNode } from "react"
 import Link from "next/link"
 
@@ -20,12 +22,14 @@ export function Card({
   title,
   href,
   icon,
+  description,
   children,
 }: {
   title: string
   href?: string
   icon?: string
-  children: ReactNode
+  description?: string
+  children?: ReactNode
 }) {
   const content = (
     <div
@@ -64,7 +68,7 @@ export function Card({
         {title}
       </h4>
       <div style={{ fontSize: "14px", color: "rgb(61, 61, 58)", lineHeight: "21px" }}>
-        {children}
+        {description || children}
       </div>
     </div>
   )
