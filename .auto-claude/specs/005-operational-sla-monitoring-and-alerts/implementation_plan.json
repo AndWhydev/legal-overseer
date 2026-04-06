@@ -1,8 +1,0 @@
-{
-  "feature": "Operational SLA Monitoring and Alerts",
-  "description": "# Operational SLA Monitoring and Alerts\n\nTrack response and execution SLAs for key workflows and trigger notifications when thresholds are breached. Surface delayed and stuck runs in a dedicated monitoring view.\n\n## Rationale\nImproved speed and consistency are core goals. SLA visibility helps teams detect bottlenecks early and protect customer-facing performance.\n\n## User Stories\n- As an operations lead, I want SLA alerts so that I can intervene before customer impact escalates.\n- As a founder, I want trend reporting so that I can measure execution quality improvements over time.\n\n## Acceptance Criteria\n- [ ] Users can define SLA thresholds per workflow type.\n- [ ] When a run breaches SLA, notifications are sent to configured channels/users within 1 minute.\n- [ ] Monitoring view lists active breaches and historical SLA trend metrics.\n",
-  "created_at": "2026-03-29T18:34:28.195Z",
-  "updated_at": "2026-03-29T18:34:28.195Z",
-  "status": "pending",
-  "phases": []
-}

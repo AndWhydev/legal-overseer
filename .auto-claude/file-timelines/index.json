@@ -1,7 +1,0 @@
-{
-  "files": [
-    "personal-assistant/src/lib/context/__tests__/timeline-writer.test.ts",
-    "personal-assistant/src/lib/context/timeline-writer.ts"
-  ],
-  "last_updated": "2026-02-21T17:40:08.472621"
-}

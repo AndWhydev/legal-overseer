@@ -1,22 +1,6 @@
 # Dependencies
 node_modules/
 
-# Auto Claude data directory
-.auto-claude/
-
-# Auto Claude generated files
-.auto-claude-security.json
-.auto-claude-status
-.claude_settings.json
-.worktrees/
-.security-key
-logs/security/
-.gitnexus
-
-# Demo artifacts
-demo-1/
-
-
 # Build artifacts
 .next/
 dist/
@@ -26,6 +10,7 @@ dist/
 test-results/
 playwright-report/
 coverage/
+dogfood-*
 
 # Environment
 .env
@@ -33,13 +18,37 @@ coverage/
 .env.production
 .env.*.local
 
-# IDE
+# Database files
+data/*.db*
+*.db-shm
+*.db-wal
+
+# IDE / editor
 .vscode/
 .idea/
+.cursor/
+
+# Tool configs (local)
+.auto-claude/
+.auto-claude-security.json
+.auto-claude-status
+.claude_settings.json
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+.claude/worktrees/
+.vercel/
+.gitnexus
+.worktrees/
+.security-key
+
+# Agent/skill caches (plugin-generated)
+.agent/skills/
+.agents/skills/
 
 # OS
 .DS_Store
 Thumbs.db
+._*
 
 # Temp / agent artifacts
 temp-*/
@@ -47,14 +56,7 @@ temp-*/
 supabase/.temp/
 tmp_baileys_probe*/
 auth_state_*/
+logs/security/
 
-# Generated HTML reports
-docs/*.html
-.vercel
-.env*.local
-.claude/worktrees/
-._*
-
-# macOS resource forks
-._*
-.DS_Store
+# Demo
+demo-1/
