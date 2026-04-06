@@ -94,7 +94,7 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
       const { image } = await generateImage({
         model: modelId,
         prompt: fullPrompt,
-        aspectRatio: aspect_ratio || '1:1',
+        aspectRatio: (aspect_ratio || '1:1') as `${number}:${number}`,
       })
 
       logger.info('[generate_image] Generated image', { model: modelId, aspectRatio: aspect_ratio || '1:1' })
@@ -129,7 +129,7 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
       const { images } = await generateImage({
         model: modelId,
         prompt,
-        aspectRatio: aspect_ratio || '1:1',
+        aspectRatio: (aspect_ratio || '1:1') as `${number}:${number}`,
         n,
       })
 

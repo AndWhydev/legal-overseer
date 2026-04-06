@@ -1,7 +1,7 @@
 /**
- * Purpose-based model resolution via AI Gateway.
+ * Purpose-based model resolution.
  *
- * Returns "provider/model" strings that route through Vercel AI Gateway.
+ * Returns Anthropic model IDs. Override via env vars for AI Gateway routing.
  * Override via env vars: MODEL_CLASSIFY, MODEL_CONVERSE, MODEL_SYNTH
  */
 
@@ -11,9 +11,9 @@ export type ModelPurpose =
   | 'synthesis'        // heavy: planning, ad scripts, complex analysis
 
 const MODELS: Record<ModelPurpose, string> = {
-  classification: process.env.MODEL_CLASSIFY || 'anthropic/claude-haiku-4.5',
-  conversation:   process.env.MODEL_CONVERSE || 'anthropic/claude-sonnet-4.6',
-  synthesis:      process.env.MODEL_SYNTH    || 'anthropic/claude-opus-4.6',
+  classification: process.env.MODEL_CLASSIFY || 'claude-haiku-4-5-20251001',
+  conversation:   process.env.MODEL_CONVERSE || 'claude-sonnet-4-5-20250929',
+  synthesis:      process.env.MODEL_SYNTH    || 'claude-opus-4-20250514',
 }
 
 const TOKEN_LIMITS: Record<ModelPurpose, number> = {
