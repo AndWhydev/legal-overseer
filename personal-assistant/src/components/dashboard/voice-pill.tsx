@@ -313,8 +313,8 @@ export function VoicePill({
           'opacity-100 visible pointer-events-auto',
           'transition-[min-height,padding] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
         ],
-        docked && compactDocked && !isDockedExpanded && 'min-h-[88px] px-4 py-2',
-        docked && (!compactDocked || isDockedExpanded) && 'min-h-[120px] px-4 pt-2 pb-1',
+        docked && compactDocked && !isDockedExpanded && 'min-h-[88px] px-5 py-3',
+        docked && (!compactDocked || isDockedExpanded) && 'min-h-[120px] px-5 pt-3.5 pb-3',
 
         // ── Floating visible ──
         !docked && isVisible && !isExiting && [
