@@ -75,6 +75,7 @@
     "react-medium-image-zoom": "^5.4.2",
     "react-resizable-panels": "^4.9.0",
     "recharts": "^3.7.0",
+    "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "remotion": "^4.0.445",
     "resend": "^6.9.2",
