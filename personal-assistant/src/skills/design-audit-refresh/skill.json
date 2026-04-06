@@ -1,0 +1,32 @@
+{
+  "name": "Design Audit & Refresh",
+  "description": "Audit, diagnose, and enhance existing UI designs through structured assessment and targeted improvements.",
+  "tags": ["design-audit", "ui-refresh", "anti-generic", "visual-quality", "typography", "color", "interaction-states", "design-direction", "delight", "onboarding"],
+  "triggerKeywords": [
+    "audit design",
+    "improve design",
+    "polish ui",
+    "redesign",
+    "too boring",
+    "too busy",
+    "make it pop",
+    "clean up",
+    "design review",
+    "look and feel",
+    "visual quality",
+    "needs work",
+    "refresh",
+    "generic design",
+    "too loud",
+    "too cluttered",
+    "bland",
+    "add personality",
+    "make it delightful",
+    "empty state",
+    "design feels off",
+    "ui looks bad"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 3200,
+  "planGate": "growth"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Email Design",
+  "description": "Design marketing email templates with subject line formulas, layout patterns, and deliverability compliance.",
+  "tags": ["design", "email", "marketing", "newsletter", "campaigns"],
+  "triggerKeywords": ["email design", "email template", "email marketing", "newsletter design", "email layout", "email campaign", "drip campaign", "welcome email", "promotional email", "transactional email", "email subject line", "email header image", "email banner"],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 1800,
+  "planGate": "growth"
+}

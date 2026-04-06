@@ -1,13 +1,71 @@
 
-# SEO Content Skill
+# SEO Writer
 
-## Overview
+Write and plan SEO-optimized articles, meta descriptions, and content briefs. This skill covers the full execution layer: content briefs, on-page optimization, E-E-A-T signals, schema markup, and article templates. For keyword strategy, site architecture, and link building, use `seo-strategy`.
 
-SEO Content is content optimized for search engines that also engages and converts readers. This skill teaches you to write content that ranks and resonates, following modern E-E-A-T principles and topical authority strategies.
+---
 
-**Keywords**: SEO content, search engine optimization, content marketing, ranking content, organic traffic, search intent, content strategy, E-E-A-T, topical authority
+## Content Brief Template
 
-**Related**: See `./seo-strategy` for the complete strategic framework and keyword research methodology.
+Every piece of SEO content starts with a brief. Complete this before writing.
+
+```markdown
+# Content Brief: [Working Title]
+
+## Target
+- **Primary keyword:** [exact keyword]
+- **Secondary keywords:** [3–5 related terms]
+- **Search intent:** [informational / commercial / transactional / navigational]
+- **Target word count:** [X,XXX words]
+- **Target URL:** /blog/[slug]
+
+## Search Intent Analysis
+- What is the searcher trying to accomplish?
+- What format do top results use? (listicle, guide, comparison, tutorial)
+- What questions need answering?
+
+## Outline
+H1: [Title with primary keyword]
+  H2: [Section 1]
+    H3: [Subsection]
+  H2: [Section 2]
+  ...
+
+## Competitors to Beat
+1. [URL] — [word count] — [what they do well] — [gap/weakness]
+2. [URL] — [word count] — [what they do well] — [gap/weakness]
+3. [URL] — [word count] — [what they do well] — [gap/weakness]
+
+## Unique Angle
+What makes this piece different/better than what already ranks?
+
+## Internal Links
+- Link TO: [existing pages to link to from this article]
+- Link FROM: [existing pages that should link to this new article]
+```
+
+---
+
+## SERP Analysis Process
+
+Before writing, analyze what currently ranks. Never write blind.
+
+**What to extract from the top 3–5 results:**
+
+| Data Point | Why |
+|-----------|-----|
+| Word count | Sets your minimum — match or exceed top 3 |
+| Heading structure | Shows what Google considers complete coverage |
+| Topics covered | Everything they cover, you must cover |
+| Topics missed | Your opportunity to be more comprehensive |
+| Content format | Listicle, guide, tutorial, comparison |
+| Media used | Images, videos, tables, infographics |
+
+**Rule: If top 10 results are all listicles, write a listicle. Fighting the SERP format loses.**
+
+---
+
+**Related**: Use `seo-strategy` for keyword research methodology, 90-day plans, and link building.
 
 
 ## The Modern SEO Content Framework

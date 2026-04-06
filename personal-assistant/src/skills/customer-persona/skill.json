@@ -1,0 +1,9 @@
+{
+  "name": "Customer Persona",
+  "description": "Build research-backed customer personas with demographics, psychographics, JTBD, and anti-persona definitions.",
+  "tags": ["product", "research", "personas", "ux", "marketing-strategy"],
+  "triggerKeywords": ["customer persona", "buyer persona", "user persona", "target audience", "ideal customer", "customer profile", "audience research", "user research", "icp", "ideal customer profile", "target market", "customer avatar", "audience persona"],
+  "roleAffinity": ["sales", "research"],
+  "estimatedTokens": 1900,
+  "planGate": "growth"
+}
