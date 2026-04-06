@@ -1,20 +1,6 @@
 # Case Study Writing
 
-Create compelling B2B case studies with research and visuals via [inference.sh](https://inference.sh) CLI.
-
-## Quick Start
-
-> Requires inference.sh CLI (`infsh`). [Install instructions](https://raw.githubusercontent.com/inference-sh/skills/refs/heads/main/cli-install.md)
-
-```bash
-infsh login
-
-# Research the customer's industry
-infsh app run tavily/search-assistant --input '{
-  "query": "SaaS customer onboarding challenges 2024 statistics"
-}'
-```
-
+Create compelling B2B case studies with research and visuals.
 
 ## The STAR Framework
 
@@ -111,12 +97,12 @@ Place at the top for skimmers:
 
 ### Data Visualization
 
-```bash
-# Generate a before/after comparison chart
-infsh app run infsh/python-executor --input '{
-  "code": "import matplotlib.pyplot as plt\nimport matplotlib\nmatplotlib.use(\"Agg\")\n\ncategories = [\"Processing Time\", \"Error Rate\", \"Cost per Order\"]\nbefore = [4, 12, 8.50]\nafter = [0.75, 1.5, 2.10]\n\nfig, ax = plt.subplots(figsize=(10, 6))\nx = range(len(categories))\nwidth = 0.35\nax.bar([i - width/2 for i in x], before, width, label=\"Before\", color=\"#ef4444\")\nax.bar([i + width/2 for i in x], after, width, label=\"After\", color=\"#22c55e\")\nax.set_ylabel(\"Value\")\nax.set_xticks(x)\nax.set_xticklabels(categories)\nax.legend()\nax.set_title(\"Impact of Implementation\")\nplt.tight_layout()\nplt.savefig(\"results-chart.png\", dpi=150)\nprint(\"Chart saved\")"
-}'
-```
+To generate a before/after comparison chart, use the appropriate generation tool or `execute_code` to call the API directly. Present results directly in the conversation.
+
+Example chart concept:
+- Categories: ["Processing Time", "Error Rate", "Cost per Order"]
+- Before values vs. After values displayed as grouped bars
+- Highlight the improvement percentage for each metric
 
 ## Customer Quotes
 
@@ -152,22 +138,11 @@ infsh app run infsh/python-executor --input '{
 
 ### Finding Industry Context
 
-```bash
-# Industry benchmarks
-infsh app run tavily/search-assistant --input '{
-  "query": "average e-commerce order processing time industry benchmark 2024"
-}'
+Use web search or research tools to gather:
 
-# Competitor landscape
-infsh app run exa/search --input '{
-  "query": "order management automation solutions market overview"
-}'
-
-# Supporting statistics
-infsh app run exa/answer --input '{
-  "question": "What percentage of e-commerce businesses still use manual order processing?"
-}'
-```
+- **Industry benchmarks** — e.g., "average e-commerce order processing time industry benchmark 2024"
+- **Competitor landscape** — e.g., "order management automation solutions market overview"
+- **Supporting statistics** — e.g., "What percentage of e-commerce businesses still use manual order processing?"
 
 ## Distribution Formats
 
@@ -219,13 +194,3 @@ Read the full story → [link]"
 | Missing the "before" | No contrast to show impact | Always show the starting point |
 | Too long | Loses reader attention | 800-1200 words max |
 | No customer approval | Legal/relationship risk | Always get sign-off |
-
-## Related Skills
-
-```bash
-npx skills add inference-sh/skills@web-search
-npx skills add inference-sh/skills@prompt-engineering
-```
-
-Browse all apps: `infsh app list`
-

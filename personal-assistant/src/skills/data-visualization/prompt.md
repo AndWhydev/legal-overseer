@@ -1,18 +1,28 @@
 # Data Visualization
 
-Create clear, effective data visualizations via [inference.sh](https://inference.sh) CLI.
+Create clear, effective data visualizations.
 
 ## Quick Start
 
-> Requires inference.sh CLI (`infsh`). [Install instructions](https://raw.githubusercontent.com/inference-sh/skills/refs/heads/main/cli-install.md)
+To generate a chart, use the appropriate generation tool or `execute_code` to call the API directly. Present results directly in the conversation.
 
-```bash
-infsh login
+**Example: Monthly revenue bar chart**
+```python
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
 
-# Generate a chart with Python
-infsh app run infsh/python-executor --input '{
-  "code": "import matplotlib.pyplot as plt\nimport matplotlib\nmatplotlib.use(\"Agg\")\n\nmonths = [\"Jan\", \"Feb\", \"Mar\", \"Apr\", \"May\", \"Jun\"]\nrevenue = [42, 48, 55, 61, 72, 89]\n\nfig, ax = plt.subplots(figsize=(10, 6))\nax.bar(months, revenue, color=\"#3b82f6\", width=0.6)\nax.set_ylabel(\"Revenue ($K)\")\nax.set_title(\"Monthly Revenue Growth\", fontweight=\"bold\")\nfor i, v in enumerate(revenue):\n    ax.text(i, v + 1, f\"${v}K\", ha=\"center\", fontweight=\"bold\")\nplt.tight_layout()\nplt.savefig(\"revenue.png\", dpi=150)\nprint(\"Saved\")"
-}'
+months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"]
+revenue = [42, 48, 55, 61, 72, 89]
+
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.bar(months, revenue, color="#3b82f6", width=0.6)
+ax.set_ylabel("Revenue ($K)")
+ax.set_title("Monthly Revenue Growth", fontweight="bold")
+for i, v in enumerate(revenue):
+    ax.text(i, v + 1, f"${v}K", ha="center", fontweight="bold")
+plt.tight_layout()
+# Present inline or save as needed
 ```
 
 
@@ -107,34 +117,105 @@ cb_safe = ["#0077BB", "#33BBEE", "#009988", "#EE7733", "#CC3311"]
 
 ### Line Chart (Time Series)
 
-```bash
-infsh app run infsh/python-executor --input '{
-  "code": "import matplotlib.pyplot as plt\nimport matplotlib\nmatplotlib.use(\"Agg\")\n\nfig, ax = plt.subplots(figsize=(12, 6))\nfig.patch.set_facecolor(\"white\")\n\nmonths = [\"Jan\", \"Feb\", \"Mar\", \"Apr\", \"May\", \"Jun\", \"Jul\", \"Aug\", \"Sep\", \"Oct\", \"Nov\", \"Dec\"]\nthis_year = [120, 135, 148, 162, 178, 195, 210, 228, 245, 268, 290, 320]\nlast_year = [95, 102, 108, 115, 122, 130, 138, 145, 155, 165, 178, 190]\n\nax.plot(months, this_year, color=\"#3b82f6\", linewidth=2.5, marker=\"o\", markersize=6, label=\"2024\")\nax.plot(months, last_year, color=\"#94a3b8\", linewidth=2, linestyle=\"--\", label=\"2023\")\nax.fill_between(range(len(months)), last_year, this_year, alpha=0.1, color=\"#3b82f6\")\n\nax.annotate(\"$320K\", xy=(11, 320), fontsize=14, fontweight=\"bold\", color=\"#3b82f6\")\nax.annotate(\"$190K\", xy=(11, 190), fontsize=12, color=\"#94a3b8\")\n\nax.set_ylabel(\"Revenue ($K)\", fontsize=12)\nax.set_title(\"Revenue grew 68% year-over-year\", fontsize=16, fontweight=\"bold\")\nax.legend(fontsize=12)\nax.spines[\"top\"].set_visible(False)\nax.spines[\"right\"].set_visible(False)\nax.grid(axis=\"y\", alpha=0.3)\nplt.tight_layout()\nplt.savefig(\"line-chart.png\", dpi=150)\nprint(\"Saved\")"
-}'
+```python
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
+
+fig, ax = plt.subplots(figsize=(12, 6))
+fig.patch.set_facecolor("white")
+
+months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+this_year = [120, 135, 148, 162, 178, 195, 210, 228, 245, 268, 290, 320]
+last_year = [95, 102, 108, 115, 122, 130, 138, 145, 155, 165, 178, 190]
+
+ax.plot(months, this_year, color="#3b82f6", linewidth=2.5, marker="o", markersize=6, label="2024")
+ax.plot(months, last_year, color="#94a3b8", linewidth=2, linestyle="--", label="2023")
+ax.fill_between(range(len(months)), last_year, this_year, alpha=0.1, color="#3b82f6")
+
+ax.annotate("$320K", xy=(11, 320), fontsize=14, fontweight="bold", color="#3b82f6")
+ax.annotate("$190K", xy=(11, 190), fontsize=12, color="#94a3b8")
+
+ax.set_ylabel("Revenue ($K)", fontsize=12)
+ax.set_title("Revenue grew 68% year-over-year", fontsize=16, fontweight="bold")
+ax.legend(fontsize=12)
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+ax.grid(axis="y", alpha=0.3)
+plt.tight_layout()
 ```
 
 ### Horizontal Bar Chart (Comparison)
 
-```bash
-infsh app run infsh/python-executor --input '{
-  "code": "import matplotlib.pyplot as plt\nimport matplotlib\nmatplotlib.use(\"Agg\")\n\nfig, ax = plt.subplots(figsize=(10, 6))\n\ncategories = [\"Email\", \"Social\", \"SEO\", \"Paid Ads\", \"Referral\", \"Direct\"]\nvalues = [12, 18, 35, 22, 8, 5]\ncolors = [\"#94a3b8\"] * len(values)\ncolors[2] = \"#3b82f6\"  # Highlight the winner\n\n# Sort by value\nsorted_pairs = sorted(zip(values, categories, colors))\nvalues, categories, colors = zip(*sorted_pairs)\n\nax.barh(categories, values, color=colors, height=0.6)\nfor i, v in enumerate(values):\n    ax.text(v + 0.5, i, f\"{v}%\", va=\"center\", fontsize=12, fontweight=\"bold\")\n\nax.set_xlabel(\"% of Total Traffic\", fontsize=12)\nax.set_title(\"SEO drives the most traffic\", fontsize=16, fontweight=\"bold\")\nax.spines[\"top\"].set_visible(False)\nax.spines[\"right\"].set_visible(False)\nplt.tight_layout()\nplt.savefig(\"bar-chart.png\", dpi=150)\nprint(\"Saved\")"
-}'
+```python
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+categories = ["Email", "Social", "SEO", "Paid Ads", "Referral", "Direct"]
+values = [12, 18, 35, 22, 8, 5]
+colors = ["#94a3b8"] * len(values)
+colors[2] = "#3b82f6"  # Highlight the winner
+
+# Sort by value
+sorted_pairs = sorted(zip(values, categories, colors))
+values, categories, colors = zip(*sorted_pairs)
+
+ax.barh(categories, values, color=colors, height=0.6)
+for i, v in enumerate(values):
+    ax.text(v + 0.5, i, f"{v}%", va="center", fontsize=12, fontweight="bold")
+
+ax.set_xlabel("% of Total Traffic", fontsize=12)
+ax.set_title("SEO drives the most traffic", fontsize=16, fontweight="bold")
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+plt.tight_layout()
 ```
 
 ### KPI / Big Number Card
 
-```bash
-infsh app run infsh/html-to-image --input '{
-  "html": "<div style=\"display:flex;gap:20px;padding:20px;background:white;font-family:system-ui\"><div style=\"background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:24px;width:200px;text-align:center\"><p style=\"color:#64748b;font-size:14px;margin:0\">Monthly Revenue</p><p style=\"font-size:48px;font-weight:900;margin:8px 0;color:#1e293b\">$89K</p><p style=\"color:#22c55e;font-size:14px;margin:0\">↑ 23% vs last month</p></div><div style=\"background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:24px;width:200px;text-align:center\"><p style=\"color:#64748b;font-size:14px;margin:0\">Active Users</p><p style=\"font-size:48px;font-weight:900;margin:8px 0;color:#1e293b\">12.4K</p><p style=\"color:#22c55e;font-size:14px;margin:0\">↑ 8% vs last month</p></div><div style=\"background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:24px;width:200px;text-align:center\"><p style=\"color:#64748b;font-size:14px;margin:0\">Churn Rate</p><p style=\"font-size:48px;font-weight:900;margin:8px 0;color:#1e293b\">2.1%</p><p style=\"color:#ef4444;font-size:14px;margin:0\">↑ 0.3% vs last month</p></div></div>"
-}'
+For KPI cards, generate an HTML-based image using the image generation tool, or render the HTML structure and present it as formatted text in the conversation:
+
+```html
+<div style="display:flex;gap:20px;padding:20px;background:white;font-family:system-ui">
+  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:24px;width:200px;text-align:center">
+    <p style="color:#64748b;font-size:14px;margin:0">Monthly Revenue</p>
+    <p style="font-size:48px;font-weight:900;margin:8px 0;color:#1e293b">$89K</p>
+    <p style="color:#22c55e;font-size:14px;margin:0">↑ 23% vs last month</p>
+  </div>
+</div>
 ```
 
 ### Heatmap
 
-```bash
-infsh app run infsh/python-executor --input '{
-  "code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport matplotlib\nmatplotlib.use(\"Agg\")\n\nfig, ax = plt.subplots(figsize=(10, 6))\n\ndays = [\"Mon\", \"Tue\", \"Wed\", \"Thu\", \"Fri\", \"Sat\", \"Sun\"]\nhours = [\"9AM\", \"10AM\", \"11AM\", \"12PM\", \"1PM\", \"2PM\", \"3PM\", \"4PM\", \"5PM\"]\ndata = np.random.randint(10, 100, size=(len(hours), len(days)))\ndata[2][1] = 95  # Tuesday 11AM peak\ndata[2][3] = 88  # Thursday 11AM\n\nim = ax.imshow(data, cmap=\"Blues\", aspect=\"auto\")\nax.set_xticks(range(len(days)))\nax.set_yticks(range(len(hours)))\nax.set_xticklabels(days, fontsize=12)\nax.set_yticklabels(hours, fontsize=12)\n\nfor i in range(len(hours)):\n    for j in range(len(days)):\n        color = \"white\" if data[i][j] > 60 else \"black\"\n        ax.text(j, i, data[i][j], ha=\"center\", va=\"center\", fontsize=10, color=color)\n\nax.set_title(\"Website Traffic by Day & Hour\", fontsize=16, fontweight=\"bold\")\nplt.colorbar(im, label=\"Visitors\")\nplt.tight_layout()\nplt.savefig(\"heatmap.png\", dpi=150)\nprint(\"Saved\")"
-}'
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+hours = ["9AM", "10AM", "11AM", "12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]
+data = np.random.randint(10, 100, size=(len(hours), len(days)))
+
+im = ax.imshow(data, cmap="Blues", aspect="auto")
+ax.set_xticks(range(len(days)))
+ax.set_yticks(range(len(hours)))
+ax.set_xticklabels(days, fontsize=12)
+ax.set_yticklabels(hours, fontsize=12)
+
+for i in range(len(hours)):
+    for j in range(len(days)):
+        color = "white" if data[i][j] > 60 else "black"
+        ax.text(j, i, data[i][j], ha="center", va="center", fontsize=10, color=color)
+
+ax.set_title("Website Traffic by Day & Hour", fontsize=16, fontweight="bold")
+plt.colorbar(im, label="Visitors")
+plt.tight_layout()
 ```
 
 ## Storytelling with Data
@@ -173,10 +254,39 @@ infsh app run infsh/python-executor --input '{
 
 ## Dark Mode Charts
 
-```bash
-infsh app run infsh/python-executor --input '{
-  "code": "import matplotlib.pyplot as plt\nimport matplotlib\nmatplotlib.use(\"Agg\")\n\n# Dark theme\nplt.rcParams.update({\n    \"figure.facecolor\": \"#0f172a\",\n    \"axes.facecolor\": \"#0f172a\",\n    \"axes.edgecolor\": \"#334155\",\n    \"axes.labelcolor\": \"white\",\n    \"text.color\": \"white\",\n    \"xtick.color\": \"white\",\n    \"ytick.color\": \"white\",\n    \"grid.color\": \"#1e293b\"\n})\n\nfig, ax = plt.subplots(figsize=(12, 6))\nmonths = [\"Jan\", \"Feb\", \"Mar\", \"Apr\", \"May\", \"Jun\"]\nvalues = [45, 52, 58, 72, 85, 98]\n\nax.plot(months, values, color=\"#818cf8\", linewidth=3, marker=\"o\", markersize=8)\nax.fill_between(range(len(months)), values, alpha=0.15, color=\"#818cf8\")\nax.set_title(\"MRR Growth: On track for $100K\", fontsize=18, fontweight=\"bold\")\nax.set_ylabel(\"MRR ($K)\", fontsize=13)\nax.spines[\"top\"].set_visible(False)\nax.spines[\"right\"].set_visible(False)\nax.grid(axis=\"y\", alpha=0.2)\n\nfor i, v in enumerate(values):\n    ax.annotate(f\"${v}K\", (i, v), textcoords=\"offset points\", xytext=(0, 12), ha=\"center\", fontsize=11, fontweight=\"bold\")\n\nplt.tight_layout()\nplt.savefig(\"dark-chart.png\", dpi=150, facecolor=\"#0f172a\")\nprint(\"Saved\")"
-}'
+```python
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
+
+# Dark theme
+plt.rcParams.update({
+    "figure.facecolor": "#0f172a",
+    "axes.facecolor": "#0f172a",
+    "axes.edgecolor": "#334155",
+    "axes.labelcolor": "white",
+    "text.color": "white",
+    "xtick.color": "white",
+    "ytick.color": "white",
+    "grid.color": "#1e293b"
+})
+
+fig, ax = plt.subplots(figsize=(12, 6))
+months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"]
+values = [45, 52, 58, 72, 85, 98]
+
+ax.plot(months, values, color="#818cf8", linewidth=3, marker="o", markersize=8)
+ax.fill_between(range(len(months)), values, alpha=0.15, color="#818cf8")
+ax.set_title("MRR Growth: On track for $100K", fontsize=18, fontweight="bold")
+ax.set_ylabel("MRR ($K)", fontsize=13)
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+ax.grid(axis="y", alpha=0.2)
+
+for i, v in enumerate(values):
+    ax.annotate(f"${v}K", (i, v), textcoords="offset points", xytext=(0, 12), ha="center", fontsize=11, fontweight="bold")
+
+plt.tight_layout()
 ```
 
 ## Common Mistakes
@@ -193,14 +303,3 @@ infsh app run infsh/python-executor --input '{
 | No labels on axes | Reader can't interpret | Always label with units |
 | Chartjunk (decorative elements) | Distracts from data | Remove everything that doesn't convey information |
 | Red/green only for color coding | Colorblind users can't read | Use shapes, patterns, or colorblind-safe palettes |
-
-## Related Skills
-
-```bash
-npx skills add inference-sh/skills@pitch-deck-visuals
-npx skills add inference-sh/skills@technical-blog-writing
-npx skills add inference-sh/skills@competitor-teardown
-```
-
-Browse all apps: `infsh app list`
-

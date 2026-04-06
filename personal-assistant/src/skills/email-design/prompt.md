@@ -1,18 +1,19 @@
 # Email Design
 
-Design high-converting marketing emails with AI-generated visuals via [inference.sh](https://inference.sh) CLI.
+Design high-converting marketing emails with AI-generated visuals.
 
 ## Quick Start
 
-> Requires inference.sh CLI (`infsh`). [Install instructions](https://raw.githubusercontent.com/inference-sh/skills/refs/heads/main/cli-install.md)
+To generate an email header banner, use the appropriate generation tool or `execute_code` to render the HTML and produce an image. Present results directly in the conversation.
 
-```bash
-infsh login
-
-# Generate email header banner
-infsh app run infsh/html-to-image --input '{
-  "html": "<div style=\"width:600px;height:250px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-family:system-ui;color:white;text-align:center\"><div><h1 style=\"font-size:36px;margin:0\">Spring Sale — 30% Off</h1><p style=\"font-size:18px;opacity:0.9\">This weekend only</p></div></div>"
-}'
+**Example header HTML:**
+```html
+<div style="width:600px;height:250px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-family:system-ui;color:white;text-align:center">
+  <div>
+    <h1 style="font-size:36px;margin:0">Spring Sale — 30% Off</h1>
+    <p style="font-size:18px;opacity:0.9">This weekend only</p>
+  </div>
+</div>
 ```
 
 
@@ -134,24 +135,32 @@ The preview text appears after the subject line in the inbox. Don't waste it.
 
 ## Header Image Design
 
-```bash
-# Welcome email header
-infsh app run infsh/html-to-image --input '{
-  "html": "<div style=\"width:600px;height:250px;background:linear-gradient(135deg,#2d3436,#636e72);display:flex;align-items:center;padding:40px;font-family:system-ui;color:white\"><div><p style=\"font-size:14px;text-transform:uppercase;letter-spacing:2px;opacity:0.7;margin:0\">Welcome to</p><h1 style=\"font-size:42px;margin:8px 0 0;font-weight:800\">DataFlow</h1><p style=\"font-size:18px;opacity:0.8;margin-top:4px\">Your data, automated</p></div></div>"
-}'
+To generate header images, use the appropriate generation tool or `execute_code` to call the image API. Present results directly in the conversation.
 
-# Sale / promotional header
-infsh app run infsh/html-to-image --input '{
-  "html": "<div style=\"width:600px;height:300px;background:linear-gradient(135deg,#e74c3c,#c0392b);display:flex;align-items:center;justify-content:center;font-family:system-ui;color:white;text-align:center\"><div><p style=\"font-size:20px;opacity:0.9;margin:0\">This Weekend Only</p><h1 style=\"font-size:72px;margin:8px 0;font-weight:900\">30% OFF</h1><p style=\"font-size:18px;opacity:0.8\">All annual plans. Ends Sunday.</p></div></div>"
-}'
-
-# Feature announcement header with AI visual
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "clean modern email header banner, abstract flowing data visualization, dark blue gradient background, subtle glowing nodes and connections, tech aesthetic, minimal, no text, 600x250 equivalent",
-  "width": 1200,
-  "height": 500
-}'
+**Welcome email header concept:**
+```html
+<div style="width:600px;height:250px;background:linear-gradient(135deg,#2d3436,#636e72);display:flex;align-items:center;padding:40px;font-family:system-ui;color:white">
+  <div>
+    <p style="font-size:14px;text-transform:uppercase;letter-spacing:2px;opacity:0.7;margin:0">Welcome to</p>
+    <h1 style="font-size:42px;margin:8px 0 0;font-weight:800">DataFlow</h1>
+    <p style="font-size:18px;opacity:0.8;margin-top:4px">Your data, automated</p>
+  </div>
+</div>
 ```
+
+**Sale / promotional header concept:**
+```html
+<div style="width:600px;height:300px;background:linear-gradient(135deg,#e74c3c,#c0392b);display:flex;align-items:center;justify-content:center;font-family:system-ui;color:white;text-align:center">
+  <div>
+    <p style="font-size:20px;opacity:0.9;margin:0">This Weekend Only</p>
+    <h1 style="font-size:72px;margin:8px 0;font-weight:900">30% OFF</h1>
+    <p style="font-size:18px;opacity:0.8">All annual plans. Ends Sunday.</p>
+  </div>
+</div>
+```
+
+**Feature announcement header (AI-generated image):**
+Prompt: "clean modern email header banner, abstract flowing data visualization, dark blue gradient background, subtle glowing nodes and connections, tech aesthetic, minimal, no text, 600x250 equivalent"
 
 ## CTA Buttons
 
@@ -223,14 +232,3 @@ HTML buttons render differently across email clients. Use the "bulletproof butto
 | Missing unsubscribe | Illegal (CAN-SPAM) + spam complaints | Clear unsubscribe link in footer |
 | Over-designing | Email clients render CSS inconsistently | Simple layouts, inline styles |
 | Fake urgency | Erodes trust, trains users to ignore | Only use real deadlines |
-
-## Related Skills
-
-```bash
-npx skills add inference-sh/skills@landing-page-design
-npx skills add inference-sh/skills@ai-image-generation
-npx skills add inference-sh/skills@prompt-engineering
-```
-
-Browse all apps: `infsh app list`
-

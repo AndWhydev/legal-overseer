@@ -1,26 +1,19 @@
 # Product Hunt Launch
 
-Optimize your Product Hunt launch with research and visuals via [inference.sh](https://inference.sh) CLI.
+Optimize your Product Hunt launch with research and visuals.
 
 ## Quick Start
 
-> Requires inference.sh CLI (`infsh`). [Install instructions](https://raw.githubusercontent.com/inference-sh/skills/refs/heads/main/cli-install.md)
+To generate gallery images, use the appropriate generation tool or `execute_code` to call the image generation API directly. Present results directly in the conversation.
 
-```bash
-infsh login
-
-# Generate gallery hero image
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "clean product showcase, modern SaaS dashboard interface on laptop screen, floating UI elements around it, soft gradient background from blue to purple, professional marketing hero shot, minimal clean design",
-  "width": 1248,
-  "height": 832
-}'
-
-# Research competitor launches
-infsh app run tavily/search-assistant --input '{
-  "query": "Product Hunt top launches this week SaaS tools"
-}'
+**Hero image prompt example:**
 ```
+clean product showcase, modern SaaS dashboard interface on laptop screen, 
+floating UI elements around it, soft gradient background from blue to purple, 
+professional marketing hero shot, minimal clean design
+```
+
+To research competitor launches, use web search: "Product Hunt top launches this week SaaS tools"
 
 
 ## Listing Specifications
@@ -57,33 +50,30 @@ The first gallery image shows in the feed, email digest, and social shares. It I
 
 ### Generating Gallery Images
 
-```bash
-# Image 1: Hero product shot
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "modern SaaS product showcase, clean dashboard interface floating above gradient background, UI showing analytics charts and metrics, professional product marketing style, soft shadows, blue and white color scheme, wide format",
-  "width": 1248,
-  "height": 832
-}'
+Use the appropriate generation tool or `execute_code` to call the image API. Present results inline.
 
-# Image 2: Feature demo
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "product feature showcase, split screen showing drag-and-drop interface on left and generated output on right, clean UI design, modern SaaS aesthetic, subtle grid background, professional marketing",
-  "width": 1248,
-  "height": 832
-}'
+**Image 1: Hero product shot**
+```
+modern SaaS product showcase, clean dashboard interface floating above gradient background, 
+UI showing analytics charts and metrics, professional product marketing style, 
+soft shadows, blue and white color scheme, wide format
+```
 
-# Image 3: Before/after
-infsh app run infsh/stitch-images --input '{
-  "images": ["before-state.png", "after-state.png"],
-  "direction": "horizontal"
-}'
+**Image 2: Feature demo**
+```
+product feature showcase, split screen showing drag-and-drop interface on left 
+and generated output on right, clean UI design, modern SaaS aesthetic, 
+subtle grid background, professional marketing
+```
 
-# Image 4: Social proof / metrics
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "clean infographic style image showing upward growth metrics, large numbers and charts on dark background, professional data visualization, startup metrics dashboard style, modern minimal design",
-  "width": 1248,
-  "height": 832
-}'
+**Image 3: Before/after**
+Create a side-by-side comparison showing the before state on the left and the improved after state on the right.
+
+**Image 4: Social proof / metrics**
+```
+clean infographic style image showing upward growth metrics, large numbers and charts 
+on dark background, professional data visualization, startup metrics dashboard style, 
+modern minimal design
 ```
 
 ## Tagline
@@ -203,22 +193,11 @@ your feedback — what reporting pain points do you have?
 
 ## Research for Preparation
 
-```bash
-# Study similar product launches
-infsh app run tavily/search-assistant --input '{
-  "query": "Product Hunt top launches analytics tools best practices"
-}'
+Use web search to prepare:
 
-# Competitive landscape
-infsh app run exa/search --input '{
-  "query": "Product Hunt analytics dashboard tools launched 2024 2025"
-}'
-
-# Community sentiment
-infsh app run tavily/search-assistant --input '{
-  "query": "Product Hunt launch tips what works 2024 maker advice"
-}'
-```
+- **Study similar product launches** — "Product Hunt top launches analytics tools best practices"
+- **Competitive landscape** — "Product Hunt analytics dashboard tools launched 2024 2025"
+- **Community sentiment** — "Product Hunt launch tips what works 2024 maker advice"
 
 ## Post-Launch
 
@@ -241,14 +220,3 @@ infsh app run tavily/search-assistant --input '{
 | Not replying to comments | Low engagement signal | Reply to every single comment |
 | Too many topics | Dilutes discoverability | Max 3, pick the most specific |
 | Tagline with buzzwords | Nobody knows what you do | Clear, specific, benefit-focused |
-
-## Related Skills
-
-```bash
-npx skills add inference-sh/skills@ai-image-generation
-npx skills add inference-sh/skills@web-search
-npx skills add inference-sh/skills@prompt-engineering
-```
-
-Browse all apps: `infsh app list`
-

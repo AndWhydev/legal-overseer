@@ -2,7 +2,7 @@
   "name": "Keyword Research",
   "description": "Discover high-value keywords with search volume, difficulty, and intent analysis.",
   "tags": ["keyword research", "SEO keywords", "search volume", "keyword strategy", "content planning", "search intent", "keyword analysis"],
-  "triggerKeywords": ["keyword research", "find keywords", "search volume", "keyword difficulty", "keyword opportunities", "long tail keywords"],
+  "triggerKeywords": ["keyword research", "find keywords", "search volume", "keyword difficulty", "keyword opportunities", "long tail keywords", "keyword gap", "keyword planner", "keyword tool", "seed keywords", "keyword list", "keyword analysis"],
   "roleAffinity": ["research", "operations"],
   "estimatedTokens": 1202,
   "planGate": "growth"

@@ -1,27 +1,6 @@
 # Customer Persona
 
-Create data-backed customer personas with research and visuals via [inference.sh](https://inference.sh) CLI.
-
-## Quick Start
-
-> Requires inference.sh CLI (`infsh`). [Install instructions](https://raw.githubusercontent.com/inference-sh/skills/refs/heads/main/cli-install.md)
-
-```bash
-infsh login
-
-# Research your target market
-infsh app run tavily/search-assistant --input '{
-  "query": "SaaS product manager demographics pain points 2024 survey"
-}'
-
-# Generate a persona avatar
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "professional headshot photograph of a 35-year-old woman, product manager, friendly confident expression, modern office background, natural lighting, business casual attire, realistic portrait",
-  "width": 1024,
-  "height": 1024
-}'
-```
-
+Create data-backed customer personas with research and visuals.
 
 ## Persona Template
 
@@ -66,29 +45,12 @@ infsh app run falai/flux-dev-lora --input '{
 
 ### Step 1: Research
 
-Start with data, not assumptions.
+Start with data, not assumptions. Use web search or research tools to gather:
 
-```bash
-# Market demographics
-infsh app run tavily/search-assistant --input '{
-  "query": "product manager salary demographics 2024 survey report"
-}'
-
-# Pain points and challenges
-infsh app run exa/search --input '{
-  "query": "biggest challenges facing product managers SaaS companies"
-}'
-
-# Tool usage patterns
-infsh app run tavily/search-assistant --input '{
-  "query": "most popular tools product managers use 2024 survey"
-}'
-
-# Content consumption habits
-infsh app run exa/answer --input '{
-  "question": "Where do product managers get their industry news and professional development?"
-}'
-```
+- **Market demographics** — e.g., "product manager salary demographics 2024 survey report"
+- **Pain points and challenges** — e.g., "biggest challenges facing product managers SaaS companies"
+- **Tool usage patterns** — e.g., "most popular tools product managers use 2024 survey"
+- **Content consumption habits** — e.g., "Where do product managers get their industry news and professional development?"
 
 ### Step 2: Demographics
 
@@ -172,13 +134,13 @@ Three types of jobs:
 
 ### Step 8: Generate Avatar
 
-```bash
-# Match demographics: age, gender, ethnicity, professional context
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "professional headshot photograph of a 34-year-old Asian American woman, product manager, warm confident smile, modern tech office background, natural lighting, wearing smart casual blouse, realistic portrait photography, sharp focus",
-  "width": 1024,
-  "height": 1024
-}'
+To create a persona avatar image, use the appropriate generation tool or `execute_code` to call the image generation API directly. Present the result inline in the conversation.
+
+**Suggested prompt for a professional avatar:**
+```
+professional headshot photograph of a 34-year-old Asian American woman, product manager, 
+warm confident smile, modern tech office background, natural lighting, 
+wearing smart casual blouse, realistic portrait photography, sharp focus
 ```
 
 **Avatar tips:**
@@ -238,13 +200,8 @@ Personas based on assumptions are fiction. Validate with:
 | No anti-persona | Wasted effort on wrong customers | Define who you're NOT for |
 | Single persona for all | Different users have different needs | Primary/secondary/tertiary |
 
-## Related Skills
+## Memory Integration
 
-```bash
-npx skills add inference-sh/skills@web-search
-npx skills add inference-sh/skills@ai-image-generation
-npx skills add inference-sh/skills@prompt-engineering
-```
-
-Browse all apps: `infsh app list`
-
+- Before starting, use `search_memory` to recall any previously built personas, known customer segments, or user preference data already gathered.
+- After completing a persona, use `add_memory` to store key demographics, pain points, and JTBD findings for future reference.
+- Tag memories with the persona name, product name, and target segment so they surface in relevant future sessions.

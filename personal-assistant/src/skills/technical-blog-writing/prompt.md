@@ -1,23 +1,27 @@
 # Technical Blog Writing
 
-Write developer-focused technical blog posts via [inference.sh](https://inference.sh) CLI.
+Write developer-focused technical blog posts.
 
 ## Quick Start
 
-> Requires inference.sh CLI (`infsh`). [Install instructions](https://raw.githubusercontent.com/inference-sh/skills/refs/heads/main/cli-install.md)
+To research a topic in depth, use web search with queries like:
+- "building REST API Node.js best practices 2024 tutorial"
 
-```bash
-infsh login
+To generate a header image, use the appropriate generation tool or `execute_code` to call the image generation API. Present results directly in the conversation.
 
-# Research topic depth
-infsh app run exa/search --input '{
-  "query": "building REST API Node.js best practices 2024 tutorial"
-}'
-
-# Generate header image
-infsh app run infsh/html-to-image --input '{
-  "html": "<div style=\"width:1200px;height:630px;background:linear-gradient(135deg,#0f172a,#1e293b);display:flex;align-items:center;padding:60px;font-family:ui-monospace,monospace;color:white\"><div><p style=\"font-size:18px;color:#38bdf8;margin:0\">// engineering blog</p><h1 style=\"font-size:48px;margin:16px 0;font-weight:800;font-family:system-ui;line-height:1.2\">How We Reduced API Latency by 90% with Edge Caching</h1><p style=\"font-size:20px;opacity:0.6;font-family:system-ui\">A deep dive into our CDN architecture</p></div></div>"
-}'
+**Example blog header HTML concept:**
+```html
+<div style="width:1200px;height:630px;background:linear-gradient(135deg,#0f172a,#1e293b);
+            display:flex;align-items:center;padding:60px;
+            font-family:ui-monospace,monospace;color:white">
+  <div>
+    <p style="font-size:18px;color:#38bdf8;margin:0">// engineering blog</p>
+    <h1 style="font-size:48px;margin:16px 0;font-weight:800;font-family:system-ui;line-height:1.2">
+      How We Reduced API Latency by 90% with Edge Caching
+    </h1>
+    <p style="font-size:20px;opacity:0.6;font-family:system-ui">A deep dive into our CDN architecture</p>
+  </div>
+</div>
 ```
 
 
@@ -231,16 +235,30 @@ If you're new to containers, start with [our intro post]."
 | Performance comparison | Bar/line chart |
 | Before/after | Side-by-side |
 
-```bash
-# Generate architecture diagram
-infsh app run infsh/html-to-image --input '{
-  "html": "<div style=\"width:1200px;height:600px;background:#0f172a;display:flex;align-items:center;justify-content:center;padding:40px;font-family:system-ui;color:white\"><div style=\"display:flex;gap:40px;align-items:center\"><div style=\"background:#1e293b;border:2px solid #334155;border-radius:8px;padding:24px;text-align:center;width:160px\"><p style=\"font-size:14px;color:#94a3b8;margin:0\">Client</p><p style=\"font-size:18px;font-weight:bold;margin:8px 0 0\">React App</p></div><div style=\"color:#64748b;font-size:32px\">→</div><div style=\"background:#1e293b;border:2px solid #3b82f6;border-radius:8px;padding:24px;text-align:center;width:160px\"><p style=\"font-size:14px;color:#94a3b8;margin:0\">Edge</p><p style=\"font-size:18px;font-weight:bold;margin:8px 0 0\">CDN Cache</p></div><div style=\"color:#64748b;font-size:32px\">→</div><div style=\"background:#1e293b;border:2px solid #334155;border-radius:8px;padding:24px;text-align:center;width:160px\"><p style=\"font-size:14px;color:#94a3b8;margin:0\">API</p><p style=\"font-size:18px;font-weight:bold;margin:8px 0 0\">Node.js</p></div><div style=\"color:#64748b;font-size:32px\">→</div><div style=\"background:#1e293b;border:2px solid #334155;border-radius:8px;padding:24px;text-align:center;width:160px\"><p style=\"font-size:14px;color:#94a3b8;margin:0\">Database</p><p style=\"font-size:18px;font-weight:bold;margin:8px 0 0\">PostgreSQL</p></div></div></div>"
-}'
+To generate diagrams and benchmark charts, use the appropriate generation tool or `execute_code` to call the API directly. Present results inline in the conversation.
 
-# Generate benchmark chart
-infsh app run infsh/python-executor --input '{
-  "code": "import matplotlib.pyplot as plt\nimport matplotlib\nmatplotlib.use(\"Agg\")\n\nfig, ax = plt.subplots(figsize=(12, 6))\nfig.patch.set_facecolor(\"#0f172a\")\nax.set_facecolor(\"#0f172a\")\n\ntools = [\"Express\", \"Fastify\", \"Hono\", \"Elysia\"]\nrps = [15000, 45000, 62000, 78000]\ncolors = [\"#64748b\", \"#64748b\", \"#3b82f6\", \"#64748b\"]\n\nax.barh(tools, rps, color=colors, height=0.5)\nfor i, v in enumerate(rps):\n    ax.text(v + 1000, i, f\"{v:,} req/s\", va=\"center\", color=\"white\", fontsize=14)\n\nax.set_xlabel(\"Requests per second\", color=\"white\", fontsize=14)\nax.set_title(\"HTTP Framework Benchmark (Hello World)\", color=\"white\", fontsize=18, fontweight=\"bold\")\nax.tick_params(colors=\"white\", labelsize=12)\nax.spines[\"top\"].set_visible(False)\nax.spines[\"right\"].set_visible(False)\nax.spines[\"bottom\"].set_color(\"#334155\")\nax.spines[\"left\"].set_color(\"#334155\")\nplt.tight_layout()\nplt.savefig(\"benchmark.png\", dpi=150, facecolor=\"#0f172a\")\nprint(\"Saved\")"
-}'
+**Architecture diagram HTML concept:**
+```html
+<div style="width:1200px;height:600px;background:#0f172a;display:flex;
+            align-items:center;justify-content:center;padding:40px;
+            font-family:system-ui;color:white">
+  <!-- Client → Edge Cache → API → Database flow diagram -->
+</div>
+```
+
+**Benchmark chart Python concept:**
+```python
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
+
+tools = ["Express", "Fastify", "Hono", "Elysia"]
+rps = [15000, 45000, 62000, 78000]
+colors = ["#64748b", "#64748b", "#3b82f6", "#64748b"]
+
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.barh(tools, rps, color=colors, height=0.5)
+# ... rest of chart config
 ```
 
 ## Distribution
@@ -254,15 +272,8 @@ infsh app run infsh/python-executor --input '{
 | Hashnode | Cross-post (canonical URL) | Markdown import |
 | Hacker News | Link submission | Show HN for projects, tell HN for stories |
 | Reddit (r/programming, r/webdev, etc.) | Link or discussion | Follow subreddit rules |
-| Twitter/X | Thread summary + link | See twitter-thread-creation skill |
+| Twitter/X | Thread summary + link | See linkedin-content skill |
 | LinkedIn | Adapted version + link | See linkedin-content skill |
-
-```bash
-# Cross-post thread to X
-infsh app run x/post-create --input '{
-  "text": "New blog post: How We Reduced API Latency by 90%\n\nThe short version:\n→ Moved computation to edge\n→ Aggressive cache-control headers\n→ Eliminated N+1 queries\n\np99 went from 800ms to 90ms.\n\nFull deep dive with code: [link]"
-}'
-```
 
 ## Common Mistakes
 
@@ -278,14 +289,3 @@ infsh app run x/post-create --input '{
 | Giant introduction before content | Readers bounce | Get to the point in 2-3 paragraphs |
 | Unpinned dependencies | Tutorial breaks for future readers | Pin versions, note date written |
 | No "Further Reading" | Dead end, no context | 3-5 links to deepen understanding |
-
-## Related Skills
-
-```bash
-npx skills add inference-sh/skills@seo-content-brief
-npx skills add inference-sh/skills@content-repurposing
-npx skills add inference-sh/skills@og-image-design
-```
-
-Browse all apps: `infsh app list`
-

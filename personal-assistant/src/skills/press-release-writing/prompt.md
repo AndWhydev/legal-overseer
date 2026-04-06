@@ -1,19 +1,12 @@
 # Press Release Writing
 
-Write professional press releases with research and fact-checking via [inference.sh](https://inference.sh) CLI.
+Write professional press releases with research and fact-checking.
 
 ## Quick Start
 
-> Requires inference.sh CLI (`infsh`). [Install instructions](https://raw.githubusercontent.com/inference-sh/skills/refs/heads/main/cli-install.md)
-
-```bash
-infsh login
-
-# Research for fact-checking and context
-infsh app run tavily/search-assistant --input '{
-  "query": "SaaS funding rounds Q1 2024 average series A size"
-}'
-```
+To research industry context for fact-checking, use web search with queries like:
+- "SaaS funding rounds Q1 2024 average series A size"
+- "enterprise analytics market size 2024 2025 forecast"
 
 
 ## AP Style Format
@@ -165,33 +158,12 @@ Most important information first. Each paragraph is less critical than the one b
 
 ## Research & Fact-Checking
 
-### Verify Claims
+Use web search to verify claims and add context:
 
-```bash
-# Check market size claims
-infsh app run tavily/search-assistant --input '{
-  "query": "enterprise analytics market size 2024 2025 forecast"
-}'
-
-# Verify competitor claims
-infsh app run exa/search --input '{
-  "query": "Company X competitors enterprise analytics market share"
-}'
-
-# Get industry statistics
-infsh app run exa/answer --input '{
-  "question": "How much time do engineering teams spend on reporting weekly?"
-}'
-```
-
-### Add Context
-
-```bash
-# Industry trends for the "why now" angle
-infsh app run tavily/search-assistant --input '{
-  "query": "AI automation enterprise reporting trends 2024"
-}'
-```
+- **Market size claims** — "enterprise analytics market size 2024 2025 forecast"
+- **Competitor claims** — "Company X competitors enterprise analytics market share"
+- **Industry statistics** — "How much time do engineering teams spend on reporting weekly?"
+- **Industry trends** — "AI automation enterprise reporting trends 2024"
 
 ## Press Release Types
 
@@ -271,13 +243,3 @@ Over 800 words and editors won't read it. Under 400 and it lacks substance.
 - [ ] Media contact: name, email, phone
 - [ ] 500-800 words total
 - [ ] Read aloud for flow
-
-## Related Skills
-
-```bash
-npx skills add inference-sh/skills@web-search
-npx skills add inference-sh/skills@prompt-engineering
-```
-
-Browse all apps: `infsh app list`
-

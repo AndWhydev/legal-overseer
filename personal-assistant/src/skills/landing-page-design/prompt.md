@@ -1,26 +1,19 @@
 # Landing Page Design
 
-Design high-converting landing pages with AI-generated visuals via [inference.sh](https://inference.sh) CLI.
+Design high-converting landing pages with AI-generated visuals.
 
 ## Quick Start
 
-> Requires inference.sh CLI (`infsh`). [Install instructions](https://raw.githubusercontent.com/inference-sh/skills/refs/heads/main/cli-install.md)
+To generate a hero image, use the appropriate generation tool or `execute_code` to call the image generation API directly. Present results directly in the conversation.
 
-```bash
-infsh login
-
-# Generate a hero image
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "professional person smiling while using a laptop showing a clean dashboard interface, bright modern office, natural lighting, warm and productive atmosphere, lifestyle marketing photography",
-  "width": 1248,
-  "height": 832
-}'
-
-# Research competitor landing pages
-infsh app run tavily/search-assistant --input '{
-  "query": "best SaaS landing page examples 2024 conversion rate"
-}'
+**Hero image prompt example:**
 ```
+professional person smiling while using a laptop showing a clean dashboard interface, 
+bright modern office, natural lighting, warm and productive atmosphere, 
+lifestyle marketing photography
+```
+
+To research competitor landing pages, use web search to query: "best SaaS landing page examples 2024 conversion rate"
 
 
 ## Above-the-Fold Formula
@@ -92,19 +85,18 @@ Everything visible before scrolling must communicate value in 5 seconds.
 ✅ The end result of using your product
 ```
 
-```bash
-# Outcome-focused hero
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "happy professional team celebrating around a laptop showing positive growth charts, bright modern office, natural sunlight, authentic candid moment, marketing photography style, warm tones",
-  "width": 1248,
-  "height": 832
-}'
+**Outcome-focused hero prompt:**
+```
+happy professional team celebrating around a laptop showing positive growth charts, 
+bright modern office, natural sunlight, authentic candid moment, 
+marketing photography style, warm tones
+```
 
-# Product-in-context hero
-infsh app run bytedance/seedream-4-5 --input '{
-  "prompt": "clean modern laptop on a minimalist desk showing a beautiful analytics dashboard, floating UI elements emerging from the screen, soft gradient background, product marketing style, professional",
-  "size": "2K"
-}'
+**Product-in-context hero prompt:**
+```
+clean modern laptop on a minimalist desk showing a beautiful analytics dashboard, 
+floating UI elements emerging from the screen, soft gradient background, 
+product marketing style, professional
 ```
 
 ## CTA Buttons
@@ -158,12 +150,7 @@ The proven sequence for landing pages:
 | **Case study stats** | Specific proof | Feature sections |
 | **Trust badges** | Security/compliance | Near forms, pricing, footer |
 
-```bash
-# Research for social proof stats
-infsh app run exa/answer --input '{
-  "question": "What is the average conversion rate for SaaS landing pages with social proof vs without?"
-}'
-```
+To research social proof stats, use web search: "average conversion rate SaaS landing pages with social proof vs without"
 
 ## Form Design
 
@@ -190,18 +177,22 @@ infsh app run exa/answer --input '{
 
 ## OG Image for Sharing
 
-```bash
-# Generate an OG image for the landing page
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "clean professional social sharing card, product name and tagline on modern gradient background, minimal design, corporate tech aesthetic, 1200x630 aspect ratio equivalent",
-  "width": 1200,
-  "height": 630
-}'
+**AI-generated OG image prompt:**
+```
+clean professional social sharing card, product name and tagline on modern gradient background, 
+minimal design, corporate tech aesthetic, 1200x630 aspect ratio equivalent
+```
 
-# Or use html-to-image for a template-based approach
-infsh app run infsh/html-to-image --input '{
-  "html": "<div style=\"width:1200px;height:630px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:white\"><div style=\"text-align:center\"><h1 style=\"font-size:48px;margin:0\">DataFlow</h1><p style=\"font-size:24px;opacity:0.9\">Ship docs in minutes, not days</p></div></div>"
-}'
+**HTML-based OG image:**
+```html
+<div style="width:1200px;height:630px;background:linear-gradient(135deg,#667eea,#764ba2);
+            display:flex;align-items:center;justify-content:center;
+            font-family:sans-serif;color:white">
+  <div style="text-align:center">
+    <h1 style="font-size:48px;margin:0">DataFlow</h1>
+    <p style="font-size:24px;opacity:0.9">Ship docs in minutes, not days</p>
+  </div>
+</div>
 ```
 
 ## Page Speed
@@ -226,14 +217,3 @@ infsh app run infsh/html-to-image --input '{
 | Too many form fields | Conversion drops ~11% per field | Name + email maximum |
 | Desktop-only design | 60%+ traffic is mobile | Design mobile-first |
 | No urgency in final CTA | Visitors leave and forget | "Start your free 14-day trial" |
-
-## Related Skills
-
-```bash
-npx skills add inference-sh/skills@ai-image-generation
-npx skills add inference-sh/skills@web-search
-npx skills add inference-sh/skills@prompt-engineering
-```
-
-Browse all apps: `infsh app list`
-

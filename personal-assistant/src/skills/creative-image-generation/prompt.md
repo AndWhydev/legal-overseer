@@ -3,29 +3,26 @@
 
 ## Overview
 
-Image Generation uses FAL.ai nanobanana pro to create professional-quality images from text descriptions. This skill teaches you how to craft effective prompts and use the automation system to generate assets directly in Claude Code.
+Image Generation creates professional-quality images from text descriptions. This skill teaches you how to craft effective prompts and generate visual assets directly in the conversation.
 
-**Keywords**: image generation, nanobanana pro, prompt engineering, AI art, visual content creation, asset generation, automation
+**Keywords**: image generation, prompt engineering, AI art, visual content creation, asset generation
 
 ## Core Models
 
-### nanobanana pro — Recommended
+### High-Quality Generation — Recommended
 - **Quality**: Highest, most detailed
-- **Speed**: 30-60 seconds
 - **Best For**: Product photography, hero images, final assets
 - **Use Case**: When quality matters most
 
-### nanobanana pro
+### Fast Generation
 - **Quality**: High, good detail
-- **Speed**: 5-15 seconds
 - **Best For**: Testing, iterations, social media
 - **Use Case**: When speed matters
 
-### nanobanana pro
+### Latest Model
 - **Quality**: Latest, improved
-- **Speed**: 20-40 seconds
 - **Best For**: Production work
-- **Use Case**: When you want the latest model
+- **Use Case**: When you want the newest capabilities
 
 ## Prompt Engineering Framework
 
@@ -110,146 +107,48 @@ centered composition, sharp focus, 4K, luxury and professional mood
 ✅ Good: "A person in rule of thirds composition, natural lighting, centered"
 ```
 
-## Claude Code Integration
+## How to Generate Images in BitBit
 
-### How to Use in Claude Code
+Use the appropriate generation tool or `execute_code` to call the image generation API directly. Present results directly in the conversation.
 
-Claude Code can directly generate images using the automation system:
+When asked to generate an image:
 
-```python
-from claude_integration import generate_asset
+1. **Read the Creative Strategist style** to understand your visual direction
+2. **Craft the prompt** using the 5-part formula above
+3. **Call the generation API** with the prompt and desired parameters
+4. **Present results** with the generated image shown inline in the conversation
 
-# Generate a single image
-result = generate_asset(
-    category="product-photos",
-    name="luxury-watch",
-    prompt="A luxury leather watch with gold accents on white background, professional product photography, studio lighting, 4K, sharp focus",
-    size="1024x1024",
-    num_variations=1
-)
+### Example: Generating Product Photos
 
-print(f"Generated: {result['images']}")
+**Prompt approach for a luxury watch:**
 ```
-
-### Setup for Claude Code
-
-**Ensure these files are in your project:**
-```
-your-project/
-├── vibe-creative-automation/
-│   ├── fal_api.py
-│   ├── creative_cli.py
-│   ├── claude_integration.py
-│   └── requirements.txt
-└── assets/  (will be created automatically)
-```
-
-**Set environment variable:**
-```bash
-export FAL_API_KEY="your_key_here"
-```
-
-**Install dependencies:**
-```bash
-pip install requests
-```
-
-### Claude Code Workflow
-
-When you ask Claude: **"Generate 3 variations of a product photo for my watch"**
-
-Claude will:
-
-1. **Read Image Generation skill** to understand prompting
-2. **Read Creative Strategist** to get your style
-3. **Craft the prompt** combining both
-4. **Call automation system** with the prompt
-5. **Generate 3 images** using FLUX model
-6. **Save to folder** like `assets/product-photos/luxury-watch/`
-7. **Show you results** with file paths
-
-### Example: Claude Code Generates Product Photos
-
-```python
-from claude_integration import generate_asset
-
-# Your Creative Strategist style (from your style guide)
-YOUR_STYLE = {
-    "primary_style": "photorealistic",
-    "mood": "professional and luxurious",
-    "lighting": "studio lighting with rim light",
-    "composition": "centered"
-}
-
-# Generate product photo using your style
-prompt = f"""
 A luxury leather watch with gold accents,
-{YOUR_STYLE['primary_style']},
-{YOUR_STYLE['mood']},
-{YOUR_STYLE['lighting']},
-{YOUR_STYLE['composition']},
+photorealistic,
+professional and luxurious,
+studio lighting with rim light,
+centered composition,
 white background,
 4K,
 sharp focus,
 professional product photography
-"""
-
-result = generate_asset(
-    category="product-photography",
-    name="luxury-watch",
-    prompt=prompt,
-    size="1024x1024",
-    num_variations=3
-)
-
-for img_path in result['images']:
-    print(f"✅ Generated: {img_path}")
 ```
 
-### Batch Generation Example
-
-```python
-from claude_integration import batch_generate_assets
-
-# Generate multiple assets at once
-assets = [
-    {
-        "type": "custom",
-        "category": "product-photos",
-        "name": "watch",
-        "prompt": "Luxury watch, professional photography, studio lighting, 4K"
-    },
-    {
-        "type": "custom",
-        "category": "product-photos",
-        "name": "wallet",
-        "prompt": "Premium leather wallet, professional photography, studio lighting, 4K"
-    },
-    {
-        "type": "custom",
-        "category": "product-photos",
-        "name": "sunglasses",
-        "prompt": "Designer sunglasses, professional photography, studio lighting, 4K"
-    }
-]
-
-results = batch_generate_assets(assets)
-
-for result in results:
-    print(f"{result['asset_name']}: {result['images']}")
-```
+**Parameters to specify:**
+- Size: 1024x1024 for product photos, 1248x832 for hero images
+- Guidance scale: 5.0 (balanced adherence to prompt)
+- Inference steps: 28-40 (higher = better quality)
 
 ## Image Sizes
 
 Choose the right size for your use case:
 
-| Size | Use Case | Speed | Detail |
-|------|----------|-------|--------|
-| 512x512 | Testing, thumbnails | Fast | Good |
-| 768x768 | Social media, web | Medium | Good |
-| 1024x1024 | Product photos, hero images | Medium | Excellent |
-| 1536x1536 | Large prints, high-res | Slow | Excellent |
-| 2048x2048 | 4K, maximum detail | Very Slow | Maximum |
+| Size | Use Case |
+|------|----------|
+| 512x512 | Testing, thumbnails |
+| 768x768 | Social media, web |
+| 1024x1024 | Product photos, hero images |
+| 1248x832 | Wide hero/landscape |
+| 1536x1536 | Large prints, high-res |
 
 ## Generation Parameters
 
@@ -263,18 +162,6 @@ Controls how strictly the model follows your prompt:
 7.5 — Strict adherence to prompt, more literal
 ```
 
-**Example:**
-```python
-# More creative
-result = generate_asset(..., guidance_scale=3.5)
-
-# Balanced (default)
-result = generate_asset(..., guidance_scale=5.0)
-
-# Strict
-result = generate_asset(..., guidance_scale=7.5)
-```
-
 ### Inference Steps (20 - 50)
 
 More steps = higher quality but slower:
@@ -284,18 +171,6 @@ More steps = higher quality but slower:
 28 — Balanced (default)
 40 — High quality
 50 — Maximum quality
-```
-
-**Example:**
-```python
-# Fast generation
-result = generate_asset(..., inference_steps=20)
-
-# Balanced (default)
-result = generate_asset(..., inference_steps=28)
-
-# High quality
-result = generate_asset(..., inference_steps=40)
 ```
 
 ## Practical Prompt Examples
@@ -358,21 +233,6 @@ cinematic composition, 4K, highly detailed
 - Generate logos and icons
 - Create brand illustrations
 
-## Command Line Usage
-
-You can also use the CLI directly:
-
-```bash
-# Generate custom asset
-python creative_cli.py custom \
-  --category "product-photos" \
-  --name "luxury-watch" \
-  --prompt "A luxury leather watch with gold accents on white background, professional product photography, studio lighting, 4K, sharp focus" \
-  --size 1024x1024 \
-  --num-images 3 \
-  --model fal-ai/nano-banana-pro
-```
-
 ## Troubleshooting
 
 ### Problem: Images don't match my style
@@ -386,7 +246,6 @@ python creative_cli.py custom \
 ### Problem: Generation is too slow
 
 **Solution:**
-- Use `fal-ai/nano-banana-pro` model
 - Reduce image size to 768x768
 - Reduce inference steps to 20
 
@@ -397,14 +256,6 @@ python creative_cli.py custom \
 - Be more specific in prompt
 - Add more technical details
 
-### Problem: API errors
-
-**Solution:**
-- Verify FAL_API_KEY is set correctly
-- Check internet connection
-- Verify API key is valid
-- Try again after a moment
-
 ## Best Practices
 
 1. **Start with Creative Strategist** — Define your style first
@@ -413,17 +264,15 @@ python creative_cli.py custom \
 4. **Iterate** — Refine based on results
 5. **Use Consistent Prompts** — Similar prompts = consistent style
 6. **Reference Your Style** — Include style descriptors in every prompt
-7. **Batch Generate** — Generate multiple assets at once
-8. **Organize Assets** — Keep generated images organized
+7. **Batch Generate** — Generate multiple assets in one session
 
 ## Next Steps
 
 1. **Define Your Style** — Complete Creative Strategist first
 2. **Craft Your Prompt** — Use the 5-part formula
-3. **Test Generation** — Generate a test image
+3. **Generate Test Image** — Start with a single test
 4. **Iterate** — Refine based on results
-5. **Batch Generate** — Create multiple assets
-6. **Use in Projects** — Integrate with other skills
+5. **Generate Batch** — Create multiple assets
 
 
-**You now have the power to generate professional images with AI. Start creating! 🎨**
+**You now have the knowledge to generate professional images with AI. Start creating!**

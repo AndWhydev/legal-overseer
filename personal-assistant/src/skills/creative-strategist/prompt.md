@@ -92,109 +92,16 @@ You can have multiple styles for different contexts:
 - **Secondary Style** — Alternative for variety
 - **Accent Style** — Special occasions or campaigns
 
-## Claude Code Integration
+## How to Use with BitBit
 
-### How to Use with Claude Code
-
-When you ask Claude to generate assets, it will use this skill to:
+When you ask to generate assets, BitBit will use this skill to:
 
 1. **Read your style guide** from the Creative Strategist
 2. **Craft detailed prompts** based on your aesthetic
-3. **Call the automation system** to generate images
-4. **Save organized assets** to your project
+3. **Call the appropriate generation tool** to generate images
+4. **Present organized assets** directly in the conversation
 
-### Setup Instructions for Claude Code
-
-**Step 1: Ensure automation system is installed**
-
-```bash
-# The automation system should be in your project:
-# vibe-creative-automation/
-#   ├── fal_api.py
-#   ├── creative_cli.py
-#   ├── claude_integration.py
-#   └── requirements.txt
-```
-
-**Step 2: Set environment variable**
-
-```bash
-export FAL_API_KEY="your_fal_api_key_here"
-```
-
-**Step 3: Install dependencies**
-
-```bash
-pip install requests
-```
-
-### Claude Code Example: Generate Assets Using Your Style
-
-```python
-# Claude Code will use this pattern to generate assets
-
-from claude_integration import generate_product, generate_social, generate_brand
-
-# Your Creative Strategist style guide (define this once)
-YOUR_STYLE = {
-    "primary_style": "photorealistic",
-    "color_palette": ["#FF6B35", "#004E89", "#F7F7F7"],
-    "mood": "professional and energetic",
-    "lighting": "studio lighting with rim light",
-    "composition": "centered with dynamic elements",
-    "detail_level": "highly detailed",
-    "target_audience": "tech professionals aged 25-45"
-}
-
-# Generate product photo using your style
-result = generate_product(
-    product_name="Your Product",
-    description="Your product description here",
-    style=f"{YOUR_STYLE['primary_style']}, {YOUR_STYLE['mood']}, {YOUR_STYLE['lighting']}",
-    num_variations=3
-)
-
-print(f"Generated: {result['images']}")
-```
-
-### How Claude Code Uses This Skill
-
-When you ask: **"Generate 3 product photos for my luxury watch"**
-
-Claude will:
-
-1. **Read Creative Strategist** to get your style guide
-2. **Extract your aesthetic** (photorealistic, luxury, professional, etc.)
-3. **Craft detailed prompt** like:
-   ```
-   "A luxury leather watch with gold accents, photorealistic, 
-   professional and elegant, studio lighting with rim light, 
-   centered composition, highly detailed, 4K, sharp focus"
-   ```
-4. **Call automation system** to generate images
-5. **Save to organized folder** like `assets/product-photography/luxury-watch/`
-6. **Show you results** with file paths
-
-### Integration with Other Skills
-
-**Creative Strategist → Image Generation:**
-- Provides style parameters for prompting
-
-**Creative Strategist → Product Photography:**
-- Defines photography aesthetic and lighting
-
-**Creative Strategist → Social Graphics:**
-- Sets color palette and mood for social content
-
-**Creative Strategist → Brand Asset:**
-- Establishes brand visual identity
-
-**Creative Strategist → All Other Skills:**
-- Foundation for consistent creative output
-
-## Practical Examples
-
-### Example 1: E-Commerce Brand
+### Style Guide Example: E-Commerce Brand
 
 **Your Style Guide:**
 ```
@@ -207,15 +114,14 @@ Detail Level: Highly detailed
 Texture: Smooth and refined
 ```
 
-**When Claude generates assets:**
-```python
-# Claude Code will automatically craft prompts like:
-"Luxury product on white background, gold and navy accents, 
+**When generating assets, craft prompts like:**
+```
+Luxury product on white background, gold and navy accents, 
 studio lighting, centered composition, highly detailed, 4K, 
-professional product photography"
+professional product photography
 ```
 
-### Example 2: Tech Startup
+### Style Guide Example: Tech Startup
 
 **Your Style Guide:**
 ```
@@ -228,15 +134,14 @@ Detail Level: Moderate
 Texture: Clean with subtle gradients
 ```
 
-**When Claude generates assets:**
-```python
-# Claude Code will automatically craft prompts like:
-"Modern tech illustration, minimalist style, blue and purple 
+**When generating assets, craft prompts like:**
+```
+Modern tech illustration, minimalist style, blue and purple 
 colors, dynamic composition, clean aesthetic, energetic mood, 
-professional quality"
+professional quality
 ```
 
-### Example 3: Personal Brand
+### Style Guide Example: Personal Brand
 
 **Your Style Guide:**
 ```
@@ -249,12 +154,11 @@ Detail Level: Detailed but not busy
 Texture: Warm and inviting
 ```
 
-**When Claude generates assets:**
-```python
-# Claude Code will automatically craft prompts like:
-"Professional portrait with warm lighting, rule of thirds 
+**When generating assets, craft prompts like:**
+```
+Professional portrait with warm lighting, rule of thirds 
 composition, approachable mood, natural aesthetic, warm 
-gold and cream tones, 4K quality"
+gold and cream tones, 4K quality
 ```
 
 ## How to Set Up Your Style Guide
@@ -277,19 +181,19 @@ What makes your style unique?
 
 ### Step 2: Gather References
 
-Find 10-15 reference images that match your aesthetic and save them.
+Find 10-15 reference images that match your aesthetic and describe them.
 
 ### Step 3: Create Your Style Document
 
 Create a document with:
 - Your answers to the questions above
-- Links to or descriptions of your reference images
+- Descriptions of your reference images
 - Your color palette with hex codes
 - Any specific style rules or prohibitions
 
-### Step 4: Share with Claude
+### Step 4: Share with BitBit
 
-When working with Claude, share your style guide. Claude will:
+When working on creative tasks, share your style guide. BitBit will:
 - Remember your aesthetic
 - Use it for all asset generation
 - Maintain consistency across all outputs
@@ -297,19 +201,18 @@ When working with Claude, share your style guide. Claude will:
 
 ## Integration Checklist
 
-Before generating assets with Claude Code:
+Before generating assets:
 
-- [ ] Creative Strategist skill is enabled
+- [ ] Creative Strategist skill is active
 - [ ] Your style guide is documented
-- [ ] FAL_API_KEY environment variable is set
-- [ ] Automation system files are in your project
-- [ ] Dependencies are installed (`pip install requests`)
-- [ ] You've tested the API connection (`python creative_cli.py test`)
+- [ ] You've defined your color palette (hex codes)
+- [ ] You've described your mood and composition preferences
+- [ ] You've tested with a sample asset
 
 ## Tips for Success
 
 1. **Be Specific** — The more detailed your style guide, the better the results
-2. **Use References** — Share actual images that match your aesthetic
+2. **Use References** — Describe actual images that match your aesthetic
 3. **Document Colors** — Use hex codes for exact color matching
 4. **Test Variations** — Generate multiple variations to find the best style
 5. **Iterate** — Refine your style guide based on results
@@ -331,10 +234,10 @@ Before generating assets with Claude Code:
 1. **Define Your Aesthetic** — Answer the questions above
 2. **Gather References** — Find 10-15 matching images
 3. **Create Your Style Guide** — Document everything
-4. **Share with Claude** — Give Claude your style guide
+4. **Share with BitBit** — Provide your style guide
 5. **Generate Test Assets** — Create a few test assets
 6. **Refine** — Adjust based on results
 7. **Maintain** — Keep style guide updated
 
 
-**Your Creative Strategist foundation is set. Now use Image Generation and other creative skills to generate consistent, professional assets. 🎨**
+**Your Creative Strategist foundation is set. Now use Image Generation and other creative skills to generate consistent, professional assets.**

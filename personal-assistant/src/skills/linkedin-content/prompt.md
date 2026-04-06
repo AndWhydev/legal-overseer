@@ -1,25 +1,6 @@
 # LinkedIn Content
 
-Write high-engagement LinkedIn posts via [inference.sh](https://inference.sh) CLI.
-
-## Quick Start
-
-> Requires inference.sh CLI (`infsh`). [Install instructions](https://raw.githubusercontent.com/inference-sh/skills/refs/heads/main/cli-install.md)
-
-```bash
-infsh login
-
-# Research trending LinkedIn content patterns
-infsh app run tavily/search-assistant --input '{
-  "query": "LinkedIn viral post examples 2024 high engagement patterns"
-}'
-
-# Post to X (cross-posting reference)
-infsh app run x/post-create --input '{
-  "text": "Your cross-posted version here"
-}'
-```
-
+Write high-engagement LinkedIn posts.
 
 ## Post Anatomy
 
@@ -173,18 +154,19 @@ Every LinkedIn creator should have 3-5 pillars they rotate through:
 
 ## Visual Content
 
-```bash
-# Generate a visual for a LinkedIn post
-infsh app run infsh/html-to-image --input '{
-  "html": "<div style=\"width:1080px;height:1080px;background:#0f172a;display:flex;align-items:center;justify-content:center;padding:80px;font-family:system-ui;color:white;text-align:center\"><div><h1 style=\"font-size:56px;font-weight:900;line-height:1.2;margin:0\">The best code is the code you don&apos;t write</h1><p style=\"font-size:22px;opacity:0.5;margin-top:24px\">— Every senior engineer</p></div></div>"
-}'
+To generate a visual for a LinkedIn post, use the appropriate generation tool or `execute_code` to call the image generation API. Present results directly in the conversation.
 
-# Generate a professional photo for a personal post
-infsh app run falai/flux-dev-lora --input '{
-  "prompt": "candid professional photo, person speaking at a conference podium, audience in background blurred, natural stage lighting, authentic moment, corporate event photography",
-  "width": 1200,
-  "height": 900
-}'
+**Quote card prompt:**
+```
+Dark background (0f172a), large bold white text centered, minimal design, 
+1080x1080 square format, professional typography
+```
+
+**Professional photo prompt:**
+```
+candid professional photo, person speaking at a conference podium, 
+audience in background blurred, natural stage lighting, authentic moment, 
+corporate event photography
 ```
 
 ## CTA Formulas
@@ -214,14 +196,3 @@ End every post with engagement driver:
 | Resharing without adding | Near-zero reach | Write original posts, quote instead |
 | Posting and disappearing | Kills comment momentum | Engage for 30-60 min after posting |
 | Being generic | "Hard work pays off" = invisible | Specific stories and data |
-
-## Related Skills
-
-```bash
-npx skills add inference-sh/skills@social-media-carousel
-npx skills add inference-sh/skills@content-repurposing
-npx skills add inference-sh/skills@twitter-thread-creation
-```
-
-Browse all apps: `infsh app list`
-
