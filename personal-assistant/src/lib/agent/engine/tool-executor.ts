@@ -512,6 +512,9 @@ export async function* executeToolBatchStreaming(
                       (data.length - MAX_TOOL_RESULT_CHARS).toLocaleString() +
                       ' chars omitted]'
                   }
+                  if (tool.name.startsWith('generate_image')) {
+                    logger.info('[tool-executor] Image tool result for model:', { content: data.substring(0, 200), success: result.success })
+                  }
                   const jit = getJITInstruction(tool.name)
                   return jit ? `${data}\n\n---\n${jit}` : data
                 })()
