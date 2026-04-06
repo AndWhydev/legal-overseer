@@ -497,3 +497,68 @@ Emulators are helpful, but test on real devices. Real network conditions, real t
 - [ ] Performance is good on slow networks and devices
 
 A well-designed layout system is the foundation of a great experience across all devices.
+
+---
+
+## Spatial Audit & Visual Rhythm Checklist
+
+Use this when a layout feels monotonous, crowded, or structurally weak — to turn generic arrangements into intentional, rhythmic compositions.
+
+### Assess Current Layout
+
+1. **Spacing**: Is spacing consistent or arbitrary? Is all spacing the same (equal padding everywhere = no rhythm)? Are related elements grouped tightly, with generous space between groups?
+2. **Visual hierarchy**: Apply the squint test — blur your (metaphorical) eyes. Can you identify the most important element, second most important, and clear groupings? Does whitespace guide the eye to what matters?
+3. **Grid & structure**: Is there a clear underlying structure? Are identical card grids used everywhere (icon + heading + text, repeated endlessly)? Is everything centered?
+4. **Rhythm & variety**: Does the layout have visual rhythm (alternating tight/generous spacing)? Is every section structured the same way (monotonous repetition)?
+5. **Density**: Is the layout too cramped? Too sparse? Does density match content type (data-dense UIs need tighter spacing; marketing pages need more air)?
+
+**Critical**: Layout problems are often the root cause of interfaces feeling "off" even when colors and fonts are fine. Space is a design material.
+
+### Layout Improvement Patterns
+
+**Spacing system**: Use a consistent scale — whether that's a framework's built-in scale (Tailwind), rem-based tokens, or a custom system. Name tokens semantically (`--space-xs` through `--space-xl`). Use `gap` for sibling spacing instead of margins. Apply `clamp()` for fluid spacing on larger screens.
+
+**Visual rhythm**:
+- Tight grouping for related elements (8-12px between siblings)
+- Generous separation between distinct sections (48-96px)
+- Varied spacing within sections — not every row needs the same gap
+- Asymmetric compositions — break the predictable centered-content pattern when it makes sense
+
+**Layout tool selection**:
+- **Flexbox for 1D layouts**: Rows of items, nav bars, button groups, card contents, most component internals
+- **Grid for 2D layouts**: Page-level structure, dashboards, data-dense interfaces, anything where rows AND columns need coordinated control
+- Don't default to Grid when Flexbox with `flex-wrap` would be simpler
+- Use `repeat(auto-fit, minmax(280px, 1fr))` for responsive grids without breakpoints
+- Use named `grid-template-areas` for complex page layouts — redefine at breakpoints
+
+**Breaking card grid monotony**: Don't default to card grids for everything. Use cards only when content is truly distinct and actionable — never nest cards inside cards. Vary card sizes, span columns, or mix cards with non-card content.
+
+**Visual hierarchy**: Use the fewest dimensions needed. Space alone can be enough — generous whitespace around an element draws the eye. Add color or size contrast only when simpler means aren't sufficient.
+
+**Depth and elevation**:
+- Create a semantic z-index scale (dropdown → sticky → modal-backdrop → modal → toast → tooltip)
+- Build a consistent shadow scale (sm → md → lg → xl) — shadows should be subtle
+- Use elevation to reinforce hierarchy, not as decoration
+
+**Optical adjustments**: If an icon looks visually off-center despite being geometrically centered, nudge it — only if you're confident it actually looks wrong. Don't adjust speculatively.
+
+### Layout Anti-Patterns to Eliminate
+
+- Arbitrary spacing values outside a defined scale
+- Making all spacing equal — variety creates hierarchy
+- Wrapping everything in cards — not everything needs a container
+- Nesting cards inside cards — use spacing and dividers for hierarchy within
+- Identical card grids everywhere (icon + heading + text, repeated)
+- Centering everything — left-aligned with asymmetry feels more designed
+- Defaulting to the hero metric layout (big number, small label, stats, gradient) as a template
+- Using CSS Grid when Flexbox would be simpler
+- Arbitrary z-index values (999, 9999)
+
+### Verification
+
+- **Squint test**: Can you identify primary, secondary, and groupings with blurred vision?
+- **Rhythm**: Does the page have a satisfying beat of tight and generous spacing?
+- **Hierarchy**: Is the most important content obvious within 2 seconds?
+- **Breathing room**: Does the layout feel comfortable, not cramped or wasteful?
+- **Consistency**: Is the spacing system applied uniformly?
+- **Responsiveness**: Does the layout adapt gracefully across screen sizes?

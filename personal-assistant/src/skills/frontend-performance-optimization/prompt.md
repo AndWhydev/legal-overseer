@@ -513,3 +513,115 @@ Respect user gesture velocity.
 - [ ] CLS < 0.1
 
 Optimized perceived performance transforms interfaces from sluggish to snappy.
+
+---
+
+## Full-Stack Performance Diagnostic Checklist
+
+Use this to systematically diagnose and fix performance issues across loading speed, rendering, animations, images, and bundle size.
+
+### Measure Before Optimizing
+
+1. **Core Web Vitals**: LCP, FID/INP, CLS scores
+2. **Load time**: Time to interactive, first contentful paint
+3. **Bundle size**: JavaScript, CSS, image sizes
+4. **Runtime performance**: Frame rate, memory usage, CPU usage
+5. **Network**: Request count, payload sizes, waterfall
+
+**Critical**: Measure before and after. Premature optimization wastes time. Optimize what actually matters.
+
+### Loading Performance
+
+**Images**:
+- Use modern formats (WebP, AVIF)
+- Proper sizing — don't load a 3000px image for a 300px display
+- Lazy loading for below-fold images (`loading="lazy"`)
+- Responsive images with `srcset` and `picture` element
+- Compress to 80-85% quality (usually imperceptible)
+- CDN for faster delivery
+
+**JavaScript bundle**:
+- Route-based and component-based code splitting
+- Tree shaking (remove unused code)
+- Remove unused dependencies
+- Dynamic imports for large/non-critical components: `const HeavyChart = lazy(() => import('./HeavyChart'))`
+
+**Fonts**:
+- Use `font-display: swap` or `optional`
+- Subset fonts (`unicode-range`) — only characters you need
+- Preload critical fonts
+- Limit font weights loaded (each weight adds to page load)
+
+**CSS**: Remove unused CSS. Inline critical CSS, load rest async. Use CSS containment for independent regions.
+
+### Rendering Performance
+
+**Avoid layout thrashing**: Batch DOM reads first, then writes — never alternate reads and writes in a loop.
+
+**Optimize rendering**:
+- `CSS contain` property for independent regions
+- Minimize DOM depth and size
+- `content-visibility: auto` for long lists
+- Virtual scrolling for very long lists (react-window, react-virtualized)
+
+**Reduce paint and composite**:
+- Use `transform` and `opacity` for animations (GPU-accelerated — never animate `width`, `height`, `top`, `left`)
+- Use `will-change` sparingly for known expensive operations
+
+### Animation Performance
+
+```css
+/* GPU-accelerated (fast) */
+.animated { transform: translateX(100px); opacity: 0.5; }
+/* CPU-bound (slow) — avoid */
+.animated { left: 100px; width: 300px; }
+```
+
+Target 16ms per frame (60fps). Use `requestAnimationFrame` for JS animations. Use IntersectionObserver to efficiently detect viewport entry.
+
+### React/Framework Optimization
+
+- `memo()` for expensive components; `useMemo()` and `useCallback()` for expensive computations
+- Avoid inline function creation in render
+- Virtualize long lists
+- Code split routes
+- Use React DevTools Profiler
+
+### Network Optimization
+
+- Combine small files; use SVG sprites for icons
+- Pagination — don't load everything
+- GraphQL to request only needed fields
+- Response compression (gzip, brotli)
+- HTTP caching headers; CDN for static assets
+- Request deduplication: cache in-flight promises, return the same promise for duplicate requests
+
+### Core Web Vitals Targets
+
+**LCP < 2.5s**: Optimize hero images, inline critical CSS, preload key resources, use CDN, consider SSR.
+
+**FID < 100ms / INP < 200ms**: Break up long tasks, defer non-critical JS, use web workers for heavy computation.
+
+**CLS < 0.1**: Set dimensions on images and videos, don't inject content above existing content, use `aspect-ratio`, reserve space for ads/embeds.
+
+```css
+.image-container { aspect-ratio: 16 / 9; }
+```
+
+### Performance Anti-Patterns to Eliminate
+
+- Optimizing without measuring
+- `will-change` everywhere (creates new layers, uses memory)
+- Lazy loading above-fold content
+- Optimizing micro-optimizations while ignoring major bottlenecks
+- Forgetting mobile (slower devices, slower connections)
+
+### Verification
+
+- **Before/after metrics**: Compare Lighthouse scores
+- **Real devices**: Test on low-end Android, not just flagship iPhone
+- **Slow connections**: Throttle to 3G, test experience
+- **No regressions**: Ensure functionality still works
+- **User perception**: Does it feel faster?
+
+**Key tools**: Chrome DevTools (Lighthouse, Performance panel), WebPageTest, webpack-bundle-analyzer, Sentry/DataDog for real user monitoring. Measure on real devices with real network conditions.

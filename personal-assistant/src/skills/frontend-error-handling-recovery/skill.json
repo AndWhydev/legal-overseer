@@ -1,7 +1,7 @@
 {
   "name": "Error Handling & Recovery",
-  "description": "Design error states and recovery workflows that guide users to resolution with accessible, human-friendly messaging.",
-  "tags": ["error-handling", "UX", "validation", "recovery", "accessibility", "forms", "network-errors", "empty-states"],
+  "description": "Harden interfaces against edge cases, i18n overflow, and error states with resilient recovery flows.",
+  "tags": ["error-handling", "UX", "validation", "recovery", "accessibility", "i18n", "resilience", "edge-cases", "text-overflow"],
   "triggerKeywords": [
     "error handling",
     "error message",
@@ -10,13 +10,16 @@
     "network error",
     "recovery workflow",
     "graceful degradation",
-    "permission denied",
-    "404 page",
-    "validation feedback",
-    "user error",
-    "error design"
+    "harden",
+    "production ready",
+    "edge cases",
+    "text overflow",
+    "i18n",
+    "internationalization",
+    "RTL",
+    "empty state"
   ],
   "roleAffinity": ["operations"],
-  "estimatedTokens": 3246,
+  "estimatedTokens": 4436,
   "planGate": "growth"
 }

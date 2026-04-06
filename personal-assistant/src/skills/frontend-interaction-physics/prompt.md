@@ -626,3 +626,120 @@ Respect user preferences for reduced motion and provide non-animation feedback.
 - [ ] Page transitions are smooth and intentional
 
 Intentional, delightful interactions transform a functional product into one that feels loved.
+
+---
+
+## Purposeful Animation Patterns & Timing Guidelines
+
+Use this to add purposeful micro-interactions and motion that enhance usability and delight.
+
+### Identify Animation Opportunities
+
+1. **Missing feedback**: Actions without visual acknowledgment (button clicks, form submission)
+2. **Jarring transitions**: Instant state changes that feel abrupt (show/hide, page loads, route changes)
+3. **Unclear relationships**: Spatial or hierarchical relationships that aren't obvious
+4. **Lack of delight**: Functional but joyless interactions
+
+### Animation Strategy
+
+Plan four layers:
+- **Hero moment**: The ONE signature animation (page load? hero section? key interaction?)
+- **Feedback layer**: Which interactions need acknowledgment?
+- **Transition layer**: Which state changes need smoothing?
+- **Delight layer**: Where can we surprise and delight?
+
+One well-orchestrated experience beats scattered animations everywhere.
+
+### Timing Guidelines by Purpose
+
+| Duration | Use |
+|----------|-----|
+| 100-150ms | Instant feedback (button press, toggle) |
+| 200-300ms | State changes (hover, menu open) |
+| 300-500ms | Layout changes (accordion, modal) |
+| 500-800ms | Entrance animations (page load) |
+
+**Exit animations are faster than entrances** — use ~75% of enter duration.
+
+### Easing Curves (Use These, Not CSS Defaults)
+
+```css
+/* Recommended — natural deceleration */
+--ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);    /* Smooth, refined */
+--ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);   /* Slightly snappier */
+--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);     /* Confident, decisive */
+
+/* AVOID — feel dated and draw attention to themselves */
+/* bounce: cubic-bezier(0.34, 1.56, 0.64, 1) */
+/* elastic: cubic-bezier(0.68, -0.6, 0.32, 1.6) */
+```
+
+### Animation Pattern Library
+
+**Entrance animations**:
+- Page load choreography: Stagger element reveals (100-150ms delays), fade + slide combinations
+- Modal/drawer entry: Smooth slide + fade, backdrop fade, focus management
+- Content reveals: Scroll-triggered with IntersectionObserver
+
+**Micro-interactions**:
+- Button hover: Subtle scale (1.02-1.05), color shift, shadow increase
+- Button click: Quick scale down then up (0.95 → 1), ripple effect
+- Button loading: Spinner or pulse state
+- Input focus: Border color transition, slight glow
+- Form validation: Shake on error, check mark on success, smooth color transitions
+- Toggle switches: Smooth slide + color transition (200-300ms)
+- Like/favorite: Scale + rotation, particle effects, color transition
+
+**State transitions**:
+- Show/hide: Fade + slide (not instant), 200-300ms
+- Expand/collapse: Height transition with overflow handling, icon rotation
+- Loading states: Skeleton screen fades, shimmer shimmer, progress bars
+- Success/error: Color transitions, icon animations, gentle scale pulse
+
+**Navigation and flow**:
+- Page transitions: Crossfade between routes, shared element transitions
+- Tab switching: Slide indicator, content fade/slide
+- Scroll effects: Parallax layers, sticky headers with state changes
+
+**Delight moments**:
+- Empty states: Subtle floating animations on illustrations
+- Completed actions: Confetti, check mark flourish, success celebrations
+- Staggered list appearance: 50ms delay between items creates natural cascade
+
+### Implementation
+
+**CSS animations** — Prefer for simple, declarative animations: `transition` for state changes, `@keyframes` for complex sequences.
+
+**JavaScript animation** — Use for complex, interactive animations: Web Animations API, Framer Motion (React), GSAP for sequences.
+
+**Performance**: Use only `transform` and `opacity` for animations (GPU-accelerated). Add `will-change` sparingly. Monitor FPS on target devices.
+
+**Accessibility**: Always provide `prefers-reduced-motion` alternatives:
+```css
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+### Animation Anti-Patterns to Eliminate
+
+- Bounce or elastic easing curves — feel dated and draw attention to the animation
+- Animating layout properties (width, height, top, left) — use `transform` instead
+- Durations over 500ms for feedback — feels laggy
+- Animating without purpose — every animation needs a reason
+- Ignoring `prefers-reduced-motion` — accessibility violation
+- Animating everything — animation fatigue makes interfaces exhausting
+- Blocking interaction during animations unless intentional
+
+### Verification
+
+- Smooth at 60fps on target devices
+- Easing curves feel organic, not robotic
+- Not too fast (jarring) or too slow (laggy)
+- Reduced motion works — disabled or simplified appropriately
+- Doesn't block — users can interact during/after animations
+- Adds value — makes interface clearer or more delightful

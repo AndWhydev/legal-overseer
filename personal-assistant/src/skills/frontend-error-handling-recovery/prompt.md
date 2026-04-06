@@ -504,3 +504,102 @@ Errors must be perceivable to everyone.
 - [ ] 404 pages guide to alternatives
 
 Thoughtful error handling transforms frustration into confidence.
+
+---
+
+## Interface Resilience Checklist
+
+Use this to harden interfaces against edge cases, internationalization issues, text overflow, and real-world usage scenarios that break idealized designs.
+
+### Test With Extreme Inputs
+
+- Very long text (names, descriptions, titles with 100+ characters)
+- Very short text (empty, single character)
+- Special characters (emoji, RTL text, accents)
+- Large numbers (millions, billions)
+- Many items (1000+ list items, 50+ options)
+- No data (empty states)
+
+### Test Error Scenarios
+
+- Network failures (offline, slow, timeout)
+- API errors: 400 (validation), 401 (redirect to login), 403 (permission), 404 (not found), 429 (rate limit), 500 (generic + support)
+- Concurrent operations (click submit 10 times rapidly)
+- Optimistic updates with rollback
+
+### Internationalization (i18n) Hardening
+
+**Text expansion**: Add 30-40% space budget for translations. Use flexbox/grid that adapts to content. Test with German (often 30% longer than English). Avoid fixed widths on text containers.
+
+```jsx
+// Bad: Assumes short English text
+<button className="w-24">Submit</button>
+// Good: Adapts to content
+<button className="px-4 py-2">Submit</button>
+```
+
+**RTL support**: Use CSS logical properties (`margin-inline-start`, `padding-inline`, `border-inline-end`) instead of directional equivalents. For arrows and icons: `[dir="rtl"] .arrow { transform: scaleX(-1); }`.
+
+**Character set support**: Test CJK characters (Chinese/Japanese/Korean) and emoji (they can be 2-4 bytes). Use UTF-8 everywhere.
+
+**Date/time and numbers**: Use `Intl.DateTimeFormat` and `Intl.NumberFormat` APIs instead of manual formatting. Use a proper i18n library for pluralization (handles complex plural rules beyond English).
+
+### Text Overflow Patterns
+
+```css
+/* Single line with ellipsis */
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Multi-line clamp */
+.line-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Allow wrapping */
+.wrap { word-wrap: break-word; overflow-wrap: break-word; hyphens: auto; }
+
+/* Prevent flex/grid overflow */
+.flex-item { min-width: 0; overflow: hidden; }
+.grid-item { min-width: 0; min-height: 0; }
+```
+
+### Edge Cases
+
+**Empty states**: Always provide a clear next action — no items, no results, no notifications must all have purpose-built states.
+
+**Large datasets**: Use pagination or virtual scrolling. Never load all 10,000 items at once.
+
+**Concurrent operations**: Disable submit button while loading to prevent double-submission. Handle race conditions. Use optimistic updates with rollback.
+
+**Permission states**: Show clear explanation of why — no permission to view, no permission to edit, read-only mode.
+
+### Accessibility Resilience
+
+- All functionality accessible via keyboard; logical tab order; focus management in modals
+- Announce dynamic changes with live regions (`role="alert"`, `aria-live`)
+- Reduce motion: `@media (prefers-reduced-motion: reduce)` disabling all transitions
+- Test in Windows high contrast mode
+
+### Performance Resilience
+
+- Progressive image loading with skeleton screens for slow connections
+- Debounce search input (300ms); throttle scroll handlers (100ms)
+- Clean up event listeners, subscriptions, timers on unmount; abort pending requests
+
+### Resilience Anti-Patterns to Eliminate
+
+- Assuming perfect input — validate everything
+- Ignoring internationalization — design for global from day one
+- Generic error messages ("Error occurred")
+- Fixed widths on text containers
+- Trusting client-side validation alone (always validate server-side too)
+- Blocking the entire interface when one component errors
+
+### Verification Checklist
+
+- Long text: Try names with 100+ characters, emoji in all text fields
+- RTL: Test with Arabic or Hebrew
+- CJK: Test with Chinese/Japanese/Korean characters
+- Network: Disable internet, throttle to 3G
+- Large datasets: Test with 1000+ items
+- Concurrent actions: Click submit 10 times rapidly
+- API errors: Force each error code, verify all error states
+- Empty states: Remove all data

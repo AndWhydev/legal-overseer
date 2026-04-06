@@ -395,3 +395,76 @@ Designing for color-blind users results in better designs for everyone.
 - [ ] Color tokens are centralized in Tailwind config or CSS variables
 
 A well-designed color system is both beautiful and functional. Make it count.
+
+---
+
+## Strategic Color Injection Checklist
+
+Use this when a design is too monochromatic, gray, or lacking visual warmth and personality.
+
+### Assess Color Opportunity
+
+1. **Understand current state**: Is it pure grayscale? One timid accent? What's appropriate for this domain and audience?
+2. **Identify where color adds value**:
+   - **Semantic meaning**: Success (green), error (red), warning (yellow/orange), info (blue)
+   - **Hierarchy**: Drawing attention to important elements
+   - **Categorization**: Different sections, types, or states
+   - **Emotional tone**: Warmth, energy, trust, creativity
+   - **Wayfinding**: Helping users navigate and understand structure
+
+**Critical**: More color ≠ better. Strategic color beats rainbow every time. Every color should have a purpose.
+
+### Color Injection Patterns
+
+**Semantic color**:
+- Success: Green tones (emerald, forest, mint)
+- Error: Red/pink tones (rose, crimson, coral)
+- Warning: Orange/amber tones
+- Info: Blue tones (sky, ocean, indigo)
+- Status badges: Colored backgrounds or borders for states (active, pending, completed)
+
+**Accent application**:
+- Color the most important buttons/CTAs
+- Add color to clickable links (maintain accessibility)
+- Colorize key icons for recognition and personality
+- Introduce color on hover states
+
+**Backgrounds and surfaces**:
+- Replace pure gray (`#f5f5f5`) with warm neutrals (`oklch(97% 0.01 60)`) or cool tints (`oklch(97% 0.01 250)`)
+- Use subtle background colors to separate areas
+- Tint cards or surfaces slightly for warmth
+- **Use OKLCH for color**: Perceptually uniform — equal steps in lightness look equal, ideal for generating harmonious scales
+
+**Borders and accents**:
+- Add colored left/top borders to cards or sections
+- Color underlines for emphasis or active states
+- Colored focus rings matching brand
+
+**Typography color**:
+- Use brand colors for section headings (maintain contrast)
+- Small colored labels for metadata or categories
+
+### Color Balance (60/30/10 Rule)
+
+- **Dominant color** (60%): Primary brand color or most used accent
+- **Secondary color** (30%): Supporting color for variety
+- **Accent color** (10%): High contrast for key moments
+- **Neutrals** (remaining): Structure and legibility
+
+### Color Anti-Patterns to Eliminate
+
+- Using every color in the rainbow (choose 2-4 beyond neutrals)
+- Applying color randomly without semantic meaning
+- Gray text on colored backgrounds — use a darker shade of the background color or transparency instead
+- Pure gray for neutrals — add subtle warm or cool tint for sophistication
+- Pure black (`#000`) or pure white (`#fff`) for large areas
+- Color as the only indicator (accessibility issue)
+- Defaulting to purple-blue gradients (AI slop aesthetic)
+
+### Verification
+
+- **Better hierarchy**: Does color guide attention appropriately?
+- **Clearer meaning**: Does color help users understand states/categories?
+- **More engaging**: Does the interface feel warmer and more inviting?
+- **Still accessible**: Do all color combinations meet WCAG standards?
+- **Not overwhelming**: Is color balanced and purposeful?

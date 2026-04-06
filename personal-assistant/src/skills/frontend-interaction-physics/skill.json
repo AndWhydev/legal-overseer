@@ -1,22 +1,24 @@
 {
   "name": "Interaction Physics",
-  "description": "Design intentional microinteractions, animations, and transitions with correct timing, easing, and accessible motion.",
-  "tags": ["animations", "microinteractions", "transitions", "easing", "CSS-animations", "motion", "UX", "hover-states"],
+  "description": "Add purposeful micro-interactions, entrance animations, and easing curves that make UI feel alive.",
+  "tags": ["animations", "microinteractions", "transitions", "easing", "CSS-animations", "motion", "hover-states", "delight", "timing"],
   "triggerKeywords": [
-    "button hover state",
-    "microinteractions",
-    "CSS animations",
-    "transition timing",
+    "animation",
+    "micro-interaction",
+    "transition",
+    "hover effect",
+    "motion design",
+    "make it feel alive",
     "easing functions",
     "page transitions",
-    "animation performance",
     "reduced motion",
     "loading spinner",
-    "notification animation",
-    "form validation animation",
-    "interaction feedback"
+    "entrance animation",
+    "stagger",
+    "feels static",
+    "add delight"
   ],
   "roleAffinity": ["operations"],
-  "estimatedTokens": 4028,
+  "estimatedTokens": 5418,
   "planGate": "growth"
 }

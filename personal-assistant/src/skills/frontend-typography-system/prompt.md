@@ -492,3 +492,56 @@ Consistent typography across your product builds trust and reduces cognitive loa
 - [ ] Typography is documented and shared with the team
 
 Great typography is the voice of your interface. Make it count.
+
+---
+
+## Typography Audit & Improvement Checklist
+
+Use this when improving existing typography that feels generic, inconsistent, or poorly structured.
+
+### Assess Current Typography
+
+1. **Font choices** — Are you using invisible defaults? (Inter, Roboto, Arial, Open Sans, system defaults). Does the font match brand personality? Are there more than 2-3 families?
+2. **Hierarchy** — Can you tell headings from body from captions at a glance? Are font sizes too close together (14px, 15px, 16px = muddy)? Are weight contrasts strong enough?
+3. **Sizing & scale** — Is there a consistent type scale, or are sizes arbitrary? Does body text meet minimum readability (16px+)?
+4. **Sizing strategy by context**:
+   - **App UIs**: Use a fixed `rem`-based type scale, optionally adjusted at 1-2 breakpoints. Fluid sizing (`clamp()`) undermines the spatial predictability that dense, container-based layouts need.
+   - **Marketing / content pages**: Use fluid sizing via `clamp(min, preferred, max)` for headings and display text. Keep body text fixed.
+5. **Readability** — Are line lengths comfortable (45-75ch ideal)? Is line-height appropriate? Is there enough contrast?
+6. **Consistency** — Are same-role elements styled identically? Are font weights used consistently?
+
+### Correction Patterns
+
+**Hierarchy**: Build a clear type scale — 5 sizes cover most needs: caption, secondary, body, subheading, heading. Combine dimensions (size + weight + color + space) — don't rely on size alone.
+
+**Readability**: Set `max-width: 65ch` on text containers. Adjust line-height per context: tighter for headings (1.1-1.2), looser for body (1.5-1.7). Increase line-height slightly for light-on-dark text.
+
+**Detail refinements**:
+- Use `tabular-nums` (`font-feature-settings: 'tnum' 1`) for data tables and aligned numbers
+- Apply slightly open `letter-spacing` for small caps and uppercase labels; tight or default for large display text
+- Use semantic token names (`--text-body`, `--text-heading`), not value names (`--font-16`)
+- Set `font-kerning: normal`; load only the font weights you actually use
+
+**Weight strategy**: Define clear roles per weight and stick to them. Regular for body, Semibold for labels, Bold for headings (or whatever fits). Don't use more than 3-4 weights.
+
+**Font loading**: Use `font-display: swap` with metric-matched fallbacks to prevent layout shift on web font load.
+
+### Typography Anti-Patterns to Eliminate
+
+- More than 2-3 font families
+- Arbitrary sizes outside a defined scale
+- Body text below 16px
+- Decorative/display fonts for body text
+- `user-scalable=no` (disables browser zoom)
+- `px` for font sizes — use `rem` to respect user settings
+- Pairing two fonts that are similar but not identical (two geometric sans-serifs)
+- Using Inter/Roboto/Open Sans by default when personality matters
+
+### Verification
+
+- **Hierarchy**: Can you identify heading vs body vs caption instantly?
+- **Readability**: Is body text comfortable in long passages?
+- **Consistency**: Are same-role elements styled identically throughout?
+- **Personality**: Does the typography reflect the brand?
+- **Performance**: Are web fonts loading without layout shift?
+- **Accessibility**: Does text meet WCAG contrast ratios? Is it zoomable to 200%?

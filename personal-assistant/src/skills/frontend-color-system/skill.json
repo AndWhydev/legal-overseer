@@ -1,7 +1,7 @@
 {
   "name": "Color System",
-  "description": "Design accessible, harmonious color systems with theming, dark mode, and WCAG-compliant contrast ratios.",
-  "tags": ["color", "design-system", "dark-mode", "theming", "accessibility", "contrast", "color-theory", "tailwind"],
+  "description": "Build semantic color tokens and inject strategic color into monochromatic or flat interfaces.",
+  "tags": ["color", "design-system", "dark-mode", "theming", "accessibility", "contrast", "color-theory", "color-injection", "oklch"],
   "triggerKeywords": [
     "color system",
     "dark mode",
@@ -12,11 +12,13 @@
     "semantic colors",
     "brand colors",
     "color harmony",
-    "color scheme",
-    "theme colors",
-    "color accessibility"
+    "too gray",
+    "needs color",
+    "monochromatic",
+    "dull design",
+    "add warmth"
   ],
   "roleAffinity": ["operations"],
-  "estimatedTokens": 3238,
+  "estimatedTokens": 4138,
   "planGate": "growth"
 }
