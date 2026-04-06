@@ -112,4 +112,5 @@ Once you've identified your keywords, move to Skill 06: SEO Content to create ra
 
 - Before starting, use `search_memory` to recall previously researched keywords, known search volumes, and past content gaps.
 - After completing research, use `add_memory` to store the keyword map: primary keywords, clusters, and prioritization with search volume data.
+- Tag memories with the niche, product name, and topical authority area so they inform future content planning sessions.
 - Tag with domain entity names so future SEO work can build on this research.
