@@ -433,7 +433,7 @@ When features fail, degrade gracefully rather than breaking the entire interface
 }
 ```
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Design Error States
 

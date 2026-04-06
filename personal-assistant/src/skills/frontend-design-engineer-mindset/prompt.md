@@ -464,7 +464,7 @@ Engineer: "Let's reduce duration from 300ms to 200ms"
 Both: "Test and verify"
 ```
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Implement with Fidelity
 

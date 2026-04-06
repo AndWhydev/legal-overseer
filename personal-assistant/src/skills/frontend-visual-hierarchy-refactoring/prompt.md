@@ -435,7 +435,7 @@ Boundaries create groupings. Enclosed areas are perceived as related.
 }
 ```
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Audit Visual Hierarchy
 

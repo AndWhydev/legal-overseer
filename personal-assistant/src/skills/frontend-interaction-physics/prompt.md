@@ -528,7 +528,7 @@ Avoid rapid, flashing, or disorienting animations:
 }
 ```
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Audit Your Interactions
 
@@ -576,7 +576,7 @@ Include timing, easing, and accessibility considerations"
 
 ## Design Critique: Evaluating Your Interactions
 
-Claude Code can critique your interactions:
+BitBit can critique your interactions:
 
 ```
 "Can you evaluate my interactions?

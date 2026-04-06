@@ -147,7 +147,7 @@ Quote Graphics: 5 graphics (Key quotes)
 
 ### Step 4: Create Your Atomic Content
 
-Use prompts with Claude to generate all formats at once.
+Use prompts with BitBit to generate all formats at once.
 
 ### Step 5: Distribute Across Platforms
 
@@ -166,7 +166,7 @@ Sunday: Quote Graphic 1
 ## How to Use This Skill
 
 1. **First Time**: Choose one blog post or video and atomize it
-2. **With Claude**: Use prompts to create all atomic content
+2. **With BitBit**: Use prompts to create all atomic content
 3. **In Projects**: Reference this framework for every piece
 4. **Refinement**: Track which formats drive most engagement
 

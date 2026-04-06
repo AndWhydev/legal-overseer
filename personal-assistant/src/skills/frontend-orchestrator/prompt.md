@@ -216,7 +216,7 @@ After implementing each skill, assess your progress. You may need to revisit ear
 - **accessibility-excellence** ensures everyone can use your product
 - **frontend-orchestrator** ensures strategic coordination
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Automatic Skill Invocation
 

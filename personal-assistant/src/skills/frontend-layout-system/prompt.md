@@ -401,7 +401,7 @@ Ensure keyboard navigation follows a logical order:
 /* For tab order, use HTML source order or tabindex (use sparingly) */
 ```
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Audit Your Current Layout
 
@@ -445,7 +445,7 @@ Ensure keyboard navigation follows a logical order:
 
 ## Design Critique: Evaluating Your Layouts
 
-Claude Code can critique your layouts:
+BitBit can critique your layouts:
 
 ```
 "Can you evaluate my layouts?

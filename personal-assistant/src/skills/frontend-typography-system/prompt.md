@@ -390,7 +390,7 @@ h3 {
 }
 ```
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Create a Type Scale
 
@@ -439,7 +439,7 @@ h3 {
 
 ## Design Critique: Evaluating Your Typography
 
-Claude Code can critique your typography:
+BitBit can critique your typography:
 
 ```
 "Can you evaluate my typography?

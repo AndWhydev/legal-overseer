@@ -250,7 +250,7 @@ Document:
 - Transition and animation durations
 - Z-index scale
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Audit Your Current Design
 
@@ -262,7 +262,7 @@ Document:
 - Create a design token system based on what I have"
 ```
 
-Claude Code will:
+BitBit will:
 1. Analyze your current design
 2. Identify inconsistencies and opportunities
 3. Create a comprehensive design token system
@@ -279,7 +279,7 @@ Claude Code will:
 - Create a component library structure"
 ```
 
-Claude Code will:
+BitBit will:
 1. Create design principles tailored to your product
 2. Generate a complete color system with accessibility considerations
 3. Define typography scales and usage
@@ -296,7 +296,7 @@ Claude Code will:
 - Suggest improvements and inconsistencies"
 ```
 
-Claude Code will:
+BitBit will:
 1. Extract and organize your existing tokens
 2. Document your components
 3. Create design principles that reflect your current design
@@ -315,15 +315,15 @@ Claude Code will:
 - Responsive design guidelines"
 ```
 
-Claude Code will generate:
+BitBit will generate:
 1. Markdown documentation for your design system
 2. Code examples for each section
-3. Visual examples (if using Claude's image generation)
+3. Visual examples (if using BitBit's image generation)
 4. Accessibility guidelines integrated throughout
 
 ## Design Critique: Evaluating Your Foundation
 
-Claude Code can critique your design foundation:
+BitBit can critique your design foundation:
 
 ```
 "Can you evaluate my design foundation?

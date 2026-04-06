@@ -11,7 +11,7 @@ The Creative Orchestrator is the master coordinator for all creative skills. It 
 
 The Creative Orchestrator:
 
-1. **Coordinates all creative skills** — Tells Claude which skills to use in which order
+1. **Coordinates all creative skills** — Tells BitBit which skills to use in which order
 2. **Manages asset generation** — Guides how to call image generation APIs
 3. **Automates workflows** — Chains multiple generation tasks together
 4. **Handles asset organization** — Manages how to present and organize results

@@ -513,7 +513,7 @@ body {
 }
 ```
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Audit Accessibility
 
@@ -563,7 +563,7 @@ body {
 
 ## Design Critique: Evaluating Accessibility
 
-Claude Code can critique your accessibility:
+BitBit can critique your accessibility:
 
 ```
 "Can you evaluate my accessibility?

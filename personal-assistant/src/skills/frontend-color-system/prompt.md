@@ -294,7 +294,7 @@ colors: {
 }
 ```
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Create a Color System
 
@@ -343,7 +343,7 @@ colors: {
 
 ## Design Critique: Evaluating Your Color System
 
-Claude Code can critique your colors:
+BitBit can critique your colors:
 
 ```
 "Can you evaluate my color system?

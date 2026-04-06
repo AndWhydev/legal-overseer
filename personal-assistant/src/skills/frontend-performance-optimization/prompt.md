@@ -443,7 +443,7 @@ const fidObserver = new PerformanceObserver((list) => {
 fidObserver.observe({ entryTypes: ['first-input'] });
 ```
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Optimize Perceived Performance
 

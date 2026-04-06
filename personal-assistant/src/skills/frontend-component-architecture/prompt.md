@@ -561,7 +561,7 @@ Shows spinner, not clickable.
 - Very long text should wrap or truncate
 ```
 
-## How to Use This Skill with Claude Code
+## How to Use This Skill with BitBit
 
 ### Audit Your Components
 
@@ -610,7 +610,7 @@ Shows spinner, not clickable.
 
 ## Design Critique: Evaluating Your Components
 
-Claude Code can critique your components:
+BitBit can critique your components:
 
 ```
 "Can you evaluate my component architecture?
