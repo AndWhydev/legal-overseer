@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { generateImage, gateway } from 'ai'
+import { generateText, gateway } from 'ai'
 import { logger } from '@/lib/core/logger'
 import type { AgentToolHandler } from '../tools'
 
@@ -75,9 +75,25 @@ const STYLE_SUFFIXES: Record<string, string> = {
   minimalist: ', minimalist design, white space, simple clean composition',
 }
 
+const IMAGE_MODEL = 'google/gemini-3.1-flash-image-preview'
+
+async function generateImageViaGateway(prompt: string): Promise<{ base64: string; mediaType: string }[]> {
+  const result = await generateText({
+    model: gateway(IMAGE_MODEL),
+    prompt,
+  })
+  const images = (result.files || []).filter(
+    (f: { mediaType?: string }) => f.mediaType?.startsWith('image/')
+  )
+  return images.map((f: { base64Data?: string; uint8ArrayData?: Uint8Array; mediaType?: string }) => ({
+    base64: f.base64Data || (f.uint8ArrayData ? Buffer.from(f.uint8ArrayData).toString('base64') : ''),
+    mediaType: f.mediaType || 'image/png',
+  }))
+}
+
 export const imageToolHandlers: Record<string, AgentToolHandler> = {
   async generate_image(input) {
-    const { prompt, aspect_ratio, style, model } = input as {
+    const { prompt, aspect_ratio, style } = input as {
       prompt: string
       aspect_ratio?: string
       style?: string
@@ -88,21 +104,23 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
       ? `${prompt}${STYLE_SUFFIXES[style]}`
       : prompt
 
-    const modelId = model || 'google/imagen-4.0-fast-generate-001'
+    const aspectHint = aspect_ratio && aspect_ratio !== '1:1'
+      ? ` The image should have a ${aspect_ratio} aspect ratio.`
+      : ''
 
     try {
-      const { image } = await generateImage({
-        model: gateway(modelId),
-        prompt: fullPrompt,
-        aspectRatio: (aspect_ratio || '1:1') as `${number}:${number}`,
-      })
+      const images = await generateImageViaGateway(fullPrompt + aspectHint)
 
-      logger.info('[generate_image] Generated image', { model: modelId, aspectRatio: aspect_ratio || '1:1' })
+      if (images.length === 0) {
+        return { success: false, error: 'No image was generated' }
+      }
+
+      logger.info('[generate_image] Generated image', { model: IMAGE_MODEL, aspectRatio: aspect_ratio || '1:1' })
 
       return {
         success: true,
-        image_base64: image.base64,
-        model_used: modelId,
+        image_base64: images[0].base64,
+        model_used: IMAGE_MODEL,
         prompt_used: fullPrompt,
       }
     } catch (error) {
@@ -115,7 +133,7 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
   },
 
   async generate_images(input) {
-    const { prompt, count, aspect_ratio, model } = input as {
+    const { prompt, count, aspect_ratio } = input as {
       prompt: string
       count?: number
       aspect_ratio?: string
@@ -123,17 +141,18 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
     }
 
     const n = Math.min(Math.max(count || 2, 2), 4)
-    const modelId = model || 'google/imagen-4.0-fast-generate-001'
+    const aspectHint = aspect_ratio && aspect_ratio !== '1:1'
+      ? ` The image should have a ${aspect_ratio} aspect ratio.`
+      : ''
 
     try {
-      const { images } = await generateImage({
-        model: gateway(modelId),
-        prompt,
-        aspectRatio: (aspect_ratio || '1:1') as `${number}:${number}`,
-        n,
-      })
+      // Generate multiple by requesting N images in prompt
+      const multiPrompt = n > 1
+        ? `Generate ${n} different variations of: ${prompt}${aspectHint}`
+        : prompt + aspectHint
+      const images = await generateImageViaGateway(multiPrompt)
 
-      logger.info('[generate_images] Generated images', { model: modelId, count: images.length })
+      logger.info('[generate_images] Generated images', { model: IMAGE_MODEL, count: images.length })
 
       return {
         success: true,
@@ -142,7 +161,7 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
           base64: img.base64,
         })),
         count: images.length,
-        model_used: modelId,
+        model_used: IMAGE_MODEL,
       }
     } catch (error) {
       logger.error('[generate_images] Failed:', error)
