@@ -1,242 +1,106 @@
 ---
 title: "What's Built"
-description: "Everything BitBit has shipped across v1.0 through v1.5, from core infrastructure to autonomous agent roles."
+description: "A complete inventory of what BitBit ships today, how it compares to the market, and what makes it different."
 ---
 
 # What's Built
 
-BitBit shipped five milestones in five weeks. What started as a chat interface with one agent became a fully autonomous operating system with six specialist roles, a knowledge graph, a memory system that thinks while you sleep, and native connections to every channel your business runs on.
+Every platform on the market solves one problem. Lindy builds workflows. Superhuman handles email. Motion schedules your calendar. Jasper writes copy. None of them talk to each other.
 
-This page covers everything that's live and working today.
+BitBit is one system that owns your entire business operation. It reads every channel, knows every contact, handles invoicing, triages messages, writes proposals, and works while you sleep. This page covers what's live today.
 
-## The Foundation
+## How BitBit Compares
 
-### Dashboard
+| What you need | Market solution | BitBit |
+|---------------|----------------|--------|
+| Email triage and drafting | Superhuman ($30/mo, email only) | Built in. Plus WhatsApp, SMS, Slack, iMessage. |
+| Calendar management | Motion ($34/mo, calendar only) | Built in. Cross referenced with contacts and projects. |
+| Sales outreach | Artisan Ava ($900+/mo, outbound only) | Built in. Lead qualification, proposals, nurture sequences. |
+| Content creation | Jasper ($49/mo, copy only) | Built in. Blog, social, ad scripts, platform adapted. |
+| Support automation | Intercom Fin ($0.99/resolution) | Built in. Proactive, not reactive. |
+| CRM and pipeline | HubSpot ($800+/mo, locked ecosystem) | Built in. Learns from real conversations, not manual entry. |
+| Workflow automation | Lindy ($50/mo, no code builder) | Built in. Natural language rules, no workflow builder needed. |
 
-The main interface. Built on Next.js 16 with React 19, deployed to Vercel. Every user gets their own workspace with their own data, their own agents, and their own connections. Multi tenant from day one, with row level security across every table.
+The difference: those tools react to instructions. BitBit thinks ahead. When a new email arrives, BitBit already knows who sent it, what project it relates to, whether there's an outstanding invoice, and whether it needs your attention.
 
-The dashboard includes:
+## Core Capabilities
 
-- **Chat interface** with syntax highlighted code blocks, voice input, slash commands, follow up suggestions, message editing with conversation forking, and an artifact panel for code and HTML preview
-- **Unified activity feed** showing every action every agent takes
-- **Role status cards** with autonomy toggles (Observer, Co pilot, Autopilot)
-- **Intelligence widgets** showing Revenue Radar, Client Health Score, Cash Flow Prophet, and Capacity Oracle metrics
-- **Approval queue** where anything above your confidence threshold lands for review
-- **Notification badges** with unread counts across every section
+### Connections
 
-### Design System
+13 channels wired. Gmail, Outlook, WhatsApp, Android Messages, iMessage, SMS, Slack, Asana, Calendly, Stripe, Xero, Facebook Messenger, Instagram. Connect with a click or a QR scan. iMessage connects through a secure sign in experience.
 
-Monochrome glassmorphic design language. No decorative colors. Status colors only for semantic meaning. Glass hierarchy where top level surfaces get backdrop blur and inset shadows while children stay flat. Full light and dark theme support via CSS variables. 150 files touched in the overhaul. 10 micro animation keyframes with stagger and lift utilities.
+Messaging bridges run per user instances on your actual accounts. Not API wrappers. Your real conversations, your real identity.
 
-### Database
+### Agent Engine
 
-Supabase PostgreSQL with 120 migrations. Row level security on every table scoped by org_id. pgvector for semantic search over entity relationships. Four PL/pgSQL helper functions for the conversation memory system. Dual tier tenancy where personal orgs auto create and shared team orgs are supported.
+Every request goes through a Think, Act, Observe, Reflect loop with no iteration cap. The model decides when it's done.
 
-## The Agent Engine
+A fast classifier reads your intent and selects only the relevant tools (5 to 12 out of 26 total). This keeps responses fast and costs low with 90%+ cache hit rates.
 
-### TAOR Loop
+Three tier confidence routing controls what happens autonomously:
+- High confidence: execute and report
+- Medium confidence: queue for your approval
+- Low confidence: ask you directly
 
-The core decision cycle. Think, Act, Observe, Reflect. Every agent request flows through this loop with unbounded iterations. The model decides when it's done, not an arbitrary cap.
+### Autonomous Roles
 
-The engine replaced a legacy 1,100 line monolith with clean separated modules for pre flight checks, tool execution, and sub agent decomposition. Sub agents run isolated parallel queries for complex multi domain requests.
+Six specialist roles that own entire domains. Not chatbot responses. Continuous autonomous operation.
 
-### Confidence Routing
+**Finance** handles invoicing, collections, cash flow tracking, and payment timing. It knows which clients pay late.
 
-Three tiers that control how much autonomy each action gets:
+**Comms** triages every channel, drafts responses that match each conversation's tone, and manages follow ups automatically.
 
-- **Above 0.85**: Execute autonomously, report after
-- **0.55 to 0.85**: Queue for approval via dashboard or WhatsApp
-- **Below 0.55**: Escalate directly to the user
+**Sales** qualifies leads, manages your pipeline, generates proposals from meeting transcripts, and runs nurture sequences.
 
-Calibrated against 50 real world scenarios from the first production deployment. Per agent threshold tuning. Adversarial test suite for false positive measurement.
+**Ad Scripts** generates platform adapted copy for Meta, Google, and LinkedIn with daily budget caps.
 
-### Tool Orchestration
+**SEO and Tender Hunter** runs audits, recommends content, validates schemas, finds tenders, checks eligibility, and generates responses. The tender capability is the premium play.
 
-A fast planner (Haiku) reads user intent and selects only the relevant tool groups. Six groups, 26 tools total. The execution model (Sonnet) receives 5 to 12 filtered tools instead of all 26. This keeps responses fast and costs low, with 90 to 95% KV cache hit rates.
+**Content Creator** writes blog posts, social content, and manages a content calendar with scheduling.
 
-Tools include contact CRUD, task management, invoice operations, email send/find/read, web search, calendar, and memory recall.
+**Builder** generates websites through conversation with WordPress and Elementor integration. Preview in a sandbox, deploy from chat.
 
-### Action Dispatcher
-
-Seven transport handlers for executing agent decisions: email, SMS, WhatsApp, task creation, invoice creation, invoice send, and reminders. Every action gets an idempotency guard to prevent duplicates, with retry and exponential backoff on failure.
-
-Conversational approval works naturally. When BitBit asks "Should I send this?", you can reply "yep, send it" and the approve_action tool fires.
-
-## Connections
-
-### Channels
-
-Every service your business uses shows up as a connection tile. Click to connect. No confusing distinction between channels and integrations.
-
-Currently wired:
-
-| Channel | Transport | Status |
-|---------|-----------|--------|
-| Gmail | OAuth + API | Live |
-| Outlook | Microsoft Graph OAuth | Live |
-| WhatsApp | Beeper/Matrix bridge | Live |
-| Android Messages | Beeper/Matrix bridge | Live |
-| iMessage | BlueBubbles on Mac VPS | Live |
-| SMS | Telnyx API | Live |
-| Slack | OAuth | Wired |
-| Asana | API | Wired |
-| Calendly | Webhook | Wired |
-| Stripe | Webhook | Wired |
-| Xero | API | Wired |
-| Facebook Messenger | Webhook | Wired |
-| Instagram | Webhook | Wired |
-
-### Bridge Infrastructure
-
-For WhatsApp, Android Messages, and iMessage, BitBit runs per user bridge instances that connect to your actual accounts. Not API wrappers. Your real conversations, your real identity.
-
-**WhatsApp and Android Messages** use mautrix bridges running on Fly.io Machines with a shared Conduit Matrix homeserver. Link by scanning a QR code. Cost: $1.90 per month per user.
-
-**iMessage** uses BlueBubbles running on a LightNode Mac VPS with macOS Sequoia. Link by signing into your Apple ID through an embedded VNC session locked down to look like a native widget. A warm pool of pre provisioned instances means provisioning takes under 5 seconds. Cost: $7.70 per month per user.
-
-### Provider Registry
-
-Runtime extensible plugin system. Every connection implements the same ProviderPlugin interface with pull, send, webhookParse, and healthCheck methods. Adding a new channel means writing one file. The Envelope format normalizes every message from every provider before it enters the pipeline.
-
-### Webhook Infrastructure
-
-Signature verification on all incoming webhooks. Token based authentication for providers that do not support HMAC signing. Connection sync logging. Deduplication via content hashing.
-
-## The Intelligence Layer
+Each role runs at one of three autonomy levels: Observer (watch only), Co pilot (draft and approve), or Autopilot (act and report). Tools auto graduate from Co pilot to Autopilot based on your approval history.
 
 ### Knowledge Graph
 
-Entity graph built on pgvector with in process Kuzu WASM for relationship queries. Entities include people, companies, projects, invoices, and any concept BitBit extracts from your data.
+BitBit builds a graph of every person, company, project, and invoice it encounters. Fact extraction fires on every conversation. When you say "invoice Sezer for the White House RE work," BitBit already knows who Sezer is, what the work was, the rate, and whether it's been invoiced.
 
-Fact extraction fires per conversation turn via Haiku. Entity mention scanning with word boundary matching. The context baseplate injects entity profiles into system prompts so BitBit always knows who Dave is, what he owes you, and which project he mentioned last Tuesday.
+### Memory System
 
-### Memory Palace
-
-Six layer Cognitive Memory OS:
-
-1. **Working memory**: Last 10 conversation turns, verbatim
-2. **Short term memory**: Turns 11 to 30, compressed via Haiku
-3. **Long term memory**: Turns 31 and beyond, key facts only (commitments, decisions, deadlines, amounts)
-4. **Procedural memory**: Learned patterns and preferences
-5. **Semantic memory**: Embedded knowledge chunks via dual embeddings (Voyage 3.5 primary, Google multimodal fallback)
-6. **Episodic memory**: Historical interaction patterns
-
-### Sleep Consolidation
-
-Background process that runs during low activity periods. Compresses conversation memory, extracts durable facts, strengthens important connections in the knowledge graph, and archives stale threads. Like your brain consolidating memories while you sleep, except BitBit does it with a cron job.
-
-### Context Assembly
-
-Six tier token budgeting within an 8K token limit. Every agent request assembles context from entity profiles, active threads, recent memory, procedural knowledge, and proactive signals. The pipeline prioritizes what matters most for the current request.
+Six layer memory with sleep consolidation. Recent conversations are kept verbatim. Older ones compress to key facts: commitments, decisions, deadlines, amounts. A background process strengthens important connections during low activity. Cross channel identity resolution ties your WhatsApp, email, SMS, and Slack contacts together.
 
 ### Proactive Intelligence
 
-BitBit does its thinking when new information arrives, not when you ask. Four always on intelligence modules:
+Four always on modules that compute from real data with minimum thresholds:
 
-- **Revenue Radar**: Identifies upsell opportunities by analyzing customer spend patterns
-- **Client Health Score**: 0 to 100 rating per relationship using real engagement signals
-- **Cash Flow Prophet**: Forward financial projections with confidence intervals
-- **Capacity Oracle**: Workload modeling that warns before you overcommit
+- **Revenue Radar** identifies upsell opportunities from spending patterns
+- **Client Health Score** rates every relationship 0 to 100 from engagement signals
+- **Cash Flow Prophet** projects finances forward with confidence intervals
+- **Capacity Oracle** warns before you overcommit
 
-All computed from real data with minimum thresholds so predictions are never shown when the data is insufficient.
+### Billing
 
-## Autonomous Roles
+Four tiers from $10/mo (core agents) to $2,000/mo (tender hunting). 30 day free trial. Stripe checkout with customer portal.
 
-Six specialist roles, each owning a domain. Not task executing agents. Domain owning autonomous operators.
+### Mobile
 
-### Primary Roles
-
-**Finance**: Invoice management, collections, cash flow tracking, payment timing learning. Knows which clients pay late, which invoices are overdue, and when to nudge.
-
-**Comms**: Message triage across all channels. Classifies, prioritizes, routes. Drafts responses that match the tone of each conversation. Manages follow up automation and relationship health.
-
-**Sales**: Lead qualification, pipeline management, proposal generation from meeting transcripts, client onboarding automation including Asana project creation and kickoff call booking. Nurture sequences that actually run.
-
-### Growth Roles
-
-**Ad Script Generator**: Platform adapted ad copy for Meta, Google, and LinkedIn. Daily budget caps and cost controls. Token spend tracking.
-
-**SEO Monitor and Tender Hunter**: Dual purpose role. SEO audits, content recommendations, and schema validation on one side. Tender discovery, eligibility checking (ABN, insurance, case studies), and fast response generation on the other. The tender hunting capability is the premium play at $1,000 to $2,000 per month.
-
-**Content Creator**: Blog posts, social content, content calendar planning. Uses Claude Sonnet for cost effective generation with scheduling to connected platforms.
-
-### Builder Role
-
-Website generation through natural conversation. Template library with variable syntax. WordPress and Elementor integration. Staging preview with scaled iframe rendering. Deploy from chat. Budget capped at $2 per day in co pilot mode.
-
-### Autonomy Control
-
-Every role runs at one of three levels:
-
-- **Observer**: Watch only. Generates insights but takes no action.
-- **Co pilot**: Drafts and proposes. User approves before execution.
-- **Autopilot**: Acts and reports. Confidence gated with automatic escalation on uncertainty.
-
-Tools auto graduate from Co pilot to Autopilot based on approval history. If you approve the same type of action 10 times in a row, BitBit learns it can handle that category on its own.
-
-## Conversation Memory
-
-### Unified Pipeline
-
-Web chat, WhatsApp, SMS, email, and Slack all route through the same conversation pipeline. One active thread per user per org. Cross channel identity resolution ties phone numbers, email addresses, and Slack IDs to authenticated users.
-
-### Persistent Threads
-
-Every conversation is a persistent thread. Switch from WhatsApp to the dashboard and pick up where you left off. The three tier compression (verbatim, compressed, key facts) means even very long conversations stay within token budgets.
-
-Thread archival runs every 15 minutes for threads inactive longer than 24 hours.
-
-## Billing and Pricing
-
-### Stripe Integration
-
-Full subscription management with Stripe Checkout, customer portal, and webhook handling. Trial period set to 30 days. Server side plan gating on agent tool execution. Tier comparison for upgrade flows.
-
-### Four Tiers
-
-| Tier | Price | Key Capability |
-|------|-------|---------------|
-| Base | ~$10/month | Core agents, 3 channels |
-| Growth | ~$150 to $200/month | All roles, unlimited channels |
-| Premium | ~$400/month | Builder role, proposal generation |
-| Enterprise | $1,000 to $2,000/month | Tender Hunter, priority support |
-
-## Mobile
-
-React Native app with Expo. Full chat capability with push notifications persisted to AsyncStorage. Voice input via push to talk (long press 300ms, minimum 1 second recording). Offline queue with mutation persistence that resumes after restart. Swipeable approvals where left swipe approves and right swipe rejects. Dual auth support with bearer tokens on mobile and cookies on web.
-
-## Marketing Site
-
-Landing page at bitbit.chat with waitlist capture, industry pages for agencies, trades, service businesses, and tender hunters, AWU case study with real metrics, and pricing page wired to Stripe Checkout. SEO optimized with JSON LD structured data, metadata, and canonical URLs. Google Search Console verified.
+React Native app with push notifications, voice input via push to talk, offline queue that syncs when reconnected, and swipeable approvals.
 
 ## Infrastructure
 
-| Service | Purpose | Region |
-|---------|---------|--------|
-| Vercel | Dashboard hosting, serverless functions | Auto |
-| Supabase | PostgreSQL, Auth, Realtime, Storage | Mumbai |
-| Fly.io | Agent workers, bridge machines, Conduit homeserver | Sydney |
-| LightNode | Mac VPS for iMessage bridges | Sydney |
-| Cloudflare | DNS, tunnels for BlueBubbles | Global |
-| Pinecone | Vector database for RAG embeddings | Serverless |
-| Stripe | Billing and subscriptions | Global |
-| Telnyx | SMS send and receive | AU |
-| Sentry | Error tracking with PII filtering | Global |
+| Service | Role |
+|---------|------|
+| Vercel | Dashboard and API |
+| Supabase | Database, auth, realtime |
+| Fly.io | Bridge machines, workers |
+| LightNode | Mac VPS for iMessage |
+| Pinecone | Vector search |
+| Stripe | Billing |
+| Sentry | Error tracking |
 
-### Cron Jobs
-
-28 scheduled routes handling everything from channel sync (every 5 minutes) to sleep consolidation (every 2 hours) to weekly reports (Monday 8am) to bridge health monitoring (every 5 minutes).
-
-### Testing
-
-2,072 unit and integration tests via Vitest across 768 test suites. 21 end to end specs with Playwright covering auth, dashboard, API routes, agent flows, and channel pipelines.
-
-### Security
-
-Row level security on every table. CSRF origin checking on all non webhook routes. Rate limiting on webhook endpoints. Circuit breaker on LLM calls. Security response headers (X Content Type Options, HSTS, Referrer Policy). Dead letter queue for failed operations with admin API. PII filtering on error tracking. Webhook signature verification.
+28 background jobs. 2,000+ tests. Row level security on every table. Webhook signature verification on all inbound.
 
 ## What's Next
 
-v2.0 is in early planning. The focus is Autonomous Execution. Multi day operations with minimal intervention. The role engine evolving toward fully self directed workflows that can run complex business processes end to end.
-
-113 plans shipped. Five milestones delivered in five weeks. Everything described on this page is live and working.
+v2.0 is in early planning. Focus: fully autonomous multi day operations with minimal intervention.
