@@ -1,13 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { generateText, gateway } from 'ai'
 import { logger } from '@/lib/core/logger'
+import { getServiceClient } from '@/lib/supabase/service-client'
 import type { AgentToolHandler } from '../tools'
 
 export const imageToolDefinitions: Anthropic.Tool[] = [
   {
     name: 'generate_image',
     description:
-      'Generate an image from a text prompt using AI. Returns a base64-encoded image. Use for: product photos, social media graphics, hero images, illustrations, brand assets, data visualization mockups, presentation visuals. Craft detailed prompts describing style, composition, lighting, and subject for best results.',
+      'Generate an image from a text prompt using AI. Returns a URL to the generated image. Use for: product photos, social media graphics, hero images, illustrations, brand assets, data visualization mockups, presentation visuals. Craft detailed prompts describing style, composition, lighting, and subject for best results.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -25,11 +26,6 @@ export const imageToolDefinitions: Anthropic.Tool[] = [
           enum: ['photorealistic', 'illustration', 'flat-design', 'watercolor', '3d-render', 'sketch', 'minimalist'],
           description: 'Visual style hint. Appended to prompt for consistency. Default: photorealistic',
         },
-        model: {
-          type: 'string',
-          enum: ['google/imagen-4.0-generate-001', 'google/imagen-4.0-fast-generate-001', 'openai/gpt-image-1'],
-          description: 'Image model to use. Default: google/imagen-4.0-fast-generate-001 (fast, high quality). Use imagen-4.0-generate-001 for highest quality, openai/gpt-image-1 for different aesthetic.',
-        },
       },
       required: ['prompt'],
     },
@@ -37,7 +33,7 @@ export const imageToolDefinitions: Anthropic.Tool[] = [
   {
     name: 'generate_images',
     description:
-      'Generate multiple images from a text prompt. Returns an array of base64-encoded images. Use when the user needs variations or multiple options to choose from.',
+      'Generate multiple images from a text prompt. Returns URLs to the generated images. Use when the user needs variations or multiple options to choose from.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -53,11 +49,6 @@ export const imageToolDefinitions: Anthropic.Tool[] = [
           type: 'string',
           enum: ['1:1', '16:9', '9:16', '4:3', '3:4'],
           description: 'Image aspect ratio. Default: 1:1',
-        },
-        model: {
-          type: 'string',
-          enum: ['google/imagen-4.0-generate-001', 'google/imagen-4.0-fast-generate-001', 'openai/gpt-image-1'],
-          description: 'Image model. Default: google/imagen-4.0-fast-generate-001',
         },
       },
       required: ['prompt'],
@@ -76,6 +67,7 @@ const STYLE_SUFFIXES: Record<string, string> = {
 }
 
 const IMAGE_MODEL = 'google/gemini-3.1-flash-image-preview'
+const STORAGE_BUCKET = 'chat-thumbnails'
 
 async function generateImageViaGateway(prompt: string, retries = 2): Promise<{ base64: string; mediaType: string }[]> {
   for (let attempt = 0; attempt < retries; attempt++) {
@@ -94,7 +86,6 @@ async function generateImageViaGateway(prompt: string, retries = 2): Promise<{ b
           mediaType: f.mediaType || 'image/png',
         }))
       }
-      // No images returned — retry
       logger.warn('[generate_image] No images in response, retrying', { attempt })
     } catch (err) {
       if (attempt < retries - 1) {
@@ -107,13 +98,29 @@ async function generateImageViaGateway(prompt: string, retries = 2): Promise<{ b
   return []
 }
 
+/** Upload a base64 image to Supabase Storage and return its public URL */
+async function uploadImageToStorage(base64: string, mediaType: string): Promise<string> {
+  const supabase = getServiceClient()
+  const ext = mediaType === 'image/jpeg' ? 'jpg' : 'png'
+  const path = `generated/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+
+  const buffer = Buffer.from(base64, 'base64')
+  const { error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(path, buffer, { contentType: mediaType, upsert: false })
+
+  if (error) throw new Error(`Storage upload failed: ${error.message}`)
+
+  const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path)
+  return data.publicUrl
+}
+
 export const imageToolHandlers: Record<string, AgentToolHandler> = {
   async generate_image(input) {
     const { prompt, aspect_ratio, style } = input as {
       prompt: string
       aspect_ratio?: string
       style?: string
-      model?: string
     }
 
     const fullPrompt = style && STYLE_SUFFIXES[style]
@@ -128,15 +135,16 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
       const images = await generateImageViaGateway(fullPrompt + aspectHint)
 
       if (images.length === 0) {
-        return { success: false, error: 'No image was generated', data: null }
+        return { success: false, error: 'No image was generated' }
       }
 
-      logger.info('[generate_image] Generated image', { model: IMAGE_MODEL, aspectRatio: aspect_ratio || '1:1' })
+      const url = await uploadImageToStorage(images[0].base64, images[0].mediaType)
+      logger.info('[generate_image] Generated and uploaded image', { model: IMAGE_MODEL, url })
 
       return {
         success: true,
         data: {
-          __image_data: images[0].base64,
+          image_url: url,
           status: 'Image successfully generated and delivered to the user inline.',
           model_used: IMAGE_MODEL,
           prompt_used: fullPrompt,
@@ -156,7 +164,6 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
       prompt: string
       count?: number
       aspect_ratio?: string
-      model?: string
     }
 
     const n = Math.min(Math.max(count || 2, 2), 4)
@@ -165,22 +172,22 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
       : ''
 
     try {
-      // Generate multiple by requesting N images in prompt
       const multiPrompt = n > 1
         ? `Generate ${n} different variations of: ${prompt}${aspectHint}`
         : prompt + aspectHint
       const images = await generateImageViaGateway(multiPrompt)
 
-      logger.info('[generate_images] Generated images', { model: IMAGE_MODEL, count: images.length })
+      const urls = await Promise.all(
+        images.map(img => uploadImageToStorage(img.base64, img.mediaType))
+      )
+
+      logger.info('[generate_images] Generated and uploaded images', { model: IMAGE_MODEL, count: urls.length })
 
       return {
         success: true,
         data: {
-          __image_data: images.map((img, i) => ({
-            index: i,
-            base64: img.base64,
-          })),
-          images_generated: images.length,
+          images: urls.map((url, i) => ({ index: i, url })),
+          images_generated: urls.length,
           model_used: IMAGE_MODEL,
         },
       }

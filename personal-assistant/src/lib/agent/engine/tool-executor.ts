@@ -500,20 +500,13 @@ export async function* executeToolBatchStreaming(
               })()
             : result.success
               ? (() => {
-                  // Strip __image_data before sending to model (too large for context)
-                  const modelData = (typeof result.data === 'object' && result.data !== null && '__image_data' in result.data)
-                    ? Object.fromEntries(Object.entries(result.data as Record<string, unknown>).filter(([k]) => k !== '__image_data'))
-                    : result.data
-                  let data = JSON.stringify(modelData)
+                  let data = JSON.stringify(result.data)
                   if (data.length > MAX_TOOL_RESULT_CHARS) {
                     data =
                       data.slice(0, MAX_TOOL_RESULT_CHARS) +
                       '\n\n[Content truncated — ' +
                       (data.length - MAX_TOOL_RESULT_CHARS).toLocaleString() +
                       ' chars omitted]'
-                  }
-                  if (tool.name.startsWith('generate_image')) {
-                    logger.info('[tool-executor] Image tool result for model:', { content: data.substring(0, 200), success: result.success })
                   }
                   const jit = getJITInstruction(tool.name)
                   return jit ? `${data}\n\n---\n${jit}` : data

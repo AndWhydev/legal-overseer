@@ -576,7 +576,7 @@ export function ChatInterface() {
     html: string; subject: string; afterMessageId: string
   }>>([])
   const [imageArtifacts, setImageArtifacts] = useState<Array<{
-    id: string; images: Array<{ base64: string; index?: number }>
+    id: string; images: Array<{ url?: string; base64?: string; index?: number }>
     prompt: string; model: string; afterMessageId: string
   }>>([])
   // Whispers visible state (hides when typing or conversation starts)
@@ -1030,23 +1030,16 @@ export function ChatInterface() {
                   event.data.result
                 ) {
                   const r = event.data.result as Record<string, unknown>
-                  const images: Array<{ base64: string; index?: number }> = []
+                  const images: Array<{ url?: string; base64?: string; index?: number }> = []
 
-                  if (typeof r.__image_data === 'string') {
-                    // Single image from generate_image
-                    images.push({ base64: r.__image_data as string })
-                  } else if (r.image_base64) {
-                    // Legacy: single image with base64 in result
-                    images.push({ base64: r.image_base64 as string })
-                  } else if (Array.isArray(r.__image_data)) {
-                    // Multiple images from generate_images
-                    for (const img of r.__image_data as Array<Record<string, unknown>>) {
-                      if (img.base64) images.push({ base64: img.base64 as string, index: img.index as number })
-                    }
+                  if (r.image_url) {
+                    // Single image URL from generate_image
+                    images.push({ url: r.image_url as string })
                   } else if (Array.isArray(r.images)) {
-                    // Legacy: multiple images
+                    // Multiple image URLs from generate_images
                     for (const img of r.images as Array<Record<string, unknown>>) {
-                      if (img.base64) images.push({ base64: img.base64 as string, index: img.index as number })
+                      if (img.url) images.push({ url: img.url as string, index: img.index as number })
+                      else if (img.base64) images.push({ base64: img.base64 as string, index: img.index as number })
                     }
                   }
 
@@ -1179,28 +1172,6 @@ export function ChatInterface() {
                 const suggestions = event.data?.suggestions || event.data
                 if (Array.isArray(suggestions)) {
                   setFollowUps(suggestions.slice(0, 3))
-                }
-                break
-              }
-
-              case 'image_generated': {
-                const imgEvt = event.data as { imageData: string | Array<{ base64: string; index?: number }>; prompt?: string; model?: string }
-                const images: Array<{ base64: string; index?: number }> = []
-                if (typeof imgEvt.imageData === 'string') {
-                  images.push({ base64: imgEvt.imageData })
-                } else if (Array.isArray(imgEvt.imageData)) {
-                  for (const img of imgEvt.imageData) {
-                    if (img.base64) images.push({ base64: img.base64, index: img.index })
-                  }
-                }
-                if (images.length > 0) {
-                  setImageArtifacts(prev => [...prev, {
-                    id: `img-${Date.now()}`,
-                    images,
-                    prompt: imgEvt.prompt || '',
-                    model: imgEvt.model || '',
-                    afterMessageId: assistantId,
-                  }])
                 }
                 break
               }
@@ -2194,17 +2165,13 @@ export function ChatInterface() {
                               key={i}
                               className="group relative overflow-hidden rounded-xl border border-border bg-card cursor-pointer"
                               onClick={() => {
-                                // Open full-size in new tab
-                                const w = window.open()
-                                if (w) {
-                                  w.document.write(`<img src="data:image/png;base64,${img.base64}" style="max-width:100%;height:auto" />`)
-                                  w.document.title = imgSet.prompt || 'Generated Image'
-                                }
+                                const src = img.url || (img.base64 ? `data:image/png;base64,${img.base64}` : '')
+                                if (src) window.open(src, '_blank')
                               }}
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={`data:image/png;base64,${img.base64}`}
+                                src={img.url || (img.base64 ? `data:image/png;base64,${img.base64}` : '')}
                                 alt={imgSet.prompt || 'Generated image'}
                                 className="w-full h-auto rounded-xl transition-transform duration-200 group-hover:scale-[1.02]"
                               />
