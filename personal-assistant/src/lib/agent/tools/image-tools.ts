@@ -128,17 +128,19 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
       const images = await generateImageViaGateway(fullPrompt + aspectHint)
 
       if (images.length === 0) {
-        return { success: false, error: 'No image was generated' }
+        return { success: false, error: 'No image was generated', data: null }
       }
 
       logger.info('[generate_image] Generated image', { model: IMAGE_MODEL, aspectRatio: aspect_ratio || '1:1' })
 
       return {
         success: true,
-        __image_data: images[0].base64,
-        status: 'Image successfully generated and delivered to the user inline.',
-        model_used: IMAGE_MODEL,
-        prompt_used: fullPrompt,
+        data: {
+          __image_data: images[0].base64,
+          status: 'Image successfully generated and delivered to the user inline.',
+          model_used: IMAGE_MODEL,
+          prompt_used: fullPrompt,
+        },
       }
     } catch (error) {
       logger.error('[generate_image] Failed:', error)
@@ -173,12 +175,14 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
 
       return {
         success: true,
-        __image_data: images.map((img, i) => ({
-          index: i,
-          base64: img.base64,
-        })),
-        images_generated: images.length,
-        model_used: IMAGE_MODEL,
+        data: {
+          __image_data: images.map((img, i) => ({
+            index: i,
+            base64: img.base64,
+          })),
+          images_generated: images.length,
+          model_used: IMAGE_MODEL,
+        },
       }
     } catch (error) {
       logger.error('[generate_images] Failed:', error)
