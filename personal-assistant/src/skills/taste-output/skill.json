@@ -1,0 +1,22 @@
+{
+  "name": "Full Output Enforcement",
+  "description": "Overrides LLM truncation bias to enforce complete, unabridged code and content generation with no placeholders.",
+  "tags": ["output", "completeness", "anti-truncation", "code-generation", "enforcement", "quality"],
+  "triggerKeywords": [
+    "generate complete code",
+    "no truncation",
+    "full implementation required",
+    "don't skip any code",
+    "write the entire file",
+    "complete all functions",
+    "no placeholders",
+    "full output",
+    "don't abbreviate",
+    "write everything out",
+    "no todo comments",
+    "exhaustive output"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 741,
+  "planGate": "growth"
+}

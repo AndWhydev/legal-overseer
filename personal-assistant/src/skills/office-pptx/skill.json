@@ -1,0 +1,23 @@
+{
+  "name": "PowerPoint Presentation Generator",
+  "description": "Creates, edits, and extracts content from .pptx presentation files with professional design.",
+  "tags": ["powerpoint", "pptx", "presentations", "slides", "pitch-deck", "office", "documents"],
+  "triggerKeywords": [
+    "create a presentation",
+    "make a slide deck",
+    "build a pitch deck",
+    "edit a pptx file",
+    "read a presentation",
+    "extract slides",
+    "update the deck",
+    "convert to slides",
+    "presentation design",
+    "slide layout",
+    "speaker notes",
+    "pptx template",
+    "PowerPoint file"
+  ],
+  "roleAffinity": ["operations", "comms"],
+  "estimatedTokens": 2624,
+  "planGate": "growth"
+}

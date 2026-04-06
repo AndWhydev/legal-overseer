@@ -1,0 +1,23 @@
+{
+  "name": "Excel Spreadsheet Builder",
+  "description": "Creates, edits, and analyzes Excel spreadsheets with formulas, financial models, and professional formatting.",
+  "tags": ["excel", "xlsx", "spreadsheet", "office", "financial-model", "formulas", "data-analysis", "openpyxl", "pandas"],
+  "triggerKeywords": [
+    "create a spreadsheet",
+    "build an excel model",
+    "edit an xlsx file",
+    "add formulas to spreadsheet",
+    "financial model in excel",
+    "analyze spreadsheet data",
+    "format excel file",
+    "create pivot table",
+    "clean messy csv data",
+    "build a financial forecast",
+    "excel with color coding",
+    "fix formula errors",
+    "convert csv to excel"
+  ],
+  "roleAffinity": ["operations", "comms"],
+  "estimatedTokens": 3276,
+  "planGate": "growth"
+}
