@@ -55,7 +55,9 @@
 | Vercel | Dashboard hosting & serverless functions | Auto | Deployed |
 | Supabase | Database, auth, realtime, storage | ap-south-1 (Mumbai) | Deployed |
 | Fly.io | Agent worker processes (Firecracker MicroVMs) | syd (Sydney) | Deployed |
-| Fly.io | WhatsApp Baileys bridge (`bitbit-wa-bridge.fly.dev`) | syd (Sydney) | Deployed |
+| Fly.io | Conduit Matrix homeserver (`bitbit-conduit`) | syd (Sydney) | Deployed |
+| Fly.io | Per-user bridge machines (mautrix-whatsapp, mautrix-gmessages) | syd (Sydney) | Deployed |
+| LightNode | Per-user Mac VPS (BlueBubbles iMessage bridge) | syd (Sydney) | Deployed |
 | Cloudflare Workers | Edge cron (task polling), rate limiting | Edge (global) | Deployed |
 | Sentry | Error tracking & monitoring | us (bitbit-d1 org) | Deployed |
 | Stripe | Billing, webhook endpoint | - | Keys set, webhook configured |
@@ -80,11 +82,25 @@
 - **Rate limiting**: 10 req/min/IP on `/trigger` endpoint
 - **Secrets**: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, WORKER_AUTH_TOKEN, WORKER_CALLBACK_URL
 
-### Fly.io WhatsApp Bridge
-- **App**: `bitbit-wa-bridge` → `https://bitbit-wa-bridge.fly.dev`
-- **Purpose**: Baileys-based WhatsApp bridge (fallback transport when Meta Cloud API unavailable)
-- **Auth**: Bearer token (`BRIDGE_SECRET`)
-- **Proxy**: Dashboard proxies `/api/whatsapp/bridge/*` to this service
+### Messaging Bridges (Per-User)
+
+**Conduit Matrix Homeserver** (`bitbit-conduit` on Fly.io):
+- Shared homeserver for all WhatsApp/Android bridge users
+- server_name: `bitbit.chat`, federation off, registration on
+- Appservice registration via admin room messages
+
+**WhatsApp/Android Bridges** (Fly.io Machines, per user):
+- mautrix-whatsapp + mautrix-gmessages in single container
+- Per-user Fly Machine with 1GB volume for bridge state
+- QR scan linking via qr-callback relay to dashboard
+- Lifecycle: active ($1.90/mo) -> suspended (7 days idle) -> destroyed
+
+**iMessage Bridge** (LightNode Mac VPS, per user):
+- BlueBubbles on macOS Sequoia (REST API + webhooks)
+- Warm pool of 2 pre-provisioned instances for instant provisioning
+- noVNC embedded in dashboard for Apple ID sign-in (kiosk-locked)
+- No suspension — runs continuously at $7.70/mo
+- See `docs/adr/0005-imessage-bridge-approach.md`
 
 ### Sentry
 - **Org**: `bitbit-d1`, **Project**: `bitbit-dashboard`
@@ -108,7 +124,7 @@ bitbit/                      # npm workspaces root
   deployments/
     fly/                     # Fly.io worker (Dockerfile, fly.toml, src/)
     cloudflare/              # Cloudflare edge cron (wrangler.toml, src/)
-    whatsapp-bridge/         # Fly.io WhatsApp Baileys bridge
+    # Baileys bridge removed — WhatsApp now uses Beeper/Matrix bridges
     vps/                     # VPS relay daemon config
     awu/                     # AWU client deployment
     torkay/                  # Torkay client deployment
