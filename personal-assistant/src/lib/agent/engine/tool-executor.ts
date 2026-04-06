@@ -261,7 +261,11 @@ export async function executeToolBatch(
             })()
           : result.success
             ? (() => {
-                let data = JSON.stringify(result.data)
+                // Strip __image_data before sending to model (too large for context)
+                const modelData = (typeof result.data === 'object' && result.data !== null && '__image_data' in result.data)
+                  ? Object.fromEntries(Object.entries(result.data as Record<string, unknown>).filter(([k]) => k !== '__image_data'))
+                  : result.data
+                let data = JSON.stringify(modelData)
                 if (data.length > MAX_TOOL_RESULT_CHARS) {
                   data =
                     data.slice(0, MAX_TOOL_RESULT_CHARS) +
@@ -496,7 +500,11 @@ export async function* executeToolBatchStreaming(
               })()
             : result.success
               ? (() => {
-                  let data = JSON.stringify(result.data)
+                  // Strip __image_data before sending to model (too large for context)
+                  const modelData = (typeof result.data === 'object' && result.data !== null && '__image_data' in result.data)
+                    ? Object.fromEntries(Object.entries(result.data as Record<string, unknown>).filter(([k]) => k !== '__image_data'))
+                    : result.data
+                  let data = JSON.stringify(modelData)
                   if (data.length > MAX_TOOL_RESULT_CHARS) {
                     data =
                       data.slice(0, MAX_TOOL_RESULT_CHARS) +

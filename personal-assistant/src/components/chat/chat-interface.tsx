@@ -1032,11 +1032,19 @@ export function ChatInterface() {
                   const r = event.data.result as Record<string, unknown>
                   const images: Array<{ base64: string; index?: number }> = []
 
-                  if (r.image_base64) {
+                  if (typeof r.__image_data === 'string') {
                     // Single image from generate_image
+                    images.push({ base64: r.__image_data as string })
+                  } else if (r.image_base64) {
+                    // Legacy: single image with base64 in result
                     images.push({ base64: r.image_base64 as string })
-                  } else if (Array.isArray(r.images)) {
+                  } else if (Array.isArray(r.__image_data)) {
                     // Multiple images from generate_images
+                    for (const img of r.__image_data as Array<Record<string, unknown>>) {
+                      if (img.base64) images.push({ base64: img.base64 as string, index: img.index as number })
+                    }
+                  } else if (Array.isArray(r.images)) {
+                    // Legacy: multiple images
                     for (const img of r.images as Array<Record<string, unknown>>) {
                       if (img.base64) images.push({ base64: img.base64 as string, index: img.index as number })
                     }

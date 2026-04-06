@@ -119,7 +119,9 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
 
       return {
         success: true,
-        image_base64: images[0].base64,
+        // image_base64 sent only via SSE __image_data field (too large for model context)
+        __image_data: images[0].base64,
+        image_generated: true,
         model_used: IMAGE_MODEL,
         prompt_used: fullPrompt,
       }
@@ -156,11 +158,11 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
 
       return {
         success: true,
-        images: images.map((img, i) => ({
+        __image_data: images.map((img, i) => ({
           index: i,
           base64: img.base64,
         })),
-        count: images.length,
+        images_generated: images.length,
         model_used: IMAGE_MODEL,
       }
     } catch (error) {
