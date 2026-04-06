@@ -1,19 +1,21 @@
-import { createAnthropic } from '@ai-sdk/anthropic'
-
 /**
- * Shared Anthropic provider for AI SDK calls.
- * Uses ANTHROPIC_API_KEY from environment.
- */
-export const anthropic = createAnthropic({})
-
-/**
- * Model shortcuts matching the existing model-registry.ts purposes:
- * - fast: classification, quick parsing (Haiku)
- * - balanced: conversation, general tasks (Sonnet)
- * - heavy: synthesis, deep analysis (Opus)
+ * AI Gateway model references.
+ *
+ * Plain "provider/model" strings route through Vercel AI Gateway automatically.
+ * No explicit provider setup needed — AI SDK resolves these via Gateway
+ * with OIDC auth (Vercel deployments) or AI_GATEWAY_API_KEY (local dev).
+ *
+ * Auth priority: AI_GATEWAY_API_KEY env var → VERCEL_OIDC_TOKEN via @vercel/oidc
+ *
+ * To refresh local OIDC token: `vercel env pull .env.local --yes`
  */
 export const models = {
-  fast: anthropic('claude-haiku-4-5-20251001'),
-  balanced: anthropic('claude-sonnet-4-5-20250514'),
-  heavy: anthropic('claude-opus-4-20250514'),
+  /** Classification, triage, quick parsing — cheapest and fastest */
+  fast: 'anthropic/claude-haiku-4.5' as const,
+  /** Conversation, general tasks — balanced cost/quality */
+  balanced: 'anthropic/claude-sonnet-4.6' as const,
+  /** Synthesis, deep analysis, complex reasoning — highest quality */
+  heavy: 'anthropic/claude-opus-4.6' as const,
 } as const
+
+export type GatewayModelId = typeof models[keyof typeof models]

@@ -1,1 +1,1 @@
-export { anthropic, models } from './provider'
+export { models, type GatewayModelId } from './provider'
