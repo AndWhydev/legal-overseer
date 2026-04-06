@@ -85,7 +85,10 @@ export interface CapabilityBoundary {
 export const DEFAULT_CAPABILITIES: Record<AgentRole, CapabilityBoundary> = {
   sales: {
     allowedToolGroups: ['core', 'memory', 'channel'],
-    allowedSkills: ['ad-scripts', 'tender-hunter', 'website-builder'],
+    allowedSkills: [
+      'ad-scripts', 'tender-hunter', 'website-builder',
+      'direct-response-copy', 'positioning-angles', 'lead-magnet', 'brand-voice',
+    ],
     deniedTools: ['generate_invoice', 'send_email'],
   },
   finance: {
@@ -96,23 +99,35 @@ export const DEFAULT_CAPABILITIES: Record<AgentRole, CapabilityBoundary> = {
   },
   comms: {
     allowedToolGroups: ['core', 'memory', 'channel', 'comms'],
-    allowedSkills: ['ad-scripts', 'content-social'],
+    allowedSkills: [
+      'ad-scripts', 'content-social',
+      'email-sequences', 'newsletter', 'tweet-writer', 'brand-voice', 'content-atomizer',
+      'creative-social-graphics', 'creative-brand-asset', 'creative-talking-head',
+    ],
     deniedTools: ['generate_invoice'],
     requiresApproval: ['send_email', 'send_sms', 'send_whatsapp'],
   },
   operations: {
     allowedToolGroups: ['core', 'memory', 'channel'],
-    allowedSkills: ['seo-visibility', 'content-social', 'tender-hunter'],
+    allowedSkills: [
+      'seo-visibility', 'content-social', 'tender-hunter',
+      'seo-content', 'seo-strategy', 'keyword-research',
+      'creative-product-video', 'creative-remotion-script-writer',
+    ],
     deniedTools: ['send_email', 'generate_invoice'],
   },
   research: {
     allowedToolGroups: ['core', 'memory', 'web'],
-    allowedSkills: ['seo-visibility', 'tender-hunter'],
+    allowedSkills: [
+      'seo-visibility', 'tender-hunter',
+      'keyword-research', 'seo-strategy', 'positioning-angles',
+      'creative-strategist',
+    ],
     deniedTools: ['send_email', 'send_sms', 'generate_invoice', 'create_task'],
   },
   coordinator: {
     allowedToolGroups: ['core', 'memory'],
-    allowedSkills: [],
+    allowedSkills: ['marketing-orchestrator', 'creative-orchestrator'],
     deniedTools: [],
   },
 }
