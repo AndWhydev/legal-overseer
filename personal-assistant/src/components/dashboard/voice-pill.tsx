@@ -13,10 +13,18 @@ import {
   IconVolumeOff,
   IconX,
 } from '@tabler/icons-react';
+import { ArrowUp, Globe, Mic, Plus, Volume2, VolumeX } from 'lucide-react';
 import { MiniWaveform } from '../ui/mini-waveform';
+import { Loader } from '@/components/ui/loader';
 import { useFileUpload, type UploadItem } from '@/hooks/use-file-upload';
 import { useVoiceInput } from '../chat/use-voice-input';
 import { CommandPalette, DEFAULT_CHAT_COMMANDS, type ChatCommand } from '../chat/command-palette';
+import {
+  PromptInput,
+  PromptInputAction,
+  PromptInputActions,
+  PromptInputTextarea,
+} from '@/components/ui/prompt-input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -372,14 +380,10 @@ export function VoicePill({
         />
       )}
 
-      {/* ── Processing dots ── */}
+      {/* ── Processing indicator ── */}
       {effectiveMode === 'processing' && (
         <div className="flex flex-1 items-center justify-center">
-          <div className="flex items-center gap-1">
-            <span className="size-1 rounded-full bg-muted-foreground/50 animate-[pill-dot-bounce_1s_ease-in-out_infinite]" />
-            <span className="size-1 rounded-full bg-muted-foreground/50 animate-[pill-dot-bounce_1s_ease-in-out_infinite_0.15s]" />
-            <span className="size-1 rounded-full bg-muted-foreground/50 animate-[pill-dot-bounce_1s_ease-in-out_infinite_0.3s]" />
-          </div>
+          <Loader variant="pulse-dot" size="sm" />
         </div>
       )}
 
@@ -398,136 +402,133 @@ export function VoicePill({
           />
 
           {docked ? (
-            <>
-              {/* Upload progress indicators */}
-              {hasUploads && (
-                <div className="flex flex-row flex-wrap gap-2 px-3 pt-2 w-full">
-                  {fileUpload.uploads.map((item) => (
-                    <UploadProgressItem
-                      key={item.id}
-                      item={item}
-                      onRemove={() => fileUpload.removeUpload(item.id)}
-                    />
-                  ))}
-                </div>
-              )}
+            <PromptInput
+              value={textValue}
+              onValueChange={(val) => {
+                setTextValue(val);
+                if (val.startsWith('/') && val.length > 1) {
+                  setShowCommands(true);
+                  setCommandQuery(val.slice(1));
+                } else {
+                  setShowCommands(false);
+                  setCommandQuery('');
+                }
+              }}
+              onSubmit={handleSubmit}
+              className="border-0 bg-transparent p-0 shadow-none rounded-none"
+            >
+              <div className="flex flex-col w-full">
+                {/* Upload progress indicators */}
+                {hasUploads && (
+                  <div className="flex flex-row flex-wrap gap-2 px-3 pt-2 w-full">
+                    {fileUpload.uploads.map((item) => (
+                      <UploadProgressItem
+                        key={item.id}
+                        item={item}
+                        onRemove={() => fileUpload.removeUpload(item.id)}
+                      />
+                    ))}
+                  </div>
+                )}
 
-              {/* Command palette container */}
-              <div className="relative w-full">
-                <textarea
-                  ref={textareaRef}
-                  className={cn(
-                    'w-full flex-1 resize-none overflow-y-auto',
-                    'bg-transparent border-0 outline-none shadow-none',
-                    'text-base leading-[1.55] text-foreground',
-                    'placeholder:text-muted-foreground',
-                    'focus-visible:ring-0 focus-visible:border-0',
-                    'max-h-[188px] pr-0.5',
-                    'transition-[min-height] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                    compactDocked && !isDockedExpanded ? 'min-h-[52px]' : 'min-h-[88px]',
-                  )}
-                  placeholder="Message BitBit..."
-                  value={textValue}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setTextValue(val);
-                    if (val.startsWith('/') && val.length > 1) {
-                      setShowCommands(true);
-                      setCommandQuery(val.slice(1));
-                    } else {
-                      setShowCommands(false);
-                      setCommandQuery('');
-                    }
-                  }}
-                  onKeyDown={handleKeyDown}
-                  autoComplete="off"
-                  spellCheck={false}
-                  rows={1}
-                />
-
-                {/* Command palette - appears above the textarea */}
-                <AnimatePresence>
-                  {showCommands && (
-                    <CommandPalette
-                      query={commandQuery}
-                      commands={DEFAULT_CHAT_COMMANDS}
-                      onSelect={handleCommandSelect}
-                    />
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Action buttons row */}
-              <div className={cn(
-                'flex items-center justify-between',
-                compactDocked && !isDockedExpanded ? 'pt-1.5' : 'pt-2',
-              )}>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
-                    aria-label="Attach file"
-                    type="button"
-                    onClick={handlePaperclipClick}
-                  >
-                    <IconPaperclip size={20} />
-                  </Button>
-                  {onVoiceModeToggle && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        'rounded-full',
-                        voiceModeEnabled
-                          ? 'text-foreground bg-foreground/10 hover:bg-foreground/15'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-                        isSpeaking && 'animate-pulse',
-                      )}
-                      onClick={onVoiceModeToggle}
-                      aria-label={voiceModeEnabled ? 'Disable voice responses' : 'Enable voice responses'}
-                      type="button"
-                    >
-                      {voiceModeEnabled ? <IconVolume size={20} /> : <IconVolumeOff size={20} />}
-                    </Button>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {voice.isSupported && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        'rounded-full',
-                        voice.isListening
-                          ? 'text-destructive hover:text-destructive hover:bg-destructive/10'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-                      )}
-                      onClick={voice.toggleListening}
-                      aria-label={voice.isListening ? 'Stop listening' : 'Start voice input'}
-                      type="button"
-                    >
-                      {voice.isListening ? <IconMicrophoneOff size={20} /> : <IconMicrophone size={20} />}
-                    </Button>
-                  )}
-                  <Button
-                    variant={canSend && !fileUpload.isUploading ? 'default' : 'ghost'}
-                    size="icon"
+                {/* Command palette container */}
+                <div className="relative w-full">
+                  <PromptInputTextarea
+                    placeholder="Message BitBit..."
                     className={cn(
-                      'rounded-full',
-                      canSend && !fileUpload.isUploading
-                        ? 'bg-foreground text-background hover:bg-foreground/90'
-                        : 'text-muted-foreground',
+                      'text-base leading-[1.55] pl-4 pt-3',
+                      'max-h-[188px]',
+                      'transition-[min-height] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                      compactDocked && !isDockedExpanded ? 'min-h-[52px]' : 'min-h-[88px]',
                     )}
-                    onClick={handleSubmit}
-                    aria-label="Send"
-                    disabled={!canSend || fileUpload.isUploading}
-                  >
-                    <IconArrowUp size={20} />
-                  </Button>
+                    onKeyDown={handleKeyDown}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+
+                  {/* Command palette - appears above the textarea */}
+                  <AnimatePresence>
+                    {showCommands && (
+                      <CommandPalette
+                        query={commandQuery}
+                        commands={DEFAULT_CHAT_COMMANDS}
+                        onSelect={handleCommandSelect}
+                      />
+                    )}
+                  </AnimatePresence>
                 </div>
+
+                {/* Action buttons row */}
+                <PromptInputActions className="flex w-full items-center justify-between gap-2 px-3 pb-3 mt-2">
+                  <div className="flex items-center gap-1.5">
+                    <PromptInputAction tooltip="Attach file">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="size-9 rounded-full"
+                        onClick={handlePaperclipClick}
+                        type="button"
+                      >
+                        <Plus size={18} />
+                      </Button>
+                    </PromptInputAction>
+
+                    <PromptInputAction tooltip="Web search">
+                      <Button variant="outline" className="rounded-full h-9 px-3 text-sm">
+                        <Globe size={16} />
+                        Search
+                      </Button>
+                    </PromptInputAction>
+
+                    {onVoiceModeToggle && (
+                      <PromptInputAction tooltip={voiceModeEnabled ? 'Disable voice responses' : 'Enable voice responses'}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className={cn(
+                            'size-9 rounded-full',
+                            voiceModeEnabled && 'bg-foreground/10 border-foreground/20',
+                            isSpeaking && 'animate-pulse',
+                          )}
+                          onClick={onVoiceModeToggle}
+                          type="button"
+                        >
+                          {voiceModeEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                        </Button>
+                      </PromptInputAction>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {voice.isSupported && (
+                      <PromptInputAction tooltip={voice.isListening ? 'Stop listening' : 'Voice input'}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className={cn(
+                            'size-9 rounded-full',
+                            voice.isListening && 'text-destructive border-destructive/30 bg-destructive/10',
+                          )}
+                          onClick={voice.toggleListening}
+                          type="button"
+                        >
+                          <Mic size={18} />
+                        </Button>
+                      </PromptInputAction>
+                    )}
+
+                    <Button
+                      size="icon"
+                      disabled={!canSend || fileUpload.isUploading}
+                      onClick={handleSubmit}
+                      className="size-9 rounded-full"
+                    >
+                      <ArrowUp size={18} />
+                    </Button>
+                  </div>
+                </PromptInputActions>
               </div>
-            </>
+            </PromptInput>
           ) : (
             /* ── Floating text input ── */
             <div className="relative w-full flex items-center">
