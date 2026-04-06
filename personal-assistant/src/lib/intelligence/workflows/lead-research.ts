@@ -23,7 +23,7 @@
  */
 
 import { z } from 'zod'
-import { generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { models } from '@/lib/ai'
 import { runParallelWorkflow } from '@/lib/workflows/patterns'
 import { runSequentialWorkflow } from '@/lib/workflows/patterns'
@@ -271,13 +271,15 @@ export async function runLeadResearch(
     tokensEstimate += 3000 // rough estimate for 2 sequential steps
 
     // Parse outreach draft from sequential output using generateObject
-    const { object: outreachDraft } = await generateObject({
+    const { output: outreachDraft } = await generateText({
       model: models.fast,
       system:
         'Extract structured email components from this draft outreach text. Parse the subject, body, personalization hooks, and suggest optimal send timing.',
-      schema: outreachDraftSchema,
+      output: Output.object({ schema: outreachDraftSchema }),
       prompt: `Parse this outreach draft into structured components:\n\n${sequentialResult.output}`,
     })
+
+    if (!outreachDraft) throw new Error('Outreach draft parsing returned null')
 
     stepsCompleted += 1
     tokensEstimate += 500

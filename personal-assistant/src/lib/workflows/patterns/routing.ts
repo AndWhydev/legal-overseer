@@ -27,7 +27,7 @@
  * ```
  */
 
-import { generateText, generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { type ZodType } from 'zod'
 import { models } from '@/lib/ai'
 
@@ -100,11 +100,13 @@ export async function runRoutingWorkflow<TClassification>(
   // Step 1: Classify the input
   const prompt = classificationPrompt.replace(/\{\{input\}\}/g, input)
 
-  const { object: classification } = await generateObject({
+  const { output: classification } = await generateText({
     model: models[classificationModel],
-    schema: classificationSchema,
+    output: Output.object({ schema: classificationSchema }),
     prompt,
   })
+
+  if (!classification) throw new Error('Classification returned null')
 
   // Step 2: Determine route
   let selectedRoute = routeKey(classification)

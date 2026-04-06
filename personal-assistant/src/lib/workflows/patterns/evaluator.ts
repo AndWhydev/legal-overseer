@@ -27,7 +27,7 @@
  * ```
  */
 
-import { generateText, generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { type ZodType } from 'zod'
 import { models } from '@/lib/ai'
 
@@ -133,12 +133,14 @@ export async function runEvaluatorWorkflow<TEvaluation>(
       .replace(/\{\{input\}\}/g, input)
       .replace(/\{\{output\}\}/g, currentOutput)
 
-    const { object: evaluation } = await generateObject({
+    const { output: evaluation } = await generateText({
       model: models[evaluatorModel],
       system: evaluatorSystem,
-      schema: evaluationSchema,
+      output: Output.object({ schema: evaluationSchema }),
       prompt: evalPrompt,
     })
+
+    if (!evaluation) throw new Error('Evaluation returned null')
 
     const accepted = isAcceptable(evaluation)
 

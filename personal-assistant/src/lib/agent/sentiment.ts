@@ -1,4 +1,4 @@
-import { generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { z } from 'zod'
 import { models } from '@/lib/ai'
 
@@ -107,9 +107,9 @@ export async function analyzeSentiment(text: string): Promise<SentimentResult> {
   try {
     const truncated = text.length > 1000 ? text.slice(0, 1000) + '...' : text
 
-    const { object } = await generateObject({
+    const { output: object } = await generateText({
       model: models.fast,
-      schema: SentimentSchema,
+      output: Output.object({ schema: SentimentSchema }),
       maxOutputTokens: 200,
       prompt: `Analyze the sentiment of this client message.
 
@@ -117,6 +117,8 @@ Message: "${truncated}"
 
 Return the sentiment label (positive/neutral/negative), a score from -1.0 to 1.0, confidence 0-1, whether it's urgent, and key phrases driving the sentiment.`,
     })
+
+    if (!object) return analyzeSentimentFast(text)
 
     return {
       label: object.label,

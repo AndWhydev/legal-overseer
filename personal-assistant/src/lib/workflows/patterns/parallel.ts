@@ -23,7 +23,7 @@
  * ```
  */
 
-import { generateText, generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { type ZodType } from 'zod'
 import { models } from '@/lib/ai'
 
@@ -96,14 +96,14 @@ export async function runParallelWorkflow(
         const prompt = (branch.prompt ?? 'Analyze this:\n{{input}}')
           .replace(/\{\{input\}\}/g, input)
 
-        const { object } = await generateObject({
+        const { output } = await generateText({
           model,
           system: branch.system,
-          schema: branch.schema,
+          output: Output.object({ schema: branch.schema }),
           prompt,
         })
 
-        return { name: branch.name, output: object }
+        return { name: branch.name, output }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
         return { name: branch.name, output: null, error: message }

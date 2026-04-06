@@ -8,7 +8,7 @@
  * Ported from: aisdkagents-patterns/tool-api-tool-call-repair
  */
 
-import { generateObject, NoSuchToolError, type Tool } from 'ai'
+import { generateText, Output, NoSuchToolError, type Tool } from 'ai'
 import { models } from '@/lib/ai'
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ export interface ToolRepairOptions {
    * Model used for repair inference. Defaults to `models.fast` (cheap/fast)
    * because repair prompts are highly constrained by the schema.
    */
-  repairModel?: Parameters<typeof generateObject>[0]['model']
+  repairModel?: Parameters<typeof generateText>[0]['model']
   /** Optional callback invoked after a successful repair. */
   onRepair?: (info: RepairInfo) => void
 }
@@ -80,9 +80,9 @@ export function createToolCallRepairHandler(opts: ToolRepairOptions = {}) {
     }
 
     // Use structured output to coerce args into valid schema
-    const { object: repairedArgs } = await generateObject({
+    const { output: repairedArgs } = await generateText({
       model: repairModel,
-      schema: matchedTool.inputSchema,
+      output: Output.object({ schema: matchedTool.inputSchema }),
       prompt: [
         `The model tried to call the tool "${toolCall.toolName}" with the following inputs:`,
         JSON.stringify(toolCall.input, null, 2),
@@ -92,6 +92,8 @@ export function createToolCallRepairHandler(opts: ToolRepairOptions = {}) {
         'Please fix the inputs to match the schema.',
       ].join('\n'),
     })
+
+    if (!repairedArgs) return null
 
     const info: RepairInfo = {
       toolCallId: toolCall.toolCallId,

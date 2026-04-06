@@ -24,7 +24,7 @@
  */
 
 import { z } from 'zod'
-import { generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { models } from '@/lib/ai'
 import { runEvaluatorWorkflow } from '@/lib/workflows/patterns'
 import type {
@@ -294,13 +294,15 @@ export async function runRelationshipDrift(
     let recommendedAction: string | undefined
 
     if (bestEvaluation?.driftDetected) {
-      const { object: actionRec } = await generateObject({
+      const { output: actionRec } = await generateText({
         model: models.fast,
         system:
           'You are a relationship management advisor. Based on the drift analysis, recommend a specific, actionable next step to address the relationship drift.',
-        schema: actionRecommendationSchema,
+        output: Output.object({ schema: actionRecommendationSchema }),
         prompt: `Based on this drift analysis, recommend a specific action:\n\nContact: ${contactName}\nDrift Direction: ${bestEvaluation.direction}\nSeverity: ${bestEvaluation.severity}/100\nFactors: ${bestEvaluation.factors.join(', ')}\n\nFull Analysis:\n${evaluatorResult.output}`,
       })
+
+      if (!actionRec) throw new Error('Action recommendation returned null')
 
       recommendedAction = `[${actionRec.urgency.toUpperCase()}] ${actionRec.action} — ${actionRec.reasoning}`
       stepsCompleted += 1

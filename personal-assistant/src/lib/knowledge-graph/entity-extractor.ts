@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { z } from 'zod'
 import { models } from '@/lib/ai'
 import { logger } from '@/lib/core/logger'
@@ -160,11 +160,13 @@ export async function extractAndPopulateGraph(
     }
 
     // Step 1: Call Haiku to extract structured data
-    const { object: extraction } = await generateObject({
+    const { output: extraction } = await generateText({
       model: models.fast,
-      schema: ExtractionSchema,
+      output: Output.object({ schema: ExtractionSchema }),
       prompt: `${EXTRACTION_PROMPT}\n\n"${text}"`,
     })
+
+    if (!extraction) return { ...EMPTY_RESULT }
 
     // If nothing was extracted, return early
     if (

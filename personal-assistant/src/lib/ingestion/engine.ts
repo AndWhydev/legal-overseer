@@ -13,7 +13,7 @@
  * @module ingestion/engine
  */
 
-import { generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { models } from '@/lib/ai'
 import { logger } from '@/lib/core/logger'
 import type { ChannelMessage } from '@/lib/channels/types'
@@ -85,39 +85,43 @@ function buildMessageContext(message: ChannelMessage): string {
 // ─── Individual Extractors ───────────────────────────────────────────────
 
 async function extractClassification(context: string): Promise<MessageClassification> {
-  const { object } = await generateObject({
+  const { output } = await generateText({
     model: models.fast,
-    schema: MessageClassificationSchema,
+    output: Output.object({ schema: MessageClassificationSchema }),
     prompt: `Classify this business message. Determine category, urgency, whether it's actionable, and suggest next actions.\n\n${context}`,
   })
-  return object
+  if (!output) throw new Error('Classification extraction returned null')
+  return output
 }
 
 async function extractEntities(context: string): Promise<EntityExtraction> {
-  const { object } = await generateObject({
+  const { output } = await generateText({
     model: models.fast,
-    schema: EntityExtractionSchema,
+    output: Output.object({ schema: EntityExtractionSchema }),
     prompt: `Extract all structured entities from this message: people (with roles, emails, phones), organisations, monetary amounts, dates/deadlines, and reference numbers (invoice IDs, PO numbers, ticket IDs, etc.).\n\n${context}`,
   })
-  return object
+  if (!output) throw new Error('Entity extraction returned null')
+  return output
 }
 
 async function extractRelationships(context: string): Promise<RelationshipSignal> {
-  const { object } = await generateObject({
+  const { output } = await generateText({
     model: models.balanced,
-    schema: RelationshipSignalSchema,
+    output: Output.object({ schema: RelationshipSignalSchema }),
     prompt: `Analyze the relationship dynamics in this message. Determine sentiment (5 levels from very_negative to very_positive), sender intent, engagement level (1-10), and identify any risk signals (churn indicators, frustration, delays) or opportunity signals (expansion interest, positive feedback, referral potential).\n\n${context}`,
   })
-  return object
+  if (!output) throw new Error('Relationship signal extraction returned null')
+  return output
 }
 
 async function extractSummary(context: string): Promise<MessageSummary> {
-  const { object } = await generateObject({
+  const { output } = await generateText({
     model: models.balanced,
-    schema: MessageSummarySchema,
+    output: Output.object({ schema: MessageSummarySchema }),
     prompt: `Summarize this message concisely:\n- oneLiner: max 120 chars, captures the essence\n- keyPoints: up to 5 bullet points of what matters\n- actionItems: any tasks, requests, or follow-ups with assignee/due date if mentioned\n\n${context}`,
   })
-  return object
+  if (!output) throw new Error('Summary extraction returned null')
+  return output
 }
 
 // ─── Main Pipeline ───────────────────────────────────────────────────────

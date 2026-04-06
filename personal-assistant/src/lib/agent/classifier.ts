@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelMessage } from '@/lib/channels/types'
-import { generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { z } from 'zod'
 import { models } from '@/lib/ai'
 import { assembleContext } from '@/lib/context/assembler'
@@ -411,12 +411,14 @@ export async function classifyMessage(
 
     const prompt = buildClassificationPrompt(message, context.summary)
 
-    const { object } = await generateObject({
+    const { output: object } = await generateText({
       model: models.fast,
-      schema: ClassificationSchema,
+      output: Output.object({ schema: ClassificationSchema }),
       maxOutputTokens: 500,
       prompt,
     })
+
+    if (!object) return DEFAULT_RESULT
 
     const result: ClassificationResult = {
       significance: Math.max(1, Math.min(10, Math.round(object.significance))),

@@ -10,7 +10,7 @@
  * @module proactive/classifier
  */
 
-import { generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { z } from 'zod'
 import { models } from '@/lib/ai'
 import { logger } from '@/lib/core/logger'
@@ -186,12 +186,14 @@ Maximum severity in this group: ${maxSeverity}
 Earliest signal: ${signals[0].timestamp}
 Latest signal: ${signals[signals.length - 1].timestamp}`
 
-  const { object } = await generateObject({
+  const { output: object } = await generateText({
     model: models.fast,
-    schema: decisionSchema,
+    output: Output.object({ schema: decisionSchema }),
     system: systemPrompt,
     prompt: userPrompt,
   })
+
+  if (!object) throw new Error('Signal classification returned null')
 
   // Map to autonomy level based on confidence and urgency
   const autonomyLevel = mapAutonomyLevel(

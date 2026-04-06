@@ -20,7 +20,7 @@
  * ```
  */
 
-import { generateText, generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { z, type ZodType } from 'zod'
 import { models } from '@/lib/ai'
 
@@ -116,11 +116,13 @@ export async function runSequentialWorkflow(
         .replace(/\{\{output\}\}/g, output)
         .replace(/\{\{input\}\}/g, input)
 
-      const { object: evalResult } = await generateObject({
+      const { output: evalResult } = await generateText({
         model: evalModel,
-        schema: step.qualityGate.schema,
+        output: Output.object({ schema: step.qualityGate.schema }),
         prompt: evalPrompt,
       })
+
+      if (!evalResult) throw new Error('Quality gate evaluation returned null')
 
       evaluation = evalResult
 

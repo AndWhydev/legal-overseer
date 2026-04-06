@@ -35,7 +35,7 @@
  * ```
  */
 
-import { generateText, generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { type ZodType } from 'zod'
 import { models } from '@/lib/ai'
 
@@ -144,12 +144,14 @@ export async function runOrchestratorWorkflow<
   // Step 1: Plan
   const prompt = plannerPrompt.replace(/\{\{input\}\}/g, input)
 
-  const { object: plan } = await generateObject({
+  const { output: plan } = await generateText({
     model: models[plannerModel],
     system: plannerSystem,
-    schema: planSchema,
+    output: Output.object({ schema: planSchema }),
     prompt,
   })
+
+  if (!plan) throw new Error('Planner returned null')
 
   const tasks = getTasks(plan)
 
@@ -162,10 +164,10 @@ export async function runOrchestratorWorkflow<
       const system = workerSystemByType[taskType] ?? defaultWorkerSystem
       const workerPrompt = taskToWorkerPrompt(task, input)
 
-      const { object: output } = await generateObject({
+      const { output } = await generateText({
         model: models[workerModel],
         system,
-        schema: workerSchema,
+        output: Output.object({ schema: workerSchema }),
         prompt: workerPrompt,
       })
 

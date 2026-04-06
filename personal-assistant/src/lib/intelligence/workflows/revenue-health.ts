@@ -23,7 +23,7 @@
  */
 
 import { z } from 'zod'
-import { generateObject } from 'ai'
+import { generateText, Output } from 'ai'
 import { models } from '@/lib/ai'
 import { runSequentialWorkflow } from '@/lib/workflows/patterns'
 import type {
@@ -363,24 +363,28 @@ export async function runRevenueHealth(
     // Step 4: Structure the output via generateObject
     // -----------------------------------------------------------------------
 
-    const { object: healthScores } = await generateObject({
+    const { output: healthScores } = await generateText({
       model: models.fast,
       system:
         'Parse the following revenue health analysis into structured client health scores. Use the contact IDs and names from the data.',
-      schema: clientHealthArraySchema,
+      output: Output.object({ schema: clientHealthArraySchema }),
       prompt: `Parse this health analysis into structured scores:\n\nAnalysis: ${sequentialResult.steps[0]?.output ?? ''}\n\nClient Data: ${dataContext}`,
     })
+
+    if (!healthScores) throw new Error('Health score parsing returned null')
 
     stepsCompleted += 1
     tokensEstimate += 1500
 
-    const { object: anomalyResult } = await generateObject({
+    const { output: anomalyResult } = await generateText({
       model: models.fast,
       system:
         'Parse the following anomaly analysis into structured anomaly records. Use contact IDs and names from the data.',
-      schema: anomalyArraySchema,
+      output: Output.object({ schema: anomalyArraySchema }),
       prompt: `Parse this anomaly analysis into structured records:\n\nAnalysis: ${sequentialResult.steps[1]?.output ?? ''}\n\nClient Data: ${dataContext}`,
     })
+
+    if (!anomalyResult) throw new Error('Anomaly parsing returned null')
 
     stepsCompleted += 1
     tokensEstimate += 1500
