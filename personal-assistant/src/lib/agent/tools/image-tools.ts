@@ -81,6 +81,7 @@ async function generateImageViaGateway(prompt: string): Promise<{ base64: string
   const result = await generateText({
     model: gateway(IMAGE_MODEL),
     prompt,
+    abortSignal: AbortSignal.timeout(60_000), // 60s timeout for image gen
   })
   const images = (result.files || []).filter(
     (f: { mediaType?: string }) => f.mediaType?.startsWith('image/')
@@ -119,9 +120,8 @@ export const imageToolHandlers: Record<string, AgentToolHandler> = {
 
       return {
         success: true,
-        // image_base64 sent only via SSE __image_data field (too large for model context)
         __image_data: images[0].base64,
-        image_generated: true,
+        status: 'Image successfully generated and delivered to the user inline.',
         model_used: IMAGE_MODEL,
         prompt_used: fullPrompt,
       }
