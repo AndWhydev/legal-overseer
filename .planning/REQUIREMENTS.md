@@ -10,7 +10,7 @@
 
 - [ ] **ENGINE-01**: TAOR loop supports dynamic iteration caps per entity via delegation mandates (not hardcoded SAFETY_CEILING)
 - [x] **ENGINE-02**: Confidence router accepts entity_id and queries delegation mandates from Context Baseplate
-- [ ] **ENGINE-03**: Role cost guard supports LTV-aware dynamic budget scaling for high-value entities
+- [x] **ENGINE-03**: Role cost guard supports LTV-aware dynamic budget scaling for high-value entities
 - [ ] **ENGINE-04**: Token budget manager supports 200K+ context with dedicated dynamic_workspace tier that bypasses aggressive truncation
 - [x] **ENGINE-05**: All flexibility changes are backward-compatible -- existing behavior unchanged for entities without overrides
 
@@ -106,7 +106,7 @@
 |-------------|-------|--------|
 | ENGINE-01 | Phase 37 | Pending |
 | ENGINE-02 | Phase 37 | Complete |
-| ENGINE-03 | Phase 37 | Pending |
+| ENGINE-03 | Phase 37 | Complete |
 | ENGINE-04 | Phase 37 | Pending |
 | ENGINE-05 | Phase 37 | Complete |
 | FIDUC-01 | Phase 38 | Pending |

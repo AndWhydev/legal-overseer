@@ -258,7 +258,7 @@ Phase 38 ──┘                  Phase 41 ──┤──→ Phase 42 ──�
 Plans:
 - [x] 37-01-PLAN.md -- Entity overrides schema + TAOR dynamic iteration caps (Wave 1)
 - [x] 37-02-PLAN.md -- Confidence router entity delegation support (Wave 1)
-- [ ] 37-03-PLAN.md -- LTV-aware dynamic cost guard budget scaling (Wave 1)
+- [x] 37-03-PLAN.md -- LTV-aware dynamic cost guard budget scaling (Wave 1)
 - [x] 37-04-PLAN.md -- Token budget manager dynamic workspace tier (Wave 1)
 - [ ] 37-05-PLAN.md -- Entity override resolution + backward compatibility regression (Wave 2)
 
@@ -385,7 +385,7 @@ Plans:
 | 34. Builder Role | v1.5 | 4/4 | Complete | 2026-03-27 |
 | 35. Proactive Workflows | v1.5 | 3/3 | Complete | 2026-03-27 |
 | 36. Mobile-First Experience | v1.5 | 4/4 | Complete | 2026-03-28 |
-| 37. Engine Flexibility | v2.0 | 6/5 | Complete   | 2026-04-09 |
+| 37. Engine Flexibility | v2.0 | 8/5 | Complete   | 2026-04-09 |
 | 38. Fiduciary Memory | v2.0 | 6/3 | Complete   | 2026-04-08 |
 | 39. Async Task Infrastructure | v2.0 | 0/5 | Planned | - |
 | 40. Multimodal Web Automation | v2.0 | 0/TBD | Not started | - |
