@@ -58,6 +58,12 @@ export {
 } from './heartbeat-monitor'
 
 export {
+  subscribeToTaskProgress,
+  unsubscribeFromTask,
+  formatProgressMessage,
+} from './chat-progress'
+
+export {
   type TaskExecutor,
   type TaskExecutionContext,
   registerTaskExecutor,
