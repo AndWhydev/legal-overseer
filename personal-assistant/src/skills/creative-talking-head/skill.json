@@ -1,9 +1,0 @@
-{
-  "name": "Creative: Talking Head",
-  "description": "Plan presenter and UGC-style video content with styling, backgrounds, lighting, and framing guidance.",
-  "tags": ["talking head", "presenter video", "UGC video", "testimonial", "educational video", "personal brand", "video content", "presenter styling"],
-  "triggerKeywords": ["talking head video", "presenter video", "UGC video", "testimonial video", "educational video", "video presenter", "personal brand video", "speaker video", "face to camera", "spokesperson", "video content creator", "video styling"],
-  "roleAffinity": ["comms", "operations"],
-  "estimatedTokens": 2745,
-  "planGate": "growth"
-}

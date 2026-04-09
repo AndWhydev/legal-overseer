@@ -1,9 +1,0 @@
-{
-  "name": "Creative: Brand Asset",
-  "description": "Generate branded visual elements including logos, icons, patterns, and illustrations using AI image prompts.",
-  "tags": ["brand assets", "logo design", "brand elements", "icons", "brand patterns", "visual identity", "brand design", "branded graphics"],
-  "triggerKeywords": ["brand asset", "create logo", "design icon", "brand pattern", "brand illustration", "visual identity", "logo design", "brand elements", "icon set", "brand texture", "brand graphics", "generate logo"],
-  "roleAffinity": ["comms", "operations"],
-  "estimatedTokens": 2512,
-  "planGate": "growth"
-}

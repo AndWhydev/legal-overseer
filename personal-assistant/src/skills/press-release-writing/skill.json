@@ -1,9 +1,0 @@
-{
-  "name": "Press Release Writing",
-  "description": "Write AP-style press releases with inverted pyramid structure for announcements and launches.",
-  "tags": ["writing", "pr", "media", "announcements", "ap-style"],
-  "triggerKeywords": ["press release", "pr writing", "media release", "news release", "announcement", "product launch announcement", "funding announcement", "company news", "media advisory", "ap style", "press statement", "news wire"],
-  "roleAffinity": ["comms", "operations"],
-  "estimatedTokens": 2100,
-  "planGate": "growth"
-}

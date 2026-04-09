@@ -1,9 +1,0 @@
-{
-  "name": "@bitbit/deployment-torkay",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Torkay deployment — Tor's personal agency instance (dogfooding)",
-  "dependencies": {
-    "@bitbit/core": "*"
-  }
-}

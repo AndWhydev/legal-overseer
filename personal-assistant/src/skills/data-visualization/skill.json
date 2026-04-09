@@ -1,9 +1,0 @@
-{
-  "name": "Data Visualization",
-  "description": "Select the right chart type, apply color theory, and annotate data stories for clear insight communication.",
-  "tags": ["design", "data", "charts", "visualization", "analytics"],
-  "triggerKeywords": ["data visualization", "chart", "graph", "data chart", "bar chart", "line chart", "scatter plot", "data viz", "visualization", "dashboard chart", "infographic data", "data presentation", "chart design", "plot", "heatmap", "pie chart alternative"],
-  "roleAffinity": ["operations"],
-  "estimatedTokens": 1600,
-  "planGate": "growth"
-}

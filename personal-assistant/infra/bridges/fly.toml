@@ -1,8 +1,0 @@
-app = "bitbit-bridges"
-primary_region = "syd"
-
-[build]
-  dockerfile = "Dockerfile"
-
-[env]
-  LOG_LEVEL = "info"
