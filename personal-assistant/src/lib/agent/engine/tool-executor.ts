@@ -51,6 +51,8 @@ export const TOOL_ROLE_MAP: Record<string, string> = {
   workspace_upload: 'workspaces',
   workspace_download: 'workspaces',
   workspace_destroy: 'workspaces',
+  // Escalation
+  request_human_handoff: 'escalation',
 }
 
 // ---------------------------------------------------------------------------

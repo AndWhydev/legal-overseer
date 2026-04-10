@@ -16,8 +16,11 @@ import { graphTraversalToolDefinitions, graphTraversalToolHandlers } from './too
 import { spawnAgentToolDefinition, handleSpawnAgent, type SpawnContext } from './tools/spawn-agent'
 import { cancelTaskToolDefinition, handleCancelTask } from './tools/cancel-task'
 import { spawnAsyncTaskDefinition, handleSpawnAsyncTask } from './tools/spawn-async-task'
+import { humanHandoffToolDefinition, handleHumanHandoff } from './tools/human-handoff'
 import { imageToolDefinitions, imageToolHandlers } from './tools/image-tools'
 import { composioToolDefinitions, composioToolHandlers } from './tools/composio-tools'
+import { workspaceToolDefinitions, workspaceToolHandlers } from './tools/workspace-tools'
+import { browserToolDefinitions, browserToolHandlers } from './tools/browser-tools'
 import { executeMCPTool } from '@/lib/composio/mcp-session'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
@@ -46,7 +49,7 @@ import { getOrgPlan, checkToolPlanGate, TOOL_PLAN_REQUIREMENTS } from '@/lib/bil
 // Tool Group metadata (for future Tool RAG via pgvector)
 // ---------------------------------------------------------------------------
 
-export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo' | 'tenders' | 'content' | 'builder' | 'creative' | 'composio'
+export type ToolGroup = 'core' | 'memory' | 'channel' | 'web' | 'comms' | 'agentic' | 'ads' | 'seo' | 'tenders' | 'content' | 'builder' | 'creative' | 'composio' | 'workspace' | 'browser' | 'escalation'
 
 export interface ToolGroupMeta {
   id: ToolGroup
@@ -134,6 +137,24 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     description: 'Execute actions across 1000+ third-party apps (HubSpot, Notion, Jira, Salesforce, Slack, and more) via Composio managed integrations',
     tools: ['composio_list_apps', 'composio_list_actions', 'composio_execute', 'composio_connect_app'],
   },
+  workspace: {
+    id: 'workspace',
+    label: 'Ephemeral Workspaces',
+    description: 'Spin up isolated Firecracker microVM sandboxes for running code, data analysis, and file processing in a clean environment',
+    tools: ['spawn_ephemeral_workspace', 'workspace_exec', 'workspace_upload', 'workspace_download', 'workspace_destroy'],
+  },
+  browser: {
+    id: 'browser',
+    label: 'Browser Automation',
+    description: 'Launch cloud browser sessions to automate web interactions, scrape data, fill forms, and perform multi-step web workflows using natural language',
+    tools: ['spawn_browser_agent'],
+  },
+  escalation: {
+    id: 'escalation',
+    label: 'Human Escalation',
+    description: 'Escalate tasks to the human user when all automated tiers are exhausted or human judgment is required',
+    tools: ['request_human_handoff'],
+  },
 }
 
 /** Quick lookup: tool name → group. Derived from TOOL_GROUPS. */
@@ -206,6 +227,12 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
 
   resolve_tool: 'Tool schema loaded. You can now call this tool in subsequent turns. Do not announce the tool resolution to the user — just proceed to use the tool.',
 
+  // Browser Automation
+  spawn_browser_agent: 'Browser task completed. Present the results naturally — summarize what was found or done, include any extracted data in a readable format. If the task failed, explain the error and suggest alternatives (e.g., using web_read for simpler fetches). Do not expose session IDs, action logs, or internal details unless asked.',
+
+  // Human Escalation
+  request_human_handoff: 'Task escalated to the user. Confirm briefly what was escalated and why automated tools could not handle it. Let the user know they will be notified and can respond via the dashboard, WhatsApp, or chat. Do not repeat the full description — just summarize the ask and what you expect back.',
+
   // Ad Scripts
   generate_ad_scripts: 'Ad scripts generated. Present the scripts in a structured format showing each platform\'s hook, body, CTA, and duration. Highlight the hook variations for A/B testing. If storyboard data is included, present the shot-by-shot breakdown with timing. Ask if the user wants to adapt any script to a different platform.',
   list_ad_batches: 'Present the script batches as a list with batch ID, offer name, number of scripts, and date created. Ask if the user wants to view scripts from a specific batch.',
@@ -231,6 +258,13 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   generate_website: 'Website generated and shown as a live HTML preview artifact in the chat. Do NOT repeat the HTML code. Confirm briefly: "Generated [business_name] website using [template/custom design]. You can see the live preview on the right. Tell me what you want to change." The user can see the full responsive preview in the artifact panel.',
   list_website_templates: 'Present the available templates as a concise list showing name, category, and a brief description. If the user seems interested in one, suggest using generate_website with that template_id.',
   revise_website: 'Website updated with the requested changes. The revised preview is shown in the artifact panel. Confirm briefly what changed: "Updated [change summary]. Preview is refreshed on the right." Do not repeat HTML.',
+
+  // Workspace
+  spawn_ephemeral_workspace: 'Workspace created. Use the workspace_id to run code with workspace_exec, upload files with workspace_upload, or download results with workspace_download. Remember to call workspace_destroy when done to release resources. Do not expose the workspace_id to the user — refer to it as "the workspace" or "the sandbox".',
+  workspace_exec: 'Code execution in the sandbox completed. Use the stdout/stderr output to continue the conversation. If there was an error, fix the code and try again. Summarize findings for the user rather than showing raw output. If artifacts (images, charts) were produced, mention them.',
+  workspace_upload: 'File uploaded to the sandbox. You can now reference this file in workspace_exec code. Do not announce the upload separately — just proceed to use the file.',
+  workspace_download: 'File downloaded from the sandbox. Present the content to the user or use it in your response. If the file is large, summarize the key parts.',
+  workspace_destroy: 'Workspace destroyed and resources released. Do not announce the cleanup to the user unless they explicitly asked about it.',
 
   // Deploy & Preview
   deploy_website: 'Website deployed. Confirm the live URL and whether it was published or saved as a draft. If Elementor was used, mention that the client can edit it in the Elementor editor. If deployment failed, explain the error clearly and suggest next steps.',
@@ -1017,6 +1051,8 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...graphTraversalToolHandlers,
   ...imageToolHandlers,
   ...composioToolHandlers,
+  ...workspaceToolHandlers,
+  ...browserToolHandlers,
   async generate_invoice(input, orgId, supabase) {
     return handleGenerateInvoice(input as unknown as Parameters<typeof handleGenerateInvoice>[0], orgId, supabase)
   },
@@ -1026,10 +1062,13 @@ const allHandlers: Record<string, AgentToolHandler> = {
   async spawn_async_task(input, orgId, supabase) {
     return handleSpawnAsyncTask(input, orgId, supabase)
   },
+  async request_human_handoff(input, orgId, supabase) {
+    return handleHumanHandoff(input, orgId, supabase)
+  },
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, ...webToolDefinitions, ...graphTraversalToolDefinitions, ...imageToolDefinitions, ...composioToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition, cancelTaskToolDefinition, spawnAsyncTaskDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, ...webToolDefinitions, ...graphTraversalToolDefinitions, ...imageToolDefinitions, ...composioToolDefinitions, ...workspaceToolDefinitions, ...browserToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition, cancelTaskToolDefinition, spawnAsyncTaskDefinition, humanHandoffToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])
