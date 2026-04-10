@@ -24,16 +24,16 @@ People in Andy's network who may be interested in investing at the earliest stag
 - BitBit is an entity, not a tool. Copy should make it feel like a someone, not a something.
 - No hyphens or emdashes in any copy.
 - All copy reviewed against humanizer guidelines: no AI vocabulary, no rule of three, no promotional language, no negative parallelisms, no vague attributions.
-- Grounded in the competitive research from `.omc/research/bitbit-market-analysis.md`.
+- Grounded in competitive research from `.omc/research/bitbit-competitive-intelligence-v2.md`
 
 ## Tagline strategy
 
 | Location | Tagline | Purpose |
 |---|---|---|
 | Cover (slide 1) | "Meet your new COO" | Introduces BitBit as an entity with a role. Four words. Memorable. |
-| Product intro (slide 4) | "A COO costs $200k a year. BitBit costs $99 a month." | Lindy style cost comparison. Lands after they understand the product. |
-| Competitive punchline (slide 9) | "They automate tasks. BitBit runs your business." | Positions against Zapier/Lindy in one sentence. |
-| Throughout | Specific awareness lines like "It already knows who Dave is" | Shows the Context Baseplate moat through concrete examples. |
+| Product intro (slide 4) | "A COO costs $200k a year. BitBit costs $99 a month." | Cost comparison that lands after they understand the product. |
+| Competitive punchline (slide 9) | "They draft. BitBit does." | Three words. Captures the core difference. |
+| Throughout | Specific awareness lines like "It already knows who Dave is" | Shows the Memory Palace through concrete examples. |
 
 ## Slide by slide spec
 
@@ -58,9 +58,9 @@ People in Andy's network who may be interested in investing at the earliest stag
   - Y axis: Assemble it yourself to Works out of the box
   - Top right (DIY + multi function): OpenClaw, n8n
   - Bottom left (turnkey + single function): 11x (sales), Sierra (support), Devin (code)
-  - Bottom right (turnkey + multi function): BitBit, alone in the quadrant
-- Copy: "Horizontal platforms make you build your own agent from scratch. Vertical tools handle one job. Nobody ships something that just handles your business. All of it. Without setup."
-- Source: competitive research validated this gap across 13 competitors
+  - Bottom right (turnkey + multi function): BitBit. Competitors arriving but surface level.
+- Copy: "Horizontal platforms make you build your own agent from scratch. Vertical tools handle one job. A few new players are showing up in the middle. They're chat wrappers with names. BitBit is the one with infrastructure."
+- Source: competitive research validated this across 13+ competitors including Zo, Hynge, Sintra, Ambiguous
 
 ### Slide 4: Meet BitBit
 
@@ -75,14 +75,15 @@ People in Andy's network who may be interested in investing at the earliest stag
 Three panels framed as traits, not architecture:
 
 **It connects to everything.**
-200+ services through one screen. Email, WhatsApp, iMessage, Xero, Calendar, Slack, and hundreds more via Composio. Click to connect.
+200+ services through one screen. Email, WhatsApp, iMessage, Xero, Calendar, Slack, and hundreds more via Composio. Click to connect. WhatsApp voice notes get transcribed automatically. You say "invoice him" and it knows who you mean from the conversation.
 Video clip: connections grid with tiles.
 
-**It builds context on its own.**
-BitBit does its thinking when information arrives, not when you ask. It maps people, relationships, patterns, and active threads before you need them.
+**It remembers everything and keeps getting smarter.**
+BitBit's Memory Palace stores seven types of business knowledge: conversations, decisions, patterns, facts, relationships, pricing history, and learned conventions. It scores confidence on everything it learns. Memories that aren't corroborated fade over time. Ones that get confirmed grow stronger. It detects behavioral patterns across your contacts automatically. Late payers. Scope creep. Communication gaps. You can ask it "Why did we stop working with TechCorp?" and it reconstructs the full timeline from real data. Ask "What did we charge for the last 3 WordPress builds?" and it cross references invoices with project types and contacts. It also watches your margins. If it notices two projects had scope creep that wasn't invoiced, it tells you before doing more work for that client.
+No other AI assistant does this. They remember what you said. BitBit understands how your business works.
 
 **You choose how much it does.**
-Observer: it watches and tells you what it sees. Co pilot: it drafts and you approve. Autopilot: it acts and reports back. Per role, your call.
+Three levels of trust, set per role. Observer: it watches and tells you what it sees. Co pilot: it drafts and you approve. Autopilot: it acts and reports back. And for entities you fully trust it with, you can say "Take Steve off my hands." BitBit then handles all communications, invoicing, and follow ups for Steve autonomously and sends you a morning briefing of what it did. Say "Stop managing Steve" and it stops instantly.
 
 ### Slide 6: It's already working
 
@@ -94,7 +95,8 @@ Observer: it watches and tells you what it sees. Co pilot: it drafts and you app
 - Proof points:
   - Multi channel messaging live across WhatsApp, iMessage, SMS, email, Slack
   - 2,072 tests across 768 suites
-  - 120 database migrations
+  - 120+ database migrations
+  - Confidence routing validated against 65 scenarios including adversarial inputs, 0% false positive rate
   - Waitlist collecting signups at bitbit.chat
 
 ### Slide 7: How we make money
@@ -112,28 +114,30 @@ Observer: it watches and tells you what it sees. Co pilot: it drafts and you app
 - SAM: Service businesses (agencies, trades, professional services) in English speaking markets
 - SOM: AU/NZ agencies and trades, year one
 - Visual: concentric circles narrowing down
-- **Action required:** market sizing numbers need primary source validation before presenting. These are directional estimates from the competitive research, not cited figures.
+- Market validation callout: Sintra has 40,000+ users paying $39 to $197/mo for AI that can't send an email autonomously. Hynge has 2,374 users paying $59 to $149/mo for AI that drafts but doesn't act. Ambiguous has a16z backing. ai.work raised $10M seed. Maisa raised $30M seed. The willingness to pay is proven. The technology depth is not.
+- **Action required:** TAM/SAM/SOM numbers need primary source validation before presenting.
 
-### Slide 9: The landscape
+### Slide 9: The competition
 
-- Headline: "We mapped every player. Nobody's here."
+- Headline: "Everyone's arriving. Nobody's built the foundation."
 - Comparison table (shadcn table styling):
 
-| | Messaging | Invoicing | Triage | Autonomy | Turnkey | Price |
-|---|---|---|---|---|---|---|
-| Zapier | Via zaps | Via zaps | Rules based | Low | Yes | $20/mo |
-| Lindy.ai | Email, Slack, Phone | Via integrations | Agent handoff | Medium | Partial | $50/mo |
-| OpenClaw | All (DIY) | Community built | Manual | High | No | Free + infra |
-| 11x | Outbound only | No | No | High | Yes | $50K/yr |
-| BitBit | All channels, native | Built in | AI driven | Configurable | Yes | $99 to $499/mo |
+| | Channels | Memory | Invoicing | Autonomy | Price |
+|---|---|---|---|---|---|
+| Zo | SMS, Email, Telegram | Conversational recall | No | On/off | $18/mo |
+| Hynge | Telegram, WhatsApp, Slack | Conversational recall | No | Draft only | $59 to $149/mo |
+| Sintra | Chat only | Brand voice | No | No | $39 to $197/mo |
+| Lindy | Email, Slack, Phone | Per agent | Via integrations | Per agent | $20 to $299/mo |
+| Ambiguous | Email, Slack | Agentic memory | No | No | TBD (a16z) |
+| BitBit | WhatsApp, iMessage, SMS, Email, Slack | Memory Palace: typed, scored, decaying, pattern detecting, margin protecting | Built in, autonomous, fiduciary aware | Observer to Co pilot to Autopilot to Infinite Delegation | $99 to $499/mo |
 
-- Punchline: "They automate tasks. BitBit runs your business."
-- Source: full competitive analysis in `.omc/research/bitbit-market-analysis.md`
+- Punchline: "They draft. BitBit does."
+- Source: `.omc/research/bitbit-competitive-intelligence-v2.md`
 
 ### Slide 10: Team
 
 - Two co founders, 50/50
-- Torrin (technical founder): Solo built the full stack. Agent engine, multi channel bridge architecture, 120 migrations, 2,072 tests, 10 agent packages.
+- Torrin (technical founder): Solo built the full stack. Agent engine with confidence routing validated against 65 scenarios. Multi channel bridge architecture with per user WhatsApp and iMessage instances. Memory Palace with seven knowledge types and confidence decay. 120+ migrations, 2,072 tests, 10 agent packages. 15 engineering phases shipped or in progress.
 - Andy (operations and distribution): Runs All Webbed Up. First deployment, agency network for expansion. Knows the customer because he is the customer.
 - Framing: "One person who can build it. One person who can sell it."
 
@@ -144,6 +148,31 @@ Observer: it watches and tells you what it sees. Co pilot: it drafts and you app
 - Key milestones ahead
 - Contact information
 - Soft close, not a formal ask
+
+## What's built vs what's coming (engineering depth)
+
+For investor conversations that go deep on technical capability:
+
+### Shipped (7 phases)
+- Production infrastructure across Vercel + Cloudflare Workers + Fly.io
+- Live channel connectivity for 6 channels with OAuth, token refresh, dedup
+- WhatsApp pipeline with voice transcription, multi turn context, approval flow
+- Confidence routing: 4 layer cascade, validated against 65 scenarios, 0% false positives
+- Invoice entity resolution with fuzzy matching and duplicate detection
+- Dedicated WhatsApp bridge on Fly.io with persistent auth and health monitoring
+- Integration hardening and tech debt cleanup
+
+### In progress (4 phases, agents running 24/7)
+- Engine flexibility: per entity overrides, LTV multipliers, auto delegated decisions
+- Fiduciary memory: game theory margin protection, invisible to user
+- Tool priority chain: model selects execution tier per task (API vs browser vs workspace vs human handoff), learns from reliability history
+- Infinite delegation: per entity NL delegation, morning briefings, instant revocation
+
+### Planned (4 phases)
+- Async task infrastructure: durable execution surviving worker restarts, conversational control
+- Multimodal web automation: autonomous browser control with Browserbase/Stagehand/CUA
+- Ephemeral workspaces: runtime dev environments (Vercel Sandbox or E2B)
+- Living Brain v2: write heavy consolidation architecture, 12x cost reduction, predictive coding engine, System 1/2 query gating, competitive context selection
 
 ## Video clip plan
 
@@ -188,11 +217,13 @@ Every major claim in the deck maps to the competitive analysis:
 
 | Deck claim | Research evidence |
 |---|---|
-| "Meet your new COO" | No competitor claims the COO role. Validated empty niche. |
+| "Meet your new COO" | No competitor claims the COO role. Hynge uses "Chief of Staff" but lacks autonomy. |
 | "$200k hire for $99/mo" | Enterprise agents charge $50k to $150k/yr for single functions |
-| Empty quadrant in 2x2 matrix | 13 competitors mapped, none in turnkey + multi function |
-| "It already knows who Dave is" | No competitor has persistent cross channel context (Context Baseplate) |
-| "They automate tasks. BitBit runs your business." | Zapier/Lindy are horizontal, 11x/Sierra are single function |
+| "Everyone's arriving. Nobody's built the foundation." | 13+ competitors mapped. Zo, Hynge, Sintra, Ambiguous all entering. All surface level. |
+| Memory Palace | No competitor has typed, scored, decaying memory with pattern detection and pricing intelligence |
+| "They draft. BitBit does." | Every competitor stops at generating output. BitBit acts autonomously in Autopilot/Infinite Delegation. |
+| Fiduciary constraints | No competitor evaluates whether actions serve the user's financial interest |
+| Confidence routing validated | No competitor publishes validation data for autonomy decisions. BitBit: 65 scenarios, 0% false positives. |
 | 200+ connections | Composio integration provides broad service coverage |
 
 ## Open items
