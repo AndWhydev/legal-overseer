@@ -16,6 +16,7 @@ import { checkRoleBudget, getExecutionTokenCap, type RoleBudgetResult } from '@/
 import { extractCitationsFromToolResult } from '@/lib/agent/citation-extractor'
 import { reflectAction } from '@/lib/context/action-reflector'
 import { logger } from '@/lib/core/logger'
+import { recordToolOutcome } from './tool-resolver'
 import type { EngineConfig, AgentEvent } from './types'
 
 // ---------------------------------------------------------------------------
@@ -133,8 +134,10 @@ export async function executeToolBatch(
   }
 
   // ── Parallel tool dispatch ───────────────────────────────────────────
+  const toolStartTimes = new Map<string, number>()
   const toolExecutions = await Promise.allSettled(
     toolBlocks.map((tool) => {
+      toolStartTimes.set(tool.id, Date.now())
       const override = toolBudgetOverrides.get(tool.id)
       if (override?.blocked) {
         // Return a synthetic budget-blocked result without calling the handler
@@ -168,6 +171,7 @@ export async function executeToolBatch(
     if (execution.status === 'rejected') {
       const errorMsg =
         execution.reason instanceof Error ? execution.reason.message : String(execution.reason)
+      const latencyMs = Date.now() - (toolStartTimes.get(tool.id) ?? Date.now())
       events.push({ type: 'tool_result', data: { callId: tool.id, name: tool.name, result: null, success: false } })
       events.push({
         type: 'stage',
@@ -179,6 +183,8 @@ export async function executeToolBatch(
         content: `Tool execution failed: ${errorMsg}`,
         is_error: true,
       })
+      // Fire-and-forget reliability tracking
+      recordToolOutcome(config.supabase, config.orgId, tool.name, tool.input as Record<string, unknown>, false, errorMsg, latencyMs)
       continue
     }
 
@@ -285,8 +291,17 @@ export async function executeToolBatch(
             : `Error: ${result.error}`,
         is_error: !result.success && !result.queued,
       })
+
+      // Fire-and-forget reliability tracking
+      const latencyMs = Date.now() - (toolStartTimes.get(tool.id) ?? Date.now())
+      recordToolOutcome(
+        config.supabase, config.orgId, tool.name,
+        tool.input as Record<string, unknown>,
+        result.success, result.error, latencyMs,
+      )
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err)
+      const latencyMs = Date.now() - (toolStartTimes.get(tool.id) ?? Date.now())
       events.push({ type: 'tool_result', data: { callId: tool.id, name: tool.name, result: null, success: false } })
       events.push({
         type: 'stage',
@@ -298,6 +313,8 @@ export async function executeToolBatch(
         content: `Tool execution failed: ${errorMsg}`,
         is_error: true,
       })
+      // Fire-and-forget reliability tracking
+      recordToolOutcome(config.supabase, config.orgId, tool.name, tool.input as Record<string, unknown>, false, errorMsg, latencyMs)
     }
   }
 
@@ -382,10 +399,12 @@ export async function* executeToolBatchStreaming(
   const completionQueue: CompletedTool[] = []
   let notifyCompletion: (() => void) | null = null
   const toolStartTime = Date.now()
+  const perToolStartTimes = new Map<number, number>()
 
   for (let idx = 0; idx < toolBlocks.length; idx++) {
     const tool = toolBlocks[idx]
     const override = toolBudgetOverrides.get(tool.id)
+    perToolStartTimes.set(idx, Date.now())
 
     const promise: Promise<ToolResult> = override?.blocked
       ? Promise.resolve({
@@ -421,6 +440,7 @@ export async function* executeToolBatchStreaming(
       if (completed.status === 'rejected') {
         const errorMsg =
           completed.reason instanceof Error ? completed.reason.message : String(completed.reason)
+        const latencyMs = Date.now() - (perToolStartTimes.get(completed.idx) ?? Date.now())
         yield { type: 'tool_result', data: { callId: tool.id, name: tool.name, result: null, success: false } }
         yield {
           type: 'stage',
@@ -432,6 +452,8 @@ export async function* executeToolBatchStreaming(
           content: `Tool execution failed: ${errorMsg}`,
           is_error: true,
         }
+        // Fire-and-forget reliability tracking
+        recordToolOutcome(config.supabase, config.orgId, tool.name, tool.input as Record<string, unknown>, false, errorMsg, latencyMs)
         continue
       }
 
@@ -520,8 +542,17 @@ export async function* executeToolBatchStreaming(
               : `Error: ${result.error}`,
           is_error: !result.success && !result.queued,
         }
+
+        // Fire-and-forget reliability tracking
+        const latencyMs = Date.now() - (perToolStartTimes.get(completed.idx) ?? Date.now())
+        recordToolOutcome(
+          config.supabase, config.orgId, tool.name,
+          tool.input as Record<string, unknown>,
+          result.success, result.error, latencyMs,
+        )
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : String(err)
+        const latencyMs = Date.now() - (perToolStartTimes.get(completed.idx) ?? Date.now())
         yield { type: 'tool_result', data: { callId: tool.id, name: tool.name, result: null, success: false } }
         yield {
           type: 'stage',
@@ -533,6 +564,8 @@ export async function* executeToolBatchStreaming(
           content: `Tool execution failed: ${errorMsg}`,
           is_error: true,
         }
+        // Fire-and-forget reliability tracking
+        recordToolOutcome(config.supabase, config.orgId, tool.name, tool.input as Record<string, unknown>, false, errorMsg, latencyMs)
       }
     }
 
