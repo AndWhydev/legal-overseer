@@ -129,21 +129,28 @@ export function recordToolOutcome(
   error?: string,
   latencyMs?: number,
 ): void {
-  const serviceName = inferServiceName(toolName, toolInput)
-  const tier: ReliabilityTier = getTierForTool(toolName)
+  try {
+    const serviceName = inferServiceName(toolName, toolInput)
+    const tier: ReliabilityTier = getTierForTool(toolName)
 
-  recordExecution(supabase, {
-    org_id: orgId,
-    service_name: serviceName,
-    tier,
-    success,
-    error_message: error ?? null,
-    latency_ms: latencyMs ?? null,
-    tool_name: toolName,
-  }).catch((err) => {
+    recordExecution(supabase, {
+      org_id: orgId,
+      service_name: serviceName,
+      tier,
+      success,
+      error_message: error ?? null,
+      latency_ms: latencyMs ?? null,
+      tool_name: toolName,
+    }).catch((err) => {
+      logger.warn('[tool-resolver] recordToolOutcome failed', {
+        error: err instanceof Error ? err.message : String(err),
+        toolName,
+      })
+    })
+  } catch (err) {
     logger.warn('[tool-resolver] recordToolOutcome failed', {
       error: err instanceof Error ? err.message : String(err),
       toolName,
     })
-  })
+  }
 }
