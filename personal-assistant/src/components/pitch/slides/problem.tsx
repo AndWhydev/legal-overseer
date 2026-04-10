@@ -3,12 +3,12 @@
 import { Slide } from "../slide";
 
 const ICONS = [
-  { name: "Gmail", color: "bg-red-100 text-red-600" },
-  { name: "WhatsApp", color: "bg-green-100 text-green-600" },
-  { name: "Xero", color: "bg-blue-100 text-blue-600" },
-  { name: "Calendar", color: "bg-amber-100 text-amber-600" },
-  { name: "Slack", color: "bg-purple-100 text-purple-600" },
-  { name: "CRM", color: "bg-zinc-100 text-zinc-600" },
+  { name: "Gmail" },
+  { name: "WhatsApp" },
+  { name: "Xero" },
+  { name: "Calendar" },
+  { name: "Slack" },
+  { name: "CRM" },
 ];
 
 export function ProblemSlide() {
@@ -27,7 +27,7 @@ export function ProblemSlide() {
         {ICONS.map((icon) => (
           <div
             key={icon.name}
-            className={`rounded-lg px-4 py-2 text-sm font-medium opacity-60 ${icon.color}`}
+            className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-500 opacity-60"
           >
             {icon.name}
           </div>

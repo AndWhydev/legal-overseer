@@ -80,10 +80,10 @@ export function ComparisonTable() {
           {ROWS.map((row) => (
             <tr
               key={row.name}
-              className={`border-b border-zinc-100 ${
+              className={`${
                 row.highlight
                   ? "bg-zinc-900 text-white"
-                  : "text-zinc-600"
+                  : "border-b border-zinc-100 text-zinc-600"
               }`}
             >
               <td
@@ -94,9 +94,9 @@ export function ComparisonTable() {
                 {row.name}
               </td>
               <td className="py-3 pr-4">{row.channels}</td>
-              <td className="py-3 pr-4">{row.memory}</td>
-              <td className="py-3 pr-4">{row.invoicing}</td>
-              <td className="py-3 pr-4">{row.autonomy}</td>
+              <td className={`py-3 pr-4 ${row.highlight ? "font-medium" : ""}`}>{row.memory}</td>
+              <td className={`py-3 pr-4 ${row.highlight ? "font-medium" : ""}`}>{row.invoicing}</td>
+              <td className={`py-3 pr-4 ${row.highlight ? "font-medium" : ""}`}>{row.autonomy}</td>
               <td className="py-3">{row.price}</td>
             </tr>
           ))}

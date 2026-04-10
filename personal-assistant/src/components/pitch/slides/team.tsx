@@ -9,19 +9,17 @@ export function TeamSlide() {
         One who can build it. One who can sell it.
       </h2>
       <div className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-2">
-        <div className="rounded-lg border border-zinc-200 bg-white p-8">
+        <div className="flex min-h-[200px] flex-col rounded-lg border border-zinc-200 bg-white p-8">
           <div className="text-lg font-semibold text-zinc-900">Torrin</div>
           <div className="mt-1 text-sm text-zinc-500">Technical founder</div>
           <p className="mt-4 text-sm leading-relaxed text-zinc-600">
-            Solo built the full stack. Agent engine with confidence routing
-            validated against 65 real and adversarial scenarios with no false
-            positives in production. Multi channel bridge architecture with per
-            user WhatsApp and iMessage instances. Memory Palace with seven
-            knowledge types and confidence decay. 120+ migrations, 2,072 tests,
-            10 agent packages.
+            Solo built the full stack. Confidence routing validated against 65
+            scenarios. Per user WhatsApp and iMessage bridges. Memory Palace with
+            seven knowledge types. 120+ migrations, 2,072 tests, 10 agent
+            packages.
           </p>
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-white p-8">
+        <div className="flex min-h-[200px] flex-col rounded-lg border border-zinc-200 bg-white p-8">
           <div className="text-lg font-semibold text-zinc-900">Andy</div>
           <div className="mt-1 text-sm text-zinc-500">
             Operations and distribution

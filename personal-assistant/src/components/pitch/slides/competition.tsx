@@ -12,7 +12,7 @@ export function CompetitionSlide() {
       <div className="mt-10">
         <ComparisonTable />
       </div>
-      <p className="mt-8 text-center text-xl font-medium text-zinc-900">
+      <p className="mt-8 text-center font-serif text-2xl font-bold text-zinc-900">
         They draft. BitBit does.
       </p>
     </Slide>

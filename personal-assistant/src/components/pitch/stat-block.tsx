@@ -7,6 +7,7 @@ interface StatBlockProps {
 export function StatBlock({ value, label, source }: StatBlockProps) {
   return (
     <div className="text-center">
+      <div className="mx-auto mb-3 w-8 border-t-2 border-zinc-900" />
       <div className="text-4xl font-semibold tracking-tight text-zinc-900 md:text-5xl">
         {value}
       </div>

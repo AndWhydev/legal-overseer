@@ -13,7 +13,7 @@ export function VideoClip({ src, alt, className = "" }: VideoClipProps) {
       loop
       muted
       playsInline
-      preload="none"
+      preload="metadata"
       aria-label={alt}
       className={`rounded-lg border border-zinc-200 shadow-sm ${className}`}
     >

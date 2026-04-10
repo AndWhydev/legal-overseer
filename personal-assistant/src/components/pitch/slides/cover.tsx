@@ -14,6 +14,9 @@ export function CoverSlide() {
         <h1 className="font-serif text-5xl font-bold tracking-tight text-zinc-900 md:text-7xl">
           Meet your new COO
         </h1>
+        <p className="text-sm tracking-widest text-zinc-400 uppercase">
+          bitbit.chat
+        </p>
       </div>
     </Slide>
   );
