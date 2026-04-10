@@ -14,6 +14,7 @@ export { E2BProvider } from './e2b-provider'
 export {
   createWorkspaceSession,
   getWorkspaceSession,
+  getWorkspaceSessionBySandboxId,
   getActiveWorkspace,
   updateWorkspaceStatus,
   saveWorkspaceArtifact,
