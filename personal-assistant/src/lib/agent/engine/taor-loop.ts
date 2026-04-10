@@ -40,6 +40,7 @@ import type { EngineConfig, AgentEvent } from './types'
 import { preFlightChecks } from './pre-flight'
 import { executeToolBatchStreaming, type ToolExecutionResult } from './tool-executor'
 import { resolveEntityOverrides } from '@/lib/agent/entity-overrides'
+import { buildTierContextBlock } from './tool-resolver'
 
 // ---------------------------------------------------------------------------
 // Correction detection for memory contradiction feedback
@@ -425,6 +426,23 @@ export async function* runTAORLoop(
 
   if (toolRagResult.toolSummary) {
     fullSystemPrompt += `\n\n## Available Tools Note\n${toolRagResult.toolSummary}\n`
+  }
+
+  // Inject tier context when browser or workspace tools are available
+  const hasTieredTools = toolNames.some(
+    n => n === 'spawn_browser_agent' || n === 'spawn_ephemeral_workspace',
+  )
+  if (hasTieredTools) {
+    try {
+      const tierBlock = await buildTierContextBlock(config.supabase, config.orgId)
+      if (tierBlock) {
+        fullSystemPrompt += `\n\n${tierBlock}\n`
+      }
+    } catch (err) {
+      logger.warn('[engine] Tier context injection failed', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
   }
 
   if (deferredPromptSection) {
