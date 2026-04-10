@@ -150,12 +150,19 @@ export function routeAgentAction(
     }
   }
 
+  // 0b. Supervised mandate lowers thresholds by 20% (easier to auto-act)
+  const supervisedReduction = entityDelegation?.mandate === 'supervised' ? 0.80 : 1.0
+  const applyReduction = (t: ConfidenceThresholds): ConfidenceThresholds => ({
+    act: t.act * supervisedReduction,
+    ask: t.ask * supervisedReduction,
+  })
+
   // 1. If calibrated thresholds exist with sufficient sample size, use them
   if (calibratedThresholds && calibratedThresholds.sampleSize >= 50) {
-    const thresholds = getEffectiveThresholds(
+    const thresholds = applyReduction(getEffectiveThresholds(
       { act: calibratedThresholds.act, ask: calibratedThresholds.ask },
       undefined,
-    )
+    ))
     const result = routeByConfidence(confidence, thresholds)
     result.thresholdSource = 'calibrated'
     result.reasoning = `[calibrated, n=${calibratedThresholds.sampleSize}] ${result.reasoning}`
@@ -164,10 +171,10 @@ export function routeAgentAction(
 
   // 2. If explicit agent config thresholds exist, use them (original behavior)
   if (agentConfig?.confidence_thresholds) {
-    const thresholds = getEffectiveThresholds(
+    const thresholds = applyReduction(getEffectiveThresholds(
       agentConfig.confidence_thresholds,
       orgSettings?.confidence_thresholds,
-    )
+    ))
     const result = routeByConfidence(confidence, thresholds)
     result.thresholdSource = 'agent_config'
     return result
@@ -175,20 +182,20 @@ export function routeAgentAction(
 
   // 3. If agentType provided and has per-type thresholds, use those as agent-level overrides
   if (agentType && AGENT_THRESHOLDS[agentType]) {
-    const thresholds = getEffectiveThresholds(
+    const thresholds = applyReduction(getEffectiveThresholds(
       AGENT_THRESHOLDS[agentType],
       orgSettings?.confidence_thresholds,
-    )
+    ))
     const result = routeByConfidence(confidence, thresholds)
     result.thresholdSource = 'agent_type'
     return result
   }
 
   // 4. Fall back to org settings > defaults
-  const thresholds = getEffectiveThresholds(
+  const thresholds = applyReduction(getEffectiveThresholds(
     undefined,
     orgSettings?.confidence_thresholds,
-  )
+  ))
   const result = routeByConfidence(confidence, thresholds)
   result.thresholdSource = orgSettings?.confidence_thresholds ? 'org_settings' : 'defaults'
   return result
