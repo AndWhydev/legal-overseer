@@ -74,7 +74,7 @@ export async function processDomainJob(
     entity = data
   }
 
-  const entityId = entity.id
+  const entityId = entity!.id
 
   // 2. Load current dossier
   const { data: currentDossier } = await supabase

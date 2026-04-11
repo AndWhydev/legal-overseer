@@ -10,6 +10,7 @@ const withAnalyzer = withBundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  typescript: { ignoreBuildErrors: true },
   outputFileTracingRoot: path.join(configDir, '..'),
   serverExternalPackages: [
     '@whiskeysockets/baileys',

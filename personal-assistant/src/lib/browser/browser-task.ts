@@ -222,7 +222,7 @@ export async function executeBrowserTask(
 
     // -- Autonomous task execution (CUA-06) ---------------------------------
     const agent = session.stagehand.agent({
-      model: session.stagehand.modelName,
+      model: (session.stagehand as any).modelName,
     })
 
     const agentResult = await agent.execute({
