@@ -11,6 +11,7 @@
  */
 
 import { logger } from '@/lib/core/logger'
+import type { EntityDelegation } from '@/lib/agent/confidence-router'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -142,14 +143,50 @@ export function getAutonomyLevel(
  *  - L2: execute only if confidence exceeds the act threshold AND auto-send is enabled
  *        (in practice, L2 falls through to the existing confidence router)
  *  - L1: never auto-execute
+ *
+ * When a `delegationMandate` with `infinite_autopilot` is supplied the tool
+ * is auto-executed regardless of its autonomy level (L1-L4). This mirrors the
+ * confidence router bypass — the entity owner has granted full delegation
+ * authority, so no approval gate applies.
+ *
+ * A `supervised` mandate relaxes L2 tools to auto-execute (they behave like
+ * L3) but still respects L1 blocks — financial / irreversible actions always
+ * require explicit approval even under supervised delegation.
  */
 export function shouldAutoExecute(
   toolName: string,
   confidenceScore: number,
   orgOverrides?: OrgAutonomyOverrides | null,
+  delegationMandate?: EntityDelegation | null,
 ): AutonomyDecision {
+  // ── Delegation short-circuits ──────────────────────────────────────────
+  if (delegationMandate?.mandate === 'infinite_autopilot') {
+    return {
+      execute: true,
+      notify: true,
+      reason: `Delegation bypass: entity ${delegationMandate.entityId ?? 'unknown'} has infinite_autopilot mandate — auto-executing "${toolName}" regardless of autonomy level`,
+    }
+  }
+
   const level = getAutonomyLevel(toolName, orgOverrides)
 
+  // Supervised mandate: promote L2 tools to auto-execute (like L3) but leave L1 unchanged
+  if (delegationMandate?.mandate === 'supervised' && level === 'L2_propose') {
+    if (confidenceScore > 0.5) {
+      return {
+        execute: true,
+        notify: true,
+        reason: `Supervised delegation: "${toolName}" promoted from L2→L3 — auto-executing (confidence ${confidenceScore.toFixed(2)} > 0.5)`,
+      }
+    }
+    return {
+      execute: false,
+      notify: true,
+      reason: `Supervised delegation: "${toolName}" promoted from L2→L3 but confidence too low (${confidenceScore.toFixed(2)} <= 0.5) — deferring to approval`,
+    }
+  }
+
+  // ── Standard autonomy routing ──────────────────────────────────────────
   switch (level) {
     case 'L4_silent':
       return {

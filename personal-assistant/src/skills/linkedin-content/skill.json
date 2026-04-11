@@ -1,9 +1,0 @@
-{
-  "name": "LinkedIn Content",
-  "description": "Write high-engagement LinkedIn posts with hook formulas, algorithm-aware formatting, and content pillar strategy.",
-  "tags": ["social", "linkedin", "content", "thought-leadership", "b2b"],
-  "triggerKeywords": ["linkedin post", "linkedin content", "linkedin writing", "linkedin strategy", "linkedin engagement", "linkedin algorithm", "linkedin hook", "linkedin formatting", "thought leadership", "professional content", "b2b content", "linkedin growth"],
-  "roleAffinity": ["comms", "sales"],
-  "estimatedTokens": 1700,
-  "planGate": "growth"
-}

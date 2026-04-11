@@ -17,6 +17,7 @@ import type {
   DecayRate,
   MemoryCategory,
 } from './types'
+import { emitToWAL, mapCategoryToSignalType } from '@/lib/brain/wal-emitter'
 
 // ─── Decay Rate Defaults by Category ─────────────────────────────────────────
 
@@ -28,6 +29,7 @@ const CATEGORY_DECAY_RATES: Record<MemoryCategory, DecayRate> = {
   relationship: 'slow',
   pricing: 'normal',
   convention: 'never',
+  fiduciary_constraint: 'never',
 }
 
 // ─── Memory Writer ───────────────────────────────────────────────────────────
@@ -98,6 +100,17 @@ export class MemoryWriter {
         confidence,
         entityCount: (input.entityIds ?? []).length,
       })
+
+      // Dual-write to Knowledge WAL (fire-and-forget, never blocks memory write)
+      emitToWAL(this.supabase, {
+        org_id: input.orgId,
+        entity_ids: input.entityIds ?? [],
+        signal_type: mapCategoryToSignalType(input.category),
+        content: input.content,
+        confidence: confidence,
+        source_memory_id: data.id,
+        source_thread_id: input.sourceThreadId ?? null,
+      }).catch(() => {}) // swallow — WAL emission is best-effort
 
       // Fire-and-forget embedding (non-blocking)
       this.embedMemory(data.id, input.content).catch(() => {})

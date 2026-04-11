@@ -38,6 +38,15 @@ export function getAgentThresholds(agentType: string): ConfidenceThresholds {
   return AGENT_THRESHOLDS[agentType] ?? { ...DEFAULT_THRESHOLDS }
 }
 
+/**
+ * Entity-level delegation override. When mandate is 'infinite_autopilot',
+ * the router short-circuits to 'auto_delegated' without evaluating thresholds.
+ */
+export interface EntityDelegation {
+  mandate: 'infinite_autopilot' | 'supervised' | 'standard'
+  entityId?: string
+}
+
 export interface ConfidenceRoutingResult {
   decision: ConfidenceDecision
   confidence: number
@@ -128,13 +137,32 @@ export function routeAgentAction(
   orgSettings?: { confidence_thresholds?: Partial<ConfidenceThresholds> },
   agentType?: string,
   calibratedThresholds?: { act: number; ask: number; sampleSize: number } | null,
+  entityDelegation?: EntityDelegation,
 ): ConfidenceRoutingResult {
+  // 0. If entity has infinite_autopilot mandate, short-circuit — no threshold evaluation
+  if (entityDelegation?.mandate === 'infinite_autopilot') {
+    return {
+      decision: 'auto_delegated',
+      confidence,
+      thresholds: DEFAULT_THRESHOLDS,
+      reasoning: `Entity ${entityDelegation.entityId ?? 'unknown'} has infinite_autopilot mandate — auto-delegated`,
+      thresholdSource: 'defaults',
+    }
+  }
+
+  // 0b. Supervised mandate lowers thresholds by 20% (easier to auto-act)
+  const supervisedReduction = entityDelegation?.mandate === 'supervised' ? 0.80 : 1.0
+  const applyReduction = (t: ConfidenceThresholds): ConfidenceThresholds => ({
+    act: t.act * supervisedReduction,
+    ask: t.ask * supervisedReduction,
+  })
+
   // 1. If calibrated thresholds exist with sufficient sample size, use them
   if (calibratedThresholds && calibratedThresholds.sampleSize >= 50) {
-    const thresholds = getEffectiveThresholds(
+    const thresholds = applyReduction(getEffectiveThresholds(
       { act: calibratedThresholds.act, ask: calibratedThresholds.ask },
       undefined,
-    )
+    ))
     const result = routeByConfidence(confidence, thresholds)
     result.thresholdSource = 'calibrated'
     result.reasoning = `[calibrated, n=${calibratedThresholds.sampleSize}] ${result.reasoning}`
@@ -143,10 +171,10 @@ export function routeAgentAction(
 
   // 2. If explicit agent config thresholds exist, use them (original behavior)
   if (agentConfig?.confidence_thresholds) {
-    const thresholds = getEffectiveThresholds(
+    const thresholds = applyReduction(getEffectiveThresholds(
       agentConfig.confidence_thresholds,
       orgSettings?.confidence_thresholds,
-    )
+    ))
     const result = routeByConfidence(confidence, thresholds)
     result.thresholdSource = 'agent_config'
     return result
@@ -154,20 +182,20 @@ export function routeAgentAction(
 
   // 3. If agentType provided and has per-type thresholds, use those as agent-level overrides
   if (agentType && AGENT_THRESHOLDS[agentType]) {
-    const thresholds = getEffectiveThresholds(
+    const thresholds = applyReduction(getEffectiveThresholds(
       AGENT_THRESHOLDS[agentType],
       orgSettings?.confidence_thresholds,
-    )
+    ))
     const result = routeByConfidence(confidence, thresholds)
     result.thresholdSource = 'agent_type'
     return result
   }
 
   // 4. Fall back to org settings > defaults
-  const thresholds = getEffectiveThresholds(
+  const thresholds = applyReduction(getEffectiveThresholds(
     undefined,
     orgSettings?.confidence_thresholds,
-  )
+  ))
   const result = routeByConfidence(confidence, thresholds)
   result.thresholdSource = orgSettings?.confidence_thresholds ? 'org_settings' : 'defaults'
   return result

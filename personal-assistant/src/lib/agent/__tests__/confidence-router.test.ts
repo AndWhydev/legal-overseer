@@ -7,6 +7,7 @@ import {
   DEFAULT_THRESHOLDS,
   AGENT_THRESHOLDS,
   type ConfidenceRoutingResult,
+  type EntityDelegation,
 } from '../confidence-router'
 import type { ConfidenceThresholds } from '@/lib/bitbit-core'
 
@@ -159,6 +160,65 @@ describe('confidence-router', () => {
 
       const highConfidence = routeAgentAction(0.9, { confidence_thresholds: thresholds })
       expect(highConfidence.decision).toBe('act')
+    })
+  })
+
+  describe('entity delegation', () => {
+    it('returns auto_delegated for infinite_autopilot mandate regardless of confidence', () => {
+      const result = routeAgentAction(
+        0.3, // Low confidence — would normally escalate
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { mandate: 'infinite_autopilot', entityId: 'test-entity-1' },
+      )
+      expect(result.decision).toBe('auto_delegated')
+      expect(result.reasoning).toContain('infinite_autopilot')
+      expect(result.reasoning).toContain('test-entity-1')
+    })
+
+    it('falls through to standard routing for standard mandate', () => {
+      const result = routeAgentAction(
+        0.90,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { mandate: 'standard' },
+      )
+      expect(result.decision).toBe('act')
+      expect(result.thresholdSource).toBe('defaults')
+    })
+
+    it('falls through to standard routing for supervised mandate', () => {
+      const result = routeAgentAction(
+        0.90,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { mandate: 'supervised' },
+      )
+      expect(result.decision).toBe('act')
+    })
+
+    it('falls through to standard routing when entityDelegation is undefined', () => {
+      const result = routeAgentAction(0.90)
+      expect(result.decision).toBe('act')
+      expect(result.thresholdSource).toBe('defaults')
+    })
+
+    it('auto_delegated takes priority over calibrated thresholds', () => {
+      const result = routeAgentAction(
+        0.3,
+        undefined,
+        undefined,
+        undefined,
+        { act: 0.85, ask: 0.55, sampleSize: 100 },
+        { mandate: 'infinite_autopilot' },
+      )
+      expect(result.decision).toBe('auto_delegated')
     })
   })
 

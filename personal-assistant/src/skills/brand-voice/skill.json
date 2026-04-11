@@ -1,9 +1,0 @@
-{
-  "name": "Brand Voice",
-  "description": "Define your brand's unique voice with personality dimensions, tone guidelines, and consistency frameworks.",
-  "tags": ["brand voice", "tone", "personality", "messaging", "consistency", "brand guidelines", "communication style", "brand identity"],
-  "triggerKeywords": ["brand voice", "tone of voice", "brand personality", "messaging guidelines", "brand guidelines", "writing style", "how should we sound", "brand identity", "communication style", "brand tone", "voice and tone", "brand consistency"],
-  "roleAffinity": ["sales", "comms"],
-  "estimatedTokens": 1175,
-  "planGate": "growth"
-}

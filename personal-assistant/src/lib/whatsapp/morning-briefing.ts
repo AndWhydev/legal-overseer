@@ -1,6 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendMessage } from '../channels/whatsapp'
 import { getPendingApprovals } from '../agent/approval-queue'
+import {
+  getRecentDelegatedActions,
+  type DelegationActionEntry,
+} from '../agent/delegation-mandate'
 import { formatResponse, type BriefingSection } from './response-formatter'
 
 export interface BriefingConfig {
@@ -9,6 +13,7 @@ export interface BriefingConfig {
   includeInvoices?: boolean
   includeTasks?: boolean
   includeApprovals?: boolean
+  includeDelegatedActions?: boolean
 }
 
 /**
@@ -20,7 +25,7 @@ export async function generateMorningBriefing(
   orgId: string,
   config: BriefingConfig = {}
 ): Promise<string> {
-  const includeAll = !config.includeLeads && !config.includeInvoices && !config.includeTasks && !config.includeApprovals
+  const includeAll = !config.includeLeads && !config.includeInvoices && !config.includeTasks && !config.includeApprovals && !config.includeDelegatedActions
 
   const sections: BriefingSection[] = []
 
@@ -46,6 +51,12 @@ export async function generateMorningBriefing(
   if (includeAll || config.includeTasks) {
     const items = await fetchHighPriorityTaskItems(supabase, orgId)
     sections.push({ emoji: '📋', title: "Today's Priorities", items, showEmpty: true })
+  }
+
+  // Delegated actions (what BitBit did autonomously overnight)
+  if (includeAll || config.includeDelegatedActions) {
+    const items = await fetchDelegatedActionItems(supabase, orgId)
+    sections.push({ emoji: '🤖', title: 'What I Did Autonomously', items, showEmpty: false })
   }
 
   return formatResponse.morningBriefing(sections)
@@ -166,6 +177,77 @@ async function fetchHighPriorityTaskItems(
       const emoji = t.priority === 'critical' ? '🔴' : '🟠'
       return `${emoji} ${t.title}`
     })
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Fetch delegated actions from the last 24 hours, formatted for the briefing.
+ * Groups by entity and includes financial impact when present.
+ */
+export async function fetchDelegatedActionItems(
+  supabase: SupabaseClient,
+  orgId: string
+): Promise<string[]> {
+  try {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const actions = await getRecentDelegatedActions(supabase, orgId, since)
+
+    if (actions.length === 0) return []
+
+    // Group actions by entity_id
+    const byEntity = new Map<string, DelegationActionEntry[]>()
+    for (const action of actions) {
+      const group = byEntity.get(action.entity_id) ?? []
+      group.push(action)
+      byEntity.set(action.entity_id, group)
+    }
+
+    // Resolve entity names and format each group
+    const items: string[] = []
+    for (const [entityId, entityActions] of byEntity) {
+      const { data: entity } = await supabase
+        .from('entity_nodes')
+        .select('name')
+        .eq('id', entityId)
+        .single()
+
+      const entityName = entity?.name ?? entityId
+
+      // Calculate financial impact for this entity
+      let totalFinancial = 0
+      for (const action of entityActions) {
+        if (action.financial_impact) {
+          const amount = (action.financial_impact as Record<string, unknown>).amount
+          if (typeof amount === 'number') totalFinancial += amount
+        }
+      }
+
+      if (entityActions.length === 1) {
+        const a = entityActions[0]
+        let line = `${entityName}: ${a.action_summary}`
+        if (totalFinancial !== 0) {
+          line += ` ($${Math.abs(totalFinancial).toLocaleString()})`
+        }
+        items.push(line)
+      } else {
+        let line = `${entityName}: ${entityActions.length} actions`
+        if (totalFinancial !== 0) {
+          line += ` ($${Math.abs(totalFinancial).toLocaleString()} total)`
+        }
+        items.push(line)
+        // Add sub-items (up to 3)
+        for (const a of entityActions.slice(0, 3)) {
+          items.push(`  ↳ ${a.action_summary}`)
+        }
+        if (entityActions.length > 3) {
+          items.push(`  ↳ ...and ${entityActions.length - 3} more`)
+        }
+      }
+    }
+
+    return items
   } catch {
     return []
   }

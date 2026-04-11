@@ -7,6 +7,7 @@ import type {
   GraphNeighborhood,
   GraphSearchOptions,
   TimeRange,
+  SpreadingActivationResult,
 } from './types'
 
 /**
@@ -393,6 +394,108 @@ export async function createEventTuple(
     return data as EventTuple
   } catch (err) {
     logger.error('createEventTuple: unexpected error', { err })
+    return null
+  }
+}
+
+// ============================================================================
+// Neural Knowledge Graph — Unified functions
+// ============================================================================
+
+/**
+ * Spreading activation from a seed entity through weighted synaptic edges.
+ * Calls the spreading_activation Postgres RPC (UUID-based).
+ */
+export async function spreadingActivation(
+  supabase: SupabaseClient,
+  orgId: string,
+  seedEntityId: string,
+  opts?: {
+    maxDepth?: number
+    decayFactor?: number
+    minActivation?: number
+    timeDecayLambda?: number
+  }
+): Promise<SpreadingActivationResult[]> {
+  try {
+    const { data, error } = await supabase.rpc('spreading_activation', {
+      p_org_id: orgId,
+      p_seed_entity_id: seedEntityId,
+      p_max_depth: opts?.maxDepth ?? 3,
+      p_decay_factor: opts?.decayFactor ?? 0.5,
+      p_min_activation: opts?.minActivation ?? 0.05,
+      p_time_decay_lambda: opts?.timeDecayLambda ?? 0.01,
+    })
+
+    if (error) {
+      logger.warn('spreadingActivation: rpc error', { error, seedEntityId })
+      return []
+    }
+    return (data || []) as SpreadingActivationResult[]
+  } catch (err) {
+    logger.error('spreadingActivation: unexpected error', { err, seedEntityId })
+    return []
+  }
+}
+
+/**
+ * Hebbian weight strengthening between two entity nodes.
+ * "Neurons that fire together wire together."
+ * Calls the hebbian_strengthen Postgres RPC (UUID-based).
+ */
+export async function hebbianStrengthen(
+  supabase: SupabaseClient,
+  orgId: string,
+  sourceId: string,
+  targetId: string,
+  edgeType: string = 'CO_OCCURS',
+  learningRate: number = 0.1
+): Promise<void> {
+  try {
+    const { error } = await supabase.rpc('hebbian_strengthen', {
+      p_org_id: orgId,
+      p_source_id: sourceId,
+      p_target_id: targetId,
+      p_edge_type: edgeType,
+      p_learning_rate: learningRate,
+    })
+
+    if (error) {
+      logger.warn('hebbianStrengthen: rpc error', { error, sourceId, targetId })
+    }
+  } catch (err) {
+    logger.error('hebbianStrengthen: unexpected error', { err, sourceId, targetId })
+  }
+}
+
+/**
+ * Resolve an entity by alias or name (case-insensitive).
+ * Searches entity_nodes WHERE alias = ANY(aliases) OR name ILIKE alias.
+ */
+export async function resolveEntityByAlias(
+  supabase: SupabaseClient,
+  orgId: string,
+  alias: string
+): Promise<EntityNode | null> {
+  try {
+    const normalised = alias.toLowerCase()
+    const { data, error } = await supabase
+      .from('entity_nodes')
+      .select('*')
+      .eq('org_id', orgId)
+      .eq('is_active', true)
+      .or(`name.ilike.${normalised},aliases.cs.{${normalised}}`)
+      .limit(1)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null
+      logger.warn('resolveEntityByAlias: query error', { error, alias })
+      return null
+    }
+    return data as EntityNode
+  } catch (err) {
+    logger.error('resolveEntityByAlias: unexpected error', { err, alias })
     return null
   }
 }

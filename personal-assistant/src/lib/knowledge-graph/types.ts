@@ -12,6 +12,11 @@ export interface EntityNode {
   is_active: boolean
   created_at: string
   updated_at: string
+  // Neural properties (unified KG)
+  activation_level: number
+  fire_count: number
+  last_fired_at: string | null
+  description: string | null
 }
 
 export interface EntityEdge {
@@ -26,6 +31,12 @@ export interface EntityEdge {
   ingested_at: string
   confidence: number
   source_memory_id: string | null
+  // Synaptic properties (unified KG)
+  weight: number
+  fire_count: number
+  last_fired_at: string
+  decay_rate: number
+  expired_at: string | null
 }
 
 export interface EventTuple {
@@ -58,4 +69,13 @@ export interface GraphSearchOptions {
 export interface TimeRange {
   from?: string  // ISO date
   to?: string    // ISO date
+}
+
+export interface SpreadingActivationResult {
+  entity_id: string
+  node_type: string
+  name: string
+  activation: number
+  depth: number
+  path: string[]
 }

@@ -15,6 +15,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { getAgentTools, type ExecuteToolOptions, type ToolGroup } from '@/lib/agent/tools'
 import { getEagerTools, buildDeferredToolsPrompt, resolveToolSchema } from '@/lib/agent/tools/deferred-loader'
+import { getMCPTools, isMCPEnabled } from '@/lib/composio/mcp-session'
 import { selectRelevantTools } from '@/lib/agent/tool-rag'
 import { buildEntityAwarePrompt } from '@/lib/agent/prompt-builder'
 import { ContextAssembler } from '@/lib/context-assembly/context-assembler'
@@ -29,15 +30,20 @@ import { detectLeak, scrubLeaks, guardAndHumanize } from '@/lib/agent/response-g
 import { logger } from '@/lib/core/logger'
 import { detectTopicShift } from '@/lib/agent/citation-extractor'
 import { evaluateTurnQuality } from './turn-evaluator'
+import { classifyQueryComplexity, type QueryComplexity } from '@/lib/brain/query-gate'
 
 import { MemoryPalaceService } from '@/lib/memory-palace/service'
-import { getAllSkills, resolveSkill, initializeSkillRegistry } from '@/lib/skills/registry'
+import { getAllSkills, getSkillsForRole, resolveSkill, initializeSkillRegistry } from '@/lib/skills/registry'
 import { selectRelevantSkills as selectRelevantSkillsRAG } from '@/lib/skills/skill-rag'
 import type { ResolvedSkill } from '@/lib/skills/types'
 
 import type { EngineConfig, AgentEvent } from './types'
 import { preFlightChecks } from './pre-flight'
 import { executeToolBatchStreaming, type ToolExecutionResult } from './tool-executor'
+import { resolveEntityOverrides } from '@/lib/agent/entity-overrides'
+import { detectDelegationIntent, resolveEntityFromMention, generateActivationConfirmation, generateRevocationConfirmation } from '@/lib/agent/delegation-intent'
+import { setEntityMandate, revokeEntityMandate } from '@/lib/agent/delegation-mandate'
+import { buildTierContextBlock } from './tool-resolver'
 
 // ---------------------------------------------------------------------------
 // Correction detection for memory contradiction feedback
@@ -82,6 +88,8 @@ function estimateComplexity(
 /** Safety ceiling — only for runaway cost protection. The model decides when to stop. */
 const SAFETY_CEILING = 50
 
+/** Resolve effective iteration cap: entity override > config > SAFETY_CEILING */
+
 let skillRegistryInitialized = false
 async function ensureSkillRegistry(): Promise<void> {
   if (skillRegistryInitialized) return
@@ -95,7 +103,7 @@ async function ensureSkillRegistry(): Promise<void> {
 
 export async function* runTAORLoop(
   message: string,
-  config: EngineConfig & { toolGroups?: string[]; _spawnDepth?: number },
+  config: EngineConfig & { toolGroups?: string[]; _spawnDepth?: number; swarmRole?: string },
 ): AsyncGenerator<AgentEvent> {
   const startTime = Date.now()
   let totalInputTokens = 0
@@ -125,6 +133,89 @@ export async function* runTAORLoop(
     config.calibratedThresholds = preflight.calibratedThresholds
   }
 
+  // ── 1b. Resolve entity overrides (if entity_id provided) ──────────
+  if (config.entityId && !config.delegationMandate) {
+    const overrides = await resolveEntityOverrides(config.supabase, config.orgId, config.entityId)
+    // Merge resolved overrides into config (only if not already explicitly set)
+    config = {
+      ...config,
+      delegationMandate: config.delegationMandate ?? overrides.delegationMandate,
+      ltvMultiplier: config.ltvMultiplier ?? overrides.ltvMultiplier,
+      iterationCap: config.iterationCap ?? overrides.iterationCap,
+      budgetPreset: config.budgetPreset ?? overrides.budgetPreset,
+    }
+  }
+
+  // ── 1c. NL delegation intent detection (before model call) ────────
+  const delegationIntent = detectDelegationIntent(message)
+  if (delegationIntent && delegationIntent.confidence >= 0.6) {
+    try {
+      const entity = await resolveEntityFromMention(
+        config.supabase,
+        config.orgId,
+        delegationIntent.entityMention,
+      )
+      if (entity) {
+        if (delegationIntent.type === 'activate') {
+          await setEntityMandate(
+            config.supabase,
+            config.orgId,
+            entity.id,
+            'infinite_autopilot',
+            config.channel ?? 'whatsapp',
+          )
+          const confirmation = generateActivationConfirmation(entity.name)
+          logger.info('[taor] Delegation activated via NL', {
+            entityId: entity.id,
+            entityName: entity.name,
+            mention: delegationIntent.entityMention,
+            confidence: delegationIntent.confidence,
+          })
+          yield { type: 'message', data: confirmation }
+          yield { type: 'done', data: {} }
+          return
+        } else {
+          const revoked = await revokeEntityMandate(
+            config.supabase,
+            config.orgId,
+            entity.id,
+            config.channel ?? 'whatsapp',
+          )
+          if (revoked) {
+            const confirmation = generateRevocationConfirmation(entity.name)
+            logger.info('[taor] Delegation revoked via NL', {
+              entityId: entity.id,
+              entityName: entity.name,
+              mention: delegationIntent.entityMention,
+              confidence: delegationIntent.confidence,
+            })
+            yield { type: 'message', data: confirmation }
+            yield { type: 'done', data: {} }
+            return
+          }
+          // No active mandate to revoke — fall through to normal processing
+          logger.info('[taor] Revocation intent but no active mandate, continuing', {
+            entityName: entity.name,
+          })
+        }
+      } else {
+        logger.info('[taor] Delegation intent detected but entity not found', {
+          mention: delegationIntent.entityMention,
+          type: delegationIntent.type,
+        })
+        // Entity not found — fall through to normal processing
+      }
+    } catch (err) {
+      logger.warn('[taor] Delegation intent processing failed, continuing', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+      // Non-critical: fall through to normal processing
+    }
+  }
+
+  // ── Resolve entity-aware iteration cap ────────────────────────────
+  const effectiveIterationCap = config.iterationCap ?? config.maxIterations ?? SAFETY_CEILING
+
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   // ── 2. Model routing ───────────────────────────────────────────────
@@ -153,6 +244,12 @@ export async function* runTAORLoop(
     }
   }
 
+  // ── 2c. System 1/2 query gate ──────────────────────────────────────
+  const queryComplexity: QueryComplexity = classifyQueryComplexity(message, {
+    entityMentionCount: delegationIntent?.entityMention ? 1 : 0,
+  })
+  logger.info('[taor] Query gated', { complexity: queryComplexity })
+
   // ── 3. Context assembly ────────────────────────────────────────────
   yield { type: 'stage', data: { stage: 'context_assembly', status: 'start' } }
 
@@ -160,10 +257,15 @@ export async function* runTAORLoop(
     ? { email: config.userEmail, displayName: config.userDisplayName }
     : undefined
 
+  // System 1 queries use reduced assembler config for fast path (<50ms)
+  const assemblerOverrides = queryComplexity === 'system1'
+    ? { maxEntities: 3, includeCompressedHistory: false }
+    : {}
+
   let systemPrompt: string
   if (config.threadId && config.userId) {
     try {
-      const assembler = new ContextAssembler({ userProfile, channel: config.channel })
+      const assembler = new ContextAssembler({ userProfile, channel: config.channel, ...assemblerOverrides })
       const ctx = await assembler.assemble(config.supabase, config.userId, config.orgId, config.threadId, message)
       systemPrompt = ctx.systemPrompt
       config.history = ctx.messageHistory
@@ -205,6 +307,18 @@ export async function* runTAORLoop(
   let tools = config.toolGroups
     ? getAgentTools(config.toolGroups as ToolGroup[])
     : getEagerTools()
+
+  // Merge MCP tools if enabled and composio group is active
+  if (isMCPEnabled() && (!config.toolGroups || (config.toolGroups as ToolGroup[]).includes('composio'))) {
+    const mcpTools = await getMCPTools(config.orgId)
+    if (mcpTools.length > 0) {
+      const nativeNames = new Set(tools.map(t => t.name))
+      const uniqueMcp = mcpTools.filter(t => !nativeNames.has(t.name))
+      tools = [...tools, ...uniqueMcp]
+      logger.info('[engine] MCP tools merged', { mcpCount: uniqueMcp.length, totalCount: tools.length })
+    }
+  }
+
   const deferredPromptSection = config.toolGroups ? '' : buildDeferredToolsPrompt()
   let toolNames = tools.map(t => t.name)
   const totalToolCount = tools.length
@@ -214,7 +328,9 @@ export async function* runTAORLoop(
 
   // ── 4b. Skill RAG: select relevant skill candidates ──────────────────
   await ensureSkillRegistry()
-  const skillIndex = config.toolGroups ? [] : getAllSkills() // Swarm agents: skills handled via allowedSkills separately
+  const skillIndex = config.swarmRole
+    ? getSkillsForRole(config.swarmRole as import('@/lib/swarm/types').AgentRole)
+    : getAllSkills()
   const skillRAGResult = selectRelevantSkillsRAG(message, skillIndex)
   const skillCandidates = skillRAGResult.candidates.length > 0
     ? skillRAGResult.candidates.map(c => ({ id: c.id, description: c.description }))
@@ -249,11 +365,24 @@ export async function* runTAORLoop(
       planStages = raceResult.plan.stages
       planComplexity = raceResult.plan.complexity
 
-      // Resolve skills selected by planner
+      // Resolve skills selected by planner (with plan gate enforcement)
       if (raceResult.plan.skills && raceResult.plan.skills.length > 0) {
+        const { getOrgPlan, checkToolPlanGate } = await import('@/lib/billing/plan-gates')
+        const orgPlan = await getOrgPlan(config.supabase, config.orgId)
+
         for (const skillId of raceResult.plan.skills.slice(0, 2)) {
           const resolved = await resolveSkill(skillId)
-          if (resolved) resolvedSkills.push(resolved)
+          if (!resolved) continue
+          if (resolved.entry.planGate) {
+            const gate = checkToolPlanGate(orgPlan, resolved.entry.planGate)
+            if (!gate.allowed) {
+              logger.info('[engine] Skill blocked by plan gate', {
+                skillId, requiredPlan: gate.requiredPlan, orgPlan,
+              })
+              continue
+            }
+          }
+          resolvedSkills.push(resolved)
         }
         if (resolvedSkills.length > 0) {
           logger.info('[engine] Skills activated', {
@@ -275,6 +404,18 @@ export async function* runTAORLoop(
       // Apply combined tool groups (planner + skill tool groups)
       if (combinedToolGroups.length > 0) {
         tools = getAgentTools(combinedToolGroups as ToolGroup[])
+
+        // Merge MCP tools when composio group is selected by planner
+        if (isMCPEnabled() && combinedToolGroups.includes('composio' as ToolGroup)) {
+          const mcpTools = await getMCPTools(config.orgId)
+          if (mcpTools.length > 0) {
+            const nativeNames = new Set(tools.map(t => t.name))
+            const uniqueMcp = mcpTools.filter(t => !nativeNames.has(t.name))
+            tools = [...tools, ...uniqueMcp]
+            logger.info('[engine] MCP tools merged (planner)', { mcpCount: uniqueMcp.length })
+          }
+        }
+
         toolNames = tools.map(t => t.name)
         toolGroupsApplied = true
         logger.info('[engine] Tool groups selected', {
@@ -368,6 +509,23 @@ export async function* runTAORLoop(
     fullSystemPrompt += `\n\n## Available Tools Note\n${toolRagResult.toolSummary}\n`
   }
 
+  // Inject tier context when browser or workspace tools are available
+  const hasTieredTools = toolNames.some(
+    n => n === 'spawn_browser_agent' || n === 'spawn_ephemeral_workspace',
+  )
+  if (hasTieredTools) {
+    try {
+      const tierBlock = await buildTierContextBlock(config.supabase, config.orgId)
+      if (tierBlock) {
+        fullSystemPrompt += `\n\n${tierBlock}\n`
+      }
+    } catch (err) {
+      logger.warn('[engine] Tier context injection failed', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+
   if (deferredPromptSection) {
     fullSystemPrompt += deferredPromptSection
   }
@@ -410,7 +568,7 @@ export async function* runTAORLoop(
     : undefined
 
   // ── 7. THE LOOP: Think → Act → Observe → Repeat ───────────────────
-  while (iterationCount < SAFETY_CEILING) {
+  while (iterationCount < effectiveIterationCap) {
     iterationCount++
 
     // Signal the frontend that a new synthesis pass is starting (iteration 2+ = post-tool)
@@ -699,7 +857,16 @@ export async function* runTAORLoop(
           org_id: config.orgId,
           agent_config_id: config.agentConfigId,
           trigger_type: 'chat',
-          trigger_payload: { message },
+          trigger_payload: {
+            message,
+            ...(resolvedSkills.length > 0 && {
+              skills_activated: resolvedSkills.map(s => s.entry.id),
+              skills_tokens: resolvedSkills.reduce((sum, s) => sum + s.entry.estimatedTokens, 0),
+            }),
+            ...(skillRAGResult.candidates.length > 0 && {
+              skill_candidates: skillRAGResult.candidates.map(c => `${c.id}(${c.score})`),
+            }),
+          },
           status: 'success',
           result_summary: text.slice(0, 500),
           tokens_in: totalInputTokens,

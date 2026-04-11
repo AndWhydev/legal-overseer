@@ -23,12 +23,14 @@ import { buildEntityAwarePrompt, type UserProfile } from '@/lib/agent/prompt-bui
 import { getPendingApprovals, type ApprovalRecord } from '@/lib/agent/approval-queue'
 import { loadRecentMessages, loadThreadSummaries } from '@/lib/conversation/thread-resolver'
 import { scanForEntityMentions } from '@/lib/context/entity-mention-scanner'
-import { TokenBudgetManager, type TierInput } from './token-budget-manager'
+import { TokenBudgetManager, type TierInput, type BudgetPreset, BUDGET_PRESETS } from './token-budget-manager'
 import { proactiveRecall as recallForContext, formatProactiveRecall } from '@/lib/memory-palace'
 import { getEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
 import { matchProcedure } from '@/lib/knowledge-graph/procedural-memory'
 import { logger } from '@/lib/core/logger'
 import { loadPredictiveContext } from './predictive-loader'
+import { allocateContextBudget, detectModuleContext, type ModuleContext, type ModuleAllocation } from '@/lib/brain/global-workspace'
+import { buildBrainStatePrefix, splitCacheableContext, type BrainStatePrefix } from '@/lib/brain/prompt-cache'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -38,12 +40,19 @@ const MESSAGE_OVERHEAD_TOKENS = 4 // role + formatting overhead per message
 
 export interface AssemblerConfig {
   tokenBudget: number
+  budgetPreset?: BudgetPreset  // overrides tokenBudget when set
   maxRecentTurns: number
   maxCompressedTurns: number
   maxEntities: number
   systemPromptCacheTtlMs: number
   includePendingActions: boolean
   includeCompressedHistory: boolean
+  /** Global Workspace mode replaces fixed tier allocation with competitive module selection. */
+  useGlobalWorkspace?: boolean
+  /** Enable L1 prompt caching with brain state prefix. */
+  usePromptCache?: boolean
+  /** Pre-built brain state prefix (avoids rebuilding on every call). */
+  brainStatePrefix?: BrainStatePrefix
 }
 
 export const DEFAULT_ASSEMBLER_CONFIG: AssemblerConfig = {
@@ -67,6 +76,12 @@ export interface TierStatus {
 export interface AssembledContext {
   systemPrompt: string
   messageHistory: Anthropic.MessageParam[]
+  /** Anthropic content blocks with cache_control for prompt caching (when usePromptCache is true). */
+  systemContentBlocks?: Array<{
+    type: 'text'
+    text: string
+    cache_control?: { type: 'ephemeral' }
+  }>
   metadata: {
     tokenUsage: TokenAllocation
     tiersLoaded: TierStatus[]
@@ -418,7 +433,10 @@ export class ContextAssembler {
   constructor(config?: Partial<AssemblerConfig> & { userProfile?: UserProfile; channel?: 'web' | 'sendblue' | 'telegram' | 'whatsapp' }) {
     const { userProfile, channel, ...assemblerConfig } = config ?? {}
     this.config = { ...DEFAULT_ASSEMBLER_CONFIG, ...assemblerConfig }
-    this.budgetManager = new TokenBudgetManager(this.config.tokenBudget)
+    const effectiveBudget = this.config.budgetPreset
+      ? BUDGET_PRESETS[this.config.budgetPreset]
+      : this.config.tokenBudget
+    this.budgetManager = new TokenBudgetManager(effectiveBudget)
     this.userProfile = userProfile
     this.channel = channel
   }
@@ -607,6 +625,27 @@ export class ContextAssembler {
 
     const allocation = this.budgetManager.allocate(tiers)
 
+    // ── Phase 4b: Global Workspace competitive allocation (optional) ───
+    // Global Workspace mode replaces fixed tier allocation with competitive module selection.
+    // When enabled, memory modules compete for budget based on query relevance and priority.
+    let globalWorkspaceAllocations: ModuleAllocation[] | null = null
+    if (this.config.useGlobalWorkspace) {
+      const moduleContext: ModuleContext = detectModuleContext(currentMessage, entityMentions)
+      globalWorkspaceAllocations = allocateContextBudget(
+        currentMessage,
+        this.budgetManager.getBudget(),
+        moduleContext,
+      )
+      logger.info('[context-assembler] Global Workspace allocations', {
+        moduleCount: globalWorkspaceAllocations.length,
+        allocations: globalWorkspaceAllocations.map((a) => ({
+          module: a.moduleName,
+          tokens: a.tokenBudget,
+          relevance: a.relevance,
+        })),
+      })
+    }
+
     // ── Phase 5: Build final system prompt ──────────────────────────────
 
     let finalSystemPrompt = systemPrompt
@@ -676,6 +715,17 @@ export class ContextAssembler {
         const formattedContext = formatProactiveRecall(recallResults)
         if (formattedContext) {
           finalSystemPrompt = `${finalSystemPrompt}\n\n${formattedContext}`
+
+          // Add fiduciary handling guidance when fiduciary constraints are present
+          if (formattedContext.includes('[!]')) {
+            finalSystemPrompt += '\n<fiduciary-guidance>' +
+              '\nItems marked [!] are fiduciary constraints protecting the user\'s interests. ' +
+              'When relevant to the current conversation, weave them naturally into your response. ' +
+              'Do not announce them as "fiduciary constraints" -- surface the insight conversationally. ' +
+              'Example: "Before I do more work for Steve, heads up -- the last two projects had scope creep ' +
+              'that wasn\'t invoiced. Want me to send an invoice first?"' +
+              '\n</fiduciary-guidance>'
+          }
         }
       }
       // Fetch community summaries for resolved entities
@@ -844,9 +894,55 @@ ${procSection}`
       entityMentions: entityMentions.length,
     })
 
+    // ── Phase 8: Prompt caching (L1 brain state prefix) ──────────────
+    // When enabled, split system prompt into cached prefix + dynamic suffix
+    // for Anthropic's prompt caching (90% read cost reduction on cached portion).
+
+    let systemContentBlocks: AssembledContext['systemContentBlocks'] | undefined
+
+    if (this.config.usePromptCache) {
+      try {
+        // Use pre-built prefix or build one now
+        const brainPrefix = this.config.brainStatePrefix
+          ?? await buildBrainStatePrefix(
+            supabase,
+            orgId,
+            finalSystemPrompt,
+            { userProfile: this.userProfile },
+          )
+
+        // Dynamic content is anything beyond the cached prefix
+        // (pending actions, predictive context, etc. are already in finalSystemPrompt)
+        const dynamicContent = finalSystemPrompt.length > brainPrefix.markdown.length
+          ? finalSystemPrompt.slice(brainPrefix.markdown.length)
+          : ''
+
+        const cacheable = splitCacheableContext(brainPrefix, dynamicContent)
+
+        systemContentBlocks = [
+          ...cacheable.cachedPrefix,
+          ...cacheable.dynamicSuffix,
+        ]
+
+        logger.info('[context-assembler] Prompt cache enabled', {
+          cachedPrefixTokens: brainPrefix.tokenEstimate,
+          dossierCount: brainPrefix.dossierCount,
+          constraintCount: brainPrefix.constraintCount,
+          profileCount: brainPrefix.profileCount,
+          dynamicSuffixLength: dynamicContent.length,
+        })
+      } catch (err) {
+        // Non-critical: fall back to uncached system prompt
+        logger.warn('[context-assembler] Prompt cache build failed, falling back to uncached', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+
     return {
       systemPrompt: finalSystemPrompt,
       messageHistory,
+      systemContentBlocks,
       metadata: {
         tokenUsage: allocation,
         tiersLoaded: tierStatuses,
