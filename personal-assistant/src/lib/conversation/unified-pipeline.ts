@@ -8,6 +8,7 @@
  * events directly to the client.
  */
 
+import { after } from "next/server"
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type Anthropic from '@anthropic-ai/sdk'
 import { detectInjection, neutralizeInjection } from '@/lib/agent/injection-guard'
@@ -355,17 +356,32 @@ export class UnifiedConversationPipeline {
       }
     }
 
-    // ── Step 7: Async Post-Processing (fire-and-forget) ────────────────
+    // ── Step 7: Async Post-Processing (via next/server after()) ─────────
+    // CRITICAL: Must use after() to keep the Vercel function alive until
+    // post-processing (memory extraction, embeddings, KG updates) completes.
+    // A bare async call gets killed when the streaming response ends.
     if (threadId && totalRecallAvailable) {
-      this.postProcess(
+      const postProcessArgs = {
         threadId,
-        identity.orgId,
-        identity.userId,
-        inbound.channel,
-        inbound.content,
-        responseContent,
-      ).catch(err => {
-        logger.error('[pipeline] Post-processing failed', { err, threadId })
+        orgId: identity.orgId,
+        userId: identity.userId,
+        channel: inbound.channel,
+        userMessage: inbound.content,
+        assistantResponse: responseContent,
+      }
+      after(async () => {
+        try {
+          await this.postProcess(
+            postProcessArgs.threadId,
+            postProcessArgs.orgId,
+            postProcessArgs.userId,
+            postProcessArgs.channel,
+            postProcessArgs.userMessage,
+            postProcessArgs.assistantResponse,
+          )
+        } catch (err) {
+          logger.error('[pipeline] Post-processing failed', { err, threadId })
+        }
       })
     }
 
