@@ -164,7 +164,7 @@ function humanizeError(raw: string): string {
   const lower = raw.toLowerCase()
 
   // Billing / credits
-  if (lower.includes('insufficient_funds') || lower.includes('insufficient funds') || lower.includes('402'))
+  if (lower.includes('insufficient_funds') || lower.includes('insufficient funds') || lower.includes('402') || lower.includes('credit balance'))
     return "We hit a temporary service limit. This will be sorted shortly."
 
   // Rate limiting

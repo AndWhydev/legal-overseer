@@ -13,6 +13,8 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk'
+import { callModelViaGateway, type AnthropicLikeResponse } from '@/lib/ai/gateway-adapter'
+import { models as gatewayModels } from '@/lib/ai'
 import { getAgentTools, type ExecuteToolOptions, type ToolGroup } from '@/lib/agent/tools'
 import { getEagerTools, buildDeferredToolsPrompt, resolveToolSchema } from '@/lib/agent/tools/deferred-loader'
 import { getMCPTools, isMCPEnabled } from '@/lib/composio/mcp-session'
@@ -216,14 +218,20 @@ export async function* runTAORLoop(
   // ── Resolve entity-aware iteration cap ────────────────────────────
   const effectiveIterationCap = config.iterationCap ?? config.maxIterations ?? SAFETY_CEILING
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  // Model resolved below — calls route through Vercel AI Gateway
 
-  // ── 2. Model routing ───────────────────────────────────────────────
+  // ── 2. Model routing (via AI Gateway) ──────────────────────────────
   yield { type: 'stage', data: { stage: 'model_routing', status: 'start' } }
   const autoRouted = !config.model
   const selection = autoRouted ? selectModel(message) : null
-  const model = config.model || selection?.model || resolveModel('conversation')
   const purpose: ModelPurpose = selection?.purpose || 'conversation'
+  // Resolve to gateway model IDs (provider/model format)
+  const gatewayModelMap: Record<ModelPurpose, string> = {
+    classification: gatewayModels.fast,
+    conversation: gatewayModels.balanced,
+    synthesis: gatewayModels.heavy,
+  }
+  const model = config.model || gatewayModelMap[purpose] || gatewayModels.balanced
   const maxTokens = selection ? resolveTokenLimit(selection.purpose) : resolveTokenLimit('conversation')
   yield { type: 'stage', data: { stage: 'model_routing', status: 'done' } }
 
@@ -576,10 +584,9 @@ export async function* runTAORLoop(
       yield { type: 'synthesis_start', data: { iteration: iterationCount } }
     }
 
-    let response: Anthropic.Message
-    const streamedDeltas: string[] = []
-    const streamedThinkingDeltas: string[] = []
-    let thinkingActive = false
+    let response: AnthropicLikeResponse
+    let streamedDeltas: string[] = []
+    let streamedThinkingDeltas: string[] = []
     let thinkingStartTime: number | null = null
 
     try {
@@ -587,54 +594,33 @@ export async function* runTAORLoop(
 
       const agentType = config.agentType || 'default'
 
-      response = await withCircuitBreaker(
-        `anthropic:${agentType}`,
-        async () => {
-          const streamConfig: Record<string, unknown> = {
-            model,
-            max_tokens: maxTokens,
-            system: fullSystemPrompt,
-            tools,
-            messages,
-          }
+      // Complexity-gated extended thinking
+      const complexity = planComplexity
+        ?? estimateComplexity(message, 0, planStages.length)
 
-          // Note: interleaved thinking is GA in SDK v0.74+ (no beta flag needed).
-          // Compaction (compact-2026-01-12) remains in beta — use client.beta.messages
-          // if re-enabling. For now, context overflow is handled by safety ceiling.
+      const thinking = complexity === 'high'
+        ? { type: 'enabled' as const, budget_tokens: 8192 }
+        : complexity === 'medium'
+          ? { type: 'enabled' as const, budget_tokens: 2048 }
+          : undefined
 
-          // Complexity-gated extended thinking (Sub-project A)
-          const complexity = planComplexity
-            ?? estimateComplexity(message, 0, planStages.length)
-
-          if (complexity === 'high') {
-            streamConfig.thinking = { type: 'enabled', budget_tokens: 8192 }
-          } else if (complexity === 'medium') {
-            streamConfig.thinking = { type: 'enabled', budget_tokens: 2048 }
-          }
-          // complexity === 'low': no thinking
-
-          const stream = client.messages.stream(streamConfig as Parameters<typeof client.messages.stream>[0])
-
-          for await (const event of stream) {
-            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-              streamedDeltas.push(event.delta.text)
-            } else if (event.type === 'content_block_delta' && (event.delta as unknown as Record<string, unknown>).type === 'thinking_delta') {
-              const thinkingDelta = (event.delta as unknown as Record<string, unknown>)['thinking']
-              if (typeof thinkingDelta === 'string') {
-                streamedThinkingDeltas.push(thinkingDelta)
-              }
-            } else if (event.type === 'content_block_start' && (event.content_block as unknown as Record<string, unknown>).type === 'thinking') {
-              thinkingActive = true
-              thinkingStartTime = Date.now()
-            } else if (event.type === 'content_block_stop' && thinkingActive) {
-              thinkingActive = false
-            }
-          }
-
-          return stream.finalMessage()
-        },
+      const gatewayResult = await withCircuitBreaker(
+        `gateway:${agentType}`,
+        () => callModelViaGateway({
+          model,
+          maxTokens,
+          system: fullSystemPrompt,
+          tools,
+          messages,
+          thinking,
+        }),
         { threshold: 5, cooldownMs: 60_000 },
       )
+
+      response = gatewayResult.response
+      streamedDeltas = gatewayResult.streamedDeltas
+      streamedThinkingDeltas = gatewayResult.streamedThinkingDeltas
+      thinkingStartTime = gatewayResult.thinkingStartTime
 
       // Yield thinking deltas
       for (const delta of streamedThinkingDeltas) {
@@ -764,7 +750,7 @@ export async function* runTAORLoop(
     // ── THINK complete — model is done ──────────────────────────────
     if (response.stop_reason !== 'tool_use') {
       const text = response.content
-        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
         .map(b => b.text)
         .join('\n')
       const humanizedText = guardAndHumanize(text)
@@ -902,12 +888,13 @@ export async function* runTAORLoop(
     }
 
     // ── ACT: execute tool calls ─────────────────────────────────────
+    type ToolUseBlock = { type: 'tool_use'; id: string; name: string; input: unknown }
     const toolBlocks = response.content.filter(
-      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+      (b): b is ToolUseBlock => b.type === 'tool_use',
     )
 
     // Pre-emit plan stage activations and tool_call events
-    const toolMeta: Array<{ tool: Anthropic.ToolUseBlock; matchedStage: PlanStage | null }> = []
+    const toolMeta: Array<{ tool: ToolUseBlock; matchedStage: PlanStage | null }> = []
     for (const tool of toolBlocks) {
       toolCallCount++
       allToolCallNames.push(tool.name)
@@ -987,9 +974,10 @@ export async function* runTAORLoop(
     }
 
     // ── OBSERVE: append results to conversation ─────────────────────
+    // Cast response.content for Anthropic MessageParam compatibility (gateway adapter bridge)
     messages = [
       ...messages,
-      { role: 'assistant', content: response.content },
+      { role: 'assistant', content: response.content as Anthropic.ContentBlock[] },
       { role: 'user', content: batchResult.toolResults },
     ]
 

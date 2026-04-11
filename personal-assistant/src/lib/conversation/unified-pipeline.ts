@@ -202,15 +202,6 @@ export class UnifiedConversationPipeline {
       }
     }
 
-    // Diagnostic: log totalRecallAvailable state
-    logger.info('[pipeline] Thread resolution result', {
-      threadId,
-      totalRecallAvailable,
-      isNewThread,
-      userId: identity.userId,
-      orgId: identity.orgId,
-    })
-
     // Emit thread info so frontends can track the active thread
     if (threadId) {
       yield { type: 'thread', data: { threadId, isNew: isNewThread } }
@@ -402,13 +393,6 @@ export class UnifiedConversationPipeline {
     userMessage: string,
     assistantResponse: string,
   ): Promise<void> {
-    logger.info('[pipeline] postProcess ENTERED', {
-      threadId,
-      orgId,
-      userMessageLen: userMessage?.length ?? 0,
-      assistantResponseLen: assistantResponse?.length ?? 0,
-    })
-
     // Update thread last_activity_at and last_channel
     const { data: threadData } = await this.supabase
       .from('conversation_threads')
