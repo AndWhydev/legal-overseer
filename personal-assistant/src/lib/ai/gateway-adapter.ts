@@ -174,21 +174,23 @@ export async function callModelViaGateway(
 
   // Build Anthropic-compatible response
   const text = await streamResult.text
-  const toolCalls = await streamResult.toolCalls
-  const usage = await streamResult.usage
-  const finishReason = await streamResult.finishReason
+  const toolCalls = (await streamResult.toolCalls) ?? []
+  const usage = (await streamResult.usage) ?? { promptTokens: 0, completionTokens: 0 }
+  const finishReason = (await streamResult.finishReason) ?? 'stop'
 
   const content: AnthropicLikeResponse['content'] = []
   if (text) {
     content.push({ type: 'text', text })
   }
-  for (const tc of toolCalls) {
-    content.push({
-      type: 'tool_use',
-      id: tc.toolCallId,
-      name: tc.toolName,
-      input: tc.input ?? tc.args,
-    })
+  if (Array.isArray(toolCalls)) {
+    for (const tc of toolCalls) {
+      content.push({
+        type: 'tool_use',
+        id: tc.toolCallId,
+        name: tc.toolName,
+        input: (tc as Record<string, unknown>).input ?? (tc as Record<string, unknown>).args,
+      })
+    }
   }
 
   const stop_reason =
