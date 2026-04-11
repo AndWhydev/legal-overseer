@@ -1,0 +1,9 @@
+{
+  "name": "@bitbit/deployment-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Demo deployment — showcase configuration with mock data",
+  "dependencies": {
+    "@bitbit/core": "*"
+  }
+}

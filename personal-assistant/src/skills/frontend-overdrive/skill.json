@@ -1,0 +1,33 @@
+{
+  "name": "Overdrive Effects",
+  "description": "Push interfaces past conventional limits with shaders, spring physics, scroll animations, and 60fps effects.",
+  "tags": [
+    "effects",
+    "animation",
+    "shaders",
+    "scroll-driven",
+    "webgl",
+    "spring-physics",
+    "extraordinary"
+  ],
+  "triggerKeywords": [
+    "scroll driven animation",
+    "webgl shader effect",
+    "spring physics animation",
+    "view transitions api",
+    "extraordinary ui effect",
+    "parallax scroll effect",
+    "gpu accelerated animation",
+    "morphing page transition",
+    "canvas animation effect",
+    "advanced css animation",
+    "60fps scroll animation",
+    "showpiece interface effect"
+  ],
+  "roleAffinity": [
+    "operations"
+  ],
+  "toolGroup": "code",
+  "estimatedTokens": 700,
+  "planGate": "growth"
+}

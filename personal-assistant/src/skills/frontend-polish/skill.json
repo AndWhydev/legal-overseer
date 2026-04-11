@@ -1,0 +1,32 @@
+{
+  "name": "Final Polish Pass",
+  "description": "Execute final quality pass addressing alignment, spacing, consistency, and micro-details before release.",
+  "tags": [
+    "polish",
+    "qa",
+    "final-pass",
+    "pixel-perfect",
+    "consistency",
+    "release-ready"
+  ],
+  "triggerKeywords": [
+    "final polish pass",
+    "pixel perfect alignment",
+    "pre-release qa check",
+    "spacing consistency audit",
+    "visual qa review",
+    "micro-detail refinement",
+    "release readiness check",
+    "design consistency pass",
+    "alignment audit",
+    "interactive state review",
+    "typography consistency check",
+    "final design cleanup"
+  ],
+  "roleAffinity": [
+    "operations"
+  ],
+  "toolGroup": "code",
+  "estimatedTokens": 600,
+  "planGate": "growth"
+}

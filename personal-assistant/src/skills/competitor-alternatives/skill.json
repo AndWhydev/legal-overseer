@@ -1,0 +1,22 @@
+{
+  "name": "Competitor & Alternative Pages",
+  "description": "Build SEO-optimized competitor comparison and alternative pages that rank, convert, and position your product effectively.",
+  "tags": ["SEO", "competitor-analysis", "comparison-pages", "alternatives", "positioning", "content-strategy", "sales-enablement"],
+  "triggerKeywords": [
+    "competitor comparison page",
+    "alternative page",
+    "vs page",
+    "comparison page",
+    "product vs product",
+    "product alternative",
+    "competitive landing page",
+    "switch from competitor",
+    "competitor SEO",
+    "competitor content",
+    "competitive positioning",
+    "alternatives to my product"
+  ],
+  "roleAffinity": ["sales", "research"],
+  "estimatedTokens": 5413,
+  "planGate": "growth"
+}

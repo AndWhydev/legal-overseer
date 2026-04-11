@@ -1,0 +1,34 @@
+{
+  "name": "Social Content Creator",
+  "description": "Create platform-optimized social media posts, threads, and carousels across LinkedIn, Twitter/X, Instagram, and TikTok.",
+  "tags": [
+    "social media",
+    "twitter",
+    "linkedin",
+    "instagram",
+    "tiktok",
+    "content",
+    "threads",
+    "carousels",
+    "hashtags",
+    "copywriting"
+  ],
+  "triggerKeywords": [
+    "social media post",
+    "tweet",
+    "multi-platform post",
+    "instagram caption",
+    "tiktok",
+    "thread",
+    "carousel",
+    "social content",
+    "hashtags",
+    "social strategy"
+  ],
+  "roleAffinity": [
+    "comms",
+    "operations"
+  ],
+  "estimatedTokens": 3500,
+  "planGate": "growth"
+}

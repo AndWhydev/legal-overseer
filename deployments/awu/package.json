@@ -1,0 +1,9 @@
+{
+  "name": "@bitbit/deployment-awu",
+  "version": "0.1.0",
+  "private": true,
+  "description": "All Webbed Up (AWU) deployment — policies, seeds, voices, and org config",
+  "dependencies": {
+    "@bitbit/core": "*"
+  }
+}

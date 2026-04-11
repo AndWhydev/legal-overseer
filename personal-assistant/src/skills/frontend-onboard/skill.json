@@ -1,0 +1,32 @@
+{
+  "name": "Onboarding Flow Design",
+  "description": "Design onboarding flows, empty states, and first-run experiences that get users to value quickly.",
+  "tags": [
+    "onboarding",
+    "first-run",
+    "empty-states",
+    "activation",
+    "user-flow",
+    "getting-started"
+  ],
+  "triggerKeywords": [
+    "onboarding flow design",
+    "first-time user experience",
+    "empty state design",
+    "user activation flow",
+    "getting started screen",
+    "new user walkthrough",
+    "product tour design",
+    "welcome screen flow",
+    "feature discovery ux",
+    "signup onboarding",
+    "progressive onboarding",
+    "guided tour design"
+  ],
+  "roleAffinity": [
+    "operations"
+  ],
+  "toolGroup": "code",
+  "estimatedTokens": 900,
+  "planGate": "growth"
+}

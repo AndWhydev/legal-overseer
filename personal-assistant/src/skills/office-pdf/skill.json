@@ -1,0 +1,23 @@
+{
+  "name": "PDF Processing & Generation",
+  "description": "Reads, creates, merges, splits, and manipulates PDF files using Python libraries and CLI tools.",
+  "tags": ["pdf", "documents", "office", "extract", "merge", "split", "ocr", "forms", "reportlab"],
+  "triggerKeywords": [
+    "create a pdf",
+    "merge pdf files",
+    "split a pdf",
+    "extract text from pdf",
+    "extract tables from pdf",
+    "fill pdf form",
+    "add watermark to pdf",
+    "password protect pdf",
+    "ocr scanned pdf",
+    "rotate pdf pages",
+    "combine pdfs",
+    "pdf to text",
+    "read a pdf file"
+  ],
+  "roleAffinity": ["operations", "comms", "finance"],
+  "estimatedTokens": 2307,
+  "planGate": "growth"
+}

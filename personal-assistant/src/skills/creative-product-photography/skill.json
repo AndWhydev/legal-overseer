@@ -1,0 +1,33 @@
+{
+  "name": "Creative: Product Photography",
+  "description": "Generate professional AI product photos including clean shots, lifestyle images, hero shots, and flat lays.",
+  "tags": [
+    "product photography",
+    "product shots",
+    "e-commerce photography",
+    "hero images",
+    "product marketing",
+    "visual commerce",
+    "AI photography"
+  ],
+  "triggerKeywords": [
+    "product photo",
+    "product photography",
+    "e-commerce image",
+    "product shot",
+    "product hero shot",
+    "lifestyle photo",
+    "product image",
+    "flat lay",
+    "generate product photo",
+    "product visual",
+    "product detail shot",
+    "AI product photo"
+  ],
+  "roleAffinity": [
+    "comms",
+    "operations"
+  ],
+  "estimatedTokens": 2680,
+  "planGate": "growth"
+}

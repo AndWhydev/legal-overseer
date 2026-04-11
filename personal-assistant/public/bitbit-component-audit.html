@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BitBit Component Inventory — Phase 1 Audit</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --bg: #0a0f1a;
+  --surface: rgba(15, 20, 30, 0.6);
+  --surface2: rgba(20, 28, 40, 0.5);
+  --border: rgba(255, 255, 255, 0.04);
+  --text: #F1F5F9;
+  --text-dim: #94A3B8;
+  --text-muted: #475569;
+  --accent: #F1F5F9;
+  --green: #22c55e;
+  --green-dim: rgba(34,197,94,0.12);
+  --yellow: #eab308;
+  --yellow-dim: rgba(234,179,8,0.12);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-height:1.5;padding:40px;overflow-wrap:break-word;min-height:100vh;background-image:radial-gradient(ellipse at 30% 0%,rgba(255,255,255,0.02) 0%,transparent 50%)}
+.wrap{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:160px 1fr;gap:0 40px}
+.main{min-width:0}
+.toc{position:sticky;top:24px;align-self:start;padding:14px 0;grid-row:1/-1;max-height:calc(100dvh - 48px);overflow-y:auto}
+.toc::-webkit-scrollbar{width:3px}
+.toc::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px}
+.toc-title{font-family:var(--font-mono);font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);padding:0 0 10px;margin-bottom:8px;border-bottom:1px solid var(--border)}
+.toc a{display:block;font-size:11px;color:var(--text-muted);text-decoration:none;padding:5px 8px;border-radius:4px;border-left:2px solid transparent;transition:all .15s;line-height:1.4;margin-bottom:1px}
+.toc a:hover{color:var(--text-dim);background:rgba(255,255,255,0.03)}
+.toc a.active{color:var(--text);border-left-color:var(--accent)}
+.header{margin-bottom:40px}
+.header h1{font-size:16px;font-weight:500;color:var(--text);letter-spacing:-0.01em;margin-bottom:4px}
+.header .tag{display:inline-flex;align-items:center;padding:4px 12px;border-radius:8px;font-size:14px;font-weight:500;background:rgba(255,255,255,0.06);color:var(--text-dim);margin-bottom:12px}
+.header p{font-size:14px;color:var(--text-dim);max-width:640px}
+.sec-head{font-family:var(--font-mono);font-size:14px;font-weight:500;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);padding:16px 0 12px;margin-top:40px;margin-bottom:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;scroll-margin-top:24px}
+.sec-head::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+/* KPI cards */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.kpi{padding:20px;border-radius:16px;background:var(--surface);box-shadow:inset 0 1px 0 rgba(255,255,255,0.05)}
+.kpi .num{font-family:var(--font-mono);font-size:16px;font-weight:500;color:var(--text);letter-spacing:-0.02em}
+.kpi .label{font-size:14px;color:var(--text-dim);margin-top:4px}
+.kpi .sub{font-size:14px;color:var(--text-muted);margin-top:2px}
+/* Tables */
+.table-wrap{overflow-x:auto;border-radius:16px;background:var(--surface);box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead{position:sticky;top:0;z-index:1}
+th{background:rgba(255,255,255,0.03);text-align:left;padding:12px 16px;font-weight:500;color:var(--text-dim);font-size:14px;letter-spacing:0.02em;border-bottom:1px solid var(--border)}
+td{padding:10px 16px;border-bottom:1px solid var(--border);color:var(--text-dim);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+td code{font-family:var(--font-mono);font-size:14px;background:rgba(255,255,255,0.04);padding:1px 6px;border-radius:4px;color:var(--text)}
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:14px;font-weight:500}
+.badge--green{background:var(--green-dim);color:var(--green)}
+.badge--yellow{background:var(--yellow-dim);color:var(--yellow)}
+.badge--red{background:var(--red-dim);color:var(--red)}
+.badge--dim{background:rgba(255,255,255,0.06);color:var(--text-dim)}
+/* Grade badges */
+.grade{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;font-size:14px;font-weight:500;font-family:var(--font-mono)}
+.grade-a{background:var(--green-dim);color:var(--green)}
+.grade-b{background:rgba(255,255,255,0.06);color:var(--text)}
+.grade-c{background:var(--yellow-dim);color:var(--yellow)}
+/* Progress bar */
+.prog{height:4px;border-radius:9999px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:4px}
+.prog-fill{height:100%;border-radius:9999px;background:var(--accent)}
+/* Cards */
+.opp-card{padding:16px 20px;border-radius:12px;background:var(--surface);box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);margin-bottom:8px}
+.opp-card h4{font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px}
+.opp-card p{font-size:14px;color:var(--text-dim);line-height:1.6}
+.opp-card code{font-family:var(--font-mono);font-size:14px;background:rgba(255,255,255,0.04);padding:1px 6px;border-radius:4px}
+/* Phase cards */
+.phase-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.phase{padding:16px;border-radius:12px;background:var(--surface);box-shadow:inset 0 1px 0 rgba(255,255,255,0.05)}
+.phase .num{font-family:var(--font-mono);font-size:14px;color:var(--text-muted);margin-bottom:4px}
+.phase h4{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px}
+.phase p{font-size:14px;color:var(--text-dim)}
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.kpi,.table-wrap,.opp-card,.phase{animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both}
+.kpi:nth-child(1){animation-delay:0ms}.kpi:nth-child(2){animation-delay:40ms}.kpi:nth-child(3){animation-delay:80ms}.kpi:nth-child(4){animation-delay:120ms}
+@media(max-width:1000px){body{padding:20px}.wrap{grid-template-columns:1fr}.toc{position:sticky;top:0;z-index:200;max-height:none;display:flex;gap:4px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 0;margin:0 -20px;padding-left:20px;padding-right:20px;grid-row:auto}.toc::-webkit-scrollbar{display:none}.toc-title{display:none}.toc a{white-space:nowrap;flex-shrink:0;border-left:none;border-bottom:2px solid transparent;border-radius:4px 4px 0 0;padding:6px 10px;font-size:10px}.toc a.active{border-left:none;border-bottom-color:var(--accent)}.main{padding-top:20px}.sec-head{scroll-margin-top:52px}.kpi-row{grid-template-columns:repeat(2,1fr)}.phase-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.kpi,.table-wrap,.opp-card,.phase{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" id="toc">
+<div class="toc-title">Audit</div>
+<a href="#s1">1. Numbers</a>
+<a href="#s2">2. Adoption</a>
+<a href="#s3">3. Scorecard</a>
+<a href="#s4">4. Opportunities</a>
+<a href="#s5">5. Execution Plan</a>
+</nav>
+<div class="main">
+<div class="header">
+<div class="tag">Phase 1 Audit</div>
+<h1>BitBit Component Inventory</h1>
+<p>Comprehensive audit of every UI pattern across 29 dashboard tabs and 110+ component files. Data collected by 4 parallel exploration agents on 2026-03-26.</p>
+</div>
+
+<div id="s1" class="sec-head">1 — The Numbers</div>
+<div class="kpi-row">
+<div class="kpi">
+<div class="num" style="color:var(--red)">17</div>
+<div class="label">Unique card patterns</div>
+<div class="sub">Only 1 uses S.card tokens</div>
+</div>
+<div class="kpi">
+<div class="num" style="color:var(--yellow)">14+</div>
+<div class="label">Native &lt;select&gt; elements</div>
+<div class="sub">Should all be GlassDropdown</div>
+</div>
+<div class="kpi">
+<div class="num" style="color:var(--yellow)">1 / 29</div>
+<div class="label">Tabs import design tokens</div>
+<div class="sub">3% adoption rate</div>
+</div>
+<div class="kpi">
+<div class="num" style="color:var(--red)">150+</div>
+<div class="label">Hardcoded rgba() values</div>
+<div class="sub">Should use CSS vars / C tokens</div>
+</div>
+</div>
+
+<div id="s2" class="sec-head">2 — Shared Component Adoption</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Component</th><th>Available In</th><th>Using</th><th>Adoption</th><th>Gap</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><code>EmptyState</code></td><td>29 files</td><td>28</td><td><div class="prog"><div class="prog-fill" style="width:95%"></div></div></td><td>1</td><td><span class="badge badge--green">95%</span></td></tr>
+<tr><td><code>GlassDropdown</code></td><td>26 files</td><td>10</td><td><div class="prog"><div class="prog-fill" style="width:38%"></div></div></td><td>16</td><td><span class="badge badge--yellow">38%</span></td></tr>
+<tr><td><code>StatusPill</code></td><td>66 files</td><td>~30</td><td><div class="prog"><div class="prog-fill" style="width:45%"></div></div></td><td>~36</td><td><span class="badge badge--yellow">45%</span></td></tr>
+<tr><td><code>GlassToggle</code></td><td>15 files</td><td>5</td><td><div class="prog"><div class="prog-fill" style="width:33%"></div></div></td><td>10</td><td><span class="badge badge--yellow">33%</span></td></tr>
+<tr><td><code>S.button</code> tokens</td><td>20+ files</td><td>4</td><td><div class="prog"><div class="prog-fill" style="width:20%"></div></div></td><td>16+</td><td><span class="badge badge--red">20%</span></td></tr>
+<tr><td><code>S.input</code> tokens</td><td>15 files</td><td>1</td><td><div class="prog"><div class="prog-fill" style="width:7%"></div></div></td><td>14</td><td><span class="badge badge--red">7%</span></td></tr>
+<tr><td><code>S.card</code> tokens</td><td>17 files</td><td>1</td><td><div class="prog"><div class="prog-fill" style="width:6%"></div></div></td><td>16</td><td><span class="badge badge--red">6%</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="s3" class="sec-head">3 — Compliance Scorecard</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Tab</th><th>Grade</th><th>Tokens</th><th>Hardcoded rgba</th><th>Light Ready</th><th>Animations</th><th>Shared Components</th></tr></thead>
+<tbody>
+<tr><td><code>tenders-tab</code></td><td><span class="grade grade-a">A</span></td><td>Yes</td><td>5</td><td>Yes</td><td>0</td><td>GlassToggle, EmptyState</td></tr>
+<tr><td><code>invoices-tab</code></td><td><span class="grade grade-a">A</span></td><td>No</td><td>0</td><td>Yes</td><td>0</td><td>GlassToggle</td></tr>
+<tr><td><code>medications-tab</code></td><td><span class="grade grade-a">A</span></td><td>No</td><td>0</td><td>Yes</td><td>0</td><td>StatusPill</td></tr>
+<tr><td><code>dashboard-tab</code></td><td><span class="grade grade-a">A</span></td><td>No</td><td>0</td><td>Yes</td><td>0</td><td>—</td></tr>
+<tr><td><code>contacts-tab</code></td><td><span class="grade grade-b">B</span></td><td>No</td><td>10</td><td>Partial</td><td>1</td><td>GlassDropdown, EmptyState, StatusPill</td></tr>
+<tr><td><code>inbox-tab</code></td><td><span class="grade grade-b">B</span></td><td>No</td><td>14</td><td>Partial</td><td>0</td><td>GlassDropdown, EmptyState</td></tr>
+<tr><td><code>command-center-tab</code></td><td><span class="grade grade-b">B</span></td><td>No</td><td>34</td><td>Partial</td><td>0</td><td>GlassToggle</td></tr>
+<tr><td><code>reports-tab</code></td><td><span class="grade grade-b">B</span></td><td>No</td><td>7</td><td>Partial</td><td>1</td><td>GlassToggle</td></tr>
+<tr><td><code>activity-tab</code></td><td><span class="grade grade-b">B</span></td><td>No</td><td>0</td><td>Yes</td><td>0</td><td>GlassDropdown, EmptyState, StatusPill</td></tr>
+<tr><td><code>costs-tab</code></td><td><span class="grade grade-b">B</span></td><td>No</td><td>5</td><td>Yes</td><td>0</td><td>—</td></tr>
+<tr><td><code>analytics-tab</code></td><td><span class="grade grade-b">B</span></td><td>No</td><td>28</td><td>Partial</td><td>0</td><td>EmptyState</td></tr>
+<tr><td><code>knowledge-tab</code></td><td><span class="grade grade-c">C</span></td><td>No</td><td>10</td><td>Partial</td><td>0</td><td>GlassToggle, EmptyState</td></tr>
+<tr><td><code>settings-tab</code></td><td><span class="grade grade-c">C</span></td><td>No</td><td>13</td><td>Partial</td><td>0</td><td>—</td></tr>
+<tr><td><code>ad-scripts-tab</code></td><td><span class="grade grade-c">C</span></td><td>No</td><td>20</td><td>Partial</td><td>0</td><td>—</td></tr>
+<tr><td><code>ai-search-tab</code></td><td><span class="grade grade-c">C</span></td><td>No</td><td>37</td><td>Partial</td><td>0</td><td>—</td></tr>
+<tr><td><code>creator-studio-tab</code></td><td><span class="grade grade-c">C</span></td><td>No</td><td>42</td><td>Partial</td><td>0</td><td>—</td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="s4" class="sec-head">4 — Top 5 Consolidation Opportunities</div>
+
+<div class="opp-card">
+<h4>1. Replace 14 native &lt;select&gt; → GlassDropdown</h4>
+<p>Files: <code>scenario-planner-ui</code>, <code>team-management</code>, <code>channel-config-drawer</code>, <code>ad-scripts-tab</code>, <code>reports-tab</code>, <code>admin-tab</code>, <code>campaign-create-panel</code>, <code>template-editor-panel</code>, <code>upload-modal</code>, <code>portal-management</code>, <code>portal-requests</code>, and 3 more. All use inconsistent inline styles. The shared <code>GlassDropdown</code> component exists and is proven.</p>
+</div>
+<div class="opp-card">
+<h4>2. Unify 3 toggle implementations → 1 shared Toggle</h4>
+<p><code>settings-tab</code>, <code>notification-preferences</code>, and <code>invoice-template-editor</code> each implement their own iOS-style toggle switch with different heights (24px), backgrounds, and focus styles. Consolidate into a single <code>Toggle</code> component.</p>
+</div>
+<div class="opp-card">
+<h4>3. Extend ListRow to 10+ custom implementations</h4>
+<p>A shared <code>ListRow</code> component exists but is only used in ~3 files. 10+ files implement custom row patterns: <code>leads-list-view</code>, <code>invoice-list</code>, <code>swarm-list</code>, <code>role-activity-feed</code>, <code>team-management</code>, <code>api-key-management</code>, <code>notification-preferences</code>, <code>contacts-tab</code>, <code>attention-view</code>, <code>role-detail-view</code>.</p>
+</div>
+<div class="opp-card">
+<h4>4. Token migration: creator-studio-tab (42 hardcoded rgba)</h4>
+<p>Worst offender. 42 inline <code>rgba()</code> values that should use <code>C.bgCard</code>, <code>C.bgHover</code>, <code>C.textPrimary</code> etc. from <code>design-tokens.ts</code>. Each replacement is ~1 line but the file needs a full pass.</p>
+</div>
+<div class="opp-card">
+<h4>5. S.card adoption: 6% → target 90%</h4>
+<p>16 of 17 card patterns still use inline glass styles instead of <code>S.card</code> / <code>S.cardLight</code> / <code>S.cardFlush</code> from design tokens. Each adoption replaces 6-8 lines of inline style with a single spread: <code>style={S.card}</code>.</p>
+</div>
+
+<div id="s5" class="sec-head">5 — Execution Plan</div>
+<div class="phase-grid">
+<div class="phase"><div class="num">Phase 1</div><h4>Token Migration Sprint</h4><p>Replace all hardcoded rgba with S/C imports across 29 tabs. Highest impact, mechanical work — ideal for parallel agents.</p></div>
+<div class="phase"><div class="num">Phase 2</div><h4>Component Consolidation</h4><p>Replace 14 native selects with GlassDropdown. Unify 3 toggles into 1. Extend ListRow to cover 10+ custom row patterns.</p></div>
+<div class="phase"><div class="num">Phase 3</div><h4>Page-by-Page Redesign</h4><p>Each page gets fresh Opus agent eyes. Independent redesigns where needed. Focus on the C-graded tabs first.</p></div>
+<div class="phase"><div class="num">Phase 4</div><h4>Animation Pass</h4><p>Apply bb-stagger, bb-lift, spring easing to all lists and card grids. Currently 2/29 tabs have animations.</p></div>
+<div class="phase"><div class="num">Phase 5</div><h4>Light Mode Verification</h4><p>Test every page in midnight + light + aurora themes. Fix any remaining hardcoded dark-mode values.</p></div>
+<div class="phase"><div class="num">Phase 6</div><h4>Accessibility Pass</h4><p>WCAG 2.2 audit, keyboard navigation, screen reader testing. Focus on interactive components.</p></div>
+</div>
+
+<div style="height:40px"></div>
+</div>
+</div>
+
+<script>
+(function(){const t=document.getElementById('toc'),l=t.querySelectorAll('a'),s=[];l.forEach(a=>{const id=a.getAttribute('href').slice(1),el=document.getElementById(id);if(el)s.push({id,el,link:a})});const o=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting){l.forEach(a=>a.classList.remove('active'));const m=s.find(x=>x.el===en.target);if(m){m.link.classList.add('active');if(window.innerWidth<=1000)m.link.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})}}})},{rootMargin:'-10% 0px -80% 0px'});s.forEach(x=>o.observe(x.el));l.forEach(a=>{a.addEventListener('click',e=>{e.preventDefault();const el=document.getElementById(a.getAttribute('href').slice(1));if(el){el.scrollIntoView({behavior:'smooth',block:'start'});history.replaceState(null,'','#'+a.getAttribute('href').slice(1))}})})})();
+</script>
+</body>
+</html>

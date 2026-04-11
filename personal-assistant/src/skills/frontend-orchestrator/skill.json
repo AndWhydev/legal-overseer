@@ -1,0 +1,22 @@
+{
+  "name": "Frontend Design Orchestrator",
+  "description": "Diagnose UI design maturity and sequence all 13 frontend skills in optimal order for your specific situation.",
+  "tags": ["orchestration", "design-maturity", "roadmap", "frontend", "planning", "strategy", "sequencing"],
+  "triggerKeywords": [
+    "improve my UI",
+    "frontend design roadmap",
+    "design maturity",
+    "where to start with design",
+    "design system plan",
+    "UI improvement plan",
+    "which design skill to use",
+    "frontend audit",
+    "design strategy",
+    "UI quality improvement",
+    "design system audit",
+    "frontend refactoring plan"
+  ],
+  "roleAffinity": ["coordinator"],
+  "estimatedTokens": 4122,
+  "planGate": "growth"
+}

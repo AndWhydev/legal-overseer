@@ -1,0 +1,22 @@
+{
+  "name": "Pricing Strategy",
+  "description": "Design value-based SaaS pricing with tier structures, value metrics, freemium vs trial analysis, and willingness-to-pay research.",
+  "tags": ["pricing", "SaaS", "monetization", "tiers", "freemium", "value-metric", "packaging", "Van-Westendorp"],
+  "triggerKeywords": [
+    "how much to charge",
+    "pricing tiers",
+    "freemium vs free trial",
+    "pricing strategy",
+    "value metric",
+    "willingness to pay",
+    "pricing packaging",
+    "price increase",
+    "Van Westendorp",
+    "SaaS pricing",
+    "enterprise pricing",
+    "monetization strategy"
+  ],
+  "roleAffinity": ["sales", "research", "finance"],
+  "estimatedTokens": 5821,
+  "planGate": "growth"
+}

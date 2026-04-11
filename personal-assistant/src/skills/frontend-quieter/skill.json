@@ -1,0 +1,32 @@
+{
+  "name": "Quieter Design",
+  "description": "Reduce visual intensity in overstimulating designs while maintaining sophistication and quality.",
+  "tags": [
+    "quiet",
+    "subtle",
+    "refined",
+    "reduce-intensity",
+    "muted",
+    "sophisticated"
+  ],
+  "triggerKeywords": [
+    "tone it down",
+    "too visually busy",
+    "overstimulating design",
+    "reduce visual noise",
+    "more subtle design",
+    "quieter aesthetic",
+    "muted color palette",
+    "less visual intensity",
+    "calmer interface",
+    "softer design",
+    "too loud visually",
+    "refined understated design"
+  ],
+  "roleAffinity": [
+    "operations"
+  ],
+  "toolGroup": "code",
+  "estimatedTokens": 500,
+  "planGate": "growth"
+}

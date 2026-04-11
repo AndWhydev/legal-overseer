@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -f /Users/torrinkay/Studio/bitbit/.git/index.lock)",
+      "Bash(git -C /Users/torrinkay/Studio/bitbit add .planning/phases/44-living-brain-architecture-v2/44-*-PLAN.md .planning/ROADMAP.md)",
+      "Bash(rm -f /Users/torrinkay/studio/bitbit/.git/index.lock)",
+      "Bash(rm -rf /Users/torrinkay/Studio/bitbit/.forge)",
+      "Bash(mkdir -p /Users/torrinkay/Studio/bitbit/.forge/milestones/archive /Users/torrinkay/Studio/bitbit/.forge/phases)",
+      "Bash(cp /Users/torrinkay/.claude/skills/forge/templates/config.json /Users/torrinkay/Studio/bitbit/.forge/config.json)",
+      "Bash(touch /Users/torrinkay/Studio/bitbit/.forge/event-log.jsonl)"
+    ]
+  }
+}

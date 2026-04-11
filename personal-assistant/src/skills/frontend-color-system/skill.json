@@ -1,0 +1,24 @@
+{
+  "name": "Color System",
+  "description": "Build semantic color tokens and inject strategic color into monochromatic or flat interfaces.",
+  "tags": ["color", "design-system", "dark-mode", "theming", "accessibility", "contrast", "color-theory", "color-injection", "oklch"],
+  "triggerKeywords": [
+    "color system",
+    "dark mode",
+    "color palette",
+    "contrast ratio",
+    "color tokens",
+    "color-blind friendly",
+    "semantic colors",
+    "brand colors",
+    "color harmony",
+    "too gray",
+    "needs color",
+    "monochromatic",
+    "dull design",
+    "add warmth"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 4138,
+  "planGate": "growth"
+}

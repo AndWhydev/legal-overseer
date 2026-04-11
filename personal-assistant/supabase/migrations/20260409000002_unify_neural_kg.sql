@@ -57,6 +57,15 @@ CREATE INDEX IF NOT EXISTS idx_entity_nodes_search
   ON entity_nodes USING gin (search_tsv);
 
 -- Unique constraint for Hebbian upserts (one edge per directed relation)
+-- Clean up duplicate edges before unique constraint
+DELETE FROM entity_edges a USING entity_edges b
+WHERE a.id > b.id
+  AND a.org_id = b.org_id
+  AND a.source_id = b.source_id
+  AND a.target_id = b.target_id
+  AND a.relation_type = b.relation_type
+  AND a.relation_type IS NOT NULL;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_entity_edges_unique_rel
   ON entity_edges (org_id, source_id, target_id, relation_type)
   WHERE relation_type IS NOT NULL;

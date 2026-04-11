@@ -1,0 +1,10 @@
+{
+  "name": "Creative: Image Generation",
+  "description": "Generate professional-quality images via AI Gateway with structured prompt engineering for any visual content.",
+  "tags": ["image generation", "prompt engineering", "AI art", "visual content creation", "asset generation", "automation"],
+  "triggerKeywords": ["generate image", "AI image", "create visual", "image prompt", "text to image", "generate photo", "AI art", "create image", "prompt engineering", "visual generation", "generate asset", "make me an image"],
+  "roleAffinity": ["comms", "operations"],
+  "toolGroup": "creative",
+  "estimatedTokens": 1400,
+  "planGate": "growth"
+}

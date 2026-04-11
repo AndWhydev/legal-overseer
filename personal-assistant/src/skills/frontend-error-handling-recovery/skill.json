@@ -1,0 +1,25 @@
+{
+  "name": "Error Handling & Recovery",
+  "description": "Harden interfaces against edge cases, i18n overflow, and error states with resilient recovery flows.",
+  "tags": ["error-handling", "UX", "validation", "recovery", "accessibility", "i18n", "resilience", "edge-cases", "text-overflow"],
+  "triggerKeywords": [
+    "error handling",
+    "error message",
+    "error state",
+    "form validation errors",
+    "network error",
+    "recovery workflow",
+    "graceful degradation",
+    "harden",
+    "production ready",
+    "edge cases",
+    "text overflow",
+    "i18n",
+    "internationalization",
+    "RTL",
+    "empty state"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 4436,
+  "planGate": "growth"
+}

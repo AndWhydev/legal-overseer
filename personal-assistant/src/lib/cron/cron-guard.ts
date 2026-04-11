@@ -1,0 +1,130 @@
+import { NextResponse } from 'next/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { getServiceClient } from '@/lib/supabase/service-client'
+import { logger } from '@/lib/core/logger';
+
+/**
+ * Structured result returned by cron handler functions.
+ */
+export type CronResult = {
+  message: string
+  details?: Record<string, unknown>
+}
+
+/** Shared maxDuration for all cron routes (5 minutes). */
+export const cronMaxDuration = 300
+
+/** Shared dynamic export for all cron routes. */
+export const cronDynamic = 'force-dynamic' as const
+
+/** Options for withCronGuard. */
+export interface CronGuardOptions {
+  /**
+   * When true, retries the handler once on transient DB connection errors
+   * (connection refused, timeout, etc.) after a 2s delay.
+   * Default: false.
+   */
+  resilience?: boolean
+}
+
+/** Check if an error is a transient DB connection error. */
+function isDbConnectionError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase()
+    return (
+      msg.includes('connection') ||
+      msg.includes('econnrefused') ||
+      msg.includes('timeout') ||
+      msg.includes('econnreset')
+    )
+  }
+  return false
+}
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
+ * Shared cron endpoint guard and execution wrapper.
+ *
+ * Provides:
+ * - Authorization via Bearer token (CRON_SECRET)
+ * - Service-role Supabase client (no user session needed)
+ * - Structured JSON response with timing
+ * - Error handling and logging
+ * - Optional resilience: retry once on transient DB errors
+ */
+export async function withCronGuard(
+  request: Request,
+  handler: (supabase: SupabaseClient) => Promise<CronResult>,
+  opts?: CronGuardOptions,
+): Promise<NextResponse> {
+  // Extract cron name from URL path for logging
+  const url = new URL(request.url)
+  const cronName = url.pathname.replace('/api/cron/', '') || 'unknown'
+  const tag = `[cron/${cronName}]`
+
+  // Validate authorization
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret && request.headers.get('Authorization') !== `Bearer ${cronSecret}`) {
+    logger.warn(`${tag} Unauthorized request rejected`)
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Use shared singleton service-role client (singleton with pool config from service-client.ts)
+  let supabase: SupabaseClient
+  try {
+    supabase = getServiceClient()
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err)
+    logger.error(`${tag} Service client initialization failed: ${errorMessage}`)
+    return NextResponse.json(
+      { success: false, error: 'Server configuration error' },
+      { status: 500 },
+    )
+  }
+
+  const startTime = Date.now()
+  logger.info(`${tag} Starting execution`)
+
+  try {
+    let result: CronResult
+    try {
+      result = await handler(supabase)
+    } catch (firstErr) {
+      // Optional: retry once on transient DB connection errors
+      if (opts?.resilience && isDbConnectionError(firstErr)) {
+        logger.warn(`${tag} Transient DB error, retrying in 2s...`)
+        await sleepMs(2000)
+        result = await handler(supabase)
+      } else {
+        throw firstErr
+      }
+    }
+
+    const durationMs = Date.now() - startTime
+
+    logger.info(`${tag} Completed in ${durationMs}ms: ${result.message}`)
+
+    return NextResponse.json({
+      success: true,
+      duration_ms: durationMs,
+      result,
+    })
+  } catch (err) {
+    const durationMs = Date.now() - startTime
+    const errorMessage = err instanceof Error ? err.message : String(err)
+
+    logger.error(`${tag} Failed after ${durationMs}ms:`, err)
+
+    return NextResponse.json(
+      {
+        success: false,
+        duration_ms: durationMs,
+        error: errorMessage,
+      },
+      { status: 500 },
+    )
+  }
+}

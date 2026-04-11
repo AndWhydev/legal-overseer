@@ -1,0 +1,24 @@
+{
+  "name": "Performance Optimization",
+  "description": "Diagnose and fix loading speed, rendering bottlenecks, bundle size, and Core Web Vitals.",
+  "tags": ["performance", "optimistic-UI", "Core-Web-Vitals", "latency", "skeleton-screens", "bundle-size", "LCP", "rendering", "images"],
+  "triggerKeywords": [
+    "slow",
+    "laggy",
+    "janky",
+    "bundle size",
+    "load time",
+    "optimistic UI",
+    "Core Web Vitals",
+    "LCP optimization",
+    "perceived performance",
+    "request batching",
+    "preloading",
+    "layout thrashing",
+    "virtual scroll",
+    "code splitting"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 4792,
+  "planGate": "growth"
+}

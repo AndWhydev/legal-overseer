@@ -1,0 +1,23 @@
+{
+  "name": "Industrial Brutalist UI Designer",
+  "description": "Builds raw mechanical web interfaces fusing Swiss typography with military terminal aesthetics and analog degradation.",
+  "tags": ["brutalist", "ui", "design", "industrial", "typography", "dark-mode", "crt", "terminal", "swiss-design", "frontend"],
+  "triggerKeywords": [
+    "brutalist design",
+    "industrial ui",
+    "military terminal interface",
+    "swiss typography design",
+    "crt terminal aesthetic",
+    "tactical dashboard",
+    "raw mechanical interface",
+    "monospace heavy design",
+    "declassified blueprint style",
+    "data-heavy dashboard design",
+    "analog degradation effects",
+    "halftone ui design",
+    "high contrast editorial interface"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 2416,
+  "planGate": "growth"
+}

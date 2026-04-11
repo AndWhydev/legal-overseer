@@ -1,0 +1,34 @@
+{
+  "name": "SEO Strategy",
+  "description": "Plan SEO campaigns with keyword research strategy, site architecture, and competitive positioning.",
+  "tags": [
+    "SEO strategy",
+    "keyword research",
+    "link building",
+    "domain authority",
+    "programmatic SEO",
+    "topical authority",
+    "E-E-A-T",
+    "content strategy"
+  ],
+  "triggerKeywords": [
+    "seo strategy",
+    "seo plan",
+    "keyword strategy",
+    "site architecture",
+    "link building",
+    "technical seo",
+    "seo roadmap",
+    "search strategy",
+    "seo campaign",
+    "search optimization",
+    "organic growth",
+    "domain authority"
+  ],
+  "roleAffinity": [
+    "research",
+    "operations"
+  ],
+  "estimatedTokens": 3320,
+  "planGate": "growth"
+}

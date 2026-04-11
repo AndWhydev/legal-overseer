@@ -1,0 +1,24 @@
+{
+  "name": "Layout System",
+  "description": "Design spatial layouts with grid systems, responsive breakpoints, and visual rhythm.",
+  "tags": ["layout", "responsive-design", "CSS-grid", "flexbox", "mobile-first", "breakpoints", "container-queries", "spacing", "visual-rhythm"],
+  "triggerKeywords": [
+    "layout",
+    "grid",
+    "spacing",
+    "breakpoints",
+    "responsive",
+    "visual rhythm",
+    "mobile-first design",
+    "container queries",
+    "sidebar layout",
+    "card grid",
+    "layout feels off",
+    "crowded UI",
+    "whitespace",
+    "squint test"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 4782,
+  "planGate": "growth"
+}

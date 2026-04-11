@@ -1,0 +1,9 @@
+{
+  "name": "Email Sequences",
+  "description": "Create automated email sequences that build trust and drive conversions through welcome, nurture, and launch campaigns.",
+  "tags": ["email sequences", "email automation", "email marketing", "welcome sequence", "nurture sequence", "sales sequence", "launch sequence"],
+  "triggerKeywords": ["email sequence", "welcome email", "email automation", "nurture campaign", "drip campaign", "email funnel", "launch sequence", "sales emails", "email series", "onboarding emails", "email flow", "email campaign"],
+  "roleAffinity": ["sales", "comms"],
+  "estimatedTokens": 1756,
+  "planGate": "growth"
+}

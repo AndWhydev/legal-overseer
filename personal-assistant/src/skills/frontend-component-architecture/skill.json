@@ -1,0 +1,22 @@
+{
+  "name": "Component Architecture",
+  "description": "Design reusable, documented component systems using atomic design with TypeScript, React, and Tailwind CSS.",
+  "tags": ["components", "atomic-design", "react", "typescript", "design-system", "reusability", "props", "variants"],
+  "triggerKeywords": [
+    "component library",
+    "reusable components",
+    "atomic design",
+    "component variants",
+    "props interface",
+    "component documentation",
+    "atoms molecules organisms",
+    "component composition",
+    "design system components",
+    "component architecture",
+    "React components",
+    "component refactoring"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 4670,
+  "planGate": "growth"
+}

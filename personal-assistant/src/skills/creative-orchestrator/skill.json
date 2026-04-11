@@ -1,0 +1,9 @@
+{
+  "name": "Creative Orchestrator",
+  "description": "Coordinate all creative skills and automate multi-asset workflows for complete creative production campaigns.",
+  "tags": ["orchestration", "workflow", "automation", "asset generation", "creative production", "Claude Code integration"],
+  "triggerKeywords": ["creative workflow", "generate all assets", "creative campaign", "batch generate", "creative production", "asset pipeline", "orchestrate creative", "brand kit", "full creative suite", "automate creative", "creative system", "generate campaign assets"],
+  "roleAffinity": ["coordinator"],
+  "estimatedTokens": 1300,
+  "planGate": "growth"
+}

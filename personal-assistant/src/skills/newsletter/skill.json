@@ -1,0 +1,9 @@
+{
+  "name": "Newsletter",
+  "description": "Build audience loyalty with recurring newsletters using 6 proven formats for consistent engagement.",
+  "tags": ["newsletter", "email marketing", "audience building", "subscriber engagement", "content distribution", "email strategy"],
+  "triggerKeywords": ["newsletter", "write newsletter", "email newsletter", "recurring email", "subscriber content", "weekly email", "audience building", "email list", "newsletter format", "newsletter strategy", "email content", "build audience"],
+  "roleAffinity": ["sales", "comms"],
+  "estimatedTokens": 1645,
+  "planGate": "growth"
+}

@@ -1,0 +1,227 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Invoice AWU-202603-006</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #f1f5f9; padding: 32px; color: #1e293b; }
+    .page {
+      width: 794px; min-height: 1123px; margin: 0 auto;
+      background: #ffffff; border-radius: 2px;
+      display: flex; flex-direction: column;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .header {
+      padding: 44px 48px 32px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .header-left h1 {
+      font-size: 36px; font-weight: 700; letter-spacing: -0.03em;
+      color: #1a2744; margin-bottom: 6px;
+    }
+    .header-left .subtitle {
+      font-size: 13px; color: #64748b; font-weight: 400;
+    }
+    .header-right { text-align: right; }
+    .header-right .inv-number {
+      font-size: 18px; font-weight: 700; color: #1a2744; margin-bottom: 8px;
+    }
+    .header-right .inv-date {
+      font-size: 13px; color: #64748b; line-height: 1.8;
+    }
+    .header-right .inv-date strong { color: #334155; font-weight: 600; }
+    .divider { height: 3px; background: linear-gradient(90deg, #1a2744, #2d6bc4); margin: 0 48px; border-radius: 2px; }
+
+    /* Payment due banner */
+    .due-banner {
+      margin: 28px 48px 0;
+      padding: 14px 20px;
+      background: #fefce8;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #92400e;
+      text-align: center;
+    }
+    .due-banner strong { color: #b45309; }
+
+    /* From / Bill To */
+    .parties {
+      padding: 28px 48px;
+      display: flex; gap: 80px;
+    }
+    .party { flex: 1; }
+    .party-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 12px;
+    }
+    .party-name { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+    .party-role { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+    .party-detail { font-size: 13px; color: #475569; line-height: 1.7; }
+
+    /* Table */
+    .items { padding: 8px 48px 0; flex: 1; }
+    .items table { width: 100%; border-collapse: collapse; }
+    .items thead tr {
+      background: #1a2744; color: #ffffff;
+    }
+    .items thead th {
+      padding: 12px 14px; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .items thead th:first-child { text-align: left; border-radius: 6px 0 0 6px; }
+    .items thead th:last-child { text-align: right; border-radius: 0 6px 6px 0; }
+    .items thead th.right { text-align: right; }
+    .items tbody td {
+      padding: 16px 14px; border-bottom: 1px solid #f1f5f9;
+      font-size: 14px; color: #334155; vertical-align: top;
+    }
+    .items tbody td.right { text-align: right; }
+    .item-title { font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+    .item-desc { font-size: 12px; color: #64748b; line-height: 1.5; }
+
+    /* Totals */
+    .totals-wrap { padding: 20px 48px 32px; display: flex; justify-content: flex-end; }
+    .totals { width: 280px; }
+    .totals .row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #64748b; }
+    .totals .row.total {
+      border-top: 2px solid #1a2744; margin-top: 8px; padding-top: 14px;
+      font-size: 20px; font-weight: 700; color: #1a2744;
+    }
+
+    /* Payment info */
+    .payment {
+      margin: 0 48px 32px;
+      padding: 24px 28px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .payment h3 {
+      font-size: 14px; font-weight: 700; color: #1a2744; margin-bottom: 14px;
+    }
+    .payment-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px 40px;
+    }
+    .payment-row { font-size: 13px; color: #475569; }
+    .payment-row strong { color: #1e293b; font-weight: 600; }
+    .payment-methods {
+      margin-top: 14px; padding-top: 12px; border-top: 1px solid #e2e8f0;
+      font-size: 12px; color: #64748b;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 20px 48px;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+      margin-top: auto;
+    }
+    .footer p { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+    .footer .contact { color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <h1>INVOICE</h1>
+        <p class="subtitle">Tor Kay - Web Development & SEO</p>
+      </div>
+      <div class="header-right">
+        <div class="inv-number">Invoice #AWU-202603-006</div>
+        <div class="inv-date">
+          <strong>Date:</strong> March 18, 2026<br/>
+          <strong>Due Date:</strong> March 25, 2026
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Due banner -->
+    <div class="due-banner">
+      <strong>Payment Due: March 25, 2026</strong> (7 days from invoice date)
+    </div>
+
+    <!-- Parties -->
+    <div class="parties">
+      <div class="party">
+        <div class="party-label">From</div>
+        <div class="party-name">Tor Kay</div>
+        <div class="party-role">Web Developer & SEO Specialist</div>
+        <div class="party-detail">
+          Email: contact@torkay.com
+        </div>
+      </div>
+      <div class="party">
+        <div class="party-label">Bill To</div>
+        <div class="party-name">Andy Taleb</div>
+        <div class="party-role">All Webbed Up</div>
+        <div class="party-detail">
+          Email: andy@allwebbedup.com.au<br/>
+          Phone: 0400 699 890
+        </div>
+      </div>
+    </div>
+
+    <!-- Line items -->
+    <div class="items">
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th class="right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="item-title">Club Team Manager - Bug Fixes and Functionality Updates</div>
+              <div class="item-desc">
+                Scope:<br/>
+                - Fine code removal from IssueFine form<br/>
+                - Auto-sort fines by amount descending
+              </div>
+            </td>
+            <td class="right" style="font-weight:600;">$150.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Totals -->
+    <div class="totals-wrap">
+      <div class="totals">
+        <div class="row"><span>Subtotal:</span> <span>$150.00</span></div>
+        <div class="row total"><span>Total Due:</span> <span>$150.00 AUD</span></div>
+      </div>
+    </div>
+
+    <!-- Payment info -->
+    <div class="payment">
+      <h3>Payment Information</h3>
+      <div class="payment-grid">
+        <div class="payment-row"><strong>Account Name:</strong> Torrin Kay</div>
+        <div class="payment-row"><strong>BSB:</strong> 062-948</div>
+        <div class="payment-row"><strong>Account Number:</strong> 20855887</div>
+        <div class="payment-row"><strong>PayID:</strong> 0480126540</div>
+      </div>
+      <div class="payment-methods">
+        Payment Methods Accepted: Bank Transfer (preferred), PayPal, Cash<br/>
+        Payment Terms: Due within 7 days of invoice date
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>Thank you for your business!</p>
+      <p class="contact">Questions about this invoice? Contact Tor Kay at contact@torkay.com</p>
+      <p style="margin-top:8px;font-size:10px;color:#c0c7d0;">Generated by BitBit</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<h2>How competitors split signal from noise</h2>
+<p class="subtitle">6 products, 3 core patterns. Click the approach that feels right for BitBit.</p>
+
+<div class="section">
+  <h3>The Split UX</h3>
+  <p class="subtitle">How each product lets users switch between "important" and "everything else"</p>
+
+  <table style="width:100%; border-collapse:collapse; margin:1.5rem 0; font-size:0.95rem;">
+    <thead>
+      <tr style="border-bottom:2px solid var(--border); text-align:left;">
+        <th style="padding:0.75rem 1rem; color:var(--text-secondary); font-weight:500;">Product</th>
+        <th style="padding:0.75rem 1rem; color:var(--text-secondary); font-weight:500;">Split UX</th>
+        <th style="padding:0.75rem 1rem; color:var(--text-secondary); font-weight:500;">Buckets</th>
+        <th style="padding:0.75rem 1rem; color:var(--text-secondary); font-weight:500;">AI Summary</th>
+        <th style="padding:0.75rem 1rem; color:var(--text-secondary); font-weight:500;">Row Priority</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:0.75rem 1rem; font-weight:600;">Gmail</td>
+        <td style="padding:0.75rem 1rem;">Horizontal tabs</td>
+        <td style="padding:0.75rem 1rem;">Primary, Social, Promotions, Updates, Forums</td>
+        <td style="padding:0.75rem 1rem; color:var(--text-secondary);">None in list (Gemini on-demand in thread)</td>
+        <td style="padding:0.75rem 1rem; color:var(--text-secondary);">Yellow "important" arrow</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:0.75rem 1rem; font-weight:600;">Superhuman</td>
+        <td style="padding:0.75rem 1rem;">Horizontal tabs</td>
+        <td style="padding:0.75rem 1rem;">Important, Other, Feed (custom splits)</td>
+        <td style="padding:0.75rem 1rem; font-weight:500; color:var(--accent);">Inline below subject — always visible</td>
+        <td style="padding:0.75rem 1rem; color:var(--text-secondary);">"Needs response" / "FYI" badges</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:0.75rem 1rem; font-weight:600;">Hey.com</td>
+        <td style="padding:0.75rem 1rem;">Sidebar nav (3 separate screens)</td>
+        <td style="padding:0.75rem 1rem;">Imbox, The Feed, Paper Trail</td>
+        <td style="padding:0.75rem 1rem; font-weight:500; color:var(--accent);">Inline — replaces preview snippet</td>
+        <td style="padding:0.75rem 1rem; color:var(--text-secondary);">None — Screener handles it at the gate</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:0.75rem 1rem; font-weight:600;">Shortwave</td>
+        <td style="padding:0.75rem 1rem;">Two horizontal tabs</td>
+        <td style="padding:0.75rem 1rem;">Important, Other</td>
+        <td style="padding:0.75rem 1rem; font-weight:500; color:var(--accent);">Inline below subject — always visible</td>
+        <td style="padding:0.75rem 1rem; color:var(--text-secondary);">Bold/unread only</td>
+      </tr>
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:0.75rem 1rem; font-weight:600;">Apple Mail</td>
+        <td style="padding:0.75rem 1rem;">Priority section pinned to top</td>
+        <td style="padding:0.75rem 1rem;">Priority (top), Everything else (below), Digest bundles</td>
+        <td style="padding:0.75rem 1rem; font-weight:500; color:var(--accent);">Inline — replaces preview snippet</td>
+        <td style="padding:0.75rem 1rem; color:var(--text-secondary);">Blue priority dot</td>
+      </tr>
+      <tr>
+        <td style="padding:0.75rem 1rem; font-weight:600;">Outlook</td>
+        <td style="padding:0.75rem 1rem;">Two horizontal tabs</td>
+        <td style="padding:0.75rem 1rem;">Focused, Other</td>
+        <td style="padding:0.75rem 1rem; color:var(--text-secondary);">On-demand (Copilot panel)</td>
+        <td style="padding:0.75rem 1rem; color:var(--text-secondary);">None in row</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Three patterns emerge</h3>
+  <p class="subtitle">Click the one that feels right for BitBit</p>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Binary tabs — "Inbox | Other"</h3>
+      <p><strong>Used by:</strong> Shortwave, Outlook, Superhuman</p>
+      <p>Simple segmented control at the top. AI decides what's important vs not. User corrects by moving messages between views. Two buckets, nothing more.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Simplest mental model</li><li>Maps directly to BitBit's existing enrichment data</li><li>No new nav items or routes needed</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>"Other" becomes a dumping ground</li><li>No distinction between newsletters and receipts</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Three-bucket — "Inbox | Feed | Paper Trail"</h3>
+      <p><strong>Used by:</strong> Hey.com</p>
+      <p>Personal messages in Inbox. Newsletters/content in Feed (browse when bored). Receipts/confirmations in Paper Trail (never read, always findable). Separate screens in sidebar.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Most opinionated noise handling</li><li>Feed is genuinely different UX (card layout, no badges)</li><li>Paper Trail eliminates receipt clutter permanently</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Three new views to build</li><li>Requires a Screener for new senders</li><li>More complex than BitBit needs right now</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Priority pin — "Priority section + everything else"</h3>
+      <p><strong>Used by:</strong> Apple Mail</p>
+      <p>No separate view. Important messages float to a pinned section at the top of the same list. Everything else sits below. Noise gets bundled into digest groups.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Single view — no switching</li><li>Everything visible in one scroll</li><li>Digest bundling reduces visual noise</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Still one long list — noise not truly gone</li><li>Bundling adds complexity</li><li>Doesn't match the "inbox = only relevant" goal</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:2rem;">
+  <h3>AI Summary placement</h3>
+  <p class="subtitle">Across all products, the winning pattern is clear</p>
+  <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:12px; padding:1.25rem 1.5rem; margin-top:1rem;">
+    <p style="margin:0; font-size:1.05rem;"><strong>Inline, replacing the body preview</strong> — Superhuman, Shortwave, Apple Mail, and Hey all show the AI summary directly in the message row where the body preview would normally go. Not on hover, not in a panel. BitBit already does this (<code>aiSummary || bodyPreview</code> in MessageRow).</p>
+  </div>
+</div>

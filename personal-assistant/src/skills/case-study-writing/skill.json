@@ -1,0 +1,9 @@
+{
+  "name": "Case Study Writing",
+  "description": "Write B2B case studies using STAR framework with quantified metrics and customer quotes.",
+  "tags": ["writing", "b2b", "content", "sales-enablement", "case-study"],
+  "triggerKeywords": ["case study", "customer story", "success story", "b2b case study", "client testimonial", "customer case study", "portfolio case study", "use case", "customer win", "results story"],
+  "roleAffinity": ["comms", "operations"],
+  "estimatedTokens": 1800,
+  "planGate": "growth"
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Visual Hierarchy Refactoring",
+  "description": "Establish clear visual hierarchy through size, weight, contrast, whitespace, and Gestalt principles to improve scannability.",
+  "tags": ["visual-hierarchy", "whitespace", "contrast", "Gestalt", "typography", "spacing", "refactoring", "UI-clarity"],
+  "triggerKeywords": [
+    "visual hierarchy",
+    "cluttered interface",
+    "whitespace",
+    "too dense",
+    "hard to scan",
+    "UI refactoring",
+    "Gestalt principles",
+    "tinted greys",
+    "contrast hierarchy",
+    "size hierarchy",
+    "interface clarity",
+    "UI feels cramped"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 3430,
+  "planGate": "growth"
+}

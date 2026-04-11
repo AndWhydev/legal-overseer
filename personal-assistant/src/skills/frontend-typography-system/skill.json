@@ -1,0 +1,23 @@
+{
+  "name": "Typography System",
+  "description": "Implement type scales, font pairing, and reading rhythm for production interfaces.",
+  "tags": ["typography", "type-scale", "fonts", "readability", "line-height", "modular-scale", "fluid-typography", "variable-fonts", "font-audit"],
+  "triggerKeywords": [
+    "font",
+    "typography",
+    "type scale",
+    "font pairing",
+    "line height",
+    "reading rhythm",
+    "modular scale",
+    "font size hierarchy",
+    "variable fonts",
+    "letter spacing",
+    "heading sizes",
+    "body text",
+    "font weight"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 4409,
+  "planGate": "growth"
+}

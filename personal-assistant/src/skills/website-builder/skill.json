@@ -1,0 +1,33 @@
+{
+  "name": "Website Builder",
+  "description": "Generate, preview, revise, and deploy professional websites from templates or descriptions.",
+  "tags": [
+    "website",
+    "builder",
+    "deploy",
+    "template",
+    "landing-page",
+    "web-design"
+  ],
+  "triggerKeywords": [
+    "build website",
+    "create website",
+    "build landing page",
+    "website template",
+    "deploy site",
+    "website builder",
+    "web page",
+    "portfolio site",
+    "business website",
+    "make website",
+    "site builder",
+    "website generator"
+  ],
+  "roleAffinity": [
+    "operations",
+    "sales"
+  ],
+  "toolGroup": "builder",
+  "estimatedTokens": 500,
+  "planGate": "growth"
+}

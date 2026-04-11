@@ -1,0 +1,24 @@
+{
+  "name": "Interaction Physics",
+  "description": "Add purposeful micro-interactions, entrance animations, and easing curves that make UI feel alive.",
+  "tags": ["animations", "microinteractions", "transitions", "easing", "CSS-animations", "motion", "hover-states", "delight", "timing"],
+  "triggerKeywords": [
+    "animation",
+    "micro-interaction",
+    "transition",
+    "hover effect",
+    "motion design",
+    "make it feel alive",
+    "easing functions",
+    "page transitions",
+    "reduced motion",
+    "loading spinner",
+    "entrance animation",
+    "stagger",
+    "feels static",
+    "add delight"
+  ],
+  "roleAffinity": ["operations"],
+  "estimatedTokens": 5418,
+  "planGate": "growth"
+}

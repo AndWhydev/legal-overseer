@@ -1,0 +1,716 @@
+import Anthropic from '@anthropic-ai/sdk'
+import type { AgentToolHandler } from '../tools'
+import { createApproval, resolveApproval, getPendingApprovals } from '../approval-queue'
+import type { ApprovalRecord } from '../approval-queue'
+import { executeApprovedAction, requeueExpiredAction } from '../action-executor'
+import { checkSendLimit } from '../send-limits'
+import { getDefaultAgentConfigId } from '../agent-config'
+import { logger } from '@/lib/core/logger'
+
+// ---------------------------------------------------------------------------
+// Tool definitions (Anthropic tool_use format)
+// ---------------------------------------------------------------------------
+
+export const superpowerToolDefinitions: Anthropic.Tool[] = [
+  {
+    name: 'web_search',
+    description:
+      'Search the web for current, real-time information using Brave Search. Use when the user asks about recent events, needs research, or when your training data may be outdated. Write specific search queries — include names, dates, and context for better results. Do NOT use for information you already have from memory or context.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Search query — be specific and include relevant context',
+        },
+        count: {
+          type: 'number',
+          description: 'Number of results to return (default: 5, max: 10)',
+        },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'fetch_url',
+    description:
+      'Fetch and extract readable text from a URL. Use when the user shares a link or when web_search returns a result that needs deeper reading. Handles HTML (extracts article text), JSON (returns raw), and plain text. Do NOT use for private/authenticated URLs — they will fail.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        url: {
+          type: 'string',
+          description: 'The full URL to fetch (must start with http:// or https://)',
+        },
+        max_chars: {
+          type: 'number',
+          description: 'Maximum characters to return (default: 8000)',
+        },
+      },
+      required: ['url'],
+    },
+  },
+  {
+    name: 'browse_website',
+    description:
+      'Navigate a website using a headless browser. Unlike fetch_url (which only does HTTP GET), this tool renders JavaScript, handles SPAs, and can interact with dynamic content. Use when fetch_url returns empty/broken content (JS-rendered pages), when you need to see what a page looks like after JavaScript execution, or when dealing with sites that block simple HTTP fetches. Returns extracted page text and optionally a base64 screenshot.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        url: {
+          type: 'string',
+          description: 'The full URL to browse (must start with http:// or https://)',
+        },
+        wait_for: {
+          type: 'string',
+          description: 'Optional CSS selector to wait for before extracting content (e.g. "#main-content", ".article-body")',
+        },
+        screenshot: {
+          type: 'boolean',
+          description: 'Whether to capture a screenshot (default: false). Returns base64 PNG.',
+        },
+        max_chars: {
+          type: 'number',
+          description: 'Maximum characters of text to return (default: 8000)',
+        },
+      },
+      required: ['url'],
+    },
+  },
+  {
+    name: 'send_email',
+    description:
+      'Send an email via Resend on behalf of the user. IMPORTANT: Always confirm the recipient, subject, and body with the user before sending. Supports plain text and HTML. Do NOT send without explicit user approval.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        to: {
+          type: 'string',
+          description: 'Recipient email address',
+        },
+        subject: {
+          type: 'string',
+          description: 'Email subject line',
+        },
+        body: {
+          type: 'string',
+          description: 'Email body (plain text or HTML)',
+        },
+        reply_to: {
+          type: 'string',
+          description: 'Optional reply-to address',
+        },
+      },
+      required: ['to', 'subject', 'body'],
+    },
+  },
+  {
+    name: 'send_sms',
+    description:
+      'Send an SMS text message via Telnyx. IMPORTANT: Always confirm the recipient and message with the user before sending. Use E.164 phone format (e.g. +61400123456). Messages over 160 chars are split into segments. Do NOT send without explicit user approval.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        to: {
+          type: 'string',
+          description: 'Recipient phone number (E.164 format preferred, e.g. +61400123456)',
+        },
+        message: {
+          type: 'string',
+          description: 'SMS message text (will be split into segments if >160 chars)',
+        },
+      },
+      required: ['to', 'message'],
+    },
+  },
+  // approve_action definition lives in tools.ts (toolDefinitions) to keep it with the comms group.
+  // Handler is below in superpowerToolHandlers.
+]
+
+// ---------------------------------------------------------------------------
+// Handlers
+// ---------------------------------------------------------------------------
+
+export const superpowerToolHandlers: Record<string, AgentToolHandler> = {
+  async web_search(input) {
+    const query = input.query as string
+    const count = Math.min((input.count as number) || 5, 10)
+
+    const braveKey = process.env.BRAVE_SEARCH_API_KEY
+    const serpKey = process.env.SERPAPI_KEY
+
+    if (!braveKey && !serpKey) {
+      return { success: false, error: 'Web search not configured' }
+    }
+
+    try {
+      // Try SerpAPI first (Google results), fall back to Brave
+      if (serpKey) {
+        const serpParams = new URLSearchParams({
+          q: query,
+          api_key: serpKey,
+          engine: 'google',
+          num: String(count),
+        })
+
+        const serpRes = await fetch(`https://serpapi.com/search.json?${serpParams}`)
+        if (serpRes.ok) {
+          const serpData = await serpRes.json() as {
+            organic_results?: Array<{ title?: string; link?: string; snippet?: string }>
+          }
+          const results = (serpData.organic_results ?? []).slice(0, count).map(r => ({
+            title: r.title ?? '',
+            url: r.link ?? '',
+            description: r.snippet ?? '',
+          }))
+          return {
+            success: true,
+            data: { results, totalResults: results.length, query },
+          }
+        }
+      }
+
+      // Brave fallback
+      if (!braveKey) {
+        return { success: false, error: 'Search API unavailable' }
+      }
+
+      const params = new URLSearchParams({
+        q: query,
+        count: String(count),
+        text_decorations: 'false',
+      })
+
+      const response = await fetch(`https://api.search.brave.com/res/v1/web/search?${params}`, {
+        headers: {
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip',
+          'X-Subscription-Token': braveKey,
+        },
+      })
+
+      if (!response.ok) {
+        const text = await response.text()
+        logger.warn('[web_search] Brave API error:', { status: response.status, body: text })
+        return { success: false, error: `Search failed: ${response.status}` }
+      }
+
+      const data = (await response.json()) as {
+        web?: {
+          results?: Array<{
+            title?: string
+            url?: string
+            description?: string
+            extra_snippets?: string[]
+          }>
+        }
+        query?: { original?: string }
+      }
+
+      const results = (data.web?.results ?? []).map((r) => ({
+        title: r.title ?? '',
+        url: r.url ?? '',
+        snippet: r.description ?? '',
+        extra: r.extra_snippets?.slice(0, 2),
+      }))
+
+      return {
+        success: true,
+        data: {
+          query: data.query?.original ?? query,
+          results,
+          total: results.length,
+        },
+      }
+    } catch (err) {
+      logger.error('[web_search] Error:', err)
+      return { success: false, error: `Search error: ${String(err)}` }
+    }
+  },
+
+  async fetch_url(input) {
+    const url = input.url as string
+    const maxChars = (input.max_chars as number) || 8000
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return { success: false, error: 'URL must start with http:// or https://' }
+    }
+
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'BitBit-Agent/1.0 (https://bitbit.chat)',
+          Accept: 'text/html, application/json, text/plain, */*',
+        },
+        redirect: 'follow',
+      })
+
+      clearTimeout(timeout)
+
+      if (!response.ok) {
+        return { success: false, error: `Fetch failed: ${response.status} ${response.statusText}` }
+      }
+
+      const contentType = response.headers.get('content-type') ?? ''
+
+      // JSON response — return raw
+      if (contentType.includes('application/json')) {
+        const json = await response.json()
+        const text = JSON.stringify(json, null, 2)
+        return {
+          success: true,
+          data: {
+            url,
+            content_type: 'json',
+            content: text.slice(0, maxChars),
+            truncated: text.length > maxChars,
+          },
+        }
+      }
+
+      // HTML — extract readable text
+      const html = await response.text()
+      const text = extractReadableText(html)
+
+      // Try to extract title
+      const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
+      const title = titleMatch ? titleMatch[1].trim().replace(/\s+/g, ' ') : undefined
+
+      return {
+        success: true,
+        data: {
+          url,
+          title,
+          content_type: contentType.includes('text/html') ? 'html' : 'text',
+          content: text.slice(0, maxChars),
+          truncated: text.length > maxChars,
+          char_count: text.length,
+        },
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return { success: false, error: 'Request timed out (15s)' }
+      }
+      logger.error('[fetch_url] Error:', err)
+      return { success: false, error: `Fetch error: ${String(err)}` }
+    }
+  },
+
+  async browse_website(input) {
+    const url = input.url as string
+    const waitFor = input.wait_for as string | undefined
+    const takeScreenshot = (input.screenshot as boolean) || false
+    const maxChars = (input.max_chars as number) || 8000
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return { success: false, error: 'URL must start with http:// or https://' }
+    }
+
+    try {
+      // Dynamic import — Playwright only available where installed
+      const { chromium } = await import('playwright')
+
+      const browser = await chromium.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      })
+
+      try {
+        const context = await browser.newContext({
+          userAgent: 'BitBit-Agent/1.0 (https://bitbit.chat)',
+          viewport: { width: 1280, height: 720 },
+        })
+        const page = await context.newPage()
+
+        // Navigate with timeout
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 })
+
+        // Wait for optional selector
+        if (waitFor) {
+          await page.waitForSelector(waitFor, { timeout: 10000 }).catch(() => {
+            // Don't fail if selector not found — still return what we have
+            logger.warn('[browse_website] Selector not found, proceeding:', waitFor)
+          })
+        } else {
+          // Brief settle for JS rendering
+          await page.waitForTimeout(2000)
+        }
+
+        // Extract title
+        const title = await page.title()
+
+        // Extract text content
+        const text = await page.evaluate(() => {
+          // Remove script, style, nav, footer
+          const remove = document.querySelectorAll('script, style, noscript, nav, footer, header')
+          remove.forEach(el => el.remove())
+          return document.body?.innerText || ''
+        })
+
+        // Optional screenshot
+        let screenshotBase64: string | undefined
+        if (takeScreenshot) {
+          const buffer = await page.screenshot({ type: 'png', fullPage: false })
+          screenshotBase64 = buffer.toString('base64')
+        }
+
+        // Get final URL (after redirects)
+        const finalUrl = page.url()
+
+        await browser.close()
+
+        const content = text.replace(/\n{3,}/g, '\n\n').trim()
+
+        return {
+          success: true,
+          data: {
+            url: finalUrl,
+            title,
+            content: content.slice(0, maxChars),
+            truncated: content.length > maxChars,
+            char_count: content.length,
+            screenshot_base64: screenshotBase64,
+            has_screenshot: !!screenshotBase64,
+          },
+        }
+      } catch (pageErr) {
+        await browser.close()
+        throw pageErr
+      }
+    } catch (err) {
+      // Graceful fallback if Playwright not installed
+      if (String(err).includes('Cannot find module') || String(err).includes('ERR_MODULE_NOT_FOUND')) {
+        return {
+          success: false,
+          error: 'browse_website requires Playwright (not installed in this environment). Use fetch_url instead for simple HTTP fetches.',
+        }
+      }
+      logger.error('[browse_website] Error:', err)
+      return { success: false, error: `Browse error: ${String(err)}` }
+    }
+  },
+
+  async send_email(input, orgId, supabase) {
+    const to = input.to as string
+    const subject = input.subject as string
+    const body = input.body as string
+    const replyTo = input.reply_to as string | undefined
+
+    try {
+      // Check daily send limit
+      const limit = await checkSendLimit(supabase, orgId, 'email')
+      if (!limit.allowed) {
+        return { success: false, error: `Daily email limit reached (${limit.limit}/day). Try again tomorrow.` }
+      }
+
+      // Resolve agent config ID (required FK on approval_queue)
+      const agentConfigId = await getDefaultAgentConfigId(supabase, orgId)
+      if (!agentConfigId) {
+        return { success: false, error: 'No agent configuration found. Set up an agent config first.' }
+      }
+
+      // Queue for human approval instead of sending directly
+      const approval = await createApproval(supabase, {
+        org_id: orgId,
+        agent_config_id: agentConfigId,
+        action_type: 'send_email',
+        action_payload: { to, subject, body, reply_to: replyTo },
+        action_summary: `Send email to ${to}: ${subject}`,
+        confidence_score: 1.0,
+        routing_decision: 'ask',
+        priority: 'normal',
+      })
+
+      logger.info('[send_email] Queued for approval', { to, subject, org: orgId, approvalId: approval.id })
+
+      return {
+        success: true,
+        queued: true,
+        approvalId: approval.id,
+        data: {
+          message: 'Email queued for your approval',
+          to,
+          subject,
+          approvalId: approval.id,
+        },
+      }
+    } catch (err) {
+      logger.error('[send_email] Error:', err)
+      return { success: false, error: `Email error: ${String(err)}` }
+    }
+  },
+
+  async send_sms(input, orgId, supabase) {
+    const to = input.to as string
+    const message = input.message as string
+
+    try {
+      // Check daily send limit
+      const limit = await checkSendLimit(supabase, orgId, 'sms')
+      if (!limit.allowed) {
+        return { success: false, error: `Daily SMS limit reached (${limit.limit}/day). Try again tomorrow.` }
+      }
+
+      // Resolve agent config ID (required FK on approval_queue)
+      const agentConfigId = await getDefaultAgentConfigId(supabase, orgId)
+      if (!agentConfigId) {
+        return { success: false, error: 'No agent configuration found. Set up an agent config first.' }
+      }
+
+      // Queue for human approval instead of sending directly
+      const approval = await createApproval(supabase, {
+        org_id: orgId,
+        agent_config_id: agentConfigId,
+        action_type: 'send_sms',
+        action_payload: { to, message },
+        action_summary: `Send SMS to ${to}: ${message.slice(0, 60)}${message.length > 60 ? '...' : ''}`,
+        confidence_score: 1.0,
+        routing_decision: 'ask',
+        priority: 'normal',
+      })
+
+      logger.info('[send_sms] Queued for approval', { to, org: orgId, approvalId: approval.id })
+
+      return {
+        success: true,
+        queued: true,
+        approvalId: approval.id,
+        data: {
+          message: 'SMS queued for your approval',
+          to,
+          approvalId: approval.id,
+        },
+      }
+    } catch (err) {
+      logger.error('[send_sms] Error:', err)
+      return { success: false, error: `SMS error: ${String(err)}` }
+    }
+  },
+
+  async approve_action(input, orgId, supabase) {
+    const approvalId = input.approval_id as string | undefined
+    const actionDescription = input.action_description as string | undefined
+
+    if (!approvalId && !actionDescription) {
+      return { success: false, error: 'Provide either approval_id or action_description' }
+    }
+
+    try {
+      let approval: ApprovalRecord | null = null
+
+      // Strategy 1: Direct lookup by ID (full or short)
+      if (approvalId) {
+        approval = await findApprovalById(supabase, orgId, approvalId)
+      }
+
+      // Strategy 2: Fuzzy match on pending approvals by description
+      if (!approval && actionDescription) {
+        approval = await fuzzyMatchApproval(supabase, orgId, actionDescription, 'pending')
+      }
+
+      // Strategy 3: Check expired approvals for re-queue (last 7 days)
+      if (!approval && actionDescription) {
+        const expiredMatch = await fuzzyMatchApproval(supabase, orgId, actionDescription, 'expired')
+        if (expiredMatch) {
+          const requeued = await requeueExpiredAction(supabase, expiredMatch)
+          return {
+            success: true,
+            data: {
+              requeued: true,
+              newApprovalId: requeued.id,
+              summary: requeued.action_summary,
+              message: `Found your expired action: "${requeued.action_summary}". Re-queued with a fresh 24h window. Want me to send it now?`,
+            },
+          }
+        }
+      }
+
+      if (!approval) {
+        return {
+          success: false,
+          error: approvalId
+            ? `No pending approval found with ID starting with "${approvalId}"`
+            : `No pending approval matching "${actionDescription}"`,
+        }
+      }
+
+      // Resolve the approval as approved via chat
+      const resolved = await resolveApproval(supabase, approval.id, 'approved', 'system', 'chat')
+
+      // Execute immediately
+      const executionResult = await executeApprovedAction(supabase, resolved)
+
+      return {
+        success: executionResult.success,
+        data: {
+          approvalId: approval.id,
+          actionType: approval.action_type,
+          summary: approval.action_summary,
+          executionResult,
+        },
+        error: executionResult.error,
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+
+      if (msg === 'APPROVAL_NOT_FOUND') {
+        return { success: false, error: 'Approval not found' }
+      }
+      if (msg === 'APPROVAL_ALREADY_RESOLVED') {
+        return { success: false, error: 'This action has already been resolved' }
+      }
+
+      logger.error('[approve_action] Error:', err)
+      return { success: false, error: `Approval error: ${msg}` }
+    }
+  },
+}
+
+// ─── approve_action helpers ─────────────────────────────────────────────────
+
+async function findApprovalById(
+  supabase: import('@supabase/supabase-js').SupabaseClient,
+  orgId: string,
+  idOrPrefix: string,
+): Promise<ApprovalRecord | null> {
+  // Try exact match first
+  const { data: exact } = await supabase
+    .from('approval_queue')
+    .select('*, agent_configs(name)')
+    .eq('org_id', orgId)
+    .eq('id', idOrPrefix)
+    .eq('status', 'pending')
+    .single()
+
+  if (exact) return exact as ApprovalRecord
+
+  // Try prefix match (short IDs like "abc12345")
+  if (idOrPrefix.length >= 6 && idOrPrefix.length < 36) {
+    const { data: prefixMatches } = await supabase
+      .from('approval_queue')
+      .select('*, agent_configs(name)')
+      .eq('org_id', orgId)
+      .eq('status', 'pending')
+      .ilike('id', `${idOrPrefix}%`)
+      .limit(2)
+
+    if (prefixMatches && prefixMatches.length === 1) {
+      return prefixMatches[0] as ApprovalRecord
+    }
+  }
+
+  return null
+}
+
+async function fuzzyMatchApproval(
+  supabase: import('@supabase/supabase-js').SupabaseClient,
+  orgId: string,
+  description: string,
+  statusFilter: 'pending' | 'expired',
+): Promise<ApprovalRecord | null> {
+  const statuses = statusFilter === 'pending'
+    ? ['pending']
+    : ['expired', 'auto_expired']
+
+  let query = supabase
+    .from('approval_queue')
+    .select('*, agent_configs(name)')
+    .eq('org_id', orgId)
+    .in('status', statuses)
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  // For expired, only look back 7 days
+  if (statusFilter === 'expired') {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    query = query.gte('created_at', sevenDaysAgo)
+  }
+
+  const { data } = await query
+  if (!data || data.length === 0) return null
+
+  // Score each approval against the description
+  const descLower = description.toLowerCase()
+  const keywords = descLower.split(/\s+/).filter(w => w.length > 2)
+
+  let bestMatch: ApprovalRecord | null = null
+  let bestScore = 0
+
+  for (const row of data) {
+    const approval = row as ApprovalRecord
+    const summary = approval.action_summary.toLowerCase()
+    const payloadStr = JSON.stringify(approval.action_payload).toLowerCase()
+    const searchable = `${summary} ${payloadStr}`
+
+    let score = 0
+    for (const keyword of keywords) {
+      if (searchable.includes(keyword)) score += 1
+    }
+
+    // Exact substring match on summary gets bonus
+    if (summary.includes(descLower)) score += keywords.length
+
+    if (score > bestScore) {
+      bestScore = score
+      bestMatch = approval
+    }
+  }
+
+  // Require at least 1 keyword match
+  return bestScore > 0 ? bestMatch : null
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract readable text from HTML by stripping tags, scripts, styles, and
+ * collapsing whitespace. Lightweight — no external dependency needed.
+ */
+function extractReadableText(html: string): string {
+  let text = html
+
+  // Remove script and style blocks
+  text = text.replace(/<script[\s\S]*?<\/script>/gi, '')
+  text = text.replace(/<style[\s\S]*?<\/style>/gi, '')
+  text = text.replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+
+  // Remove HTML comments
+  text = text.replace(/<!--[\s\S]*?-->/g, '')
+
+  // Remove nav, header, footer elements (usually boilerplate)
+  text = text.replace(/<nav[\s\S]*?<\/nav>/gi, '')
+  text = text.replace(/<footer[\s\S]*?<\/footer>/gi, '')
+
+  // Convert block elements to newlines
+  text = text.replace(/<\/(p|div|h[1-6]|li|tr|blockquote|article|section)>/gi, '\n')
+  text = text.replace(/<br\s*\/?>/gi, '\n')
+  text = text.replace(/<hr\s*\/?>/gi, '\n---\n')
+
+  // Convert links to text with URL
+  text = text.replace(/<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, '$2 ($1)')
+
+  // Remove all remaining tags
+  text = text.replace(/<[^>]+>/g, '')
+
+  // Decode common HTML entities
+  text = text.replace(/&amp;/g, '&')
+  text = text.replace(/&lt;/g, '<')
+  text = text.replace(/&gt;/g, '>')
+  text = text.replace(/&quot;/g, '"')
+  text = text.replace(/&#039;/g, "'")
+  text = text.replace(/&nbsp;/g, ' ')
+  text = text.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+
+  // Collapse whitespace
+  text = text.replace(/[ \t]+/g, ' ')
+  text = text.replace(/\n\s*\n/g, '\n\n')
+  text = text.trim()
+
+  return text
+}

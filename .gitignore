@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+.next/
+dist/
+*.tsbuildinfo
+
+# Test artifacts
+test-results/
+playwright-report/
+coverage/
+dogfood-*
+
+# Environment
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Database files
+data/*.db*
+*.db-shm
+*.db-wal
+
+# IDE / editor
+.vscode/
+.idea/
+.cursor/
+
+# Tool configs (local)
+.auto-claude/
+.auto-claude-security.json
+.auto-claude-status
+.claude_settings.json
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+.claude/worktrees/
+.vercel/
+.gitnexus
+.worktrees/
+.security-key
+
+# Agent/skill caches (plugin-generated)
+.agent/skills/
+.agents/skills/
+
+# OS
+.DS_Store
+Thumbs.db
+._*
+
+# Temp / agent artifacts
+temp-*/
+*.log
+supabase/.temp/
+tmp_baileys_probe*/
+auth_state_*/
+logs/security/
+
+# Demo
+demo-1/
+.vercel
+.forge/
