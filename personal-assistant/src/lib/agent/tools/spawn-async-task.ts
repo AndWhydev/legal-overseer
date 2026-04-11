@@ -63,7 +63,7 @@ export async function handleSpawnAsyncTask(
   supabase: SupabaseClient,
   execOptions?: { threadId?: string },
 ): Promise<ToolResult> {
-  const typedInput = input as SpawnAsyncTaskInput
+  const typedInput = input as unknown as SpawnAsyncTaskInput
 
   try {
     const task = await createTask(supabase, {

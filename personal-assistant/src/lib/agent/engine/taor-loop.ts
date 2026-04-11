@@ -162,7 +162,7 @@ export async function* runTAORLoop(
             config.orgId,
             entity.id,
             'infinite_autopilot',
-            config.channel ?? 'whatsapp',
+            (config.channel ?? "whatsapp") as any,
           )
           const confirmation = generateActivationConfirmation(entity.name)
           logger.info('[taor] Delegation activated via NL', {
@@ -179,7 +179,7 @@ export async function* runTAORLoop(
             config.supabase,
             config.orgId,
             entity.id,
-            config.channel ?? 'whatsapp',
+            (config.channel ?? "whatsapp") as any,
           )
           if (revoked) {
             const confirmation = generateRevocationConfirmation(entity.name)

@@ -161,7 +161,7 @@ export async function synthesizeDomainProfile(
     model: gateway(models.balanced),
     system: DOMAIN_PROFILE_SYSTEM_PROMPT,
     prompt: `Domain: ${domain}\n\nEntity dossiers:\n\n${dossiersBlock}`,
-    maxTokens: MAX_PROFILE_TOKENS,
+    maxOutputTokens: MAX_PROFILE_TOKENS,
   })
 
   const profileMarkdown = text.trim()

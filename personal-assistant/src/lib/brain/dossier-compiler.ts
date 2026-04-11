@@ -106,7 +106,7 @@ export async function compileDossierDelta(
       model: gateway(model),
       system: NEW_DOSSIER_SYSTEM_PROMPT,
       prompt: `Facts about this entity:\n${factsBlock}`,
-      maxTokens: MAX_DOSSIER_TOKENS,
+      maxOutputTokens: MAX_DOSSIER_TOKENS,
     })
 
     const markdown = text.trim()
@@ -128,7 +128,7 @@ export async function compileDossierDelta(
     model: gateway(model),
     system: DELTA_MERGE_SYSTEM_PROMPT,
     prompt: `Current dossier:\n${delta.current_dossier!.dossier_markdown}\n\nNew facts to merge:\n${factsBlock}`,
-    maxTokens: MAX_DOSSIER_TOKENS,
+    maxOutputTokens: MAX_DOSSIER_TOKENS,
   })
 
   const markdown = text.trim()
