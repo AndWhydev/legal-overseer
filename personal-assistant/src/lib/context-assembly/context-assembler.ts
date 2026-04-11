@@ -30,6 +30,7 @@ import { matchProcedure } from '@/lib/knowledge-graph/procedural-memory'
 import { logger } from '@/lib/core/logger'
 import { loadPredictiveContext } from './predictive-loader'
 import { allocateContextBudget, detectModuleContext, type ModuleContext, type ModuleAllocation } from '@/lib/brain/global-workspace'
+import { buildBrainStatePrefix, splitCacheableContext, type BrainStatePrefix } from '@/lib/brain/prompt-cache'
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -48,6 +49,10 @@ export interface AssemblerConfig {
   includeCompressedHistory: boolean
   /** Global Workspace mode replaces fixed tier allocation with competitive module selection. */
   useGlobalWorkspace?: boolean
+  /** Enable L1 prompt caching with brain state prefix. */
+  usePromptCache?: boolean
+  /** Pre-built brain state prefix (avoids rebuilding on every call). */
+  brainStatePrefix?: BrainStatePrefix
 }
 
 export const DEFAULT_ASSEMBLER_CONFIG: AssemblerConfig = {
@@ -71,6 +76,12 @@ export interface TierStatus {
 export interface AssembledContext {
   systemPrompt: string
   messageHistory: Anthropic.MessageParam[]
+  /** Anthropic content blocks with cache_control for prompt caching (when usePromptCache is true). */
+  systemContentBlocks?: Array<{
+    type: 'text'
+    text: string
+    cache_control?: { type: 'ephemeral' }
+  }>
   metadata: {
     tokenUsage: TokenAllocation
     tiersLoaded: TierStatus[]
@@ -883,9 +894,55 @@ ${procSection}`
       entityMentions: entityMentions.length,
     })
 
+    // ── Phase 8: Prompt caching (L1 brain state prefix) ──────────────
+    // When enabled, split system prompt into cached prefix + dynamic suffix
+    // for Anthropic's prompt caching (90% read cost reduction on cached portion).
+
+    let systemContentBlocks: AssembledContext['systemContentBlocks'] | undefined
+
+    if (this.config.usePromptCache) {
+      try {
+        // Use pre-built prefix or build one now
+        const brainPrefix = this.config.brainStatePrefix
+          ?? await buildBrainStatePrefix(
+            supabase,
+            orgId,
+            finalSystemPrompt,
+            { userProfile: this.userProfile },
+          )
+
+        // Dynamic content is anything beyond the cached prefix
+        // (pending actions, predictive context, etc. are already in finalSystemPrompt)
+        const dynamicContent = finalSystemPrompt.length > brainPrefix.markdown.length
+          ? finalSystemPrompt.slice(brainPrefix.markdown.length)
+          : ''
+
+        const cacheable = splitCacheableContext(brainPrefix, dynamicContent)
+
+        systemContentBlocks = [
+          ...cacheable.cachedPrefix,
+          ...cacheable.dynamicSuffix,
+        ]
+
+        logger.info('[context-assembler] Prompt cache enabled', {
+          cachedPrefixTokens: brainPrefix.tokenEstimate,
+          dossierCount: brainPrefix.dossierCount,
+          constraintCount: brainPrefix.constraintCount,
+          profileCount: brainPrefix.profileCount,
+          dynamicSuffixLength: dynamicContent.length,
+        })
+      } catch (err) {
+        // Non-critical: fall back to uncached system prompt
+        logger.warn('[context-assembler] Prompt cache build failed, falling back to uncached', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+
     return {
       systemPrompt: finalSystemPrompt,
       messageHistory,
+      systemContentBlocks,
       metadata: {
         tokenUsage: allocation,
         tiersLoaded: tierStatuses,
