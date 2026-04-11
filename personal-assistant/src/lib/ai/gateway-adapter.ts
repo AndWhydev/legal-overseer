@@ -138,8 +138,15 @@ function convertTools(tools: AnthropicTool[]) {
 export async function callModelViaGateway(
   config: GatewayCallConfig,
 ): Promise<GatewayCallResult> {
-  const messages = convertMessages(config.messages)
-  const tools = convertTools(config.tools)
+  let messages: ReturnType<typeof convertMessages>
+  let tools: ReturnType<typeof convertTools>
+  try {
+    messages = convertMessages(config.messages)
+    tools = convertTools(config.tools)
+  } catch (convErr) {
+    console.error('[gateway-adapter] Conversion error:', convErr)
+    throw convErr
+  }
 
   const streamResult = streamText({
     model: gateway(config.model),
@@ -160,6 +167,7 @@ export async function callModelViaGateway(
   let hadThinking = false
   let thinkingStartTime: number | null = null
 
+  try {
   for await (const chunk of streamResult.fullStream) {
     if (chunk.type === 'text-delta') {
       streamedDeltas.push(chunk.textDelta)
@@ -211,5 +219,9 @@ export async function callModelViaGateway(
         output_tokens: usage.completionTokens,
       },
     },
+  }
+  } catch (streamErr) {
+    console.error('[gateway-adapter] Stream/response error:', streamErr)
+    throw streamErr
   }
 }
