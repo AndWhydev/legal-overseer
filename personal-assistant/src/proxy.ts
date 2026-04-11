@@ -19,7 +19,7 @@ const CONTENT_SECURITY_POLICY = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self'",
-  "connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co https://*.ingest.us.sentry.io https://secure.gravatar.com https://logo.clearbit.com",
+  "connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co https://*.ingest.us.sentry.io https://secure.gravatar.com https://logo.clearbit.com https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com",
   "worker-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",

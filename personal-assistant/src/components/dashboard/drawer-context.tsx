@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
 interface DrawerContextValue {
   content: ReactNode | null
@@ -32,12 +32,10 @@ export function DrawerProvider({ activeTab, children }: DrawerProviderProps) {
     setContent(null)
   }, [activeTab])
 
-  const value: DrawerContextValue = {
-    content,
-    isOpen: content !== null,
-    setDrawer,
-    closeDrawer,
-  }
+  const value = useMemo<DrawerContextValue>(
+    () => ({ content, isOpen: content !== null, setDrawer, closeDrawer }),
+    [content, setDrawer, closeDrawer],
+  );
 
   return (
     <DrawerContext.Provider value={value}>

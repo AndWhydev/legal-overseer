@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { logger } from '@/lib/core/logger';
 
@@ -124,6 +124,7 @@ export function AppDataProvider({ children, onReady }: AppDataProviderProps) {
   }, [refresh]);
 
   // Safety timeout - don't block splash for more than 3s
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isReady) {
@@ -132,10 +133,15 @@ export function AppDataProvider({ children, onReady }: AppDataProviderProps) {
       }
     }, 3000);
     return () => clearTimeout(timer);
-  }, [isReady]);
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({ tasks, approvals, leads, channelMessages, agentRuns, kanbanColumns, isReady, refresh }),
+    [tasks, approvals, leads, channelMessages, agentRuns, kanbanColumns, isReady, refresh],
+  );
 
   return (
-    <AppDataContext.Provider value={{ tasks, approvals, leads, channelMessages, agentRuns, kanbanColumns, isReady, refresh }}>
+    <AppDataContext.Provider value={contextValue}>
       {children}
     </AppDataContext.Provider>
   );

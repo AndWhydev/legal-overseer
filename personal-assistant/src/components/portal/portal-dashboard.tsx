@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import type { PortalDashboardStats } from '@/lib/portal/data'
 import type { PortalProject, PortalActivity } from '@/lib/portal/types'
@@ -24,7 +25,8 @@ export function PortalDashboard({
   welcomeMessage,
 }: PortalDashboardProps) {
   const basePath = `/portal/${orgSlug}`
-  const greeting = getGreeting()
+  const [greeting, setGreeting] = React.useState('')
+  React.useEffect(() => { setGreeting(getGreeting()) }, [])
 
   return (
     <div>

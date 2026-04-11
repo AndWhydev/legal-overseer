@@ -210,9 +210,14 @@ export default function FlipClock({
   className,
   ...props
 }: FlipClockProps) {
-  const [time, setTime] = useState<TimeLeft>(getTime(countdown, targetDate));
+  // Initialize to zeros to match server render; populate on client after mount
+  // to avoid hydration mismatch (SSR time !== client hydration time).
+  const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
+    // Set the correct time immediately on mount, then poll
+    setTime(getTime(countdown, targetDate));
+
     // Run a faster heartbeat (250ms) to catch the second rollover immediately
     const timer = setInterval(() => {
       const nextTime = getTime(countdown, targetDate);

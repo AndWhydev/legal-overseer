@@ -169,7 +169,7 @@ export async function searchEntities(
       .limit(10),
     supabase
       .from('invoices')
-      .select('id, invoice_number, status, amount, contact_id')
+      .select('id, invoice_number, status, total, contact_id')
       .eq('org_id', orgId)
       .ilike('invoice_number', pattern)
       .limit(10),

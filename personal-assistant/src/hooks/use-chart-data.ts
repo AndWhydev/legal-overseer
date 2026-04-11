@@ -67,7 +67,7 @@ export function useChartData() {
           db.from('agent_runs').select('created_at, trigger_type, duration_ms, tokens_out, routing_decision').gte('created_at', ninetyDaysAgo).order('created_at', { ascending: true }).limit(5000),
           db.from('tasks').select('status, priority, created_at').limit(2000),
           db.from('channel_messages').select('channel, is_actionable, received_at').limit(5000),
-          db.from('invoices').select('status, amount').limit(2000),
+          db.from('invoices').select('status, total').limit(2000),
           db.from('channel_messages').select('*', { count: 'exact', head: true }),
           db.from('channel_messages').select('*', { count: 'exact', head: true }).eq('is_actionable', true),
         ])
@@ -128,8 +128,8 @@ export function useChartData() {
         // Radial goals — use exact counts from Supabase for messages
         const tasksCompleted = tasks.filter(t => t.status === 'completed').length
         const tasksTotal = tasks.length || 1
-        const revenuePaid = invoices.filter((i: any) => i.status === 'paid').reduce((s: number, i: any) => s + (i.amount ?? 0), 0)
-        const revenueTotal = invoices.reduce((s: number, i: any) => s + (i.amount ?? 0), 0) || 1
+        const revenuePaid = invoices.filter((i: any) => i.status === 'paid').reduce((s: number, i: any) => s + (i.total ?? 0), 0)
+        const revenueTotal = invoices.reduce((s: number, i: any) => s + (i.total ?? 0), 0) || 1
         const messagesActionable = (msgActionableCountRes as any).count ?? messages.filter(m => m.is_actionable).length
         const messagesTotal = ((msgCountRes as any).count ?? messages.length) || 1
         const agentSuccess = agentRuns.filter(r => r.routing_decision === 'act').length
