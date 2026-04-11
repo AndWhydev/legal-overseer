@@ -30,6 +30,7 @@ import { detectLeak, scrubLeaks, guardAndHumanize } from '@/lib/agent/response-g
 import { logger } from '@/lib/core/logger'
 import { detectTopicShift } from '@/lib/agent/citation-extractor'
 import { evaluateTurnQuality } from './turn-evaluator'
+import { classifyQueryComplexity, type QueryComplexity } from '@/lib/brain/query-gate'
 
 import { MemoryPalaceService } from '@/lib/memory-palace/service'
 import { getAllSkills, getSkillsForRole, resolveSkill, initializeSkillRegistry } from '@/lib/skills/registry'
@@ -243,6 +244,12 @@ export async function* runTAORLoop(
     }
   }
 
+  // ── 2c. System 1/2 query gate ──────────────────────────────────────
+  const queryComplexity: QueryComplexity = classifyQueryComplexity(message, {
+    entityMentionCount: delegationIntent?.entityMention ? 1 : 0,
+  })
+  logger.info('[taor] Query gated', { complexity: queryComplexity })
+
   // ── 3. Context assembly ────────────────────────────────────────────
   yield { type: 'stage', data: { stage: 'context_assembly', status: 'start' } }
 
@@ -250,10 +257,15 @@ export async function* runTAORLoop(
     ? { email: config.userEmail, displayName: config.userDisplayName }
     : undefined
 
+  // System 1 queries use reduced assembler config for fast path (<50ms)
+  const assemblerOverrides = queryComplexity === 'system1'
+    ? { maxEntities: 3, includeCompressedHistory: false }
+    : {}
+
   let systemPrompt: string
   if (config.threadId && config.userId) {
     try {
-      const assembler = new ContextAssembler({ userProfile, channel: config.channel })
+      const assembler = new ContextAssembler({ userProfile, channel: config.channel, ...assemblerOverrides })
       const ctx = await assembler.assemble(config.supabase, config.userId, config.orgId, config.threadId, message)
       systemPrompt = ctx.systemPrompt
       config.history = ctx.messageHistory
