@@ -62,3 +62,4 @@ logs/security/
 demo-1/
 .vercel
 .forge/
+.env*.local

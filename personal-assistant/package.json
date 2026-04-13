@@ -4,10 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:auth": "DEV_BYPASS_AUTH=true next dev --port 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:smoke": "playwright test e2e/page-render.spec.ts",
+    "test:full": "npm run test && npm run test:e2e",
     "audit": "npm audit --audit-level=moderate"
   },
   "dependencies": {
@@ -109,6 +114,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "msw": "^2.13.2",
+    "next-test-api-route-handler": "^5.0.4",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.0.18"
