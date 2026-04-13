@@ -12,6 +12,7 @@ import {
   EmptyContent,
 } from '@/components/ui/empty'
 import { IconAlertCircle, IconSearch } from '@tabler/icons-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -48,9 +49,6 @@ const CONNECTION_STATUS_ALIASES: Record<string, string> = {
 }
 
 const FEATURED_IDS = ['gmail', 'google-calendar', 'whatsapp', 'stripe', 'asana', 'slack']
-
-const BTN_BASE =
-  'inline-flex min-w-[5.5rem] items-center justify-center rounded-lg px-4 py-2 text-base font-medium transition'
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Exports kept for backwards compatibility with existing tests / callers
@@ -140,38 +138,36 @@ function ConnectionCard({
   }, [orgConnection, onConnectedClick, onDisconnect, app])
 
   return (
-    <article className="flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition duration-300 hover:translate-y-[-1px] hover:shadow-md">
-      <div className="flex items-center gap-3">
-        <AppIcon id={app.id} name={app.name} logo={app.logo} size={40} />
-        <div className="min-w-0">
-          <h3 className="truncate text-base font-medium leading-tight text-foreground">
-            {app.name}
-          </h3>
-          <p className="mt-0.5 line-clamp-2 text-base leading-tight text-muted-foreground">
-            {app.description}
-          </p>
-        </div>
+    <article className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-3">
+      <AppIcon id={app.id} name={app.name} logo={app.logo} size={36} />
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-sm font-medium text-foreground">
+          {app.name}
+        </h3>
+        <p className="truncate text-sm text-muted-foreground">
+          {app.description}
+        </p>
       </div>
 
-      <div className="flex items-center justify-end">
+      <div className="ml-auto shrink-0">
         {app.connected ? (
-          <button
-            type="button"
+          <Badge
+            variant="secondary"
+            className="cursor-pointer"
             onClick={handleConnectedClick}
-            disabled={isLoading}
-            className={`${BTN_BASE} border border-success bg-success/10 text-success hover:bg-success/15 disabled:opacity-50`}
           >
-            {isLoading ? 'Removing\u2026' : 'Connected'}
-          </button>
+            {isLoading ? 'Removing…' : 'Connected'}
+          </Badge>
         ) : (
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-[16px]"
             onClick={() => onConnect(app)}
             disabled={isLoading}
-            className={`${BTN_BASE} bg-foreground text-white hover:translate-y-[-1px] hover:bg-foreground/90 disabled:opacity-50`}
           >
-            {isLoading ? 'Connecting\u2026' : 'Connect'}
-          </button>
+            {isLoading ? 'Connecting…' : 'Connect'}
+          </Button>
         )}
       </div>
     </article>
@@ -424,7 +420,7 @@ export function ConnectionsGrid({
    * ──────────────────────────────────────────────────────────────────── */
 
   const connectedCount = data?.connected_count ?? 0
-  const gridCls = 'grid gap-4 md:grid-cols-2 xl:grid-cols-3'
+  const gridCls = 'grid grid-cols-1 md:grid-cols-2 gap-2'
 
   if (error) {
     return (
@@ -450,7 +446,7 @@ export function ConnectionsGrid({
       {showHeader ? (
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-lg font-medium tracking-[-0.02em] text-foreground">Connections</h2>
-          <div className="rounded-lg bg-accent/10 px-3 py-1 text-base font-medium text-accent">
+          <div className="text-sm text-muted-foreground">
             {connectedCount} connected
           </div>
         </div>
@@ -466,7 +462,7 @@ export function ConnectionsGrid({
             type="search"
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-            placeholder="Search services\u2026"
+            placeholder="Search services…"
             aria-label="Search connections"
             className="pl-9"
           />
@@ -475,7 +471,7 @@ export function ConnectionsGrid({
 
       {showCategoryTabs && categoryOptions.length > 1 ? (
         <div
-          className="flex flex-wrap gap-2"
+          className="flex gap-2 overflow-x-auto"
           role="tablist"
           aria-label="Connection categories"
         >
@@ -483,20 +479,18 @@ export function ConnectionsGrid({
             const active = activeCategory === cat
             const label = cat === 'all' ? 'All' : cat.replace(/-/g, ' ')
             return (
-              <button
+              <Button
                 key={cat}
                 type="button"
                 role="tab"
+                variant={active ? 'secondary' : 'outline'}
+                size="sm"
                 aria-selected={active}
                 onClick={() => setActiveCategory(cat)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium capitalize tracking-[0.04em] transition ${
-                  active
-                    ? 'bg-foreground text-white'
-                    : 'border border-black/[0.06] bg-white/72 text-muted-foreground hover:text-foreground'
-                }`}
+                className="h-8 shrink-0 capitalize text-sm"
               >
                 {label}
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -518,16 +512,14 @@ export function ConnectionsGrid({
           {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
-              className="flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4"
+              className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-3"
             >
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-[9px]" />
-                <div className="flex flex-1 flex-col gap-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-3 w-40" />
-                </div>
+              <Skeleton className="h-9 w-9 shrink-0 rounded-[8px]" />
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-40" />
               </div>
-              <Skeleton className="ml-auto h-9 w-24" />
+              <Skeleton className="ml-auto h-8 w-20" />
             </div>
           ))}
         </div>
@@ -546,7 +538,7 @@ export function ConnectionsGrid({
         <div className="grid gap-6">
           {featured.length > 0 ? (
             <div className="grid gap-3">
-              <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Featured
               </h3>
               <div className={gridCls} data-testid="connections-featured">
