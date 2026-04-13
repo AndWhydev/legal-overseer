@@ -1,4 +1,4 @@
-export type ConversationChannel = 'whatsapp' | 'email' | 'sms' | (string & {})
+export type ConversationChannel = 'whatsapp' | 'email' | 'sms' | 'telegram' | (string & {})
 
 export interface ConversationCommandRequest {
   channel: ConversationChannel

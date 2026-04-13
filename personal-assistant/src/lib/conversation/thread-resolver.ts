@@ -544,7 +544,7 @@ async function loadLatestArchivedSummary(
     .select('compiled_summary')
     .eq('user_id', userId)
     .eq('org_id', orgId)
-    .eq('status', 'compiled')
+    .eq('status', 'archived')
     .order('archived_at', { ascending: false })
     .limit(1)
 
