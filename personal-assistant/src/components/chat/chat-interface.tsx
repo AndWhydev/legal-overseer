@@ -1223,19 +1223,23 @@ export function ChatInterface() {
                 break
               }
 
-              case 'error':
+              case 'error': {
                 setIsThinkingStreaming(false)
                 setShowReasoning(false)
+                const rawError = typeof event.data === 'string' ? event.data : String(event.data)
+                // Raw detail for devs; UI stays intentionally vague via humanizeError
+                console.error('[chat] server error event:', rawError, { threadId })
                 setMessages(prev => [
                   ...prev.filter(m => m.id !== assistantId),
                   {
                     id: assistantId,
                     role: 'assistant' as const,
-                    content: humanizeError(typeof event.data === 'string' ? event.data : String(event.data)),
+                    content: humanizeError(rawError),
                     timestamp: new Date(),
                   },
                 ])
                 break
+              }
 
               case 'done': {
                 setIsThinkingStreaming(false)
@@ -1403,6 +1407,8 @@ export function ChatInterface() {
       if (err instanceof DOMException && err.name === 'AbortError') return
       if (requestGenRef.current !== gen) return
       setShowReasoning(false)
+      // Raw detail for devs; UI stays intentionally vague via humanizeError
+      console.error('[chat] request failed:', err)
       setMessages(prev => [
         ...prev,
         {

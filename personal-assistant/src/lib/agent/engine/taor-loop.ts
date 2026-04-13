@@ -689,6 +689,7 @@ export async function* runTAORLoop(
       // Unrecoverable API error — write to DLQ
       const errorMsg = err instanceof Error ? err.message : String(err)
       const errorStack = err instanceof Error ? err.stack : undefined
+      logger.error('[engine] Unrecoverable API error', { error: errorMsg, stack: errorStack, model, iteration: iterationCount })
       yield { type: 'error', data: `API error: ${errorMsg}` }
 
       await writeToDeadLetterQueue(config.supabase, {

@@ -169,21 +169,30 @@ export async function callModelViaGateway(
 
   try {
   for await (const chunk of streamResult.fullStream) {
+    // AI SDK v6: text-delta carries `delta: string` (v5 used `textDelta`)
     if (chunk.type === 'text-delta') {
-      streamedDeltas.push(chunk.textDelta)
-    } else if (chunk.type === 'reasoning') {
+      streamedDeltas.push(chunk.delta)
+    } else if (chunk.type === 'reasoning-delta') {
+      // AI SDK v6: reasoning chunks are `reasoning-delta` with `delta: string`
       if (!hadThinking) {
         hadThinking = true
         thinkingStartTime = Date.now()
       }
-      streamedThinkingDeltas.push(chunk.textDelta)
+      streamedThinkingDeltas.push(chunk.delta)
+    } else if (chunk.type === 'error') {
+      // Surface gateway/provider errors explicitly instead of silently finishing
+      const raw = (chunk as { error?: unknown }).error
+      const msg = raw instanceof Error ? raw.message : typeof raw === 'string' ? raw : JSON.stringify(raw)
+      logger.error('[gateway-adapter] Stream error chunk', { error: msg })
+      throw raw instanceof Error ? raw : new Error(msg)
     }
   }
 
   // Build Anthropic-compatible response
   const text = await streamResult.text
   const toolCalls = (await streamResult.toolCalls) ?? []
-  const usage = (await streamResult.usage) ?? { promptTokens: 0, completionTokens: 0 }
+  // AI SDK v6: LanguageModelUsage uses inputTokens/outputTokens (v5 used promptTokens/completionTokens)
+  const usage = (await streamResult.usage) ?? { inputTokens: 0, outputTokens: 0 }
   const finishReason = (await streamResult.finishReason) ?? 'stop'
 
   const content: AnthropicLikeResponse['content'] = []
@@ -215,8 +224,8 @@ export async function callModelViaGateway(
       content,
       stop_reason,
       usage: {
-        input_tokens: usage.promptTokens,
-        output_tokens: usage.completionTokens,
+        input_tokens: usage.inputTokens ?? 0,
+        output_tokens: usage.outputTokens ?? 0,
       },
     },
   }
