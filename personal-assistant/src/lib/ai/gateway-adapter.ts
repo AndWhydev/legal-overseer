@@ -54,16 +54,31 @@ export interface AnthropicLikeResponse {
 // ── Message Conversion ─────────────────────────────────────────────────────
 
 function convertMessages(messages: AnthropicMessageParam[]) {
+  // Build a map of tool_use_id -> toolName from assistant messages so we can
+  // populate the required `toolName` field on tool-result parts.
+  const toolNameMap = new Map<string, string>()
+  for (const msg of messages) {
+    if (msg.role === 'assistant' && Array.isArray(msg.content)) {
+      for (const block of msg.content) {
+        if (block.type === 'tool_use') {
+          toolNameMap.set(block.id as string, block.name as string)
+        }
+      }
+    }
+  }
+
   const result: Array<
     | { role: 'user'; content: string }
     | { role: 'assistant'; content: string | Array<{ type: string; [k: string]: unknown }> }
-    | { role: 'tool'; content: Array<{ type: 'tool-result'; toolCallId: string; result: string }> }
+    | { role: 'tool'; content: Array<{ type: 'tool-result'; toolCallId: string; toolName: string; output: { type: 'text'; value: string } }> }
   > = []
 
   for (const msg of messages) {
     if (msg.role === 'user') {
       if (typeof msg.content === 'string') {
-        result.push({ role: 'user', content: msg.content })
+        if (msg.content.length > 0) {
+          result.push({ role: 'user', content: msg.content })
+        }
       } else if (Array.isArray(msg.content)) {
         const toolResults = msg.content.filter(b => b.type === 'tool_result')
         if (toolResults.length > 0) {
@@ -72,41 +87,53 @@ function convertMessages(messages: AnthropicMessageParam[]) {
             content: toolResults.map(b => ({
               type: 'tool-result' as const,
               toolCallId: b.tool_use_id as string,
-              result: typeof b.content === 'string' ? b.content : JSON.stringify(b.content),
+              toolName: toolNameMap.get(b.tool_use_id as string) ?? 'unknown',
+              output: {
+                type: 'text' as const,
+                value: typeof b.content === 'string' ? b.content : JSON.stringify(b.content),
+              },
             })),
           })
           // Include any non-tool-result text as separate user message
           const textParts = msg.content
             .filter(b => b.type === 'text')
             .map(b => b.text as string)
+            .filter(t => t.length > 0)
           if (textParts.length > 0) {
             result.push({ role: 'user', content: textParts.join('\n') })
           }
         } else {
-          const parts = msg.content
+          const text = msg.content
             .filter(b => b.type === 'text')
             .map(b => b.text as string)
-          result.push({ role: 'user', content: parts.join('\n') || '' })
+            .join('\n')
+          if (text.length > 0) {
+            result.push({ role: 'user', content: text })
+          }
         }
       }
     } else if (msg.role === 'assistant') {
       if (typeof msg.content === 'string') {
-        result.push({ role: 'assistant', content: msg.content })
+        if (msg.content.length > 0) {
+          result.push({ role: 'assistant', content: msg.content })
+        }
       } else if (Array.isArray(msg.content)) {
         const parts: Array<{ type: string; [k: string]: unknown }> = []
         for (const block of msg.content) {
-          if (block.type === 'text') {
+          if (block.type === 'text' && (block.text as string).length > 0) {
             parts.push({ type: 'text', text: block.text as string })
           } else if (block.type === 'tool_use') {
             parts.push({
               type: 'tool-call',
               toolCallId: block.id as string,
               toolName: block.name as string,
-              args: block.input,
+              input: block.input,
             })
           }
         }
-        result.push({ role: 'assistant', content: parts })
+        if (parts.length > 0) {
+          result.push({ role: 'assistant', content: parts })
+        }
       }
     }
   }
