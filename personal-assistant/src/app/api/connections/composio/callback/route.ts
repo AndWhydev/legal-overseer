@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/supabase/auth-context'
 import { waitForConnection, getConnectedAccount } from '@/lib/composio'
+import { dispatchConnectionCrawl } from '@/lib/composio/dispatch-crawl'
 import { logger } from '@/lib/core/logger'
 
 export const dynamic = 'force-dynamic'
@@ -46,13 +47,13 @@ export async function GET(request: NextRequest) {
   } catch {
     // If not authenticated via cookie, still process but redirect to login
     return NextResponse.redirect(
-      `${appUrl}/connections?composio_success=true&app=${appName}&account=${connectedAccountId}`
+      `${appUrl}/dashboard/connections?composio_success=true&app=${appName}&account=${connectedAccountId}`
     )
   }
 
   if (!ctx) {
     return NextResponse.redirect(
-      `${appUrl}/connections?composio_success=true&app=${appName}&account=${connectedAccountId}`
+      `${appUrl}/dashboard/connections?composio_success=true&app=${appName}&account=${connectedAccountId}`
     )
   }
 
@@ -101,6 +102,21 @@ export async function GET(request: NextRequest) {
           logger.info('[composio/callback] Connected account stored', {
             orgId, provider, accountId,
           })
+
+          // Fire the knowledge-librarian crawler (fire-and-forget; dispatcher is idempotent and never throws)
+          dispatchConnectionCrawl({
+            orgId,
+            appKey: provider,
+            connectedAccountId: accountId,
+          }).then((r) => {
+            logger.info('[composio/callback] Crawler dispatch', {
+              orgId, provider, enqueued: r.enqueued, skipped: r.skipped, jobId: r.jobId,
+            })
+          }).catch((err) => {
+            logger.error('[composio/callback] Crawler dispatch failed', {
+              error: err instanceof Error ? err.message : String(err),
+            })
+          })
         }
       }
     }
@@ -111,6 +127,6 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.redirect(
-    `${appUrl}/connections?composio_success=true&app=${appName || 'unknown'}`
+    `${appUrl}/dashboard/connections?composio_success=true&app=${appName || 'unknown'}`
   )
 }
