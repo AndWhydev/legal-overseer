@@ -23,7 +23,6 @@ import type { CatalogApp, OrgConnection } from '@/lib/connections';
 import { RagStatsWidget } from '@/components/dashboard/rag-stats-widget';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { logger } from '@/lib/core/logger';
 import { useTheme, type ThemeName } from '@/lib/theme/theme-provider';
 
 // ---- Plugin types ----
