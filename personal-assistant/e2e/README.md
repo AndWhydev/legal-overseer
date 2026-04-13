@@ -14,6 +14,9 @@ npm run test:e2e:ui
 # Run smoke tests only (page-render spec — fastest)
 npm run test:smoke
 
+# Run the Composio connections spec in isolation
+npx playwright test composio-connect
+
 # Run Vitest unit tests + all E2E tests
 npm run test:full
 ```
