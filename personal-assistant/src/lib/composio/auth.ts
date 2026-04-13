@@ -179,15 +179,30 @@ export async function initiateConnectionByAppKey(
   }
 
   try {
+    // SDK v0.6.x: connectedAccounts.initiate takes (userId, authConfigId, options)
+    // NOT (userId, toolkitSlug, options). We must resolve the auth config ID first.
+    const allConfigs = await composio.authConfigs.list({ limit: 200 })
+    const configs = Array.isArray(allConfigs) ? allConfigs : allConfigs?.items || []
+    const authConfig = configs.find(
+      (c: { toolkit?: { slug?: string }; status?: string }) =>
+        c.toolkit?.slug === appKey && c.status === 'ENABLED'
+    )
+
+    if (!authConfig) {
+      logger.error('[composio/auth] No enabled auth config found for toolkit', { appKey })
+      return null
+    }
+
     const connRequest = await composio.connectedAccounts.initiate(
       userId,
-      appKey,
+      authConfig.id,
       { callbackUrl },
     )
 
     logger.info('[composio/auth] Connection initiated by appKey', {
       userId,
       appKey,
+      authConfigId: authConfig.id,
       connectionRequestId: connRequest.id,
     })
 
