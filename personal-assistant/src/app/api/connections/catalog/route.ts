@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
       stack: err instanceof Error ? err.stack : undefined,
     })
     return NextResponse.json(
-      { error: 'Failed to fetch catalog', apps: [] },
+      { error: 'Failed to fetch catalog', detail: err instanceof Error ? err.message : String(err), apps: [] },
       { status: 500 },
     )
   }
