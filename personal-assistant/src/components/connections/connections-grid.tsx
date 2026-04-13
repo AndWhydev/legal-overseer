@@ -3,163 +3,33 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ConnectModal, type ConnectModalMode } from '@/components/channels/connect-modal'
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
-import { IconAlertCircle } from '@tabler/icons-react'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from '@/components/ui/empty'
+import { IconAlertCircle, IconSearch } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/components/ui/toast'
 import { logger } from '@/lib/core/logger'
-import { builtInProviders } from '@/lib/connections'
-import type { OrgConnection } from '@/lib/connections'
+import { useConnectionCatalog } from '@/lib/connections'
+import { isBespokeFlow } from '@/lib/connections/bespoke-flows'
+import type { CatalogApp, OrgConnection } from '@/lib/connections'
+import { AppIcon } from './app-icon'
 
-/* App Store artwork URLs — 512px originals, sized down via query param. */
-const APP_ICONS: Record<string, string> = {
-  gmail: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/95/1f/0a/951f0a84-ae7e-ca5a-49da-cd8b0611a963/logo_gmail_2020q4_color-0-1x_U007emarketing-0-0-0-7-0-0-0-0-85-220-0.png/120x120bb.jpg',
-  outlook: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/07/35/55/07355553-d782-158a-12f2-daa122973b2b/AppIcon-outlook.prod-0-0-1x_U007epad-0-1-0-0-85-220.png/120x120bb.jpg',
-  'google-calendar': 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/fd/3b/8a/fd3b8acf-96ad-ada9-87b8-0f40ae53ff94/calendar_2020q4-0-1x_U007epad-0-0-0-1-0-0-0-0-85-220-0.png/120x120bb.jpg',
-  asana: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/28/97/be/2897be07-8327-56b0-e340-a7ed06da717b/AppIcon-0-0-1x_U007epad-0-1-85-220.png/120x120bb.jpg',
-  calendly: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/b4/80/d1/b480d1f5-f014-15f9-860e-e495ce8570b2/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/120x120bb.jpg',
-  stripe: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/b8/56/ec/b856eca9-4ed0-513b-0fd3-8f48958db087/AppIcon-0-0-1x_U007ephone-0-1-0-85-220-0.png/120x120bb.jpg',
-  whatsapp: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/88/f4/0d/88f40df9-9a8c-235f-dc2c-48c3bd5b4345/AppIcon-0-0-1x_U007epad-0-0-0-1-0-0-sRGB-0-85-220.png/120x120bb.jpg',
-  'facebook-messenger': 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/31/a6/5c/31a65c68-60ab-bb92-f38b-a6e0b955f0cb/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-85-220.png/120x120bb.jpg',
-  instagram: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/44/e7/3e/44e73e4c-1819-1c3b-6032-8398e74507e5/Prod-0-0-1x_U007epad-0-1-0-sRGB-85-220.png/120x120bb.jpg',
-  slack: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/43/1b/06/431b06ff-3c7a-6506-26c2-ef44089c9339/slack_icon_prod-0-0-1x_U007epad-0-1-sRGB-85-220.png/120x120bb.jpg',
-  xero: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/a3/87/98/a3879862-1b54-a12b-5acc-f7184579d615/AppIcon-0-0-1x_U007epad-0-0-0-1-0-0-85-220.png/120x120bb.jpg',
-}
-
-function AppIcon({ id, size = 40 }: { id: string; size?: number }) {
-  const src = APP_ICONS[id]
-  if (!src) return null
-
-  /* iOS icon radius ≈ 22.37% of size */
-  const radius = Math.round(size * 0.2237)
-
-  return (
-    <img
-      src={src}
-      alt=""
-      width={size}
-      height={size}
-      loading="lazy"
-      className="shrink-0"
-      style={{ borderRadius: radius, width: size, height: size }}
-    />
-  )
-}
-
-interface Connection {
-  id: string
-  name: string
-  description: string
-  category: 'communication' | 'productivity' | 'finance'
-  auth: 'oauth' | 'api_key' | 'whatsapp_qr'
-  comingSoon?: boolean
-  featured?: boolean
-}
-
-const CONNECTIONS: Connection[] = [
-  {
-    id: 'gmail',
-    name: 'Gmail',
-    description: 'Inbox and drafts',
-    category: 'communication',
-    auth: 'oauth',
-    featured: true,
-  },
-  {
-    id: 'outlook',
-    name: 'Outlook',
-    description: 'Mail and calendars',
-    category: 'communication',
-    auth: 'oauth',
-    featured: true,
-  },
-  {
-    id: 'google-calendar',
-    name: 'Google Calendar',
-    description: 'Meetings and events',
-    category: 'productivity',
-    auth: 'oauth',
-  },
-  {
-    id: 'asana',
-    name: 'Asana',
-    description: 'Tasks and projects',
-    category: 'productivity',
-    auth: 'oauth',
-  },
-  {
-    id: 'calendly',
-    name: 'Calendly',
-    description: 'Bookings and availability',
-    category: 'productivity',
-    auth: 'oauth',
-  },
-  {
-    id: 'stripe',
-    name: 'Stripe',
-    description: 'Payments and billing',
-    category: 'finance',
-    auth: 'api_key',
-  },
-  {
-    id: 'whatsapp',
-    name: 'WhatsApp',
-    description: 'Mobile conversations',
-    category: 'communication',
-    auth: 'whatsapp_qr',
-  },
-  {
-    id: 'facebook-messenger',
-    name: 'Messenger',
-    description: 'Meta conversations',
-    category: 'communication',
-    auth: 'oauth',
-    comingSoon: true,
-  },
-  {
-    id: 'instagram',
-    name: 'Instagram',
-    description: 'Messages and mentions',
-    category: 'communication',
-    auth: 'oauth',
-    comingSoon: true,
-  },
-  {
-    id: 'slack',
-    name: 'Slack',
-    description: 'Team conversations',
-    category: 'communication',
-    auth: 'oauth',
-    comingSoon: true,
-  },
-  {
-    id: 'xero',
-    name: 'Xero',
-    description: 'Accounting and invoices',
-    category: 'finance',
-    auth: 'oauth',
-    comingSoon: true,
-  },
-]
-
-const CATEGORIES = [
-  { id: 'all', label: 'All' },
-  { id: 'communication', label: 'Comms' },
-  { id: 'productivity', label: 'Work' },
-  { id: 'finance', label: 'Finance' },
-] as const
+/* ──────────────────────────────────────────────────────────────────────────
+ * Types
+ * ────────────────────────────────────────────────────────────────────────── */
 
 interface ConnectionStatus {
   connected: boolean
   connectedAt?: string
 }
-
-/* Bridge-type providers require POST /api/connections instead of OAuth popup */
-const BRIDGE_PROVIDER_IDS = new Set(
-  builtInProviders
-    .filter((p) => p.auth.method === 'bridge')
-    .map((p) => p.id),
-)
 
 interface ChannelStatusResponse {
   type: string
@@ -167,16 +37,29 @@ interface ChannelStatusResponse {
   connectedAt?: string | null
 }
 
+type ConnectionCallbackPayload =
+  | { type: 'bb-connection-callback'; kind: 'success'; provider?: string }
+  | { type: 'bb-connection-callback'; kind: 'error'; error?: string }
+  | { type: 'popup_closed'; provider: string }
+
 const CONNECTION_STATUS_ALIASES: Record<string, string> = {
   calendar: 'google-calendar',
   'google-calendar': 'google-calendar',
 }
 
+const FEATURED_IDS = ['gmail', 'google-calendar', 'whatsapp', 'stripe', 'asana', 'slack']
+
+const BTN_BASE =
+  'inline-flex min-w-[5.5rem] items-center justify-center rounded-lg px-4 py-2 text-base font-medium transition'
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Exports kept for backwards compatibility with existing tests / callers
+ * ────────────────────────────────────────────────────────────────────────── */
+
 export function normalizeConnectionStatuses(
   channels: ChannelStatusResponse[],
 ): Record<string, ConnectionStatus> {
   const normalized: Record<string, ConnectionStatus> = {}
-
   for (const channel of channels) {
     const id = CONNECTION_STATUS_ALIASES[channel.type] ?? channel.type
     normalized[id] = {
@@ -184,43 +67,7 @@ export function normalizeConnectionStatuses(
       ...(channel.connectedAt ? { connectedAt: channel.connectedAt } : {}),
     }
   }
-
   return normalized
-}
-
-type ConnectionCallbackPayload =
-  | { type: 'bb-connection-callback'; kind: 'success'; provider?: string }
-  | { type: 'bb-connection-callback'; kind: 'error'; error?: string }
-  | { type: 'popup_closed'; provider: string }
-
-export function getConnectionDisplayName(id: string) {
-  return CONNECTIONS.find((connection) => connection.id === id)?.name ?? id
-}
-
-function buildDisconnectedStatuses(): Record<string, ConnectionStatus> {
-  return CONNECTIONS.reduce<Record<string, ConnectionStatus>>((all, connection) => {
-    all[connection.id] = { connected: false }
-    return all
-  }, {})
-}
-
-function orgConnectionsToStatuses(orgConnections: OrgConnection[]): Record<string, ConnectionStatus> {
-  const statuses: Record<string, ConnectionStatus> = buildDisconnectedStatuses()
-
-  for (const conn of orgConnections) {
-    statuses[conn.provider] = {
-      connected: conn.status === 'connected',
-      ...(conn.last_sync_at ? { connectedAt: conn.last_sync_at } : {}),
-    }
-  }
-
-  return statuses
-}
-
-function getConnectedIds(statuses: Record<string, ConnectionStatus>) {
-  return Object.entries(statuses)
-    .filter(([, status]) => status.connected)
-    .map(([id]) => id)
 }
 
 export function reconcileLoadingConnection(
@@ -236,100 +83,78 @@ export function reconcileLoadingAfterOAuthEvent(
   event: ConnectionCallbackPayload,
 ): string | null {
   if (!loadingId) return null
-
   if (event.type === 'popup_closed') {
     return event.provider === loadingId ? null : loadingId
   }
-
-  if (event.kind === 'error') {
-    return null
-  }
-
-  if (!event.provider || event.provider === loadingId) {
-    return null
-  }
-
+  if (event.kind === 'error') return null
+  if (!event.provider || event.provider === loadingId) return null
   return loadingId
 }
 
-interface ConnectionCardProps {
-  connection: Connection
-  status: ConnectionStatus
-  isLoading: boolean
-  variant: 'dashboard' | 'onboarding'
-  orgConnection?: OrgConnection
-  onConnect: (id: string) => void
-  onDisconnect: (id: string) => void
-  onConnectionClick?: (connection: OrgConnection) => void
+export function getConnectionDisplayName(id: string): string {
+  return id
 }
 
-const BTN_BASE = 'inline-flex min-w-[5.5rem] items-center justify-center rounded-lg px-4 py-2 text-base font-medium transition'
-const BTN_COMPACT = 'inline-flex min-w-[5rem] items-center justify-center rounded-lg px-3.5 py-2 text-base font-medium transition'
+/* ──────────────────────────────────────────────────────────────────────────
+ * Bespoke flow router
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Map a bespoke flow id to a `ConnectModalMode`. Returns null when no modal
+ * mode exists for that id — e.g. iMessage, which is flagged bespoke in
+ * BESPOKE_FLOWS but has no dedicated `ConnectModal` variant yet.
+ */
+function resolveConnectModalMode(id: string): ConnectModalMode | null {
+  if (id === 'whatsapp') return 'whatsapp_qr'
+  if (id === 'stripe') return 'api_key'
+  return null
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Card
+ * ────────────────────────────────────────────────────────────────────────── */
+
+interface ConnectionCardProps {
+  app: CatalogApp
+  isLoading: boolean
+  orgConnection?: OrgConnection
+  onConnect: (app: CatalogApp) => void
+  onDisconnect: (app: CatalogApp) => void
+  onConnectedClick?: (connection: OrgConnection) => void
+}
 
 function ConnectionCard({
-  connection,
-  status,
+  app,
   isLoading,
-  variant,
   orgConnection,
   onConnect,
   onDisconnect,
-  onConnectionClick,
+  onConnectedClick,
 }: ConnectionCardProps) {
   const handleConnectedClick = useCallback(() => {
-    if (orgConnection && onConnectionClick) {
-      onConnectionClick(orgConnection)
+    if (orgConnection && onConnectedClick) {
+      onConnectedClick(orgConnection)
     } else {
-      onDisconnect(connection.id)
+      onDisconnect(app)
     }
-  }, [orgConnection, onConnectionClick, onDisconnect, connection.id])
-
-  if (variant === 'onboarding') {
-    return (
-      <article className="flex items-center gap-3.5 rounded-lg border border-black/[0.06] bg-white/76 px-5 py-4 shadow-sm transition duration-200 hover:shadow-md">
-        <AppIcon id={connection.id} size={40} />
-        <span className="flex-1 text-base font-medium text-foreground">{connection.name}</span>
-        {connection.comingSoon ? (
-          <span className={`${BTN_COMPACT} shrink-0 border border-black/[0.06] bg-muted text-muted-foreground`}>Soon</span>
-        ) : status.connected ? (
-          <button
-            type="button"
-            onClick={handleConnectedClick}
-            disabled={isLoading}
-            className={`${BTN_COMPACT} shrink-0 border border-success bg-success/10 text-success hover:bg-success/15 disabled:opacity-50`}
-          >
-            {isLoading ? 'Removing\u2026' : 'Connected'}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onConnect(connection.id)}
-            disabled={isLoading}
-            className={`${BTN_COMPACT} shrink-0 bg-foreground text-white hover:bg-foreground/90 disabled:opacity-50`}
-          >
-            {isLoading ? 'Connecting\u2026' : 'Connect'}
-          </button>
-        )}
-      </article>
-    )
-  }
+  }, [orgConnection, onConnectedClick, onDisconnect, app])
 
   return (
     <article className="flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition duration-300 hover:translate-y-[-1px] hover:shadow-md">
       <div className="flex items-center gap-3">
-        <AppIcon id={connection.id} size={40} />
+        <AppIcon id={app.id} name={app.name} logo={app.logo} size={40} />
         <div className="min-w-0">
-          <h3 className="text-base font-medium leading-tight text-foreground">{connection.name}</h3>
-          <p className="mt-0.5 text-base leading-tight text-muted-foreground">{connection.description}</p>
+          <h3 className="truncate text-base font-medium leading-tight text-foreground">
+            {app.name}
+          </h3>
+          <p className="mt-0.5 line-clamp-2 text-base leading-tight text-muted-foreground">
+            {app.description}
+          </p>
         </div>
       </div>
 
       <div className="flex items-center justify-end">
-        {connection.comingSoon ? (
-          <span className={`${BTN_BASE} border border-black/[0.06] bg-muted text-muted-foreground`}>
-            Soon
-          </span>
-        ) : status.connected ? (
+        {app.connected ? (
           <button
             type="button"
             onClick={handleConnectedClick}
@@ -341,7 +166,7 @@ function ConnectionCard({
         ) : (
           <button
             type="button"
-            onClick={() => onConnect(connection.id)}
+            onClick={() => onConnect(app)}
             disabled={isLoading}
             className={`${BTN_BASE} bg-foreground text-white hover:translate-y-[-1px] hover:bg-foreground/90 disabled:opacity-50`}
           >
@@ -353,49 +178,18 @@ function ConnectionCard({
   )
 }
 
-function CustomConnectionCard({ variant }: { variant: 'dashboard' | 'onboarding' }) {
-  if (variant === 'onboarding') {
-    return (
-      <article className="flex items-center gap-3.5 rounded-lg border border-dashed border-black/[0.12] bg-white/40 px-5 py-4 shadow-sm transition duration-200 hover:shadow-md">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-black/[0.12] bg-muted text-xl text-muted-foreground">+</div>
-        <span className="flex-1 text-base font-medium text-foreground">Custom</span>
-        <a
-          href="/docs/connections/bridge"
-          className="inline-flex min-w-[5rem] items-center justify-center rounded-lg px-3.5 py-2 text-base font-medium transition border border-black/[0.06] bg-muted text-muted-foreground hover:text-foreground"
-        >
-          Setup guide →
-        </a>
-      </article>
-    )
-  }
+/* ──────────────────────────────────────────────────────────────────────────
+ * Grid
+ * ────────────────────────────────────────────────────────────────────────── */
 
-  return (
-    <article className="flex flex-col gap-3 rounded-lg border border-dashed border-[var(--border)] bg-[var(--card)] p-4 shadow-sm transition duration-300 hover:translate-y-[-1px] hover:shadow-md">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-black/[0.12] bg-muted text-xl text-muted-foreground">+</div>
-        <div className="min-w-0">
-          <h3 className="text-base font-medium leading-tight text-foreground">Custom</h3>
-          <p className="mt-0.5 text-base leading-tight text-muted-foreground">Connect any data source</p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-end">
-        <a
-          href="/docs/connections/bridge"
-          className={`${BTN_BASE} border border-black/[0.06] bg-muted text-muted-foreground hover:text-foreground`}
-        >
-          Setup guide →
-        </a>
-      </div>
-    </article>
-  )
-}
-
-interface ConnectionsGridProps {
+export interface ConnectionsGridProps {
   onConnectionStateChange?: (hasConnection: boolean) => void
   onConnectedIdsChange?: (connectedIds: string[]) => void
   onConnectionClick?: (connection: OrgConnection) => void
-  variant?: 'dashboard' | 'onboarding'
+  /** Phase 04 wires this to the Composio OAuth popup initiator. */
+  onConnectComposio?: (app: CatalogApp) => void
+  /** Phase 04 uses this to refresh the catalog after an OAuth success. */
+  onRefetchReady?: (refetch: () => void) => void
   showHeader?: boolean
   showCategoryTabs?: boolean
 }
@@ -404,340 +198,388 @@ export function ConnectionsGrid({
   onConnectionStateChange,
   onConnectedIdsChange,
   onConnectionClick,
-  variant = 'dashboard',
+  onConnectComposio,
+  onRefetchReady,
   showHeader = true,
   showCategoryTabs = true,
 }: ConnectionsGridProps) {
   const { toast } = useToast()
   const searchParams = useSearchParams()
+
+  const [searchInput, setSearchInput] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('all')
-  const [statuses, setStatuses] = useState<Record<string, ConnectionStatus>>(buildDisconnectedStatuses)
-  const [orgConnections, setOrgConnections] = useState<OrgConnection[]>([])
   const [loadingId, setLoadingId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [orgConnections, setOrgConnections] = useState<OrgConnection[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<ConnectModalMode>('api_key')
   const [modalChannelId, setModalChannelId] = useState('')
   const [modalChannelName, setModalChannelName] = useState('')
   const handledCallbackRef = useRef<string | null>(null)
 
-  const filteredConnections = useMemo(() => {
-    const base = activeCategory === 'all'
-      ? CONNECTIONS
-      : CONNECTIONS.filter((connection) => connection.category === activeCategory)
+  /* Debounce search input → debouncedQuery (300 ms) */
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQuery(searchInput.trim()), 300)
+    return () => window.clearTimeout(id)
+  }, [searchInput])
 
-    if (variant !== 'onboarding') {
-      return base
-    }
+  const { data, isLoading, error, refetch } = useConnectionCatalog({
+    q: debouncedQuery || undefined,
+    category: activeCategory === 'all' ? undefined : activeCategory,
+  })
 
-    return [...base].sort((left, right) => Number(Boolean(right.featured)) - Number(Boolean(left.featured)))
-  }, [activeCategory, variant])
+  /* Expose refetch to parent (Phase 04 needs it after OAuth success). */
+  useEffect(() => {
+    if (onRefetchReady) onRefetchReady(() => void refetch())
+  }, [onRefetchReady, refetch])
 
-  const fetchStatuses = useCallback(async () => {
+  const fetchOrgConnections = useCallback(async () => {
     try {
-      setError(null)
       const response = await fetch('/api/connections')
-      if (!response.ok) throw new Error('Failed to fetch connections')
-
-      const data = (await response.json()) as { connections?: OrgConnection[] }
-      const fetched = data.connections ?? []
-      const nextStatuses = orgConnectionsToStatuses(fetched)
-      const connectedIds = getConnectedIds(nextStatuses)
-
+      if (!response.ok) return
+      const body = (await response.json()) as { connections?: OrgConnection[] }
+      const fetched = body.connections ?? []
       setOrgConnections(fetched)
-      setStatuses(nextStatuses)
-      setLoadingId((current) => reconcileLoadingConnection(current, nextStatuses))
+      const connectedIds = fetched
+        .filter(c => c.status === 'connected')
+        .map(c => c.provider)
       onConnectionStateChange?.(connectedIds.length > 0)
       onConnectedIdsChange?.(connectedIds)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
-      logger.error('Error fetching connection statuses', { error: message })
-      toast('error', 'Could not load connections')
-      setError('Could not load connections right now')
-      setOrgConnections([])
-      setStatuses(buildDisconnectedStatuses())
-      onConnectionStateChange?.(false)
-      onConnectedIdsChange?.([])
+      logger.error('Error fetching org connections', { error: message })
     }
-  }, [onConnectedIdsChange, onConnectionStateChange, toast])
+  }, [onConnectionStateChange, onConnectedIdsChange])
 
   useEffect(() => {
-    void fetchStatuses()
-  }, [fetchStatuses])
+    void fetchOrgConnections()
+  }, [fetchOrgConnections])
 
   useEffect(() => {
     const handleFocus = () => {
-      void fetchStatuses()
+      void fetchOrgConnections()
+      void refetch()
     }
-
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
-  }, [fetchStatuses])
+  }, [fetchOrgConnections, refetch])
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return
-
       const payload = event.data as
         | { type?: string; kind?: 'success' | 'error'; provider?: string; error?: string }
         | undefined
-
       if (payload?.type !== 'bb-connection-callback') return
 
       if (payload.kind === 'success' && payload.provider) {
         toast('success', `${payload.provider} connected`)
       }
-
       if (payload.kind === 'error' && payload.error) {
         toast('error', payload.error)
       }
-
-      setLoadingId((current) => reconcileLoadingAfterOAuthEvent(
-        current,
-        payload as ConnectionCallbackPayload,
-      ))
-      void fetchStatuses()
+      setLoadingId(current =>
+        reconcileLoadingAfterOAuthEvent(current, payload as ConnectionCallbackPayload),
+      )
+      void fetchOrgConnections()
+      void refetch()
     }
-
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [fetchStatuses, toast])
+  }, [fetchOrgConnections, refetch, toast])
 
   useEffect(() => {
     const connected = searchParams.get('connected')
     const callbackError = searchParams.get('error')
-
     if (!connected && !callbackError) return
 
-    const callbackKey = `${connected ?? ''}:${callbackError ?? ''}`
-    if (handledCallbackRef.current === callbackKey) return
-    handledCallbackRef.current = callbackKey
+    const key = `${connected ?? ''}:${callbackError ?? ''}`
+    if (handledCallbackRef.current === key) return
+    handledCallbackRef.current = key
 
-    if (connected) {
-      toast('success', `${connected} connected`)
-    }
+    if (connected) toast('success', `${connected} connected`)
+    if (callbackError) toast('error', callbackError)
 
-    if (callbackError) {
-      toast('error', callbackError)
-    }
+    const msg: ConnectionCallbackPayload = connected
+      ? { type: 'bb-connection-callback', kind: 'success', provider: connected }
+      : { type: 'bb-connection-callback', kind: 'error', error: callbackError ?? 'Connection failed' }
 
-    const callbackMessage = connected
-      ? { type: 'bb-connection-callback' as const, kind: 'success' as const, provider: connected }
-      : { type: 'bb-connection-callback' as const, kind: 'error' as const, error: callbackError ?? 'Connection failed' }
-
-    setLoadingId((current) => reconcileLoadingAfterOAuthEvent(current, callbackMessage))
-    void fetchStatuses()
+    setLoadingId(current => reconcileLoadingAfterOAuthEvent(current, msg))
+    void fetchOrgConnections()
+    void refetch()
 
     if (window.opener && window.opener !== window) {
       try {
-        window.opener.postMessage(callbackMessage, window.location.origin)
+        window.opener.postMessage(msg, window.location.origin)
       } catch {
-        // best effort only
+        /* best effort */
       }
-
-      window.setTimeout(() => {
-        window.close()
-      }, 150)
+      window.setTimeout(() => window.close(), 150)
       return
     }
-
     window.history.replaceState({}, '', window.location.pathname)
-  }, [fetchStatuses, searchParams, toast])
+  }, [fetchOrgConnections, refetch, searchParams, toast])
 
-  const handleConnect = useCallback(async (id: string) => {
-    const connection = CONNECTIONS.find((candidate) => candidate.id === id)
-    if (!connection) return
+  /* ────────────────────────────────────────────────────────────────────
+   * Derived
+   * ──────────────────────────────────────────────────────────────────── */
 
-    try {
-      setLoadingId(id)
+  const apps = data?.apps ?? []
+  const softError = data?.error
 
-      /* Bridge providers: create via POST /api/connections (no OAuth popup) */
-      if (BRIDGE_PROVIDER_IDS.has(id)) {
-        const response = await fetch('/api/connections', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider: id }),
-        })
-
-        if (!response.ok) throw new Error('Failed to create connection')
-
-        await fetchStatuses()
-        toast('success', `${connection.name} connected`)
-        setLoadingId(null)
-        return
+  const categoryOptions = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const app of apps) {
+      for (const cat of app.categories) {
+        if (!cat) continue
+        counts.set(cat, (counts.get(cat) ?? 0) + 1)
       }
+    }
+    const top = Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([cat]) => cat)
+    return ['all', ...top]
+  }, [apps])
 
-      if (connection.auth === 'oauth') {
-        const response = await fetch('/api/channels/connect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ channel: id }),
-        })
+  const { featured, rest } = useMemo(() => {
+    if (debouncedQuery || activeCategory !== 'all') {
+      return { featured: [] as CatalogApp[], rest: apps }
+    }
+    const byId = new Map(apps.map(a => [a.id, a]))
+    const feat: CatalogApp[] = []
+    for (const id of FEATURED_IDS) {
+      const app = byId.get(id)
+      if (app) feat.push(app)
+    }
+    const featuredIds = new Set(feat.map(a => a.id))
+    return { featured: feat, rest: apps.filter(a => !featuredIds.has(a.id)) }
+  }, [apps, debouncedQuery, activeCategory])
 
-        if (!response.ok) throw new Error('Failed to initiate OAuth')
+  /* ────────────────────────────────────────────────────────────────────
+   * Handlers
+   * ──────────────────────────────────────────────────────────────────── */
 
-        const data = (await response.json()) as {
-          redirect?: boolean
-          url?: string
-          error?: string
-        }
-
-        if (!data.redirect || !data.url) {
-          throw new Error(data.error || 'Missing OAuth redirect URL')
-        }
-
-        const popup = window.open(
-          data.url,
-          `connect_${id}`,
-          'width=600,height=720,scrollbars=yes',
-        )
-
-        if (!popup) {
-          window.location.assign(data.url)
+  const handleConnect = useCallback(
+    (app: CatalogApp) => {
+      if (isBespokeFlow(app.id)) {
+        const mode = resolveConnectModalMode(app.id)
+        if (mode) {
+          setModalChannelId(app.id)
+          setModalChannelName(app.name)
+          setModalMode(mode)
+          setModalOpen(true)
           return
         }
-
-        const pollTimer = window.setInterval(() => {
-          if (!popup.closed) return
-          window.clearInterval(pollTimer)
-          setLoadingId((current) => reconcileLoadingAfterOAuthEvent(current, {
-            type: 'popup_closed',
-            provider: id,
-          }))
-          void fetchStatuses()
-        }, 500)
-        return
+        logger.warn(
+          `No bespoke ConnectModal mode for ${app.id}; falling back to Composio router`,
+        )
       }
 
-      if (connection.auth === 'api_key' || connection.auth === 'whatsapp_qr') {
-        setModalChannelId(connection.id)
-        setModalChannelName(connection.name)
-        setModalMode(connection.auth === 'whatsapp_qr' ? 'whatsapp_qr' : 'api_key')
-        setModalOpen(true)
+      if (onConnectComposio) {
+        setLoadingId(app.id)
+        onConnectComposio(app)
+        return
+      }
+      console.warn(
+        `[ConnectionsGrid] onConnectComposio not wired; cannot connect ${app.id}`,
+      )
+      toast('info', `${app.name} connect flow is coming soon`)
+    },
+    [onConnectComposio, toast],
+  )
+
+  const handleDisconnect = useCallback(
+    async (app: CatalogApp) => {
+      const orgConn = orgConnections.find(c => c.provider === app.id)
+      try {
+        setLoadingId(app.id)
+        if (orgConn) {
+          const response = await fetch(`/api/connections/${orgConn.id}`, { method: 'DELETE' })
+          if (!response.ok) throw new Error('Failed to disconnect')
+        } else {
+          const response = await fetch('/api/channels/disconnect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channel: app.id }),
+          })
+          if (!response.ok) throw new Error('Failed to disconnect')
+        }
+        await fetchOrgConnections()
+        await refetch()
+        toast('success', `${app.name} disconnected`)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error'
+        logger.error(`Error disconnecting ${app.id}`, { error: message })
+        toast('error', `Could not disconnect ${app.name}`)
+      } finally {
         setLoadingId(null)
-        return
       }
+    },
+    [fetchOrgConnections, orgConnections, refetch, toast],
+  )
 
-      logger.info(`Opening API key dialog for ${id}`)
-      toast('info', `${connection.name} key setup is next`)
-      setLoadingId(null)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      logger.error(`Error connecting ${id}`, { error: message })
-      toast('error', `Could not connect ${connection.name}`)
-      setLoadingId(null)
-    }
-  }, [fetchStatuses, toast])
+  /* ────────────────────────────────────────────────────────────────────
+   * Render
+   * ──────────────────────────────────────────────────────────────────── */
 
-  const handleDisconnect = useCallback(async (id: string) => {
-    const connection = CONNECTIONS.find((candidate) => candidate.id === id)
-    const orgConn = orgConnections.find((c) => c.provider === id)
+  const connectedCount = data?.connected_count ?? 0
+  const gridCls = 'grid gap-4 md:grid-cols-2 xl:grid-cols-3'
 
-    try {
-      setLoadingId(id)
-
-      if (orgConn) {
-        const response = await fetch(`/api/connections/${orgConn.id}`, {
-          method: 'DELETE',
-        })
-
-        if (!response.ok) throw new Error('Failed to disconnect')
-      } else {
-        /* Fallback: legacy disconnect endpoint */
-        const response = await fetch('/api/channels/disconnect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ channel: id }),
-        })
-
-        if (!response.ok) throw new Error('Failed to disconnect')
-      }
-
-      await fetchStatuses()
-      toast('success', `${connection?.name || id} disconnected`)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      logger.error(`Error disconnecting ${id}`, { error: message })
-      toast('error', `Could not disconnect ${connection?.name || id}`)
-    } finally {
-      setLoadingId(null)
-    }
-  }, [fetchStatuses, orgConnections, toast])
-
-  const containerClassName = variant === 'onboarding'
-    ? 'grid gap-3'
-    : 'grid gap-6'
-
-  const gridClassName = variant === 'onboarding'
-    ? 'grid gap-3 sm:grid-cols-2'
-    : 'grid gap-4 md:grid-cols-2 xl:grid-cols-3'
-
-  return (
-    <section className={containerClassName}>
-      {error ? (
+  if (error) {
+    return (
+      <section className="grid gap-6" data-testid="connections-grid">
         <Empty>
-          <EmptyMedia variant="icon"><IconAlertCircle size={20} /></EmptyMedia>
-          <EmptyTitle>Something went wrong</EmptyTitle>
-          <EmptyDescription>{error}</EmptyDescription>
+          <EmptyMedia variant="icon">
+            <IconAlertCircle size={20} />
+          </EmptyMedia>
+          <EmptyTitle>Could not load connections</EmptyTitle>
+          <EmptyDescription>{error.message || 'Something went wrong'}</EmptyDescription>
           <EmptyContent>
-            <Button variant="outline" size="sm" onClick={() => { setError(null); void fetchStatuses(); }}>Retry</Button>
+            <Button variant="outline" size="sm" onClick={() => void refetch()}>
+              Retry
+            </Button>
           </EmptyContent>
         </Empty>
-      ) : null}
+      </section>
+    )
+  }
 
+  return (
+    <section className="grid gap-6" data-testid="connections-grid">
       {showHeader ? (
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-lg font-medium tracking-[-0.02em] text-foreground">
-            Connections
-          </h2>
+          <h2 className="text-lg font-medium tracking-[-0.02em] text-foreground">Connections</h2>
           <div className="rounded-lg bg-accent/10 px-3 py-1 text-base font-medium text-accent">
-            {getConnectedIds(statuses).length} connected
+            {connectedCount} connected
           </div>
         </div>
       ) : null}
 
-      {showCategoryTabs ? (
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Connection categories">
-          {CATEGORIES.map((category) => {
-            const active = activeCategory === category.id
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <IconSearch
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            type="search"
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            placeholder="Search services\u2026"
+            aria-label="Search connections"
+            className="pl-9"
+          />
+        </div>
+      </div>
+
+      {showCategoryTabs && categoryOptions.length > 1 ? (
+        <div
+          className="flex flex-wrap gap-2"
+          role="tablist"
+          aria-label="Connection categories"
+        >
+          {categoryOptions.map(cat => {
+            const active = activeCategory === cat
+            const label = cat === 'all' ? 'All' : cat.replace(/-/g, ' ')
             return (
               <button
-                key={category.id}
+                key={cat}
                 type="button"
                 role="tab"
                 aria-selected={active}
-                onClick={() => setActiveCategory(category.id)}
-                className={`rounded-lg px-4 py-2 text-base font-medium uppercase tracking-[0.16em] transition ${
+                onClick={() => setActiveCategory(cat)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium capitalize tracking-[0.04em] transition ${
                   active
                     ? 'bg-foreground text-white'
                     : 'border border-black/[0.06] bg-white/72 text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {category.label}
+                {label}
               </button>
             )
           })}
         </div>
       ) : null}
 
-      <div className={gridClassName}>
-        {filteredConnections.map((connection) => (
-          <ConnectionCard
-            key={connection.id}
-            connection={connection}
-            status={statuses[connection.id] || { connected: false }}
-            variant={variant}
-            isLoading={loadingId === connection.id}
-            orgConnection={orgConnections.find((c) => c.provider === connection.id)}
-            onConnect={handleConnect}
-            onDisconnect={handleDisconnect}
-            onConnectionClick={onConnectionClick}
-          />
-        ))}
-        {(activeCategory === 'all' || activeCategory === 'communication') ? (
-          <CustomConnectionCard variant={variant} />
-        ) : null}
-      </div>
+      {softError ? (
+        <div
+          role="alert"
+          data-testid="connections-soft-error"
+          className="flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50/70 px-4 py-3 text-sm text-amber-900"
+        >
+          <IconAlertCircle size={16} />
+          <span>{softError}</span>
+        </div>
+      ) : null}
+
+      {isLoading ? (
+        <div className={gridCls} data-testid="connections-loading">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4"
+            >
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-[9px]" />
+                <div className="flex flex-1 flex-col gap-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-40" />
+                </div>
+              </div>
+              <Skeleton className="ml-auto h-9 w-24" />
+            </div>
+          ))}
+        </div>
+      ) : apps.length === 0 ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>No services available</EmptyTitle>
+            <EmptyDescription>
+              {softError
+                ? 'Once Composio is configured, available services will appear here.'
+                : 'No services match your search. Try a different query.'}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <div className="grid gap-6">
+          {featured.length > 0 ? (
+            <div className="grid gap-3">
+              <h3 className="text-sm font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                Featured
+              </h3>
+              <div className={gridCls} data-testid="connections-featured">
+                {featured.map(app => (
+                  <ConnectionCard
+                    key={app.id}
+                    app={app}
+                    isLoading={loadingId === app.id}
+                    orgConnection={orgConnections.find(c => c.provider === app.id)}
+                    onConnect={handleConnect}
+                    onDisconnect={handleDisconnect}
+                    onConnectedClick={onConnectionClick}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className={gridCls} data-testid="connections-all">
+            {rest.map(app => (
+              <ConnectionCard
+                key={app.id}
+                app={app}
+                isLoading={loadingId === app.id}
+                orgConnection={orgConnections.find(c => c.provider === app.id)}
+                onConnect={handleConnect}
+                onDisconnect={handleDisconnect}
+                onConnectedClick={onConnectionClick}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <ConnectModal
         open={modalOpen}
@@ -746,22 +588,14 @@ export function ConnectionsGrid({
         channel={modalChannelId}
         channelName={modalChannelName}
         onSuccess={() => {
-          void fetchStatuses()
+          void fetchOrgConnections()
+          void refetch()
           toast('success', `${modalChannelName} connected`)
         }}
-        onError={(message) => {
+        onError={message => {
           toast('error', message)
         }}
       />
-
-      {filteredConnections.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>No connections configured</EmptyTitle>
-            <EmptyDescription>Connect your services to let BitBit start working for you</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      ) : null}
     </section>
   )
 }
