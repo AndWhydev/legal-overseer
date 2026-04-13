@@ -30,6 +30,7 @@ const webServerTimeout = parsePositiveInteger(process.env.PW_WEB_SERVER_TIMEOUT_
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
+  testIgnore: ['**/_*', '**/._*'],
   timeout: testTimeout,
   expect: {
     timeout: expectTimeout,

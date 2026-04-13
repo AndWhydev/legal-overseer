@@ -4,7 +4,7 @@ import { test, expect, type Page, type ConsoleMessage } from '@playwright/test'
 // Helpers
 // ---------------------------------------------------------------------------
 
-const E2E_EMAIL = process.env.E2E_USER_EMAIL ?? 'amatorri847@gmail.com'
+const E2E_EMAIL = process.env.E2E_USER_EMAIL ?? 'hi+test@torkay.com'
 const E2E_PASSWORD = process.env.E2E_USER_PASSWORD ?? ''
 
 /** Collect console errors during a test so we can assert zero JS errors. */
