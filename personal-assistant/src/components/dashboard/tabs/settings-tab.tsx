@@ -14,10 +14,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { BillingSettings } from '@/components/settings/billing-settings';
 import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
-import { ConnectionsGrid } from '@/components/integrations/integration-grid';
+import { ConnectionsGrid } from '@/components/connections/connections-grid';
 import { ConnectionDetailContent } from '@/components/connections/connection-detail-drawer';
 import { useDrawer } from '@/components/dashboard/drawer-context';
-import type { OrgConnection } from '@/lib/connections';
+import { useToast } from '@/components/ui/toast';
+import { logger } from '@/lib/core/logger';
+import type { CatalogApp, OrgConnection } from '@/lib/connections';
 import { RagStatsWidget } from '@/components/dashboard/rag-stats-widget';
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -196,38 +198,53 @@ function SaveIndicator({ visible }: { visible: boolean }) {
 // ---- Connections Tab ----
 
 export function SettingsConnectionsTab() {
-  const [integrations, setIntegrations] = useState<OrgIntegration[]>([]);
-  const [integrationsLoading, setIntegrationsLoading] = useState(true);
-  const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
-  const [orgConnections, setOrgConnections] = useState<OrgConnection[]>([]);
+  const { toast } = useToast();
   const { setDrawer, closeDrawer } = useDrawer();
+  const refetchRef = useRef<(() => void) | null>(null);
 
-  const fetchIntegrations = useCallback(async () => {
+  const handleConnectComposio = useCallback(async (app: CatalogApp) => {
     try {
-      setIntegrationsLoading(true);
-      const response = await fetch('/api/settings/integrations');
-      if (!response.ok) throw new Error('Failed to fetch integrations');
-      const data = await response.json() as { integrations: OrgIntegration[] };
-      setIntegrations(data.integrations);
+      const res = await fetch('/api/connections/composio/connect', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ appKey: app.id }),
+      });
 
-      // Also fetch org_connections for drawer info
-      try {
-        const connRes = await fetch('/api/connections');
-        if (connRes.ok) {
-          const connData = await connRes.json() as { connections: OrgConnection[] };
-          setOrgConnections(connData.connections || []);
-        }
-      } catch { /* non-fatal */ }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast('error', typeof body?.error === 'string' ? body.error : `Failed to connect ${app.name}.`);
+        return;
+      }
+
+      const data = (await res.json()) as { redirectUrl?: string };
+      if (!data?.redirectUrl) {
+        toast('error', `No redirect URL returned for ${app.name}.`);
+        return;
+      }
+
+      window.location.href = data.redirectUrl;
     } catch (err) {
-      logger.error('Error fetching integrations:', err);
-    } finally {
-      setIntegrationsLoading(false);
+      logger.error('[settings/connections] onConnectComposio failed', {
+        appKey: app.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      toast('error', `Unable to start connection for ${app.name}.`);
     }
-  }, []);
+  }, [toast]);
 
-  useEffect(() => {
-    fetchIntegrations();
-  }, [fetchIntegrations]);
+  const handleConnectionClick = useCallback((conn: OrgConnection) => {
+    setDrawer(
+      <ConnectionDetailContent
+        connection={conn}
+        onClose={closeDrawer}
+        onDisconnect={() => {
+          closeDrawer();
+          refetchRef.current?.();
+        }}
+      />
+    );
+  }, [setDrawer, closeDrawer]);
 
   return (
     <div className="flex h-full flex-col gap-5 overflow-auto p-6">
@@ -240,43 +257,18 @@ export function SettingsConnectionsTab() {
         <RagStatsWidget showDetails={true} />
       </div>
 
-      {/* Connections Grid */}
+      {/* Connections Grid — Composio-backed dynamic catalog */}
       <div>
         <h3 className="text-base font-medium text-foreground">Integrations</h3>
         <p className="mt-1 text-base text-muted-foreground">Connect communication channels</p>
       </div>
       <div>
         <ConnectionsGrid
-          integrations={integrations}
-          isLoading={integrationsLoading}
-          onStatusChange={fetchIntegrations}
-          onWhatsAppConnect={() => setWhatsappModalOpen(true)}
-          orgConnections={orgConnections}
-          onConnectionInfoClick={(conn) => {
-            setDrawer(
-              <ConnectionDetailContent
-                connection={conn}
-                onClose={closeDrawer}
-                onDisconnect={() => {
-                  closeDrawer();
-                  fetchIntegrations();
-                }}
-              />
-            );
-          }}
+          onConnectionClick={handleConnectionClick}
+          onConnectComposio={handleConnectComposio}
+          onRefetchReady={(refetch) => { refetchRef.current = refetch; }}
         />
-
       </div>
-
-      {whatsappModalOpen && (
-        <WhatsAppWizardModal
-          onClose={() => setWhatsappModalOpen(false)}
-          onConnected={() => {
-            setWhatsappModalOpen(false);
-            fetchIntegrations();
-          }}
-        />
-      )}
     </div>
   );
 }
