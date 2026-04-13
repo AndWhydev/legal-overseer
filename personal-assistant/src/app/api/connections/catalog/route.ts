@@ -42,51 +42,52 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Fetch available apps from Composio
-    const apps = await (composio as unknown as {
-      apps: {
-        list: (params?: { category?: string }) => Promise<{
-          items: Array<{
-            key: string
-            name: string
-            description?: string
-            categories?: string[]
-            logo?: string
-            auth_schemes?: string[]
-          }>
-        }>
-      }
-    }).apps.list(category ? { category } : undefined)
+    // Composio SDK v0.6.x: use toolkits.getToolkits({}) — NOT composio.apps.list()
+    // Returns array of toolkit objects with { slug, name, meta: { logo, categories, description }, authSchemes }
+    const toolkits = await composio.toolkits.getToolkits({})
 
     // Get user's connected accounts to mark which are connected
-    const connectedAccounts = await (composio as unknown as {
-      connectedAccounts: {
-        list: (params: { userIds: string[]; statuses: string[] }) => Promise<{
-          items: Array<{ id: string; appName?: string; status: string }>
-        }>
-      }
-    }).connectedAccounts.list({
-      userIds: [ctx.orgId],
-      statuses: ['ACTIVE'],
+    const connectedAccounts = await composio.connectedAccounts.list({
+      user_ids: [ctx.orgId],
+      status: 'ACTIVE',
     })
 
     const connectedApps = new Set(
-      connectedAccounts.items.map(a => (a.appName || '').toLowerCase())
+      (Array.isArray(connectedAccounts) ? connectedAccounts : connectedAccounts?.items || [])
+        .map((a: { appName?: string; toolkit?: string }) => (a.toolkit || a.appName || '').toLowerCase())
     )
 
-    let catalog = apps.items.map(app => ({
-      id: app.key,
-      name: app.name,
-      description: app.description || '',
-      categories: app.categories || [],
-      logo: app.logo || '',
-      authScheme: app.auth_schemes?.[0] || 'oauth2',
-      connected: connectedApps.has(app.key.toLowerCase()),
-    }))
+    let catalog = toolkits
+      .filter((tk: { noAuth?: boolean }) => !tk.noAuth) // exclude no-auth toolkits (internal utilities)
+      .map((tk: {
+        slug: string
+        name: string
+        meta?: {
+          description?: string
+          logo?: string
+          categories?: Array<{ slug: string; name: string }>
+        }
+        authSchemes?: string[]
+      }) => ({
+        id: tk.slug,
+        name: tk.name,
+        description: tk.meta?.description || '',
+        categories: (tk.meta?.categories || []).map(c => c.name || c.slug),
+        logo: tk.meta?.logo || '',
+        authScheme: tk.authSchemes?.[0] || 'oauth2',
+        connected: connectedApps.has(tk.slug.toLowerCase()),
+      }))
+
+    // Apply category filter
+    if (category) {
+      catalog = catalog.filter((app: { categories: string[] }) =>
+        app.categories.some((c: string) => c.toLowerCase() === category)
+      )
+    }
 
     // Apply search filter
     if (query) {
-      catalog = catalog.filter(app =>
+      catalog = catalog.filter((app: { name: string; description: string; id: string }) =>
         app.name.toLowerCase().includes(query) ||
         app.description.toLowerCase().includes(query) ||
         app.id.toLowerCase().includes(query)
@@ -96,11 +97,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       apps: catalog,
       total: catalog.length,
-      connected_count: catalog.filter(a => a.connected).length,
+      connected_count: catalog.filter((a: { connected: boolean }) => a.connected).length,
     })
   } catch (err) {
     logger.error('[catalog] Failed to fetch app catalog', {
       error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
     })
     return NextResponse.json(
       { error: 'Failed to fetch catalog', apps: [] },
