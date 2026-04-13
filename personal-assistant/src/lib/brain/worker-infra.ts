@@ -21,6 +21,7 @@ export const QUEUE_NAMES = {
   operational: 'memory:operational',
   behavioral: 'memory:behavioral',
   synthesis: 'memory:synthesis',
+  crawl: 'memory:crawl',
 } as const
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES]
@@ -44,6 +45,12 @@ export interface SynthesisJob {
   org_id: string
   trigger: 'librarian_complete' | 'manual' | 'scheduled'
   updated_entity_ids: string[]
+}
+
+export interface ConnectionCrawlJob {
+  orgId: string
+  appKey: string
+  connectedAccountId: string
 }
 
 // ─── Redis Connection ──────────────────────────────────────────────────────
