@@ -7,7 +7,7 @@
  */
 
 import { streamText, jsonSchema, gateway } from 'ai'
-import type { StreamTextResult } from 'ai'
+import type { LanguageModel, StreamTextResult } from 'ai'
 import { logger } from '@/lib/core/logger'
 
 // ── Anthropic-compatible types (avoids importing @anthropic-ai/sdk) ────────
@@ -137,6 +137,8 @@ function convertTools(tools: AnthropicTool[]) {
  */
 export async function callModelViaGateway(
   config: GatewayCallConfig,
+  // Test-only hook: inject a MockLanguageModelV3 instead of the real gateway. Never used in prod.
+  _testModel?: LanguageModel,
 ): Promise<GatewayCallResult> {
   let messages: ReturnType<typeof convertMessages>
   let tools: ReturnType<typeof convertTools>
@@ -149,7 +151,7 @@ export async function callModelViaGateway(
   }
 
   const streamResult = streamText({
-    model: gateway(config.model),
+    model: _testModel ?? gateway(config.model),
     system: config.system,
     messages: messages as Parameters<typeof streamText>[0]['messages'],
     tools,
@@ -169,16 +171,16 @@ export async function callModelViaGateway(
 
   try {
   for await (const chunk of streamResult.fullStream) {
-    // AI SDK v6: text-delta carries `delta: string` (v5 used `textDelta`)
+    // AI SDK v6 TextStreamPart: text-delta carries `text: string` (v5 used `textDelta`)
     if (chunk.type === 'text-delta') {
-      streamedDeltas.push(chunk.delta)
+      streamedDeltas.push(chunk.text)
     } else if (chunk.type === 'reasoning-delta') {
-      // AI SDK v6: reasoning chunks are `reasoning-delta` with `delta: string`
+      // AI SDK v6: reasoning chunks are `reasoning-delta` with `text: string`
       if (!hadThinking) {
         hadThinking = true
         thinkingStartTime = Date.now()
       }
-      streamedThinkingDeltas.push(chunk.delta)
+      streamedThinkingDeltas.push(chunk.text)
     } else if (chunk.type === 'error') {
       // Surface gateway/provider errors explicitly instead of silently finishing
       const raw = (chunk as { error?: unknown }).error
