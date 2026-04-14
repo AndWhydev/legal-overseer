@@ -68,32 +68,11 @@ export function BitBitOverlay({
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
   const [voiceConversationOpen, setVoiceConversationOpen] = useState(false);
 
-  // Listen for chat response completions to speak via TTS
-  useEffect(() => {
-    if (!voiceModeEnabled) return;
-
-    const handler = (e: Event) => {
-      const text = (e as CustomEvent<string>).detail;
-      if (text && typeof text === 'string') {
-        // Strip markdown/code blocks for cleaner speech
-        const cleaned = text
-          .replace(/```[\s\S]*?```/g, '')
-          .replace(/`([^`]+)`/g, '$1')
-          .replace(/\*\*([^*]+)\*\*/g, '$1')
-          .replace(/\*([^*]+)\*/g, '$1')
-          .replace(/#{1,6}\s+/g, '')
-          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-          .replace(/[-*+]\s+/g, '')
-          .trim();
-        if (cleaned) {
-          (playback as any).speak?.call(playback, cleaned)?.catch(() => {});
-        }
-      }
-    };
-
-    window.addEventListener('bitbit-chat-response-done', handler);
-    return () => window.removeEventListener('bitbit-chat-response-done', handler);
-  }, [voiceModeEnabled, playback]);
+  // NOTE: the legacy `bitbit-chat-response-done` → playback.speak() listener
+  // was removed here because voice-to-voice mode (useVoiceSession) runs its
+  // own ElevenLabs audio pipeline over SSE. Leaving both in produced a double-
+  // speak when a user typed into chat while in voice mode. Text chat in voice
+  // mode now remains silent by design — the voice overlay is the audio surface.
 
   useEffect(() => {
     if (!isChatTab) {
@@ -588,7 +567,7 @@ export function BitBitOverlay({
           voiceMode.deactivate();
         }
       }}
-      isSpeaking={false}
+      isSpeaking={voiceMode.state === 'speaking'}
     />
   );
 

@@ -113,15 +113,31 @@ export async function POST(request: NextRequest) {
   // ── Build the SSE stream ─────────────────────────────────────────────
   const encoder = new TextEncoder()
 
+  // Proxies (Vercel, Cloudflare, nginx) drop "idle" HTTP connections after
+  // 30-60s. TAOR tool execution can legitimately block longer than that, so
+  // we emit an SSE comment frame every 15s — valid SSE syntax, ignored by
+  // the browser EventSource parser, keeps the socket warm.
+  const KEEPALIVE_MS = 15_000
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      function write(ev: VoiceEvent) {
+      let keepaliveTimer: ReturnType<typeof setInterval> | null = null
+
+      function write(payload: string) {
         try {
-          controller.enqueue(encoder.encode(sseEvent(ev)))
+          controller.enqueue(encoder.encode(payload))
         } catch {
           // Stream already closed (client disconnect) — ignore.
         }
       }
+      function writeEvent(ev: VoiceEvent) {
+        write(sseEvent(ev))
+      }
+
+      keepaliveTimer = setInterval(() => {
+        // SSE comments: any line beginning with `:` is a no-op heartbeat.
+        write(`: ka ${Date.now()}\n\n`)
+      }, KEEPALIVE_MS)
 
       try {
         const events = runVoiceTurn({
@@ -139,18 +155,19 @@ export async function POST(request: NextRequest) {
 
         for await (const ev of events) {
           if (abortController.signal.aborted) break
-          write(ev)
+          writeEvent(ev)
         }
       } catch (err) {
         logger.error('[voice/stream] runVoiceTurn failed', {
           error: err instanceof Error ? err.message : String(err),
           stack: err instanceof Error ? err.stack : undefined,
         })
-        write({
+        writeEvent({
           type: 'error',
           data: { message: err instanceof Error ? err.message : 'Voice turn failed' },
         })
       } finally {
+        if (keepaliveTimer) clearInterval(keepaliveTimer)
         try {
           controller.close()
         } catch {

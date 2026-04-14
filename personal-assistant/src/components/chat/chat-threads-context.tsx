@@ -177,3 +177,12 @@ export function useChatThreads() {
   }
   return context
 }
+
+/**
+ * Non-throwing variant for consumers rendered outside the provider (e.g.
+ * BitBitOverlay, which wraps the whole app shell including the provider).
+ * Returns null when the provider isn't available in the tree.
+ */
+export function useChatThreadsOptional() {
+  return useContext(ChatThreadsContext)
+}

@@ -3,15 +3,19 @@
 /**
  * useVoiceSession — client-side driver for BitBit's realtime voice mode.
  *
- * Replaces `use-voice-mode.ts`. Phase 1 transport is SSE over POST: record a
- * turn → POST audio to `/api/voice/stream` → consume an event stream
- * containing live transcript, agent events, and sentence-level TTS audio.
+ * Replaces the legacy `use-voice-mode.ts`. Phase 1 transport is SSE over POST:
+ * record a turn → POST audio to `/api/voice/stream` → consume an event
+ * stream containing live transcript, agent events, and sentence-level TTS
+ * audio. Phase 2 swaps SSE for WebSocket + streaming STT without changing
+ * this hook's public surface.
  *
- * Response surface matches `UseVoiceMode` so the voice overlay doesn't need
- * shape changes to flip over.
- *
- * Phase 2 will swap the SSE transport for a WebSocket with streaming mic
- * upload, but the hook's public API stays the same.
+ * Polish wired in P1:
+ *   - Orb reactivity while speaking: hooks an AnalyserNode onto each Audio
+ *     element so the overlay's visualiser pulses with the assistant voice.
+ *   - threadId forwarding: voice turns land in the same Postgres thread as
+ *     the active text chat, enabling seamless voice↔text handoff.
+ *   - Soft barge-in: tapping during speaking aborts both local playback AND
+ *     the in-flight fetch so the server stops generating more TTS (cost + UX).
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -29,16 +33,35 @@ export interface UseVoiceSession {
   frequencyData: Uint8Array | null;
   transcript: string | null;
   lastResponse: string | null;
-  /** Current partial assistant text (updates while content_delta streams). */
+  /** Streaming assistant text (updates per content_delta). */
   interimResponse: string | null;
-  /** When the assistant's response can't be spoken (table/code), this is set. */
+  /** Non-null when the reply won't be spoken (table/code). */
   voiceSuppressed: string | null;
   error: string | null;
 }
 
+export interface UseVoiceSessionOptions {
+  /** Current active chat thread so voice turns share Postgres thread + history.
+   *  If omitted, the hook falls back to reading `bb-active-thread` from
+   *  localStorage (the key written by `ChatThreadsProvider`) so voice mode
+   *  still shares the open chat even when mounted outside the provider. */
+  threadId?: string | null;
+}
+
+const THREAD_STORAGE_KEY = 'bb-active-thread';
+
+function readPersistedThreadId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(THREAD_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
 interface SessionCredentials {
   token: string;
-  expiresAt: number; // ms
+  expiresAt: number;
 }
 
 interface PendingSentence {
@@ -57,7 +80,9 @@ function base64ToBytes(b64: string): Uint8Array {
   return bytes;
 }
 
-export function useVoiceSession(): UseVoiceSession {
+export function useVoiceSession(options: UseVoiceSessionOptions = {}): UseVoiceSession {
+  const { threadId } = options;
+
   const [state, setState] = useState<VoiceSessionState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<string | null>(null);
@@ -65,19 +90,37 @@ export function useVoiceSession(): UseVoiceSession {
   const [interimResponse, setInterimResponse] = useState<string | null>(null);
   const [voiceSuppressed, setVoiceSuppressed] = useState<string | null>(null);
 
+  // Playback-analyser outputs: distinct from the mic analyser so the overlay
+  // can show "this is the *assistant* pulsing" during speaking.
+  const [speakingLevel, setSpeakingLevel] = useState(0);
+  const [speakingFreqData, setSpeakingFreqData] = useState<Uint8Array | null>(null);
+
   const isActiveRef = useRef(false);
   const credentialsRef = useRef<SessionCredentials | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Playback queue: sentences are played back-to-back in arrival order.
+  // Resolve the current thread at call time. Explicit prop wins; otherwise
+  // we re-read localStorage so a user switching threads in the sidebar is
+  // picked up on the next voice turn without re-mounting the hook.
+  const resolveActiveThreadId = useCallback((): string | null => {
+    return threadId ?? readPersistedThreadId();
+  }, [threadId]);
+
+  // Playback queue: sentences play back-to-back in arrival order.
   const playbackQueueRef = useRef<PendingSentence[]>([]);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const isPlayingRef = useRef(false);
 
+  // Single AudioContext reused across turns for the playback analyser. Lazy-
+  // initialised inside a user-gesture path (activate) so Safari doesn't block it.
+  const playbackCtxRef = useRef<AudioContext | null>(null);
+  const playbackRafRef = useRef<number>(0);
+  const activeAnalyserRef = useRef<AnalyserNode | null>(null);
+
   const {
     isRecording,
-    audioLevel,
-    frequencyData,
+    audioLevel: micLevel,
+    frequencyData: micFreqData,
     startRecording,
     stopRecording,
     error: recordingError,
@@ -91,25 +134,72 @@ export function useVoiceSession(): UseVoiceSession {
   // ── Session credentials ────────────────────────────────────────────────
   const fetchCredentials = useCallback(async (): Promise<SessionCredentials> => {
     const existing = credentialsRef.current;
-    // Use cached token if it's got at least 30s of life left
-    if (existing && existing.expiresAt - Date.now() > 30_000) {
-      return existing;
-    }
+    if (existing && existing.expiresAt - Date.now() > 30_000) return existing;
+
     const res = await fetch('/api/voice/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ threadId: resolveActiveThreadId() ?? undefined }),
     });
-    if (!res.ok) {
-      throw new Error(`Session mint failed: ${res.status}`);
-    }
-    const json = await res.json() as { token: string; expiresIn: number };
+    if (!res.ok) throw new Error(`Session mint failed: ${res.status}`);
+
+    const json = (await res.json()) as { token: string; expiresIn: number };
     const creds: SessionCredentials = {
       token: json.token,
       expiresAt: Date.now() + json.expiresIn * 1000,
     };
     credentialsRef.current = creds;
     return creds;
+  }, [resolveActiveThreadId]);
+
+  // ── Playback analyser ──────────────────────────────────────────────────
+  const teardownPlaybackAnalyser = useCallback(() => {
+    if (playbackRafRef.current) {
+      cancelAnimationFrame(playbackRafRef.current);
+      playbackRafRef.current = 0;
+    }
+    activeAnalyserRef.current = null;
+    setSpeakingLevel(0);
+    setSpeakingFreqData(null);
+  }, []);
+
+  const hookupPlaybackAnalyser = useCallback((audio: HTMLAudioElement) => {
+    try {
+      if (!playbackCtxRef.current) {
+        const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        playbackCtxRef.current = new Ctor();
+      }
+      const ctx = playbackCtxRef.current;
+      // AudioContext may be in "suspended" state on Safari; resume is a no-op
+      // inside the user-gesture chain (activate → tap → audio.play).
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+      const source = ctx.createMediaElementSource(audio);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.75;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      activeAnalyserRef.current = analyser;
+      const data = new Uint8Array(analyser.frequencyBinCount);
+
+      const tick = () => {
+        if (activeAnalyserRef.current !== analyser) return;
+        analyser.getByteFrequencyData(data);
+        // Copy into a fresh buffer so React notices the state change.
+        setSpeakingFreqData(new Uint8Array(data));
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) sum += data[i];
+        setSpeakingLevel(sum / data.length / 255);
+        playbackRafRef.current = requestAnimationFrame(tick);
+      };
+      tick();
+    } catch (err) {
+      // Creating a MediaElementSource for an already-connected element throws.
+      // Not fatal — playback still works, the orb just won't pulse for that clip.
+      console.warn('[use-voice-session] analyser hookup failed', err);
+    }
   }, []);
 
   // ── Playback queue ─────────────────────────────────────────────────────
@@ -118,13 +208,13 @@ export function useVoiceSession(): UseVoiceSession {
     const next = playbackQueueRef.current.find(p => p.complete);
     if (!next) return;
 
-    // Remove it from the queue
     const idx = playbackQueueRef.current.indexOf(next);
     playbackQueueRef.current.splice(idx, 1);
 
-    const blob = new Blob(next.chunks, { type: next.contentType });
+    const blob = new Blob(next.chunks as BlobPart[], { type: next.contentType });
     const url = URL.createObjectURL(blob);
     const audio = new Audio(url);
+    audio.crossOrigin = 'anonymous';
     currentAudioRef.current = audio;
     isPlayingRef.current = true;
     setState('speaking');
@@ -133,6 +223,7 @@ export function useVoiceSession(): UseVoiceSession {
       URL.revokeObjectURL(url);
       if (currentAudioRef.current === audio) currentAudioRef.current = null;
       isPlayingRef.current = false;
+      teardownPlaybackAnalyser();
     };
 
     audio.onended = () => {
@@ -140,25 +231,25 @@ export function useVoiceSession(): UseVoiceSession {
       if (playbackQueueRef.current.length > 0) {
         playNext();
       } else if (isActiveRef.current) {
-        // No more audio queued — back to listening
         setState('listening');
         startRecording().catch(err => {
-          console.error('[use-voice-session] Failed to restart recording', err);
+          console.error('[use-voice-session] failed to restart recording', err);
         });
       }
     };
-    audio.onerror = (err) => {
-      console.error('[use-voice-session] Audio playback error', err);
+    audio.onerror = err => {
+      console.error('[use-voice-session] audio playback error', err);
       cleanupThis();
       if (playbackQueueRef.current.length > 0) playNext();
     };
+
+    hookupPlaybackAnalyser(audio);
     audio.play().catch(err => {
-      // Autoplay blocked — user-gesture required. Surface as error.
-      console.error('[use-voice-session] Audio play() rejected', err);
+      console.error('[use-voice-session] audio play() rejected', err);
       cleanupThis();
-      setError('Tap to allow playback');
+      setError('Tap the orb to resume playback');
     });
-  }, [startRecording]);
+  }, [hookupPlaybackAnalyser, teardownPlaybackAnalyser, startRecording]);
 
   const clearPlayback = useCallback(() => {
     playbackQueueRef.current = [];
@@ -169,9 +260,10 @@ export function useVoiceSession(): UseVoiceSession {
       currentAudioRef.current = null;
     }
     isPlayingRef.current = false;
-  }, []);
+    teardownPlaybackAnalyser();
+  }, [teardownPlaybackAnalyser]);
 
-  // ── SSE event handling ─────────────────────────────────────────────────
+  // ── SSE event dispatch ────────────────────────────────────────────────
   const handleEvent = useCallback((ev: { type: string; data: unknown }) => {
     switch (ev.type) {
       case 'transcript': {
@@ -233,8 +325,6 @@ export function useVoiceSession(): UseVoiceSession {
         break;
       }
       case 'done': {
-        // The server has finished the turn. If nothing ended up playing
-        // (e.g. voice was suppressed), return to listening.
         if (!isPlayingRef.current && playbackQueueRef.current.length === 0 && isActiveRef.current) {
           setState('listening');
           startRecording().catch(err => {
@@ -246,7 +336,7 @@ export function useVoiceSession(): UseVoiceSession {
     }
   }, [playNext, startRecording]);
 
-  // ── Main turn: upload audio + consume SSE ──────────────────────────────
+  // ── Main turn orchestration ───────────────────────────────────────────
   const processTurn = useCallback(async (blob: Blob): Promise<void> => {
     if (!isActiveRef.current) return;
 
@@ -260,8 +350,8 @@ export function useVoiceSession(): UseVoiceSession {
     try {
       credentials = await fetchCredentials();
     } catch (err) {
+      console.error('[use-voice-session] session mint failed', err);
       setError('Could not start voice session');
-      console.error('[use-voice-session] Session mint failed', err);
       if (isActiveRef.current) {
         setState('listening');
         await startRecording().catch(() => {});
@@ -275,6 +365,8 @@ export function useVoiceSession(): UseVoiceSession {
     const form = new FormData();
     form.append('audio', blob, 'audio.webm');
     form.append('token', credentials.token);
+    const currentThreadId = resolveActiveThreadId();
+    if (currentThreadId) form.append('threadId', currentThreadId);
 
     let res: Response;
     try {
@@ -306,7 +398,6 @@ export function useVoiceSession(): UseVoiceSession {
       return;
     }
 
-    // Read SSE stream line-by-line
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -318,19 +409,16 @@ export function useVoiceSession(): UseVoiceSession {
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 
-        // Split on SSE event boundaries (blank lines)
         let idx: number;
         while ((idx = buffer.indexOf('\n\n')) !== -1) {
           const frame = buffer.slice(0, idx);
           buffer = buffer.slice(idx + 2);
 
-          // Each frame is a set of lines; we only care about "data: ..." lines.
           for (const line of frame.split('\n')) {
             if (!line.startsWith('data: ')) continue;
             const json = line.slice('data: '.length);
             try {
-              const parsed = JSON.parse(json);
-              handleEvent(parsed);
+              handleEvent(JSON.parse(json));
             } catch (err) {
               console.warn('[use-voice-session] bad SSE frame', err);
             }
@@ -343,8 +431,9 @@ export function useVoiceSession(): UseVoiceSession {
       }
     } finally {
       try { reader.releaseLock(); } catch { /* noop */ }
+      if (abortRef.current === controller) abortRef.current = null;
     }
-  }, [fetchCredentials, handleEvent, startRecording]);
+  }, [fetchCredentials, handleEvent, startRecording, resolveActiveThreadId]);
 
   // ── Recording lifecycle ────────────────────────────────────────────────
   const handleRecordingStop = useCallback(async () => {
@@ -360,7 +449,6 @@ export function useVoiceSession(): UseVoiceSession {
     await processTurn(blob);
   }, [stopRecording, startRecording, processTurn]);
 
-  // Detect recording → stopped transition
   const wasRecordingRef = useRef(false);
   useEffect(() => {
     if (wasRecordingRef.current && !isRecording && isActiveRef.current && state === 'listening') {
@@ -369,7 +457,6 @@ export function useVoiceSession(): UseVoiceSession {
     wasRecordingRef.current = isRecording;
   }, [isRecording, state, handleRecordingStop]);
 
-  // Propagate recording errors
   useEffect(() => {
     if (recordingError) setError(recordingError);
   }, [recordingError]);
@@ -381,7 +468,12 @@ export function useVoiceSession(): UseVoiceSession {
     isActiveRef.current = true;
     setState('listening');
     try {
-      // Mint token eagerly so the first turn doesn't pay the round-trip.
+      // Pre-warm the AudioContext inside the user gesture so Safari doesn't
+      // block the first playback.
+      if (!playbackCtxRef.current) {
+        const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (Ctor) playbackCtxRef.current = new Ctor();
+      }
       await fetchCredentials();
       await startRecording();
     } catch (err) {
@@ -415,8 +507,12 @@ export function useVoiceSession(): UseVoiceSession {
         await startRecording();
       }
     } else if (state === 'speaking') {
-      // Phase 1: manual tap during playback stops and resumes listening.
-      // Phase 2 will hook this to server-side barge-in via AbortController.
+      // Soft barge-in: abort the fetch so the server stops generating more
+      // TTS (cost + latency), drop local playback, start a new turn.
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
       clearPlayback();
       if (isActiveRef.current) {
         setState('listening');
@@ -431,8 +527,19 @@ export function useVoiceSession(): UseVoiceSession {
       isActiveRef.current = false;
       abortRef.current?.abort();
       clearPlayback();
+      if (playbackCtxRef.current) {
+        playbackCtxRef.current.close().catch(() => {});
+        playbackCtxRef.current = null;
+      }
     };
   }, [clearPlayback]);
+
+  // Expose the analyser that corresponds to the current state: mic while
+  // listening/idle, playback while speaking. `thinking` falls back to mic
+  // (frozen since recording is stopped) — acceptable idle-ish visual.
+  const showSpeaking = state === 'speaking';
+  const audioLevel = showSpeaking ? speakingLevel : micLevel;
+  const frequencyData = showSpeaking ? speakingFreqData : micFreqData;
 
   return {
     state,

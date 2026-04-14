@@ -8,7 +8,7 @@ import {
   IconLoader2,
   IconX,
 } from '@tabler/icons-react';
-import { ArrowUp, Mic, Plus } from 'lucide-react';
+import { ArrowUp, AudioLines, Mic, Plus } from 'lucide-react';
 import { MiniWaveform } from '../ui/mini-waveform';
 import { Loader } from '@/components/ui/loader';
 import { useFileUpload, type UploadItem } from '@/hooks/use-file-upload';
@@ -67,6 +67,9 @@ export function VoicePill({
   onDismiss,
   threadId,
   onCommandSelect,
+  voiceModeEnabled = false,
+  onVoiceModeToggle,
+  isSpeaking = false,
 }: VoicePillProps) {
   const [textValue, setTextValue] = useState('');
   const [displayMode, setDisplayMode] = useState<PillMode>('hidden');
@@ -557,6 +560,28 @@ export function VoicePill({
                         </motion.div>
                       )}
                     </AnimatePresence>
+                  )}
+
+                  {/* Voice-to-voice mode: dedicated realtime session (full TAOR). */}
+                  {onVoiceModeToggle && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className={cn(
+                        'size-9 rounded-full transition-colors',
+                        voiceModeEnabled && [
+                          'bg-indigo-500/15 border-indigo-500/40 text-indigo-500',
+                          'hover:bg-indigo-500/20 hover:text-indigo-500',
+                        ],
+                        voiceModeEnabled && isSpeaking && 'animate-[voice-orb-rhythmic-pulse_1.2s_ease-in-out_infinite]',
+                      )}
+                      onClick={onVoiceModeToggle}
+                      type="button"
+                      aria-label={voiceModeEnabled ? 'Exit voice mode' : 'Start voice conversation'}
+                      aria-pressed={voiceModeEnabled}
+                    >
+                      <AudioLines size={18} />
+                    </Button>
                   )}
                 </div>
 

@@ -17,12 +17,13 @@ import { logger } from '@/lib/core/logger';
  * `/api/voice/stream`, which routes every turn through
  * `UnifiedConversationPipeline`.
  *
- * Kept behind the `LEGACY_VOICE=1` env flag for rollback / mobile-app
- * compatibility during the migration window; scheduled for deletion in
- * Phase 4 of the voice-to-voice rollout.
+ * Still active by default because the floating pill's hold-to-talk flow
+ * (`bitbit-overlay.tsx` → `stopVoiceAndProcess`) calls this endpoint. Set
+ * `LEGACY_VOICE=0` to return 410 Gone for this route; scheduled for full
+ * migration + deletion in Phase 4 of the voice-to-voice rollout.
  */
 export async function POST(request: Request) {
-  if (process.env.LEGACY_VOICE !== '1') {
+  if (process.env.LEGACY_VOICE === '0') {
     return NextResponse.json(
       {
         error: 'Legacy voice endpoint is disabled. Use /api/voice/stream.',
