@@ -44,8 +44,8 @@ import { preFlightChecks } from './pre-flight'
 import { executeToolBatchStreaming, type ToolExecutionResult } from './tool-executor'
 import { resolveEntityOverrides } from '@/lib/agent/entity-overrides'
 import { detectDelegationIntent, resolveEntityCandidates, generateActivationConfirmation, generateRevocationConfirmation, generateAmbiguityClarification } from '@/lib/agent/delegation-intent'
-import { setEntityMandate, revokeEntityMandate } from '@/lib/agent/delegation-mandate'
-import { buildTaorExecOptions } from './taor-loop-utils'
+import { setEntityMandate, revokeEntityMandate, getEntityMandate } from '@/lib/agent/delegation-mandate'
+import { buildTaorExecOptions, mergeEntityOverrides } from './taor-loop-utils'
 import { buildTierContextBlock } from './tool-resolver'
 
 // ---------------------------------------------------------------------------
@@ -136,17 +136,23 @@ export async function* runTAORLoop(
     config.calibratedThresholds = preflight.calibratedThresholds
   }
 
-  // ── 1b. Resolve entity overrides (if entity_id provided) ──────────
+  // ── 1b. Resolve entity overrides + active delegation mandate ──────
+  // Two sources of "what's the delegation posture for this entity":
+  //   1. entity_overrides table (legacy / admin-set overrides, plus ltvMultiplier etc.)
+  //   2. delegation_mandates table (canonical source; written by NL activation
+  //      in step 1c, by /api/delegation, and by direct calls to setEntityMandate)
+  // delegation_mandates wins when both sources have a value — it's the live,
+  // user-facing mandate. Without this, a mandate activated via NL in a prior
+  // turn would never take effect on subsequent turns (the bypass would stay dead).
   if (config.entityId && !config.delegationMandate) {
-    const overrides = await resolveEntityOverrides(config.supabase, config.orgId, config.entityId)
-    // Merge resolved overrides into config (only if not already explicitly set)
-    config = {
-      ...config,
-      delegationMandate: config.delegationMandate ?? overrides.delegationMandate,
-      ltvMultiplier: config.ltvMultiplier ?? overrides.ltvMultiplier,
-      iterationCap: config.iterationCap ?? overrides.iterationCap,
-      budgetPreset: config.budgetPreset ?? overrides.budgetPreset,
-    }
+    const [overrides, activeMandate] = await Promise.all([
+      resolveEntityOverrides(config.supabase, config.orgId, config.entityId),
+      getEntityMandate(config.supabase, config.orgId, config.entityId),
+    ])
+    config = mergeEntityOverrides(config, {
+      mandateFromMandatesTable: activeMandate?.mandate_level,
+      overridesFromOverridesTable: overrides,
+    })
   }
 
   // ── 1c. NL delegation intent detection (before model call) ────────

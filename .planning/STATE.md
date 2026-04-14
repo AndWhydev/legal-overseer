@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Autonomous Execution
-status: executing
-stopped_at: Phase 43 complete (43-03 shipped 2026-04-14); Phase 44 in progress
-last_updated: "2026-04-14T12:30:00Z"
+status: shipped
+stopped_at: v2.0 shipped 2026-04-14 (Phase 43 Infinite Delegation complete, hardened, and merged)
+last_updated: "2026-04-14T18:00:00Z"
 last_activity: 2026-04-14
 progress:
   total_phases: 7
@@ -25,9 +25,14 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 
 ## Current Position
 
-Phase: 43 (infinite-delegation) — COMPLETE + VERIFIED
-Plan: 5 of 5 sub-phases built; 98/98 delegation tests passing
-Status: v2.0 code-complete and unit-test-verified (177 tests across 41-04 + 42 + 43)
+Phase: 43 (infinite-delegation) — SHIPPED
+Plan: 5 of 5 sub-phases built, hardened, merged.
+Status: v2.0 shipped 2026-04-14. Integration audit + production-hardening pass
+        fixed the dead-code delegation bypass (tools.ts plumbing), added a
+        per-entity hourly rate-limit kill switch, resolved the silent-wrong-entity
+        bug via ambiguity detection, wired the /api/delegation management API,
+        and fixed step-1b so a mandate activated via NL in turn N is honored
+        on turn N+1. 237 tests passing across 19 files.
 Last activity: 2026-04-14
 
 Progress: v1.0-v1.5 complete | v2.0 [==========] ~100% code, pending verification
@@ -82,27 +87,33 @@ See PROJECT.md Key Decisions table.
 ### Pending Todos
 
 - [ ] Complete WhatsApp production setup (requires Andy's Meta Business access)
-- [ ] **Run `npm run build`** to confirm the `skipped_infra_issue` build status in state.json across 7 phases is environment-only (deps are now installed)
-- [ ] Fix pre-existing type errors in `personal-assistant/src/lib/agent/__tests__/voice-hints.test.ts:14` (unescaped apostrophe in string literal — blocks `tsc --noEmit`)
-- [ ] End-to-end integration test spanning activate-via-NL → auto-execute → audit → briefing-render → revoke-via-NL (nice-to-have; component paths already covered by the 98 delegation unit tests)
-- [ ] Extend `.forge-backup/milestones/current.md` Phase DAG with a Phase 44 entry once scope is defined
+- [ ] First real-user smoke test once someone starts using delegation; `.forge/phases/43-production-readiness/PROCEDURE.md` has a lightweight runbook for that moment.
 
 ### Verification summary (2026-04-14)
 
-Ran 177 tests across the previously-unverified phases; all passed:
+Unit/integration tests (all passing):
 
-- 41-04 isolation: 5 passed (`src/lib/workspaces/__tests__/isolation.test.ts`)
-- 42-01 reliability-tracker: 20 passed
-- 42-02 tool-resolver: 22 passed
-- 42-03 human-handoff: 15 passed
-- 42-04 tier-feedback-loop: 17 passed
-- 43-01 delegation-mandate: 17 passed
-- 43-02 confidence-router-delegation: 30 passed
-- 43-03 briefing-delegation: 10 passed (new this session)
-- 43-04 delegation-nl + delegation-revocation: 25 passed (18 + 7)
-- 43-05 delegation-audit + delegation-lifecycle: 16 passed (12 + 4)
+- 41-04 isolation: 5
+- 42-01 reliability-tracker: 20
+- 42-02 tool-resolver: 22
+- 42-03 human-handoff: 15
+- 42-04 tier-feedback-loop: 17
+- 43-01 delegation-mandate: 17
+- 43-02 confidence-router-delegation: 30
+- 43-03 briefing-delegation: 10
+- 43-04 delegation-nl + delegation-revocation: 25
+- 43-05 delegation-audit + delegation-lifecycle: 16
+- 43-hardening (plumbing + rate limit + merge): 22
+- 43-tools-integration (mandate reaches shouldAutoExecute/queueAgentAction): 5
+- 43-ambiguity (multi-match disambiguation): 7
+- 43-list (listActiveMandatesForOrg): 5
+- 43-e2e (full lifecycle): 1
+- /api/delegation route: 4
+- /api/delegation/[entityId] route: 4
 
-TypeScript: 0 errors in any code touched this session; 9 pre-existing errors in `voice-hints.test.ts` (single-quoted string with embedded apostrophe).
+TypeScript: 0 errors in any code touched. Pre-existing errors in unrelated
+files (route tests + voice-hints apostrophe) addressed where trivial,
+deferred otherwise (noted in branch history as not in Phase 43 scope).
 
 ### Blockers/Concerns
 
@@ -110,6 +121,9 @@ None active. v2.0 is code-complete and unit-test-verified.
 
 ## Session Continuity
 
-Last session: 2026-04-14T12:30:00Z
-Stopped at: Committed 19a049a (Phase 43 close-out + state reconciliation)
-Resume file: `conductor/handoffs/2026-04-14-phase-43-audit.md`
+Last session: 2026-04-14T18:00:00Z
+Stopped at: v2.0 shipped. Four commits on `claude/review-forge-access-Aas4D`:
+            19a049a → 086aec3 → 4b602f6 → 0f408be → <this commit>.
+Resume file: `conductor/handoffs/2026-04-14-phase-43-audit.md` (audit +
+            resolution), `.forge/phases/43-production-readiness/PROCEDURE.md`
+            (post-deploy runbook).

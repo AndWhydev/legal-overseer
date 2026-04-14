@@ -31,7 +31,7 @@ import {
   buildExecOptionsDelegation,
 } from '../delegation-mandate'
 import type { ExecuteToolOptions } from '../tools'
-import { buildTaorExecOptions } from '../engine/taor-loop-utils'
+import { buildTaorExecOptions, mergeEntityOverrides } from '../engine/taor-loop-utils'
 
 // ---------------------------------------------------------------------------
 // 1. ExecuteToolOptions type plumbing
@@ -226,5 +226,61 @@ describe('buildTaorExecOptions', () => {
     } as any)
     expect(opts?.spawnDepth).toBe(0)
     expect(opts?.maxSpawnDepth).toBe(3)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 5. mergeEntityOverrides — delegation_mandates wins, then entity_overrides
+// ---------------------------------------------------------------------------
+
+describe('mergeEntityOverrides', () => {
+  const baseConfig = { orgId: 'o', supabase: {} as any, entityId: 'e-1' }
+
+  it('picks mandate from delegation_mandates over entity_overrides', () => {
+    const result = mergeEntityOverrides(baseConfig, {
+      mandateFromMandatesTable: 'infinite_autopilot',
+      overridesFromOverridesTable: { delegationMandate: 'supervised' },
+    })
+    expect(result.delegationMandate).toBe('infinite_autopilot')
+  })
+
+  it('falls back to entity_overrides when no active mandate', () => {
+    const result = mergeEntityOverrides(baseConfig, {
+      mandateFromMandatesTable: null,
+      overridesFromOverridesTable: { delegationMandate: 'supervised' },
+    })
+    expect(result.delegationMandate).toBe('supervised')
+  })
+
+  it('caller config.delegationMandate wins over both sources', () => {
+    const result = mergeEntityOverrides(
+      { ...baseConfig, delegationMandate: 'standard' },
+      {
+        mandateFromMandatesTable: 'infinite_autopilot',
+        overridesFromOverridesTable: { delegationMandate: 'supervised' },
+      },
+    )
+    expect(result.delegationMandate).toBe('standard')
+  })
+
+  it('leaves delegationMandate undefined when no source has it', () => {
+    const result = mergeEntityOverrides(baseConfig, {
+      mandateFromMandatesTable: undefined,
+      overridesFromOverridesTable: {},
+    })
+    expect(result.delegationMandate).toBeUndefined()
+  })
+
+  it('passes through ltvMultiplier / iterationCap / budgetPreset from overrides', () => {
+    const result = mergeEntityOverrides(baseConfig, {
+      overridesFromOverridesTable: {
+        ltvMultiplier: 2.5,
+        iterationCap: 20,
+        budgetPreset: 'dynamic_workspace',
+      },
+    })
+    expect(result.ltvMultiplier).toBe(2.5)
+    expect(result.iterationCap).toBe(20)
+    expect(result.budgetPreset).toBe('dynamic_workspace')
   })
 })
