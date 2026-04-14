@@ -50,6 +50,15 @@ vi.mock('../../chat/use-voice-input', () => ({
   },
 }))
 
+const feedbackMocks = {
+  onRecordStart: vi.fn(),
+  onRecordStop: vi.fn(),
+}
+
+vi.mock('@/hooks/use-voice-feedback', () => ({
+  useVoiceFeedback: () => feedbackMocks,
+}))
+
 vi.mock('@/hooks/use-file-upload', () => ({
   useFileUpload: () => ({
     uploads: [],
@@ -151,6 +160,8 @@ describe('<VoicePill> voice integration', () => {
       clearError: vi.fn(),
     }
     capturedOnResult = undefined
+    feedbackMocks.onRecordStart.mockClear()
+    feedbackMocks.onRecordStop.mockClear()
   })
 
   afterEach(() => {
@@ -230,5 +241,84 @@ describe('<VoicePill> voice integration', () => {
     })
 
     expect(voiceState.current.clearError).toHaveBeenCalled()
+  })
+
+  // ─── Polish: haptic feedback, cancel-on-type, a11y ─────────────────
+
+  it('mic tap plays onRecordStart haptic cue when idle', () => {
+    renderPill()
+    fireEvent.click(screen.getByLabelText('Voice input'))
+    expect(feedbackMocks.onRecordStart).toHaveBeenCalledTimes(1)
+    expect(feedbackMocks.onRecordStop).not.toHaveBeenCalled()
+  })
+
+  it('stop tap plays onRecordStop haptic cue while listening', () => {
+    voiceState.current.isListening = true
+    renderPill()
+    fireEvent.click(screen.getByLabelText('Stop listening'))
+    expect(feedbackMocks.onRecordStop).toHaveBeenCalledTimes(1)
+    expect(feedbackMocks.onRecordStart).not.toHaveBeenCalled()
+  })
+
+  it('mic button exposes aria-pressed reflecting listening state', () => {
+    const { rerender } = renderPill()
+    expect(screen.getByLabelText('Voice input').getAttribute('aria-pressed')).toBe('false')
+
+    voiceState.current.isListening = true
+    rerender(
+      <VoicePill
+        mode="text"
+        docked
+        compactDocked
+        morphing={false}
+        morphPhase={null}
+        morphShift={0}
+        floatingAnchor={null}
+        frequencyData={null}
+        transcription={null}
+        response={null}
+        error={null}
+        onTextSubmit={vi.fn()}
+        onDismiss={vi.fn()}
+      />,
+    )
+    expect(screen.getByLabelText('Stop listening').getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('live transcript preview is announced via aria-live=polite', () => {
+    voiceState.current.isListening = true
+    voiceState.current.transcript = 'hello world'
+    renderPill()
+    const preview = screen.getByText(/hello world/).closest('[aria-live]')
+    expect(preview).not.toBeNull()
+    expect(preview!.getAttribute('aria-live')).toBe('polite')
+  })
+
+  it('cancel-on-type: typing AFTER the voice result suppresses the submit entirely', async () => {
+    vi.useFakeTimers()
+    const { onTextSubmit } = renderPill()
+
+    // Voice lands a final result
+    act(() => {
+      capturedOnResult!('hello from voice')
+    })
+
+    // User starts typing during the 600 ms debounce window
+    const textarea = screen.getByPlaceholderText('Message BitBit...')
+    await act(async () => {
+      fireEvent.change(textarea, { target: { value: 'hello from voice extra' } })
+    })
+
+    // Advance well past the debounce
+    await act(async () => {
+      vi.advanceTimersByTime(1200)
+    })
+
+    // Nothing should have been auto-submitted — the user is now editing.
+    expect(onTextSubmit).not.toHaveBeenCalled()
+
+    // And the textarea should still show the user's composed value so they
+    // can keep editing.
+    expect((textarea as HTMLTextAreaElement).value).toBe('hello from voice extra')
   })
 })

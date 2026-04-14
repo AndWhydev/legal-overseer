@@ -47,6 +47,15 @@ interface UseVoiceInputReturn {
   clearError: () => void
 }
 
+interface UseVoiceInputOptions {
+  /**
+   * BCP-47 language tag for speech recognition. Defaults to the browser's
+   * `navigator.language` with a final fallback of `'en-AU'`. Pass an explicit
+   * tag (e.g. `'en-US'`, `'es-ES'`) to override.
+   */
+  lang?: string
+}
+
 /**
  * Translate Web Speech API error codes into short, user-facing messages.
  * Returns `null` for errors that are benign (e.g. "no-speech") and should not
@@ -81,7 +90,20 @@ function mapGetUserMediaError(err: unknown): string {
   return 'Could not access microphone'
 }
 
-export function useVoiceInput(onResult?: (text: string) => void): UseVoiceInputReturn {
+/**
+ * Resolve the recognition language. Prefers explicit override, then the
+ * browser's `navigator.language`, then `'en-AU'` as a last-resort fallback.
+ */
+function resolveLang(override?: string): string {
+  if (override && override.trim()) return override
+  if (typeof navigator !== 'undefined' && navigator.language) return navigator.language
+  return 'en-AU'
+}
+
+export function useVoiceInput(
+  onResult?: (text: string) => void,
+  options: UseVoiceInputOptions = {},
+): UseVoiceInputReturn {
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [frequencyData, setFrequencyData] = useState<Uint8Array | null>(null)
@@ -165,7 +187,7 @@ export function useVoiceInput(onResult?: (text: string) => void): UseVoiceInputR
     const recognition: SpeechRecognitionInstance = new Ctor()
     recognition.continuous = false
     recognition.interimResults = true
-    recognition.lang = 'en-AU'
+    recognition.lang = resolveLang(options.lang)
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let text = ''
@@ -193,7 +215,30 @@ export function useVoiceInput(onResult?: (text: string) => void): UseVoiceInputR
     recognitionRef.current = recognition
     recognition.start()
     setIsListening(true)
-  }, [isSupported, onResult, cleanupAudio])
+  }, [isSupported, onResult, cleanupAudio, options.lang])
+
+  // Hard cleanup on unmount: if the component is torn down while we're still
+  // listening (e.g. user navigates away mid-utterance), stop recognition and
+  // release the mic + AudioContext immediately.
+  useEffect(() => {
+    return () => {
+      try {
+        recognitionRef.current?.stop()
+      } catch {
+        // recognition may already be stopped
+      }
+      recognitionRef.current = null
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(t => t.stop())
+        mediaStreamRef.current = null
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(() => {})
+        audioContextRef.current = null
+      }
+    }
+  }, [])
 
   const stopListening = useCallback(() => {
     recognitionRef.current?.stop()

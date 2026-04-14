@@ -339,4 +339,62 @@ describe('useVoiceInput', () => {
     })
     expect(result.current.isListening).toBe(false)
   })
+
+  // ─── Language ──────────────────────────────────────────────────────
+
+  it('uses navigator.language by default', async () => {
+    Object.defineProperty(navigator, 'language', {
+      value: 'es-ES',
+      configurable: true,
+    })
+
+    const { result } = renderHook(() => useVoiceInput())
+
+    await act(async () => {
+      await result.current.startListening()
+    })
+
+    expect(lastRecognition).not.toBeNull()
+    expect(lastRecognition!.lang).toBe('es-ES')
+  })
+
+  it('explicit lang override wins over navigator.language', async () => {
+    Object.defineProperty(navigator, 'language', {
+      value: 'es-ES',
+      configurable: true,
+    })
+
+    const { result } = renderHook(() => useVoiceInput(undefined, { lang: 'fr-FR' }))
+
+    await act(async () => {
+      await result.current.startListening()
+    })
+
+    expect(lastRecognition!.lang).toBe('fr-FR')
+  })
+
+  // ─── Unmount cleanup ───────────────────────────────────────────────
+
+  it('stops recognition and releases media tracks on unmount', async () => {
+    const trackStop = vi.fn()
+    navigator.mediaDevices.getUserMedia = vi.fn(() =>
+      Promise.resolve({
+        getTracks: () => [{ stop: trackStop, kind: 'audio' } as unknown as MediaStreamTrack],
+      } as unknown as MediaStream),
+    )
+
+    const { result, unmount } = renderHook(() => useVoiceInput())
+
+    await act(async () => {
+      await result.current.startListening()
+    })
+
+    expect(lastRecognition).not.toBeNull()
+    const stopSpy = lastRecognition!.stop
+
+    unmount()
+
+    expect(stopSpy).toHaveBeenCalled()
+    expect(trackStop).toHaveBeenCalled()
+  })
 })
