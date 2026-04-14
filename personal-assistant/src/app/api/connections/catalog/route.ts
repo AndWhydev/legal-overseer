@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/supabase/auth-context'
 import { isComposioEnabled } from '@/lib/composio'
+import { builtInProviders } from '@/lib/connections/built-in-providers'
+import { BESPOKE_FLOWS } from '@/lib/connections/bespoke-flows'
 import { logger } from '@/lib/core/logger'
 
 export const dynamic = 'force-dynamic'
@@ -98,6 +100,40 @@ export async function GET(request: NextRequest) {
         app.description.toLowerCase().includes(query) ||
         app.id.toLowerCase().includes(query)
       )
+    }
+
+    // Inject bespoke providers (iMessage, WhatsApp, Stripe) that bypass Composio
+    const catalogIds = new Set(catalog.map(a => a.id))
+    const { data: orgConns } = await ctx.supabase
+      .from('org_connections')
+      .select('provider, status')
+      .eq('org_id', ctx.orgId)
+    const connectedProviders = new Set(
+      (orgConns ?? []).filter(c => c.status === 'connected').map(c => c.provider),
+    )
+
+    for (const provider of builtInProviders) {
+      if (!BESPOKE_FLOWS.has(provider.id)) continue
+      if (catalogIds.has(provider.id)) {
+        const existing = catalog.find(a => a.id === provider.id)
+        if (existing && !existing.connected && connectedProviders.has(provider.id)) {
+          existing.connected = true
+        }
+        continue
+      }
+
+      if (query && !provider.name.toLowerCase().includes(query) && !provider.id.includes(query)) continue
+      if (category && provider.category !== category) continue
+
+      catalog.push({
+        id: provider.id,
+        name: provider.name,
+        description: provider.description,
+        categories: [provider.category],
+        logo: '',
+        authScheme: provider.auth.method,
+        connected: connectedProviders.has(provider.id),
+      })
     }
 
     return NextResponse.json({

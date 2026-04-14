@@ -247,6 +247,30 @@ async function getChannelSummary(): Promise<string> {
     } catch { /* non-critical */ }
   }
 
+  // Also check org_connections (new connector system — covers iMessage/BlueBubbles, etc.)
+  if (_channelSummarySupabase) {
+    try {
+      const { data: orgConns } = await _channelSummarySupabase
+        .from('org_connections')
+        .select('provider, status, updated_at')
+        .eq('org_id', _channelSummaryOrgId)
+        .eq('status', 'connected')
+
+      if (orgConns) {
+        for (const conn of orgConns) {
+          if (channelCounts.some(c => c.toLowerCase().startsWith(conn.provider))) continue
+          const name = conn.provider === 'imessage' ? 'iMessage'
+            : conn.provider.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+          channelCounts.push(`${name}: connected`)
+        }
+        const orgConnProviders = new Set(orgConns.map(c => c.provider))
+        if (orgConnProviders.has('imessage')) {
+          channelCounts.push('Routing: iMessage is connected via BlueBubbles — use send_imessage tool for casual/quick outreach to contacts with phone numbers.')
+        }
+      }
+    } catch { /* non-critical */ }
+  }
+
   return channelCounts.length > 0
     ? `Connected channels: ${channelCounts.join(', ')}`
     : 'No channels connected yet.'

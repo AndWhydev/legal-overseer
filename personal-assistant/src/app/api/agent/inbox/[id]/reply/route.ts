@@ -99,6 +99,34 @@ async function sendViaChannel(
     }
 
     case 'imessage': {
+      // Try BlueBubbles provider first (production path)
+      const { data: imConn } = await supabase
+        .from('org_connections')
+        .select('id, config')
+        .eq('org_id', orgId)
+        .eq('provider', 'imessage')
+        .eq('status', 'connected')
+        .limit(1)
+        .single()
+
+      if (imConn?.config?.bb_server_url) {
+        const cfg = imConn.config as { bb_server_url: string; bb_password: string }
+        const bbUrl = cfg.bb_server_url.replace(/\/$/, '')
+        const chatGuid = `iMessage;-;${to}`
+        const tempGuid = `bitbit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+        const bbRes = await fetch(
+          `${bbUrl}/api/v1/message/text?password=${cfg.bb_password}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatGuid, tempGuid, message: body }),
+          },
+        )
+        return bbRes.ok ? { success: true } : { success: false, error: `iMessage send failed: ${bbRes.status}` }
+      }
+
+      // Fallback: legacy macbook-bridge (dev only)
       const { sendIMessage } = await import('@/lib/channels/macbook-bridge')
       const ok = await sendIMessage(to, body)
       return ok ? { success: true } : { success: false, error: 'iMessage send failed' }

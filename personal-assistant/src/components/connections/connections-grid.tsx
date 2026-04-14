@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ConnectModal, type ConnectModalMode } from '@/components/channels/connect-modal'
+import { BridgeLinkModal } from '@/components/channels/bridge-link-modal'
 import {
   Empty,
   EmptyHeader,
@@ -48,7 +49,7 @@ const CONNECTION_STATUS_ALIASES: Record<string, string> = {
   'google-calendar': 'google-calendar',
 }
 
-const FEATURED_IDS = ['gmail', 'google-calendar', 'whatsapp', 'stripe', 'asana', 'slack']
+const FEATURED_IDS = ['gmail', 'google-calendar', 'whatsapp', 'imessage', 'stripe', 'asana', 'slack']
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Exports kept for backwards compatibility with existing tests / callers
@@ -102,9 +103,10 @@ export function getConnectionDisplayName(id: string): string {
  * mode exists for that id — e.g. iMessage, which is flagged bespoke in
  * BESPOKE_FLOWS but has no dedicated `ConnectModal` variant yet.
  */
-function resolveConnectModalMode(id: string): ConnectModalMode | null {
+function resolveConnectModalMode(id: string): ConnectModalMode | 'bridge_link' | null {
   if (id === 'whatsapp') return 'whatsapp_qr'
   if (id === 'stripe') return 'api_key'
+  if (id === 'imessage') return 'bridge_link'
   return null
 }
 
@@ -211,6 +213,8 @@ export function ConnectionsGrid({
   const [modalMode, setModalMode] = useState<ConnectModalMode>('api_key')
   const [modalChannelId, setModalChannelId] = useState('')
   const [modalChannelName, setModalChannelName] = useState('')
+  const [bridgeLinkOpen, setBridgeLinkOpen] = useState(false)
+  const [bridgeLinkProtocol, setBridgeLinkProtocol] = useState<'imessage' | 'whatsapp' | 'android-messages'>('imessage')
   const handledCallbackRef = useRef<string | null>(null)
 
   /* Debounce search input → debouncedQuery (300 ms) */
@@ -360,6 +364,11 @@ export function ConnectionsGrid({
     (app: CatalogApp) => {
       if (isBespokeFlow(app.id)) {
         const mode = resolveConnectModalMode(app.id)
+        if (mode === 'bridge_link') {
+          setBridgeLinkProtocol(app.id as 'imessage' | 'whatsapp' | 'android-messages')
+          setBridgeLinkOpen(true)
+          return
+        }
         if (mode) {
           setModalChannelId(app.id)
           setModalChannelName(app.name)
@@ -586,6 +595,17 @@ export function ConnectionsGrid({
         }}
         onError={message => {
           toast('error', message)
+        }}
+      />
+
+      <BridgeLinkModal
+        open={bridgeLinkOpen}
+        onOpenChange={setBridgeLinkOpen}
+        protocol={bridgeLinkProtocol}
+        onSuccess={() => {
+          void fetchOrgConnections()
+          void refetch()
+          toast('success', `${bridgeLinkProtocol === 'imessage' ? 'iMessage' : bridgeLinkProtocol} connected`)
         }}
       />
     </section>

@@ -14,7 +14,7 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
       type: 'object' as const,
       properties: {
         query: { type: 'string', description: 'What to search for (sender name, subject keywords, content)' },
-        channel: { type: 'string', enum: ['gmail', 'outlook', 'whatsapp', 'sms', 'slack'], description: 'Limit to a specific channel' },
+        channel: { type: 'string', enum: ['gmail', 'outlook', 'whatsapp', 'imessage', 'sms', 'slack'], description: 'Limit to a specific channel' },
         from: { type: 'string', description: 'Filter by sender name or email' },
         since: { type: 'string', description: 'ISO date — how far back to look (default: 90 days)' },
         limit: { type: 'number', description: 'Max results (default: 10)' },
@@ -154,6 +154,29 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'send_imessage',
+    description:
+      'Send an iMessage via the connected BlueBubbles bridge. Use when the user asks to send an iMessage or text someone via iMessage. Requires a connected iMessage bridge.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        recipient: {
+          type: 'string',
+          description: 'Recipient phone number (with country code, e.g. +61400123456) or Apple ID email',
+        },
+        message: {
+          type: 'string',
+          description: 'The text message body to send',
+        },
+        recipient_name: {
+          type: 'string',
+          description: 'Display name of the recipient (for reference only, not sent)',
+        },
+      },
+      required: ['recipient', 'message'],
+    },
+  },
+  {
     name: 'send_outlook',
     description:
       'Send an email from the user\'s connected Outlook account via Microsoft Graph API (OAuth). Sends directly from the user\'s own Outlook/Microsoft 365 address. IMPORTANT: Always confirm the recipient, subject, and body with the user before sending. Requires a connected Outlook OAuth integration.',
@@ -182,6 +205,29 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
         },
       },
       required: ['to', 'subject', 'body'],
+    },
+  },
+  {
+    name: 'send_voice_memo',
+    description: 'Send a voice memo (audio message) to someone via iMessage. Synthesizes your text into natural speech and delivers it as a native iMessage voice bubble. Use when the user asks you to "send a voice note", "voice message", or when replying to a voice note with audio.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        to: { type: 'string', description: 'Phone number in E.164 format (e.g., +14155551234)' },
+        text: { type: 'string', description: 'The text to synthesize into a voice memo. Write naturally — this will be spoken aloud.' },
+      },
+      required: ['to', 'text'],
+    },
+  },
+  {
+    name: 'initiate_facetime_call',
+    description: 'Start a FaceTime audio call with someone. BitBit joins as a voice AI participant that can converse naturally. Use when the user explicitly asks to "call" someone or "FaceTime" them. NOTE: Requires a Sendblue FaceTime line — currently in preview.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        phone_number: { type: 'string', description: 'Phone number to call in E.164 format' },
+      },
+      required: ['phone_number'],
     },
   },
 ]
@@ -1318,6 +1364,70 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     }
   },
 
+  async send_imessage(input, orgId, supabase) {
+    const recipient = input.recipient as string
+    const message = input.message as string
+    const recipientName = input.recipient_name as string | undefined
+
+    try {
+      const { data: imConn } = await supabase
+        .from('org_connections')
+        .select('id, config')
+        .eq('org_id', orgId)
+        .eq('provider', 'imessage')
+        .eq('status', 'connected')
+        .limit(1)
+        .single()
+
+      if (!imConn?.config?.bb_server_url) {
+        return { success: false, error: 'iMessage is not connected. Connect it in Settings > Connections first.' }
+      }
+
+      const cfg = imConn.config as { bb_server_url: string; bb_password: string }
+      const bbUrl = cfg.bb_server_url.replace(/\/$/, '')
+      const chatGuid = `iMessage;-;${recipient}`
+      const tempGuid = `bitbit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+      const res = await fetch(
+        `${bbUrl}/api/v1/message/text?password=${cfg.bb_password}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chatGuid, tempGuid, message }),
+        },
+      )
+
+      if (!res.ok) {
+        const errText = await res.text()
+        logger.error('[send_imessage] BlueBubbles API error', { status: res.status, error: errText })
+        return { success: false, error: `iMessage send failed: ${res.status} ${errText.slice(0, 200)}` }
+      }
+
+      const displayRecipient = recipientName
+        ? `${recipientName} (${recipient})`
+        : recipient
+
+      logger.info('[send_imessage] Message sent via BlueBubbles', {
+        org: orgId,
+        recipient,
+        connectionId: imConn.id,
+      })
+
+      return {
+        success: true,
+        data: {
+          recipient: displayRecipient,
+          message_preview: message.slice(0, 100) + (message.length > 100 ? '...' : ''),
+          sent_at: new Date().toISOString(),
+          sent_via: 'bluebubbles',
+        },
+      }
+    } catch (err) {
+      logger.error('[send_imessage] Error:', err)
+      return { success: false, error: `iMessage send error: ${String(err)}` }
+    }
+  },
+
   async send_outlook(input, orgId, supabase) {
     const to = input.to as string
     const subject = input.subject as string
@@ -1384,6 +1494,42 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     } catch (err) {
       logger.error('[send_outlook] Error:', err)
       return { success: false, error: `Outlook send error: ${String(err)}` }
+    }
+  },
+
+  async send_voice_memo(input) {
+    const to = input.to as string
+    const text = input.text as string
+    if (!to || !text) return { success: false, error: 'Missing to or text' }
+
+    const { sendVoiceMemoBubble } = await import('@/lib/channels/sendblue-voice-memo')
+    const result = await sendVoiceMemoBubble(to, text)
+    return result.success
+      ? { success: true, data: { to, textLength: text.length } }
+      : { success: false, error: result.error || 'Voice memo failed' }
+  },
+
+  async initiate_facetime_call(input, _orgId, context) {
+    const phoneNumber = input.phone_number as string
+    if (!phoneNumber) return { success: false, error: 'Missing phone_number' }
+
+    const { initiateFaceTimeCall } = await import('@/lib/voice/call-session')
+    const userId = context?.userId || 'unknown'
+    const orgId = context?.orgId || _orgId
+
+    const session = await initiateFaceTimeCall(userId, orgId, phoneNumber)
+    if (!session) {
+      return { success: false, error: 'FaceTime call initiation failed — check Sendblue FaceTime line config' }
+    }
+
+    return {
+      success: true,
+      data: {
+        callId: session.id,
+        status: session.status,
+        phoneNumber: session.phoneNumber,
+        note: 'FaceTime call initiated. BitBit will join the audio channel automatically.',
+      },
     }
   },
 }
