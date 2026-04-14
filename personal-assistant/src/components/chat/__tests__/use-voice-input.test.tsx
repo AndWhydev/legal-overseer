@@ -118,9 +118,7 @@ describe('useVoiceInput', () => {
     vi.stubGlobal('SpeechRecognition', undefined)
     vi.stubGlobal('webkitSpeechRecognition', undefined)
     // Manually remove from window because `'key' in window` is what the hook checks
-    // @ts-expect-error — test cleanup
     delete (window as unknown as Record<string, unknown>).SpeechRecognition
-    // @ts-expect-error — test cleanup
     delete (window as unknown as Record<string, unknown>).webkitSpeechRecognition
 
     const { result } = renderHook(() => useVoiceInput())

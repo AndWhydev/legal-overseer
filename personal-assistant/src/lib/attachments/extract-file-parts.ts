@@ -20,6 +20,7 @@ import { logger } from '@/lib/core/logger'
 
 /** Shape of an AI SDK v6 file part as it arrives in the request body. */
 export interface FilePart {
+  [key: string]: unknown
   type: 'file'
   mediaType: string
   url: string

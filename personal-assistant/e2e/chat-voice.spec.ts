@@ -45,7 +45,11 @@ async function installVoiceMocks(page: Page) {
 
     // Stub getUserMedia so the pill can set up its AudioContext-side logic
     // without triggering a real permission prompt.
-    navigator.mediaDevices = navigator.mediaDevices || ({} as MediaDevices)
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: navigator.mediaDevices || ({} as MediaDevices),
+      writable: true,
+      configurable: true,
+    })
     navigator.mediaDevices.getUserMedia = async () => {
       const track = {
         stop: () => {},
