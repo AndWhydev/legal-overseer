@@ -6,7 +6,7 @@ import { VoicePill } from './voice-pill';
 import type { PillMode } from './voice-pill';
 import { useVoiceRecording } from '@/hooks/use-voice-recording';
 import { useVoicePlayback } from '@/hooks/use-voice-playback';
-import { useVoiceMode } from '@/hooks/use-voice-mode';
+import { useVoiceSession } from '@/hooks/use-voice-session';
 import { VoiceConversationOverlay } from './voice-conversation-overlay';
 
 interface BitBitOverlayProps {
@@ -64,7 +64,7 @@ export function BitBitOverlay({
   const isDocked = isChatTab && !forceFloating;
   const voice = useVoiceRecording();
   const playback = useVoicePlayback();
-  const voiceMode = useVoiceMode();
+  const voiceMode = useVoiceSession();
   const [voiceModeEnabled, setVoiceModeEnabled] = useState(false);
   const [voiceConversationOpen, setVoiceConversationOpen] = useState(false);
 
@@ -609,6 +609,8 @@ export function BitBitOverlay({
         frequencyData={voiceMode.frequencyData}
         transcript={voiceMode.transcript}
         lastResponse={voiceMode.lastResponse}
+        interimResponse={voiceMode.interimResponse}
+        voiceSuppressed={voiceMode.voiceSuppressed}
         error={voiceMode.error}
         onTap={() => voiceMode.toggleRecording()}
         onClose={() => {

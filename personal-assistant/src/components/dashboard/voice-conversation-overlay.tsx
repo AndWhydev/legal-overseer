@@ -12,6 +12,10 @@ export interface VoiceConversationOverlayProps {
   frequencyData: Uint8Array | null;
   transcript: string | null;
   lastResponse: string | null;
+  /** Partial response streaming in while the model thinks/speaks. */
+  interimResponse?: string | null;
+  /** Non-null when the reply won't be spoken (table/code): shown as a badge. */
+  voiceSuppressed?: string | null;
   error: string | null;
   onTap: () => void;
   onClose: () => void;
@@ -31,10 +35,15 @@ export function VoiceConversationOverlay({
   frequencyData,
   transcript,
   lastResponse,
+  interimResponse,
+  voiceSuppressed,
   error,
   onTap,
   onClose,
 }: VoiceConversationOverlayProps) {
+  // Prefer the interim (streaming) response once it's populated — it's
+  // more up-to-date than `lastResponse` which only fires at end-of-turn.
+  const displayResponse = interimResponse ?? lastResponse;
   // Clamp audioLevel to 0-1
   const level = Math.max(0, Math.min(1, audioLevel));
 
@@ -180,15 +189,26 @@ export function VoiceConversationOverlay({
             </motion.p>
           )}
 
-          {/* Last response (what AI said) */}
-          {lastResponse && (
+          {/* Last (or live-streaming) response */}
+          {displayResponse && (
             <motion.p
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
               className="text-base text-foreground text-center max-w-[380px] px-4 line-clamp-3 leading-relaxed"
             >
-              {lastResponse}
+              {displayResponse}
+            </motion.p>
+          )}
+
+          {/* Voice-suppressed badge: response can't be spoken, look on screen */}
+          {voiceSuppressed && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-2 text-xs uppercase tracking-wide text-muted-foreground"
+            >
+              shown on screen ({voiceSuppressed.replace(/_/g, ' ')})
             </motion.p>
           )}
         </motion.div>

@@ -538,6 +538,15 @@ export async function* runTAORLoop(
     fullSystemPrompt += deferredPromptSection
   }
 
+  // Voice-mode prompt fragment.
+  //
+  // Appended AFTER the cached prefix so prompt-cache hits are preserved —
+  // never inline this inside the cached system prompt block or every voice
+  // turn invalidates the cache.
+  if (config.voiceMode) {
+    fullSystemPrompt += `\n\n## Voice Mode\nYou are being consumed over a realtime voice channel. Respond in 1-3 short sentences unless the user explicitly asks for detail. Avoid markdown, bullet lists, tables, and code fences — they cannot be spoken naturally. Use natural contractions ("I'll", "you're", "that's"). Confirm before destructive actions. If the user asks for data that's best shown visually (a table, a list of many items, code), give a brief spoken summary and note that the full result is on screen.\n`
+  }
+
   // ── 6. Build initial messages array ────────────────────────────────
   const userMessageContent: string | Anthropic.ContentBlockParam[] = config.contentBlocks?.length
     ? [
@@ -577,6 +586,15 @@ export async function* runTAORLoop(
 
   // ── 7. THE LOOP: Think → Act → Observe → Repeat ───────────────────
   while (iterationCount < effectiveIterationCap) {
+    // Voice barge-in / external cancellation: exit before starting a new
+    // iteration. The current Anthropic stream (if any) is not forcibly aborted
+    // here — the caller is responsible for dropping any in-flight TTS and
+    // ignoring remaining yields.
+    if (config.abortSignal?.aborted) {
+      yield { type: 'done', data: { aborted: true } }
+      return
+    }
+
     iterationCount++
 
     // Signal the frontend that a new synthesis pass is starting (iteration 2+ = post-tool)

@@ -335,6 +335,13 @@ export class UnifiedConversationPipeline {
     // ── Step 6: Store Assistant Response ────────────────────────────────
     if ((responseContent || toolTraceOrder.length > 0) && threadId && totalRecallAvailable) {
       try {
+        // Preserve voice-turn flags on the assistant side so voice ↔ text
+        // analytics see a matched pair. Non-voice metadata (attachments,
+        // externalId) is *not* propagated — those belong to the inbound side.
+        const assistantChannelMetadata = inbound.channelMetadata?.voice
+          ? { voice: true, voiceTurnId: inbound.channelMetadata.voiceTurnId }
+          : undefined
+
         await storeMessage(this.supabase, {
           threadId,
           userId: identity.userId,
@@ -342,6 +349,7 @@ export class UnifiedConversationPipeline {
           role: 'assistant',
           channel: inbound.channel,
           content: responseContent,
+          channelMetadata: assistantChannelMetadata,
           metadata: toolTraceOrder.length > 0
             ? {
                 tool_calls: toolTraceOrder
