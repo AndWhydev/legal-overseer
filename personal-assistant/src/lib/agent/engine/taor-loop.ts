@@ -297,8 +297,10 @@ export async function* runTAORLoop(
     : undefined
 
   // System 1 queries use reduced assembler config for fast path (<50ms)
+  // System 1: cache-only — dossiers in prompt prefix, no global workspace, reduced entities
+  // System 2: full retrieval — spreading activation via global workspace + all tiers
   const assemblerOverrides = queryComplexity === 'system1'
-    ? { maxEntities: 3, includeCompressedHistory: false }
+    ? { useGlobalWorkspace: false, maxEntities: 3, includeCompressedHistory: false }
     : { useGlobalWorkspace: true }
 
   let systemPrompt: string
