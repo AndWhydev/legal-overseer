@@ -30,6 +30,7 @@ import { notifyApproval } from './approval-notifier'
 import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
 import { shouldAutoExecute, type OrgAutonomyOverrides } from '@/lib/intelligence/autonomy-levels'
 import { buildExecOptionsDelegation, checkDelegationRateLimit } from './delegation-mandate'
+import { getCompositeTrustScore, adjustConfidenceByTrust, type TrustScore } from './trust-score-reader'
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
 import { graphSearch, hasTemporalSignal, MemorySearch } from '@/lib/memory-palace/memory-search'
 import { createProcedure } from '@/lib/knowledge-graph/procedural-memory'
@@ -1179,7 +1180,7 @@ export async function executeAgentTool(
   // confidence gates (a user-visible approval is queued). This protects
   // against prompt-injection-driven unbounded execution.
   // ---------------------------------------------------------------------------
-  const confidenceScore = options?.confidenceScore ?? 1 // Default to 1 (max confidence) for chat-driven calls
+  const rawConfidenceScore = options?.confidenceScore ?? 1 // Default to 1 (max confidence) for chat-driven calls
 
   let effectiveDelegation = buildExecOptionsDelegation(
     options?.delegationMandate,
@@ -1195,6 +1196,55 @@ export async function executeAgentTool(
         limit: rateCheck.limit,
       })
       effectiveDelegation = null
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Trust score gating: read historical trust data before routing.
+  // This makes autonomy gating real — decisions consult the agent's track record.
+  //
+  // - Below TRUST_BLOCK_THRESHOLD → block entirely
+  // - Below TRUST_APPROVAL_THRESHOLD → require HITL approval (penalise confidence)
+  // - High trust + long streak → slight confidence boost (tier promotion)
+  // ---------------------------------------------------------------------------
+  let confidenceScore = rawConfidenceScore
+  let trustScore: TrustScore | undefined
+  if (options?.agentConfigId) {
+    // Only read trust scores when approval infrastructure is active
+    // (avoids unnecessary DB calls for dev/chat-driven tool calls)
+    trustScore = await getCompositeTrustScore(supabase, {
+      orgId,
+      actionType: name,
+      agentType: options?.agentType,
+      entityId: options?.entityId,
+    })
+
+    if (trustScore.sufficient) {
+      // Hard block: trust is critically low
+      if (trustScore.gate === 'block') {
+        logger.warn('[tools] Trust score too low — blocking execution', {
+          toolName: name,
+          trustScore: trustScore.score,
+          sampleSize: trustScore.sampleSize,
+          orgId,
+        })
+        return {
+          success: false,
+          error: `Action "${name}" blocked: trust score ${trustScore.score.toFixed(2)} is below safety threshold. This action has a poor track record and requires review.`,
+        }
+      }
+
+      // Adjust confidence based on trust history
+      const adjustment = adjustConfidenceByTrust(confidenceScore, trustScore)
+      if (adjustment.adjusted !== confidenceScore) {
+        logger.debug('[tools] Trust-adjusted confidence', {
+          toolName: name,
+          original: confidenceScore,
+          adjusted: adjustment.adjusted,
+          reason: adjustment.reason,
+        })
+        confidenceScore = adjustment.adjusted
+      }
     }
   }
 
@@ -1235,6 +1285,7 @@ export async function executeAgentTool(
   // ---------------------------------------------------------------------------
 
   // Apply confidence routing if confidence score is provided and approval infrastructure exists
+  // Uses trust-adjusted confidence score (may be boosted or penalised vs raw score)
   if (
     options?.confidenceScore !== undefined &&
     options?.agentConfigId &&
@@ -1242,7 +1293,7 @@ export async function executeAgentTool(
     options?.confidenceScore <= 1
   ) {
     const routing = routeAgentAction(
-      options.confidenceScore,
+      confidenceScore, // trust-adjusted
       options.agentConfig,
       options.orgSettings,
       options.agentType,
@@ -1251,13 +1302,15 @@ export async function executeAgentTool(
     )
 
     // Record auto-act outcomes for calibration (fire-and-forget)
+    // IMPORTANT: record raw confidence, not trust-adjusted, to avoid feedback loop
+    // where trust scores influence their own future training data.
     if (routing.decision === 'act' && options.agentType) {
       recordActionOutcome(
         supabase,
         orgId,
         options.agentType,
         name,
-        options.confidenceScore,
+        rawConfidenceScore, // raw — avoids trust feedback loop
         true, // auto-acted = implicitly approved
         null, // correctness unknown at execution time
         routing.thresholdSource ?? 'static',
@@ -1273,7 +1326,7 @@ export async function executeAgentTool(
           action_type: name,
           action_payload: input,
           action_summary: `Tool: ${name}`,
-          confidence_score: options.confidenceScore,
+          confidence_score: confidenceScore, // trust-adjusted
           agentConfig: options.agentConfig,
           orgSettings: options.orgSettings,
           entityDelegation: effectiveDelegation ?? undefined,
@@ -1289,7 +1342,7 @@ export async function executeAgentTool(
             success: true,
             queued: true,
             approvalId: approval.id,
-            data: { routing: routing.decision, confidence: options.confidenceScore },
+            data: { routing: routing.decision, confidence: confidenceScore },
           }
         }
       } catch (err) {

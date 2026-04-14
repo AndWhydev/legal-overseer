@@ -9,6 +9,17 @@ import * as approvalNotifier from '../approval-notifier'
 vi.mock('../confidence-router')
 vi.mock('../approval-queue')
 vi.mock('../approval-notifier')
+vi.mock('../trust-score-reader', () => ({
+  getCompositeTrustScore: vi.fn().mockResolvedValue({
+    score: 1.0,
+    sampleSize: 0,
+    sufficient: false,
+    streak: 0,
+    gate: 'allow',
+    reasoning: 'test mock — neutral trust',
+  }),
+  adjustConfidenceByTrust: vi.fn().mockReturnValue({ adjusted: 0.9, reason: 'test mock' }),
+}))
 
 // Mock autonomy levels to always fall through to confidence routing
 vi.mock('@/lib/intelligence/autonomy-levels', () => ({
@@ -108,6 +119,7 @@ describe('tools with confidence routing', () => {
         options.orgSettings,
         options.agentType,
         options.calibratedThresholds,
+        undefined, // effectiveDelegation
       )
     })
 
@@ -241,7 +253,7 @@ describe('tools with confidence routing', () => {
       expect(result.error).toContain('Unknown tool')
     })
 
-    it('handles queueAgentAction failure gracefully (fails open)', async () => {
+    it('handles queueAgentAction failure gracefully (fails closed)', async () => {
       vi.mocked(confidenceRouter.routeAgentAction).mockReturnValue({
         decision: 'ask',
         confidence: 0.72,
@@ -267,8 +279,9 @@ describe('tools with confidence routing', () => {
         options
       )
 
-      // Should execute tool despite queueing failure (fail open)
-      expect(result.success).toBe(true)
+      // Fail closed: do not execute unapproved actions if approval queue is down
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('Approval queue unavailable')
     })
 
     it('passes agent type to routeAgentAction', async () => {
@@ -293,6 +306,7 @@ describe('tools with confidence routing', () => {
         options.orgSettings,
         'invoice-flow',
         options.calibratedThresholds,
+        undefined, // effectiveDelegation
       )
     })
 
@@ -378,6 +392,7 @@ describe('tools with confidence routing', () => {
         options.orgSettings,
         options.agentType,
         options.calibratedThresholds,
+        undefined, // effectiveDelegation
       )
     })
 
@@ -402,6 +417,7 @@ describe('tools with confidence routing', () => {
         options.orgSettings,
         options.agentType,
         options.calibratedThresholds,
+        undefined, // effectiveDelegation
       )
     })
   })
