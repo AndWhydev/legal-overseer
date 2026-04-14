@@ -7,7 +7,7 @@
 - v1.2 Battle-Testing & Sellability -- Phases 13-19 (shipped 2026-03-02)
 - v1.4 Media, Billing & Growth Roles -- Phases 20-28 (shipped 2026-03-27)
 - v1.5 Beta Launch & First Revenue -- Phases 29-36 (shipped 2026-03-28)
-- v2.0 Autonomous Execution -- Phases 37-43
+- v2.0 Autonomous Execution -- Phases 37-43 (shipped 2026-04-14)
 
 ## Phases
 
@@ -235,11 +235,11 @@ Phase 38 ──┘                  Phase 41 ──┤──→ Phase 42 ──�
 
 - [x] **Phase 37: Engine Flexibility** - Dynamic entity-level overrides for TAOR caps, confidence routing, cost budgets, and token allocation (completed 2026-04-09)
 - [x] **Phase 38: Fiduciary Memory** - Game theory LTV evaluation and fiduciary constraint generation via Memory Palace (completed 2026-04-08)
-- [ ] **Phase 39: Async Task Infrastructure** - Durable 7-state execution engine with real-time progress, cancellation, heartbeats, and task dashboard
-- [ ] **Phase 40: Multimodal Web Automation** - Vision-first browser control on isolated Fly.io worker with credential injection and evidence capture
-- [ ] **Phase 41: Ephemeral Workspaces** - Firecracker MicroVM provisioning for arbitrary code execution with network isolation
-- [ ] **Phase 42: Tool Priority Chain** - API-first, browser-fallback, workspace-fallback, human-handoff resolution with reliability tracking
-- [ ] **Phase 43: Infinite Delegation** - Entity-level autonomous management with fiduciary risk evaluation and Morning Briefing aggregation
+- [x] **Phase 39: Async Task Infrastructure** - Durable 7-state execution engine with real-time progress, cancellation, heartbeats, and task dashboard (completed 2026-04-14)
+- [x] **Phase 40: Multimodal Web Automation** - Vision-first browser control on isolated Fly.io worker with credential injection and evidence capture (completed 2026-04-14)
+- [x] **Phase 41: Ephemeral Workspaces** - Firecracker MicroVM provisioning for arbitrary code execution with network isolation (completed 2026-04-14)
+- [x] **Phase 42: Tool Priority Chain** - API-first, browser-fallback, workspace-fallback, human-handoff resolution with reliability tracking (completed 2026-04-14)
+- [x] **Phase 43: Infinite Delegation** - Entity-level autonomous management with fiduciary risk evaluation and Morning Briefing aggregation (completed 2026-04-14)
 
 ## Phase Details
 
@@ -260,7 +260,7 @@ Plans:
 - [x] 37-02-PLAN.md -- Confidence router entity delegation support (Wave 1)
 - [x] 37-03-PLAN.md -- LTV-aware dynamic cost guard budget scaling (Wave 1)
 - [x] 37-04-PLAN.md -- Token budget manager dynamic workspace tier (Wave 1)
-- [ ] 37-05-PLAN.md -- Entity override resolution + backward compatibility regression (Wave 2)
+- [x] 37-05-PLAN.md -- Entity override resolution + backward compatibility regression (Wave 2)
 
 ### Phase 38: Fiduciary Memory
 **Goal**: Memory Palace proactively generates and enforces fiduciary constraints -- BitBit defends user margins and optimizes for user benefit via game theory LTV evaluation before executing any action
@@ -286,11 +286,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 39-01-PLAN.md -- execution_tasks schema + FSM service (Wave 1)
-- [ ] 39-02-PLAN.md -- Heartbeat monitor + step tracker + retry engine (Wave 1)
-- [ ] 39-03-PLAN.md -- Real-time chat progress + NL cancellation (Wave 2)
-- [ ] 39-04-PLAN.md -- TAOR loop integration + spawn_async_task tool (Wave 2)
-- [ ] 39-05-PLAN.md -- Task API endpoints + chat progress rendering (Wave 3)
+- [x] 39-01-PLAN.md -- execution_tasks schema + FSM service (Wave 1)
+- [x] 39-02-PLAN.md -- Heartbeat monitor + step tracker + retry engine (Wave 1)
+- [x] 39-03-PLAN.md -- Real-time chat progress + NL cancellation (Wave 2)
+- [x] 39-04-PLAN.md -- TAOR loop integration + spawn_async_task tool (Wave 2)
+- [x] 39-05-PLAN.md -- Task API endpoints + chat progress rendering (Wave 3)
 
 ### Phase 40: Multimodal Web Automation
 **Goal**: BitBit can autonomously navigate any allowed website via vision-first browser control -- logging in, filling forms, clicking buttons, capturing screenshot evidence -- on a secure, ephemeral, isolated browser worker
@@ -387,10 +387,10 @@ Plans:
 | 36. Mobile-First Experience | v1.5 | 4/4 | Complete | 2026-03-28 |
 | 37. Engine Flexibility | v2.0 | 8/5 | Complete   | 2026-04-09 |
 | 38. Fiduciary Memory | v2.0 | 6/3 | Complete   | 2026-04-08 |
-| 39. Async Task Infrastructure | v2.0 | 0/5 | Planned | - |
-| 40. Multimodal Web Automation | v2.0 | 0/TBD | Not started | - |
-| 41. Ephemeral Workspaces | v2.0 | 0/TBD | Not started | - |
-| 42. Tool Priority Chain | v2.0 | 0/TBD | Not started | - |
-| 43. Infinite Delegation | v2.0 | 0/TBD | Not started | - |
+| 39. Async Task Infrastructure | v2.0 | 5/5 | Complete | 2026-04-14 |
+| 40. Multimodal Web Automation | v2.0 | 4/4 | Complete | 2026-04-14 |
+| 41. Ephemeral Workspaces | v2.0 | 4/4 | Complete | 2026-04-14 |
+| 42. Tool Priority Chain | v2.0 | 4/4 | Complete | 2026-04-14 |
+| 43. Infinite Delegation | v2.0 | 5/5 | Complete | 2026-04-14 |
 
-**Overall:** v1.0-v1.5: 113/113 plans (100%). v2.0: 0/5 plans (0%).
+**Overall:** v1.0-v1.5: 113/113 plans (100%). v2.0: 36/36 plans (100%). All shipped 2026-04-14.
