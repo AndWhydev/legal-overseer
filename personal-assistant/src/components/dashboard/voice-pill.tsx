@@ -159,6 +159,14 @@ export function VoicePill({
     }
   }, [voiceAutoSending]);
 
+  // Auto-dismiss voice error after 3 seconds so the pill doesn't get stuck
+  // showing a stale "Microphone access denied" message.
+  useEffect(() => {
+    if (!voice.error) return;
+    const timer = setTimeout(() => voice.clearError(), 3000);
+    return () => clearTimeout(timer);
+  }, [voice.error, voice.clearError]);
+
   useEffect(() => {
     if (mode === 'text' || (docked && displayMode === 'text')) {
       setTextValue('');
@@ -446,6 +454,24 @@ export function VoicePill({
                     className="mx-4 mb-1 px-3 py-1.5 rounded-lg bg-muted/50 text-sm text-muted-foreground italic"
                   >
                     &ldquo;{voice.transcript}&rdquo;
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Voice error notice (mic permission denied, etc.) */}
+              <AnimatePresence>
+                {voice.error && (
+                  <motion.div
+                    key="voice-error"
+                    role="alert"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    transition={{ duration: 0.15 }}
+                    className="mx-4 mb-1 px-3 py-1.5 rounded-lg bg-destructive/10 text-sm text-destructive"
+                    data-testid="voice-error"
+                  >
+                    {voice.error}
                   </motion.div>
                 )}
               </AnimatePresence>
