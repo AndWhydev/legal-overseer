@@ -47,6 +47,7 @@ import { detectDelegationIntent, resolveEntityCandidates, generateActivationConf
 import { setEntityMandate, revokeEntityMandate, getEntityMandate } from '@/lib/agent/delegation-mandate'
 import { buildTaorExecOptions, mergeEntityOverrides } from './taor-loop-utils'
 import { buildTierContextBlock } from './tool-resolver'
+import { generateFollowUps } from '@/lib/agent/follow-up-generator'
 
 // ---------------------------------------------------------------------------
 // Correction detection for memory contradiction feedback
@@ -901,6 +902,16 @@ export async function* runTAORLoop(
           model_used: model,
           complexity,
         }, config.supabase).catch(() => {}) // truly fire-and-forget
+      }
+
+      // Generate follow-up suggestions (non-blocking, timeout-guarded)
+      try {
+        const followUps = await generateFollowUps(message, text)
+        if (followUps.length > 0) {
+          yield { type: 'follow_ups', data: { suggestions: followUps } }
+        }
+      } catch {
+        // Silent — follow-ups are non-critical
       }
 
       logger.info('ai_response_complete', { model, purpose, tokens: response.usage })

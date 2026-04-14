@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { IconX } from '@tabler/icons-react'
 import type { Whisper } from '@/lib/whispers/types'
-import { Button } from '@/components/ui/button'
 
 const MAX_VISIBLE = 3
 
@@ -78,7 +77,7 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
             <motion.button
               key={`${whisper.source}-${index}`}
               onClick={() => handleTap(whisper)}
-              className="relative rounded-lg border border-border bg-secondary px-7 pl-3 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-elevated transition-colors text-center whitespace-nowrap cursor-pointer"
+              className="group flex items-center gap-1.5 max-w-[280px] sm:max-w-[360px] rounded-full border border-border bg-secondary px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-left cursor-pointer"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4, transition: { duration: 0.15 } }}
@@ -88,17 +87,16 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
                 ease: [0.25, 1, 0.5, 1],
               }}
             >
-              {whisper.text}
-              {/* Dismiss button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50 hover:opacity-100"
+              <span className="truncate flex-1">{whisper.text}</span>
+              <span
+                role="button"
+                tabIndex={-1}
+                className="shrink-0 flex items-center justify-center h-4 w-4 rounded-full opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
                 onClick={(e) => handleDismiss(index, e)}
                 aria-label="Dismiss whisper"
               >
                 <IconX size={10} />
-              </Button>
+              </span>
             </motion.button>
           ))}
         </motion.div>
