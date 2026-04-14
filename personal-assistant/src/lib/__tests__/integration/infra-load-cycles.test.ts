@@ -288,7 +288,9 @@ function createSemanticMemoriesSupabase(seed: MemoryRow[] = []) {
 type ConnectionRow = {
   org_id: string
   channel_type: 'gmail'
-  relay_enabled: boolean
+  provider?: string
+  transport?: string
+  status?: string
   config: Record<string, unknown>
   poll_cursor: string | null
   last_sync: string | null
@@ -321,7 +323,7 @@ function createRelaySupabase(seedConnections: ConnectionRow[]) {
 
   const supabase = {
     from(table: string) {
-      if (table === 'channel_connections') {
+      if (table === 'org_connections' || table === 'channel_connections') {
         return {
           select() {
             const filters: Record<string, unknown> = {}
@@ -334,9 +336,8 @@ function createRelaySupabase(seedConnections: ConnectionRow[]) {
               single: () => {
                 const row =
                   state.connections.find((connection) => {
-                    if (filters.org_id && connection.org_id !== filters.org_id) return false
-                    if (filters.channel_type && connection.channel_type !== filters.channel_type) return false
-                    return true
+                    const c = connection as Record<string, unknown>
+                    return Object.entries(filters).every(([k, v]) => c[k] === v || c[k] === undefined)
                   }) ?? null
 
                 return Promise.resolve({ data: row, error: row ? null : { message: 'not found' } })
@@ -353,15 +354,21 @@ function createRelaySupabase(seedConnections: ConnectionRow[]) {
               },
               then(resolve: (value: unknown) => void) {
                 for (const connection of state.connections) {
-                  if (filters.org_id && connection.org_id !== filters.org_id) continue
-                  if (filters.channel_type && connection.channel_type !== filters.channel_type) continue
-                  Object.assign(connection, patch)
+                  const c = connection as Record<string, unknown>
+                  const match = Object.entries(filters).every(([k, v]) => c[k] === v || c[k] === undefined)
+                  if (match) Object.assign(connection, patch)
                 }
                 return resolve({ data: null, error: null })
               },
             }
             return query
           },
+        }
+      }
+
+      if (table === 'connection_sync_logs') {
+        return {
+          insert: () => Promise.resolve({ data: null, error: null }),
         }
       }
 
@@ -628,17 +635,23 @@ describe('Infrastructure Load Cycles Integration', () => {
   it('processes 50 relay cycles deterministically without cross-tenant bleed', async () => {
     const { supabase, state } = createRelaySupabase([
       {
+        id: 'conn-a',
         org_id: 'org-A',
         channel_type: 'gmail',
-        relay_enabled: true,
+        provider: 'gmail',
+        transport: 'poll',
+        status: 'connected',
         config: { orgTag: 'org-A' },
         poll_cursor: null,
         last_sync: null,
       },
       {
+        id: 'conn-b',
         org_id: 'org-B',
         channel_type: 'gmail',
-        relay_enabled: true,
+        provider: 'gmail',
+        transport: 'poll',
+        status: 'connected',
         config: { orgTag: 'org-B' },
         poll_cursor: null,
         last_sync: null,

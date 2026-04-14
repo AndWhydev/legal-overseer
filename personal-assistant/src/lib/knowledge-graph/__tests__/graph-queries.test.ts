@@ -117,11 +117,12 @@ describe('getNeighborhood', () => {
     expect(neighborIds).toContain(nodeB!.id)
     expect(neighborIds).toContain(nodeC!.id)
 
-    // Now invalidate edge A->B by creating a replacement (createEdge auto-invalidates)
+    // Re-create edge A->B (deletes old, inserts new)
     const edgeAB2 = await createEdge(supabase, testOrgId, nodeA!.id, nodeB!.id, 'works_on')
     if (edgeAB2) createdEdgeIds.push(edgeAB2.id)
+    expect(edgeAB2).toBeTruthy()
 
-    // Old edge should be invalidated, neighborhood should still have B via new edge
+    // Neighborhood should still have both B and C via active edges
     const neighborhood2 = await getNeighborhood(supabase, testOrgId, nodeA!.id)
     expect(neighborhood2).toBeTruthy()
     // All returned edges should be active (valid_until IS NULL) since default filter
@@ -173,7 +174,7 @@ describe('getEntityEvents', () => {
 })
 
 describe('createEdge', () => {
-  it('auto-invalidates prior same-type edge', async () => {
+  it('replaces prior same-type edge on re-creation', async () => {
     const a = trackEntity(
       await findOrCreateEntity(supabase, testOrgId, `edge-a-${Date.now()}`, 'person')
     )
@@ -188,20 +189,19 @@ describe('createEdge', () => {
     expect(edge1).toBeTruthy()
     expect(edge1!.valid_until).toBeNull()
 
-    // Create another edge of same type -- should invalidate edge1
+    // Re-create same edge type -- deletes old, inserts new
     const edge2 = await createEdge(supabase, testOrgId, a!.id, b!.id, 'manages')
     if (edge2) createdEdgeIds.push(edge2.id)
     expect(edge2).toBeTruthy()
     expect(edge2!.valid_until).toBeNull()
 
-    // Verify edge1 is now invalidated
+    // Old edge should be gone (deleted, not invalidated)
     const { data: oldEdge } = await supabase
       .from('entity_edges')
       .select('*')
       .eq('id', edge1!.id)
       .single()
-    expect(oldEdge).toBeTruthy()
-    expect(oldEdge!.valid_until).not.toBeNull()
+    expect(oldEdge).toBeNull()
   })
 })
 

@@ -331,13 +331,14 @@ describe('extractFilePartAttachments', () => {
       // Should NOT upload to storage (it's an external URL)
       expect(calls.upload).toHaveLength(0)
 
-      // Should create an attachment record with the URL as storage_path
+      // Should create an attachment record with the URL as source_url (not storage_path)
       expect(calls.insert[0]).toMatchObject({
         org_id: orgId,
         user_id: userId,
         filename: 'photo.jpg',
         mime_type: 'image/jpeg',
-        storage_path: 'https://example.com/photo.jpg',
+        storage_path: null,
+        source_url: 'https://example.com/photo.jpg',
         status: 'ready',
         size: 0,
       })

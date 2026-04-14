@@ -47,11 +47,10 @@ const {
   guardAndHumanizeMock,
   detectTopicShiftMock,
   evaluateTurnQualityMock,
-  isMCPEnabledMock,
-  getMCPToolsMock,
   getTierModifierMock,
   getOrgPlanMock,
   checkToolPlanGateMock,
+  callModelViaGatewayMock,
 } = vi.hoisted(() => ({
   generatePlanMock: vi.fn(),
   isTrivialMessageMock: vi.fn(),
@@ -80,11 +79,10 @@ const {
   guardAndHumanizeMock: vi.fn(),
   detectTopicShiftMock: vi.fn(),
   evaluateTurnQualityMock: vi.fn(),
-  isMCPEnabledMock: vi.fn(),
-  getMCPToolsMock: vi.fn(),
   getTierModifierMock: vi.fn(),
   getOrgPlanMock: vi.fn(),
   checkToolPlanGateMock: vi.fn(),
+  callModelViaGatewayMock: vi.fn(),
 }))
 
 // ---------------------------------------------------------------------------
@@ -92,28 +90,17 @@ const {
 // ---------------------------------------------------------------------------
 
 vi.mock('@anthropic-ai/sdk', () => {
-  const mockStream = {
-    [Symbol.asyncIterator]: async function* () {
-      yield {
-        type: 'content_block_delta',
-        delta: { type: 'text_delta', text: 'Hello there' },
-      }
-    },
-    finalMessage: () => ({
-      content: [{ type: 'text', text: 'Hello there' }],
-      stop_reason: 'end_turn',
-      usage: { input_tokens: 100, output_tokens: 50 },
-    }),
-  }
-
-  class MockAnthropic {
-    messages = {
-      stream: vi.fn().mockReturnValue(mockStream),
-    }
-  }
-
+  class MockAnthropic {}
   return { default: MockAnthropic }
 })
+
+vi.mock('@/lib/ai/gateway-adapter', () => ({
+  callModelViaGateway: callModelViaGatewayMock,
+}))
+
+vi.mock('@/lib/ai', () => ({
+  models: { fast: 'anthropic/claude-haiku', balanced: 'anthropic/claude-sonnet', heavy: 'anthropic/claude-opus' },
+}))
 
 vi.mock('@/lib/agent/planner', () => ({
   generatePlan: generatePlanMock,
@@ -142,9 +129,17 @@ vi.mock('@/lib/agent/tools/deferred-loader', () => ({
   resolveToolSchema: resolveToolSchemaMock,
 }))
 
+vi.mock('@/lib/composio/tool-provider', () => ({
+  getComposioToolsForOrg: vi.fn(async () => ({ tools: [] })),
+}))
+
+vi.mock('@/lib/composio/client', () => ({
+  isComposioEnabled: vi.fn(() => false),
+}))
+
 vi.mock('@/lib/composio/mcp-session', () => ({
-  isMCPEnabled: isMCPEnabledMock,
-  getMCPTools: getMCPToolsMock,
+  isMCPEnabled: vi.fn(() => false),
+  getMCPTools: vi.fn(async () => []),
 }))
 
 vi.mock('@/lib/agent/tool-rag', () => ({
@@ -240,6 +235,51 @@ vi.mock('@/lib/billing/plan-gates', () => ({
   TOOL_PLAN_REQUIREMENTS: {},
 }))
 
+vi.mock('@/lib/brain/query-gate', () => ({
+  classifyQueryComplexity: vi.fn(() => 'system2'),
+}))
+
+vi.mock('@/lib/agent/entity-overrides', () => ({
+  resolveEntityOverrides: vi.fn(async () => ({})),
+}))
+
+vi.mock('@/lib/agent/delegation-intent', () => ({
+  detectDelegationIntent: vi.fn(() => null),
+  resolveEntityCandidates: vi.fn(async () => []),
+  generateActivationConfirmation: vi.fn(() => ''),
+  generateRevocationConfirmation: vi.fn(() => ''),
+  generateAmbiguityClarification: vi.fn(() => ''),
+}))
+
+vi.mock('@/lib/agent/delegation-mandate', () => ({
+  setEntityMandate: vi.fn(async () => {}),
+  revokeEntityMandate: vi.fn(async () => false),
+  getEntityMandate: vi.fn(async () => null),
+}))
+
+vi.mock('./taor-loop-utils', () => ({
+  buildTaorExecOptions: vi.fn(() => undefined),
+  mergeEntityOverrides: vi.fn((config: unknown) => config),
+}))
+
+vi.mock('./tool-resolver', () => ({
+  buildTierContextBlock: vi.fn(async () => null),
+}))
+
+vi.mock('@/lib/agent/follow-up-generator', () => ({
+  generateFollowUps: vi.fn(async () => []),
+}))
+
+vi.mock('./decision-trace-retriever', () => ({
+  retrieveRelevantTraces: vi.fn(async () => ({ traces: [], retrievalMs: 0 })),
+  formatTracesAsContext: vi.fn(() => null),
+}))
+
+vi.mock('@/lib/agent/cost-guard', () => ({
+  checkRoleBudget: vi.fn(async () => ({ allowed: true, warning: false })),
+  getExecutionTokenCap: vi.fn(() => null),
+}))
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -281,6 +321,24 @@ async function collectEvents(gen: AsyncGenerator<unknown>): Promise<unknown[]> {
   return events
 }
 
+function createMockGatewayResult(
+  content: string,
+  stopReason = 'end_turn',
+  usage = { input_tokens: 100, output_tokens: 50 },
+) {
+  return {
+    streamedDeltas: [content],
+    streamedThinkingDeltas: [],
+    hadThinking: false,
+    thinkingStartTime: null,
+    response: {
+      content: [{ type: 'text', text: content }],
+      stop_reason: stopReason,
+      usage,
+    },
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Default mock behaviour (reset each test)
 // ---------------------------------------------------------------------------
@@ -306,10 +364,6 @@ beforeEach(() => {
   buildDeferredToolsPromptMock.mockReturnValue('')
   resolveToolSchemaMock.mockReturnValue(undefined)
   selectRelevantToolsMock.mockReturnValue({ tools: DUMMY_TOOLS, excluded: [], scores: {} })
-
-  // MCP
-  isMCPEnabledMock.mockReturnValue(false)
-  getMCPToolsMock.mockResolvedValue([])
 
   // Planner defaults
   isTrivialMessageMock.mockReturnValue(false)
@@ -350,6 +404,9 @@ beforeEach(() => {
   // Others
   detectTopicShiftMock.mockReturnValue(false)
   evaluateTurnQualityMock.mockResolvedValue(undefined)
+
+  // Gateway: default text response
+  callModelViaGatewayMock.mockResolvedValue(createMockGatewayResult('Hello there'))
 })
 
 // ---------------------------------------------------------------------------
@@ -405,9 +462,6 @@ describe('TAOR planner integration', () => {
     const gen = runTAORLoop('Do something complex', makeConfig() as any)
     const events = await collectEvents(gen)
 
-    // The initial plan event should NOT have been emitted synchronously
-    // (plan arrives late, may be emitted during streaming or not at all before first API call)
-    const planEvents = (events as Array<{ type: string }>).filter(e => e.type === 'plan')
     // The plan was too slow for the 1500ms race, so tool groups were NOT applied from the plan
     expect(getAgentToolsMock).not.toHaveBeenCalledWith(expect.arrayContaining(['web']))
   }, 10000)
@@ -496,31 +550,6 @@ describe('TAOR planner integration', () => {
       skills: ['seo-audit'],
     })
     resolveSkillMock.mockResolvedValue(mockResolvedSkill)
-
-    // We need to capture what system prompt is passed to the Anthropic call.
-    // The withCircuitBreaker mock executes the fn, which calls client.messages.stream.
-    // We capture the stream call args.
-    let capturedSystemPrompt = ''
-    withCircuitBreakerMock.mockImplementation(async (_key: string, fn: () => Promise<unknown>) => {
-      // The fn creates a stream. We intercept it.
-      const Anthropic = (await import('@anthropic-ai/sdk')).default
-      const client = new Anthropic()
-      const originalStream = client.messages.stream
-      ;(client.messages.stream as any) = vi.fn().mockImplementation((config: any) => {
-        capturedSystemPrompt = config.system || ''
-        return {
-          [Symbol.asyncIterator]: async function* () {
-            yield { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Done' } }
-          },
-          finalMessage: () => ({
-            content: [{ type: 'text', text: 'Done' }],
-            stop_reason: 'end_turn',
-            usage: { input_tokens: 100, output_tokens: 50 },
-          }),
-        }
-      })
-      return fn()
-    })
 
     const { runTAORLoop } = await import('../taor-loop')
     const gen = runTAORLoop('Audit my website SEO', makeConfig() as any)
@@ -631,28 +660,6 @@ describe('TAOR planner integration', () => {
       },
       prompt: 'SEO skill prompt',
       tools: skillTools,
-    })
-
-    // Track what tools the Anthropic call receives by capturing the stream call
-    let capturedTools: any[] = []
-    withCircuitBreakerMock.mockImplementation(async (_key: string, fn: () => Promise<unknown>) => {
-      const AnthropicMod = (await import('@anthropic-ai/sdk')).default
-      const client = new AnthropicMod()
-      const origStream = client.messages.stream
-      ;(client.messages.stream as any) = vi.fn().mockImplementation((config: any) => {
-        capturedTools = config.tools || []
-        return {
-          [Symbol.asyncIterator]: async function* () {
-            yield { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Done' } }
-          },
-          finalMessage: () => ({
-            content: [{ type: 'text', text: 'Done' }],
-            stop_reason: 'end_turn',
-            usage: { input_tokens: 100, output_tokens: 50 },
-          }),
-        }
-      })
-      return fn()
     })
 
     const { runTAORLoop } = await import('../taor-loop')

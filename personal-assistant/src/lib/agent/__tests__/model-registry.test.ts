@@ -52,9 +52,9 @@ describe('resolveTokenLimit', () => {
 })
 
 describe('computeCost', () => {
-  it('computes classification cost correctly (0.25 in + 1.25 out per 1M)', () => {
+  it('computes classification cost correctly (0.15 in + 0.60 out per 1M)', () => {
     const cost = computeCost('classification', 1_000_000, 1_000_000)
-    expect(cost).toBeCloseTo(1.50)
+    expect(cost).toBeCloseTo(0.75)
   })
 
   it('computes conversation cost correctly (3.00 in + 15.00 out per 1M)', () => {

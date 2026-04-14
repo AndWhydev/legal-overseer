@@ -130,6 +130,7 @@ function buildRunsChain(data: unknown[], error?: { message: string }) {
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     not: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockResolvedValue({
       data: error ? null : data,

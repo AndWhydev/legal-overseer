@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useVoicePlayback } from '../use-voice-playback';
@@ -68,10 +69,61 @@ const mockAudioContext = {
 
 const mockArrayBuffer = new ArrayBuffer(1024);
 
+let latestMockCtx: any = null;
+
+function createMockAudioContext() {
+  const ctx = {
+    state: 'running' as string,
+    currentTime: 0,
+    destination: {},
+    createAnalyser: vi.fn(() => ({
+      fftSize: 0,
+      frequencyBinCount: 128,
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      getByteTimeDomainData: vi.fn(),
+      getByteFrequencyData: vi.fn(),
+    })),
+    createBufferSource: vi.fn(() => {
+      const node: any = {
+        buffer: null,
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        onended: null as (() => void) | null,
+      };
+      // Capture onended for external triggering
+      const origDesc = Object.getOwnPropertyDescriptor(node, 'onended');
+      Object.defineProperty(node, 'onended', {
+        get() { return mockSourceOnEnded; },
+        set(fn) { mockSourceOnEnded = fn; },
+        configurable: true,
+      });
+      return node;
+    }),
+    decodeAudioData: vi.fn(() => Promise.resolve(mockAudioBuffer)),
+    suspend: vi.fn(() => { ctx.state = 'suspended'; return Promise.resolve(); }),
+    resume: vi.fn(() => { ctx.state = 'running'; return Promise.resolve(); }),
+    close: vi.fn(() => { ctx.state = 'closed'; return Promise.resolve(); }),
+  };
+  latestMockCtx = ctx;
+  return ctx;
+}
+
 function setupGlobals() {
   vi.stubGlobal(
     'AudioContext',
-    vi.fn(() => ({ ...mockAudioContext }))
+    vi.fn(function(this: any) {
+      const ctx = createMockAudioContext();
+      Object.assign(this, ctx);
+      // Preserve mutable state reference
+      Object.defineProperty(this, 'state', {
+        get: () => ctx.state,
+        set: (v: string) => { ctx.state = v; },
+        configurable: true,
+      });
+    }) as any
   );
 
   vi.stubGlobal(
@@ -99,7 +151,7 @@ describe('useVoicePlayback', () => {
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   // ── Initial state ──────────────────────────────────────────────
@@ -130,36 +182,35 @@ describe('useVoicePlayback', () => {
   // ── State transitions: idle → loading → playing → stopped ─────
 
   it('transitions from idle to loading when play() is called', async () => {
-    // Make fetch hang so we can observe isLoading
+    // Use a fetch that resolves slowly so we can observe isLoading
     let resolveFetch!: (value: unknown) => void;
-    vi.mocked(fetch).mockImplementationOnce(
+    vi.stubGlobal('fetch', vi.fn(
       () => new Promise((resolve: any) => { resolveFetch = resolve; })
-    );
+    ));
 
     const { result } = renderHook(() => useVoicePlayback());
 
-    // Start playing (don't await — it will hang on fetch)
-    let playPromise: Promise<void>;
-    act(() => {
-      playPromise = result.current.play('https://example.com/audio.mp3');
+    // Start playing — play() sets isLoading synchronously before awaiting fetch
+    await act(async () => {
+      result.current.play('https://example.com/audio.mp3');
+      // Yield so the synchronous part of play() runs
+      await Promise.resolve();
     });
 
-    // Should be loading now
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(true);
-    });
+    // isLoading should be true since fetch is hanging
+    expect(result.current.isLoading).toBe(true);
     expect(result.current.isPlaying).toBe(false);
 
-    // Resolve fetch to allow cleanup
-    resolveFetch({
-      ok: true,
-      arrayBuffer: () => Promise.resolve(mockArrayBuffer),
-    });
-
+    // Clean up: resolve fetch and complete playback
     await act(async () => {
-      // Trigger source end to complete playback
+      resolveFetch({
+        ok: true,
+        arrayBuffer: () => Promise.resolve(mockArrayBuffer),
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
       mockSourceOnEnded?.();
-      await playPromise;
     });
   });
 
@@ -171,7 +222,9 @@ describe('useVoicePlayback', () => {
     await act(async () => {
       playPromise = result.current.play('https://example.com/audio.mp3');
       // Let the microtasks (fetch, decode) resolve
-      await vi.runAllTimersAsync?.() ?? Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
     });
 
     // After fetch + decode, should be playing

@@ -4,7 +4,7 @@
  * Tests the core agent loop: iteration, termination, streaming, safety ceiling,
  * circuit breaker, DLQ writes, token accumulation, and compaction handling.
  *
- * Strategy: mock all 20+ imports to isolate the loop logic.
+ * Strategy: mock all imports to isolate the loop logic.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -13,16 +13,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // Mock ALL imports before importing the module under test
 // ---------------------------------------------------------------------------
 
-const mockStreamFn = vi.fn()
+const mockCallModelViaGateway = vi.fn()
 
 vi.mock('@anthropic-ai/sdk', () => {
-  class MockAnthropic {
-    messages = {
-      stream: mockStreamFn,
-    }
-  }
+  class MockAnthropic {}
   return { default: MockAnthropic }
 })
+
+vi.mock('@/lib/ai/gateway-adapter', () => ({
+  callModelViaGateway: mockCallModelViaGateway,
+}))
+
+vi.mock('@/lib/ai', () => ({
+  models: { fast: 'anthropic/claude-haiku', balanced: 'anthropic/claude-sonnet', heavy: 'anthropic/claude-opus' },
+}))
 
 vi.mock('@/lib/agent/tools', () => ({
   getAgentTools: vi.fn(() => [
@@ -39,6 +43,14 @@ vi.mock('@/lib/agent/tools/deferred-loader', () => ({
   ]),
   buildDeferredToolsPrompt: vi.fn(() => ''),
   resolveToolSchema: vi.fn(),
+}))
+
+vi.mock('@/lib/composio/tool-provider', () => ({
+  getComposioToolsForOrg: vi.fn(async () => ({ tools: [] })),
+}))
+
+vi.mock('@/lib/composio/client', () => ({
+  isComposioEnabled: vi.fn(() => false),
 }))
 
 vi.mock('@/lib/composio/mcp-session', () => ({
@@ -161,6 +173,57 @@ vi.mock('@/lib/agent/tier-prompts', () => ({
   getTierModifier: vi.fn(() => ''),
 }))
 
+vi.mock('@/lib/billing/plan-gates', () => ({
+  getOrgPlan: vi.fn(async () => 'free'),
+  checkToolPlanGate: vi.fn(() => ({ allowed: true })),
+  TOOL_PLAN_REQUIREMENTS: {},
+}))
+
+vi.mock('@/lib/brain/query-gate', () => ({
+  classifyQueryComplexity: vi.fn(() => 'system2'),
+}))
+
+vi.mock('@/lib/agent/entity-overrides', () => ({
+  resolveEntityOverrides: vi.fn(async () => ({})),
+}))
+
+vi.mock('@/lib/agent/delegation-intent', () => ({
+  detectDelegationIntent: vi.fn(() => null),
+  resolveEntityCandidates: vi.fn(async () => []),
+  generateActivationConfirmation: vi.fn(() => ''),
+  generateRevocationConfirmation: vi.fn(() => ''),
+  generateAmbiguityClarification: vi.fn(() => ''),
+}))
+
+vi.mock('@/lib/agent/delegation-mandate', () => ({
+  setEntityMandate: vi.fn(async () => {}),
+  revokeEntityMandate: vi.fn(async () => false),
+  getEntityMandate: vi.fn(async () => null),
+}))
+
+vi.mock('./taor-loop-utils', () => ({
+  buildTaorExecOptions: vi.fn(() => undefined),
+  mergeEntityOverrides: vi.fn((config: unknown) => config),
+}))
+
+vi.mock('./tool-resolver', () => ({
+  buildTierContextBlock: vi.fn(async () => null),
+}))
+
+vi.mock('@/lib/agent/follow-up-generator', () => ({
+  generateFollowUps: vi.fn(async () => []),
+}))
+
+vi.mock('./decision-trace-retriever', () => ({
+  retrieveRelevantTraces: vi.fn(async () => ({ traces: [], retrievalMs: 0 })),
+  formatTracesAsContext: vi.fn(() => null),
+}))
+
+vi.mock('@/lib/agent/cost-guard', () => ({
+  checkRoleBudget: vi.fn(async () => ({ allowed: true, warning: false })),
+  getExecutionTokenCap: vi.fn(() => null),
+}))
+
 // ---------------------------------------------------------------------------
 // Import module under test (after all mocks)
 // ---------------------------------------------------------------------------
@@ -218,44 +281,48 @@ function findEvents(events: Array<{ type: string; data: unknown }>, type: string
 }
 
 /**
- * Create a mock Anthropic stream that yields text deltas then resolves a final message.
+ * Create a mock GatewayCallResult for a text response.
  */
-function createMockStream(content: string, stopReason = 'end_turn', usage = { input_tokens: 100, output_tokens: 50 }) {
+function createMockGatewayResult(
+  content: string,
+  stopReason = 'end_turn',
+  usage = { input_tokens: 100, output_tokens: 50 },
+) {
   return {
-    [Symbol.asyncIterator]: async function* () {
-      yield { type: 'content_block_delta', delta: { type: 'text_delta', text: content } }
-    },
-    finalMessage: () => ({
+    streamedDeltas: [content],
+    streamedThinkingDeltas: [],
+    hadThinking: false,
+    thinkingStartTime: null,
+    response: {
       content: [{ type: 'text', text: content }],
       stop_reason: stopReason,
       usage,
-    }),
+    },
   }
 }
 
 /**
- * Create a mock stream whose finalMessage returns tool_use blocks,
- * forcing the loop into tool execution.
+ * Create a mock GatewayCallResult for a tool_use response.
  */
-function createToolUseStream(
+function createToolUseGatewayResult(
   toolBlocks: Array<{ id: string; name: string; input: unknown }>,
   usage = { input_tokens: 200, output_tokens: 100 },
 ) {
-  const content = toolBlocks.map(t => ({
-    type: 'tool_use' as const,
-    id: t.id,
-    name: t.name,
-    input: t.input,
-  }))
   return {
-    [Symbol.asyncIterator]: async function* () {
-      // No text deltas for tool_use responses
-    },
-    finalMessage: () => ({
-      content,
+    streamedDeltas: [],
+    streamedThinkingDeltas: [],
+    hadThinking: false,
+    thinkingStartTime: null,
+    response: {
+      content: toolBlocks.map(t => ({
+        type: 'tool_use' as const,
+        id: t.id,
+        name: t.name,
+        input: t.input,
+      })),
       stop_reason: 'tool_use',
       usage,
-    }),
+    },
   }
 }
 
@@ -267,8 +334,8 @@ describe('TAOR Loop', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // Default mock: stream returns end_turn with simple text
-    mockStreamFn.mockReturnValue(createMockStream('Hello!'))
+    // Default mock: gateway returns end_turn with simple text
+    mockCallModelViaGateway.mockResolvedValue(createMockGatewayResult('Hello!'))
 
     // Reset withCircuitBreaker to default pass-through (tests may set mockRejectedValue)
     mockWithCircuitBreaker.mockImplementation(async (_key: string, fn: () => Promise<unknown>) => fn())
@@ -289,7 +356,7 @@ describe('TAOR Loop', () => {
   // -----------------------------------------------------------------------
   describe('normal termination', () => {
     it('terminates when model returns end_turn, yielding message + done', async () => {
-      mockStreamFn.mockReturnValue(createMockStream('Goodbye!'))
+      mockCallModelViaGateway.mockResolvedValue(createMockGatewayResult('Goodbye!'))
 
       const events = await collectEvents('Hello')
 
@@ -340,20 +407,18 @@ describe('TAOR Loop', () => {
   // -----------------------------------------------------------------------
   describe('content delta streaming', () => {
     it('yields content_delta events for each streamed text chunk', async () => {
-      // Stream that produces multiple text deltas
-      const multiDeltaStream = {
-        [Symbol.asyncIterator]: async function* () {
-          yield { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Hello' } }
-          yield { type: 'content_block_delta', delta: { type: 'text_delta', text: ', ' } }
-          yield { type: 'content_block_delta', delta: { type: 'text_delta', text: 'world!' } }
-        },
-        finalMessage: () => ({
+      // Gateway result with multiple streamed deltas
+      mockCallModelViaGateway.mockResolvedValue({
+        streamedDeltas: ['Hello', ', ', 'world!'],
+        streamedThinkingDeltas: [],
+        hadThinking: false,
+        thinkingStartTime: null,
+        response: {
           content: [{ type: 'text', text: 'Hello, world!' }],
           stop_reason: 'end_turn',
           usage: { input_tokens: 80, output_tokens: 30 },
-        }),
-      }
-      mockStreamFn.mockReturnValue(multiDeltaStream)
+        },
+      })
 
       const events = await collectEvents('Hi')
       const deltas = findEvents(events, 'content_delta')
@@ -363,7 +428,7 @@ describe('TAOR Loop', () => {
     })
 
     it('calls scrubLeaks on each streamed delta', async () => {
-      mockStreamFn.mockReturnValue(createMockStream('Some text'))
+      mockCallModelViaGateway.mockResolvedValue(createMockGatewayResult('Some text'))
 
       await collectEvents('Hello')
 
@@ -376,9 +441,9 @@ describe('TAOR Loop', () => {
   // -----------------------------------------------------------------------
   describe('safety ceiling', () => {
     it('stops after SAFETY_CEILING (50) iterations and logs max_iterations', async () => {
-      // Every stream call returns tool_use to force continuous iteration
-      mockStreamFn.mockImplementation(() =>
-        createToolUseStream([{ id: `call-${Date.now()}`, name: 'search_contacts', input: {} }], { input_tokens: 10, output_tokens: 5 }),
+      // Every gateway call returns tool_use to force continuous iteration
+      mockCallModelViaGateway.mockImplementation(async () =>
+        createToolUseGatewayResult([{ id: `call-${Date.now()}`, name: 'search_contacts', input: {} }], { input_tokens: 10, output_tokens: 5 }),
       )
 
       // Mock tool executor to return minimal results (generator that returns immediately)
@@ -494,16 +559,16 @@ describe('TAOR Loop', () => {
   describe('token accumulation', () => {
     it('accumulates totalInputTokens and totalOutputTokens across iterations', async () => {
       // First call: tool_use with known token counts
-      mockStreamFn
-        .mockReturnValueOnce(
-          createToolUseStream(
+      mockCallModelViaGateway
+        .mockResolvedValueOnce(
+          createToolUseGatewayResult(
             [{ id: 'call-1', name: 'search_contacts', input: {} }],
             { input_tokens: 150, output_tokens: 80 },
           ),
         )
         // Second call: end_turn with more tokens
-        .mockReturnValueOnce(
-          createMockStream('Done!', 'end_turn', { input_tokens: 300, output_tokens: 120 }),
+        .mockResolvedValueOnce(
+          createMockGatewayResult('Done!', 'end_turn', { input_tokens: 300, output_tokens: 120 }),
         )
 
       // Mock tool executor for the tool_use iteration
@@ -535,20 +600,20 @@ describe('TAOR Loop', () => {
   describe('compaction handling', () => {
     it('resets messages on compaction and continues the loop', async () => {
       // First call: compaction stop_reason
-      const compactionStream = {
-        [Symbol.asyncIterator]: async function* () {
-          // No text deltas during compaction
-        },
-        finalMessage: () => ({
-          content: [{ type: 'text', text: '[compacted summary]' }],
-          stop_reason: 'compaction',
-          usage: { input_tokens: 500, output_tokens: 200 },
-        }),
-      }
-      mockStreamFn
-        .mockReturnValueOnce(compactionStream)
+      mockCallModelViaGateway
+        .mockResolvedValueOnce({
+          streamedDeltas: [],
+          streamedThinkingDeltas: [],
+          hadThinking: false,
+          thinkingStartTime: null,
+          response: {
+            content: [{ type: 'text', text: '[compacted summary]' }],
+            stop_reason: 'compaction',
+            usage: { input_tokens: 500, output_tokens: 200 },
+          },
+        })
         // Second call: normal end_turn after compaction
-        .mockReturnValueOnce(createMockStream('After compaction'))
+        .mockResolvedValueOnce(createMockGatewayResult('After compaction'))
 
       const events = await collectEvents('Hello')
 
@@ -567,23 +632,25 @@ describe('TAOR Loop', () => {
       const doneEvents = findEvents(events, 'done')
       expect(doneEvents).toHaveLength(1)
 
-      // The stream function should have been called twice
+      // The gateway should have been called twice
       // (once for compaction, once for the resumed iteration)
-      expect(mockStreamFn).toHaveBeenCalledTimes(2)
+      expect(mockCallModelViaGateway).toHaveBeenCalledTimes(2)
     })
 
     it('accumulates tokens across compaction boundary', async () => {
-      const compactionStream = {
-        [Symbol.asyncIterator]: async function* () {},
-        finalMessage: () => ({
-          content: [{ type: 'text', text: '[compacted]' }],
-          stop_reason: 'compaction',
-          usage: { input_tokens: 400, output_tokens: 150 },
-        }),
-      }
-      mockStreamFn
-        .mockReturnValueOnce(compactionStream)
-        .mockReturnValueOnce(createMockStream('OK', 'end_turn', { input_tokens: 200, output_tokens: 100 }))
+      mockCallModelViaGateway
+        .mockResolvedValueOnce({
+          streamedDeltas: [],
+          streamedThinkingDeltas: [],
+          hadThinking: false,
+          thinkingStartTime: null,
+          response: {
+            content: [{ type: 'text', text: '[compacted]' }],
+            stop_reason: 'compaction',
+            usage: { input_tokens: 400, output_tokens: 150 },
+          },
+        })
+        .mockResolvedValueOnce(createMockGatewayResult('OK', 'end_turn', { input_tokens: 200, output_tokens: 100 }))
 
       await collectEvents('Hello')
 
@@ -604,8 +671,8 @@ describe('TAOR Loop', () => {
   describe('entity-aware iteration caps', () => {
     it('uses SAFETY_CEILING (50) when no override is set', async () => {
       // Force continuous tool_use to hit ceiling
-      mockStreamFn.mockImplementation(() =>
-        createToolUseStream([{ id: `call-${Date.now()}`, name: 'search_contacts', input: {} }], { input_tokens: 10, output_tokens: 5 }),
+      mockCallModelViaGateway.mockImplementation(async () =>
+        createToolUseGatewayResult([{ id: `call-${Date.now()}`, name: 'search_contacts', input: {} }], { input_tokens: 10, output_tokens: 5 }),
       )
       mockExecuteToolBatchStreaming.mockImplementation(function* () {
         return {
@@ -627,12 +694,12 @@ describe('TAOR Loop', () => {
 
     it('uses config.iterationCap when provided', async () => {
       let iterations = 0
-      mockStreamFn.mockImplementation(() => {
+      mockCallModelViaGateway.mockImplementation(async () => {
         iterations++
         if (iterations <= 5) {
-          return createToolUseStream([{ id: `call-${iterations}`, name: 'search_contacts', input: {} }], { input_tokens: 10, output_tokens: 5 })
+          return createToolUseGatewayResult([{ id: `call-${iterations}`, name: 'search_contacts', input: {} }], { input_tokens: 10, output_tokens: 5 })
         }
-        return createMockStream('Done after 5 iterations')
+        return createMockGatewayResult('Done after 5 iterations')
       })
       mockExecuteToolBatchStreaming.mockImplementation(function* () {
         return {
@@ -653,8 +720,8 @@ describe('TAOR Loop', () => {
     })
 
     it('uses config.maxIterations as fallback when iterationCap is absent', async () => {
-      mockStreamFn.mockImplementation(() =>
-        createToolUseStream([{ id: `call-${Date.now()}`, name: 'search_contacts', input: {} }], { input_tokens: 10, output_tokens: 5 }),
+      mockCallModelViaGateway.mockImplementation(async () =>
+        createToolUseGatewayResult([{ id: `call-${Date.now()}`, name: 'search_contacts', input: {} }], { input_tokens: 10, output_tokens: 5 }),
       )
       mockExecuteToolBatchStreaming.mockImplementation(function* () {
         return {
@@ -675,8 +742,8 @@ describe('TAOR Loop', () => {
     })
 
     it('iterationCap takes priority over maxIterations', async () => {
-      mockStreamFn.mockImplementation(() =>
-        createToolUseStream([{ id: `call-${Date.now()}`, name: 'search_contacts', input: {} }], { input_tokens: 10, output_tokens: 5 }),
+      mockCallModelViaGateway.mockImplementation(async () =>
+        createToolUseGatewayResult([{ id: `call-${Date.now()}`, name: 'search_contacts', input: {} }], { input_tokens: 10, output_tokens: 5 }),
       )
       mockExecuteToolBatchStreaming.mockImplementation(function* () {
         return {

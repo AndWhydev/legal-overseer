@@ -31,6 +31,22 @@ vi.mock('@/lib/core/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
+vi.mock('@/lib/supabase/service-client', () => ({
+  getServiceClient: vi.fn().mockReturnValue({
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'thread-xyz' } }),
+            }),
+          }),
+        }),
+      }),
+    }),
+  }),
+}))
+
 function makeRequest(body: Record<string, unknown> = {}): NextRequest {
   return new NextRequest('http://localhost:3000/api/voice/session', {
     method: 'POST',

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useVoiceFeedback } from '../use-voice-feedback';
@@ -38,7 +39,8 @@ function setupMatchMedia(prefersReducedMotion: boolean) {
 
 describe('useVoiceFeedback', () => {
   beforeEach(() => {
-    vi.stubGlobal('AudioContext', vi.fn(() => mockAudioContext));
+    const MockAudioContext = vi.fn(function(this: any) { Object.assign(this, mockAudioContext); });
+    vi.stubGlobal('AudioContext', MockAudioContext);
     vi.stubGlobal('webkitAudioContext', undefined);
     setupMatchMedia(false);
     Object.defineProperty(navigator, 'vibrate', {
@@ -49,7 +51,8 @@ describe('useVoiceFeedback', () => {
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('returns onRecordStart and onRecordStop functions', () => {

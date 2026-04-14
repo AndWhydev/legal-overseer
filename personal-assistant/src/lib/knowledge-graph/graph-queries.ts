@@ -320,19 +320,14 @@ export async function createEdge(
   props?: Record<string, unknown>
 ): Promise<EntityEdge | null> {
   try {
-    // Invalidate existing edges of the same type between these nodes
-    const { error: updateErr } = await supabase
+    // Delete existing edge of the same type between these nodes (unique constraint)
+    await supabase
       .from('entity_edges')
-      .update({ valid_until: new Date().toISOString() })
+      .delete()
       .eq('org_id', orgId)
       .eq('source_id', sourceId)
       .eq('target_id', targetId)
       .eq('relation_type', relationType)
-      .is('valid_until', null)
-
-    if (updateErr) {
-      logger.warn('createEdge: failed to invalidate prior edges', { updateErr })
-    }
 
     // Insert new edge
     const { data, error } = await supabase

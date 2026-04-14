@@ -1,22 +1,56 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { pollChannel, processNewMessages } from './relay-daemon'
 
-// Mock gmail adapter
+// Mock adapters
+const makeMockAdapter = () => ({ pull: vi.fn(), isAvailable: vi.fn() })
 vi.mock('./gmail', () => ({
-  gmailAdapter: {
-    type: 'gmail',
-    name: 'Gmail',
-    description: 'Mock Gmail',
-    icon: 'Mail',
-    pull: vi.fn(),
-    isAvailable: vi.fn(),
-  },
+  gmailAdapter: { type: 'gmail', name: 'Gmail', description: 'Mock Gmail', icon: 'Mail', pull: vi.fn(), isAvailable: vi.fn() },
 }))
+vi.mock('./outlook', () => ({ outlookAdapter: { type: 'outlook', pull: vi.fn(), isAvailable: vi.fn() } }))
+vi.mock('./asana', () => ({ asanaAdapter: { type: 'asana', pull: vi.fn(), isAvailable: vi.fn() } }))
+vi.mock('./calendly', () => ({ calendlyAdapter: { type: 'calendly', pull: vi.fn(), isAvailable: vi.fn() } }))
+vi.mock('./stripe', () => ({ stripeAdapter: { type: 'stripe', pull: vi.fn(), isAvailable: vi.fn() } }))
+vi.mock('./clickup', () => ({ clickupAdapter: { type: 'clickup', pull: vi.fn(), isAvailable: vi.fn() } }))
+vi.mock('./ga4', () => ({ ga4Adapter: { type: 'ga4', pull: vi.fn(), isAvailable: vi.fn() } }))
+vi.mock('./wordpress', () => ({ wordpressAdapter: { type: 'wordpress', pull: vi.fn(), isAvailable: vi.fn() } }))
+vi.mock('./cluely', () => ({ cluelyAdapter: { type: 'cluely', pull: vi.fn(), isAvailable: vi.fn() } }))
+vi.mock('./imessage', () => ({ imessageAdapter: { type: 'imessage', pull: vi.fn(), isAvailable: vi.fn() } }))
 
 // Mock dedup to always return not-duplicate
 vi.mock('./dedup', () => ({
   isDuplicate: vi.fn().mockResolvedValue({ duplicate: false }),
   computeContentHash: vi.fn().mockReturnValue('mock-hash'),
+}))
+
+// Mock credential hydration to avoid real supabase calls
+vi.mock('@/lib/integrations/credentials', () => ({
+  getOrgCredential: vi.fn().mockResolvedValue(null),
+  storeOrgCredential: vi.fn().mockResolvedValue(undefined),
+  storeChannelCredential: vi.fn().mockResolvedValue(undefined),
+  encryptCredential: vi.fn().mockReturnValue('encrypted'),
+}))
+
+// Mock identity resolver
+vi.mock('@/lib/conversation/identity-resolver', () => ({
+  resolveChannelIdentity: vi.fn().mockResolvedValue(null),
+}))
+
+// Mock logger
+vi.mock('@/lib/core/logger', () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+}))
+
+// Mock knowledge graph
+vi.mock('@/lib/knowledge-graph/entity-extractor', () => ({
+  extractAndPopulateGraph: vi.fn().mockResolvedValue({ entities: 0, edges: 0, events: 0 }),
+}))
+
+// Mock avatar fetchers
+vi.mock('@/lib/avatar/channel-photos', () => ({
+  fetchGooglePhotos: vi.fn().mockResolvedValue(0),
+  fetchOutlookPhotos: vi.fn().mockResolvedValue(0),
+  fetchSlackPhotos: vi.fn().mockResolvedValue(0),
+  fetchAsanaPhotos: vi.fn().mockResolvedValue(0),
 }))
 
 function createMockSupabase(overrides: Record<string, unknown> = {}): any {
@@ -31,6 +65,7 @@ function createMockSupabase(overrides: Record<string, unknown> = {}): any {
         single: vi.fn().mockResolvedValue({ data: { id: 'inserted-1' }, error: null }),
       }),
     }),
+    insert: vi.fn().mockResolvedValue({ data: null, error: null }),
     update: vi.fn().mockReturnThis(),
     ...overrides,
   }
@@ -46,11 +81,11 @@ describe('relay-daemon', () => {
   })
 
   describe('pollChannel', () => {
-    it('returns skipped when relay_enabled is false', async () => {
+    it('returns skipped when no connected org_connection exists', async () => {
       const supabase = createMockSupabase()
         ; (supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
-          data: { relay_enabled: false, config: {} },
-          error: null,
+          data: null,
+          error: { message: 'No rows found', code: 'PGRST116' },
         })
 
       const result = await pollChannel(supabase as any, 'org-1', 'gmail')
@@ -78,7 +113,7 @@ describe('relay-daemon', () => {
 
       const supabase = createMockSupabase()
         ; (supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
-          data: { relay_enabled: true, config: {}, poll_cursor: null },
+          data: { id: 'conn-1', transport: 'poll', config: {}, poll_cursor: null },
           error: null,
         })
 
@@ -108,14 +143,14 @@ describe('relay-daemon', () => {
 
       const supabase = createMockSupabase()
         ; (supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
-          data: { relay_enabled: true, config: {}, poll_cursor: null },
+          data: { id: 'conn-1', transport: 'poll', config: {}, poll_cursor: null },
           error: null,
         })
 
       await pollChannel(supabase as any, 'org-1', 'gmail')
 
-      // Verify update was called on channel_connections
-      expect(supabase.from).toHaveBeenCalledWith('channel_connections')
+      // Verify update was called on org_connections
+      expect(supabase.from).toHaveBeenCalledWith('org_connections')
     })
 
     it('handles adapter errors gracefully', async () => {
@@ -124,7 +159,7 @@ describe('relay-daemon', () => {
 
       const supabase = createMockSupabase()
         ; (supabase._chain.single as ReturnType<typeof vi.fn>).mockResolvedValue({
-          data: { relay_enabled: true, config: {}, poll_cursor: null },
+          data: { id: 'conn-1', transport: 'poll', config: {}, poll_cursor: null },
           error: null,
         })
 

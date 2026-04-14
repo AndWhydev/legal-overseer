@@ -39,9 +39,8 @@ function makeSupabase(entityName: string | null = 'Acme Corp') {
     data: entityName ? { name: entityName } : null,
     error: null,
   })
-  const eq2 = vi.fn().mockReturnValue({ single })
-  const eq1 = vi.fn().mockReturnValue({ eq: eq2 })
-  const select = vi.fn().mockReturnValue({ eq: eq1 })
+  const eq = vi.fn().mockReturnValue({ single })
+  const select = vi.fn().mockReturnValue({ eq })
   const from = vi.fn().mockReturnValue({ select })
 
   return { from } as any

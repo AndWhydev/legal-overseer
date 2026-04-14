@@ -11,10 +11,11 @@ vi.mock('@/lib/context/assembler', () => ({
   }),
 }))
 
-// Mock AI SDK generateObject
-const mockGenerateObject = vi.fn()
+// Mock AI SDK generateText (classifier uses generateText + Output.object)
+const mockGenerateText = vi.fn()
 vi.mock('ai', () => ({
-  generateObject: (...args: unknown[]) => mockGenerateObject(...args),
+  generateText: (...args: unknown[]) => mockGenerateText(...args),
+  Output: { object: vi.fn().mockReturnValue({}) },
 }))
 
 // Mock AI provider
@@ -125,8 +126,8 @@ describe('classifyMessage', () => {
   })
 
   it('classifies message and stores result', async () => {
-    mockGenerateObject.mockResolvedValue({
-      object: {
+    mockGenerateText.mockResolvedValue({
+      output: {
         significance: 7,
         timeSensitivity: 'today',
         resolves: [],
@@ -134,6 +135,7 @@ describe('classifyMessage', () => {
         recommendedActions: ['reply'],
         reasoning: 'Client follow-up',
         category: 'client',
+        summary: 'Client follow-up email',
       },
     })
 
@@ -154,7 +156,7 @@ describe('classifyMessage', () => {
   })
 
   it('returns default result on LLM error', async () => {
-    mockGenerateObject.mockRejectedValue(new Error('API error'))
+    mockGenerateText.mockRejectedValue(new Error('API error'))
 
     const supabase = mockSupabase()
     const result = await classifyMessage(supabase, makeMessage(), 'org-1')

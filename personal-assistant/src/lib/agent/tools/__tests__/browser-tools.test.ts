@@ -5,10 +5,10 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 // Mocks
 // ---------------------------------------------------------------------------
 
-const mockRunBrowserTask = vi.fn()
+const mockExecuteBrowserTask = vi.fn()
 
-vi.mock('@/lib/browser/stagehand-client', () => ({
-  runBrowserTask: (...args: unknown[]) => mockRunBrowserTask(...args),
+vi.mock('@/lib/browser/browser-task', () => ({
+  executeBrowserTask: (...args: unknown[]) => mockExecuteBrowserTask(...args),
 }))
 
 vi.mock('@/lib/core/logger', () => ({
@@ -77,7 +77,7 @@ describe('spawn_browser_agent handler', () => {
 
     expect(result.success).toBe(false)
     expect(result.error).toContain('BROWSERBASE_API_KEY')
-    expect(mockRunBrowserTask).not.toHaveBeenCalled()
+    expect(mockExecuteBrowserTask).not.toHaveBeenCalled()
   })
 
   it('returns error when BROWSERBASE_PROJECT_ID is missing', async () => {
@@ -94,7 +94,7 @@ describe('spawn_browser_agent handler', () => {
   })
 
   it('calls runBrowserTask with correct params', async () => {
-    mockRunBrowserTask.mockResolvedValue({
+    mockExecuteBrowserTask.mockResolvedValue({
       status: 'completed',
       message: 'Done',
       actions: [{ stepIndex: 0, type: 'act', description: 'clicked', timestamp: '2026-04-10T00:00:00Z', success: true }],
@@ -113,19 +113,26 @@ describe('spawn_browser_agent handler', () => {
       mockSupabase,
     )
 
-    expect(mockRunBrowserTask).toHaveBeenCalledWith({
-      instruction: 'Find the pricing page',
-      startUrl: 'https://example.com',
-      maxSteps: 5,
-      outputSchema: { type: 'object', properties: { price: { type: 'string' } } },
-    })
+    expect(mockExecuteBrowserTask).toHaveBeenCalledWith(
+      {
+        instruction: 'Find the pricing page',
+        startUrl: 'https://example.com',
+        maxSteps: 5,
+        outputSchema: { type: 'object', properties: { price: { type: 'string' } } },
+      },
+      {
+        orgId: 'org-1',
+        supabase: mockSupabase,
+        ltvMultiplier: 1.0,
+      },
+    )
     expect(result.success).toBe(true)
     expect((result.data as Record<string, unknown>).status).toBe('completed')
     expect((result.data as Record<string, unknown>).message).toBe('Done')
   })
 
   it('returns failure when task status is failed', async () => {
-    mockRunBrowserTask.mockResolvedValue({
+    mockExecuteBrowserTask.mockResolvedValue({
       status: 'failed',
       error: 'Page not found',
       actions: [],
@@ -143,7 +150,7 @@ describe('spawn_browser_agent handler', () => {
   })
 
   it('catches unexpected exceptions', async () => {
-    mockRunBrowserTask.mockRejectedValue(new Error('SDK exploded'))
+    mockExecuteBrowserTask.mockRejectedValue(new Error('SDK exploded'))
 
     const result = await browserToolHandlers.spawn_browser_agent(
       { instruction: 'do something' },
@@ -156,7 +163,7 @@ describe('spawn_browser_agent handler', () => {
   })
 
   it('passes through extractedData on success', async () => {
-    mockRunBrowserTask.mockResolvedValue({
+    mockExecuteBrowserTask.mockResolvedValue({
       status: 'completed',
       message: 'Extracted',
       extractedData: { price: '$99/mo', tier: 'Enterprise' },

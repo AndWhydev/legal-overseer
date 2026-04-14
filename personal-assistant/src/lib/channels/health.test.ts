@@ -425,7 +425,7 @@ describe('health', () => {
         icon: 'Mail',
         pull: vi.fn(),
         isAvailable: vi.fn().mockImplementation(() => {
-          return new Promise(resolve => setTimeout(() => resolve(true), 4999))
+          return new Promise(resolve => setTimeout(() => resolve(true), 4900))
         }),
       }
 

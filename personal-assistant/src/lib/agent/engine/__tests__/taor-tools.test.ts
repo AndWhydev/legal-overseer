@@ -9,24 +9,24 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import type Anthropic from '@anthropic-ai/sdk'
 import type { AgentEvent, EngineConfig } from '../types'
 
-// Shared reference to control the mock Anthropic client returned by `new Anthropic()`
-let __mockClientInstance: { messages: { stream: Mock } }
+// Shared reference to control the mock gateway adapter
+let __mockCallModelViaGateway: Mock
 
 // ---------------------------------------------------------------------------
 // Mocks — every import the TAOR loop touches
 // ---------------------------------------------------------------------------
 
-// @anthropic-ai/sdk — factory returns a class whose instances delegate to __mockClientInstance
-vi.mock('@anthropic-ai/sdk', () => {
-  return {
-    default: class MockAnthropic {
-      messages: { stream: Mock }
-      constructor() {
-        this.messages = __mockClientInstance.messages
-      }
-    },
-  }
-})
+vi.mock('@anthropic-ai/sdk', () => ({
+  default: class MockAnthropic {},
+}))
+
+vi.mock('@/lib/ai/gateway-adapter', () => ({
+  callModelViaGateway: vi.fn(),
+}))
+
+vi.mock('@/lib/ai', () => ({
+  models: { fast: 'anthropic/claude-haiku', balanced: 'anthropic/claude-sonnet', heavy: 'anthropic/claude-opus' },
+}))
 
 vi.mock('@/lib/agent/tools', () => ({
   getAgentTools: vi.fn(() => [
@@ -43,6 +43,14 @@ vi.mock('@/lib/agent/tools/deferred-loader', () => ({
   ]),
   buildDeferredToolsPrompt: vi.fn(() => '\n## Additional Tools (On-Demand)\nresolve_tool available\n'),
   resolveToolSchema: vi.fn(),
+}))
+
+vi.mock('@/lib/composio/tool-provider', () => ({
+  getComposioToolsForOrg: vi.fn(async () => ({ tools: [] })),
+}))
+
+vi.mock('@/lib/composio/client', () => ({
+  isComposioEnabled: vi.fn(() => false),
 }))
 
 vi.mock('@/lib/composio/mcp-session', () => ({
@@ -182,6 +190,46 @@ vi.mock('@/lib/agent/cost-guard', () => ({
   getExecutionTokenCap: vi.fn(() => null),
 }))
 
+vi.mock('@/lib/brain/query-gate', () => ({
+  classifyQueryComplexity: vi.fn(() => 'system2'),
+}))
+
+vi.mock('@/lib/agent/entity-overrides', () => ({
+  resolveEntityOverrides: vi.fn(async () => ({})),
+}))
+
+vi.mock('@/lib/agent/delegation-intent', () => ({
+  detectDelegationIntent: vi.fn(() => null),
+  resolveEntityCandidates: vi.fn(async () => []),
+  generateActivationConfirmation: vi.fn(() => ''),
+  generateRevocationConfirmation: vi.fn(() => ''),
+  generateAmbiguityClarification: vi.fn(() => ''),
+}))
+
+vi.mock('@/lib/agent/delegation-mandate', () => ({
+  setEntityMandate: vi.fn(async () => {}),
+  revokeEntityMandate: vi.fn(async () => false),
+  getEntityMandate: vi.fn(async () => null),
+}))
+
+vi.mock('./taor-loop-utils', () => ({
+  buildTaorExecOptions: vi.fn(() => undefined),
+  mergeEntityOverrides: vi.fn((config: unknown) => config),
+}))
+
+vi.mock('./tool-resolver', () => ({
+  buildTierContextBlock: vi.fn(async () => null),
+}))
+
+vi.mock('@/lib/agent/follow-up-generator', () => ({
+  generateFollowUps: vi.fn(async () => []),
+}))
+
+vi.mock('./decision-trace-retriever', () => ({
+  retrieveRelevantTraces: vi.fn(async () => ({ traces: [], retrievalMs: 0 })),
+  formatTracesAsContext: vi.fn(() => null),
+}))
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -205,57 +253,80 @@ function makeConfig(overrides?: Partial<EngineConfig> & { toolGroups?: string[] 
   }
 }
 
+interface GatewayCallConfig {
+  model: string
+  maxTokens: number
+  system: string
+  tools: Array<{ name: string; description?: string; input_schema: Record<string, unknown> }>
+  messages: Array<{ role: string; content: unknown }>
+  thinking?: { type: 'enabled'; budget_tokens: number }
+}
+
 /**
- * Build a mock Anthropic stream that yields `events` then returns `finalMessage`.
+ * Build a mock GatewayCallResult with text response.
  */
-function makeMockStream(
-  events: Array<{ type: string; delta?: Record<string, unknown>; content_block?: Record<string, unknown> }>,
-  finalMsg: Anthropic.Message,
+function makeTextGatewayResult(
+  text: string,
+  deltas?: string[],
+  usage = { input_tokens: 100, output_tokens: 50 },
 ) {
   return {
-    [Symbol.asyncIterator]: async function* () {
-      for (const e of events) yield e
+    streamedDeltas: deltas ?? [text],
+    streamedThinkingDeltas: [],
+    hadThinking: false,
+    thinkingStartTime: null,
+    response: {
+      content: [{ type: 'text' as const, text }],
+      stop_reason: 'end_turn',
+      usage,
     },
-    finalMessage: () => Promise.resolve(finalMsg),
   }
 }
 
 /**
- * Minimal Anthropic.Message with text content and end_turn stop_reason.
+ * Build a mock GatewayCallResult with tool_use response.
  */
-function textMessage(text: string, usage = { input_tokens: 100, output_tokens: 50 }): Anthropic.Message {
+function makeToolUseGatewayResult(
+  toolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }>,
+  usage = { input_tokens: 100, output_tokens: 50 },
+) {
   return {
-    id: 'msg-1',
-    type: 'message',
-    role: 'assistant',
-    model: 'claude-sonnet-4-20250514',
-    stop_reason: 'end_turn',
-    content: [{ type: 'text', text }],
-    usage,
-  } as Anthropic.Message
+    streamedDeltas: [],
+    streamedThinkingDeltas: [],
+    hadThinking: false,
+    thinkingStartTime: null,
+    response: {
+      content: toolCalls.map(tc => ({
+        type: 'tool_use' as const,
+        id: tc.id,
+        name: tc.name,
+        input: tc.input,
+      })),
+      stop_reason: 'tool_use',
+      usage,
+    },
+  }
 }
 
 /**
- * Anthropic.Message with tool_use blocks, followed by a final text message.
+ * Build a mock GatewayCallResult with thinking deltas.
  */
-function toolUseMessage(
-  toolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }>,
+function makeThinkingGatewayResult(
+  thinkingDeltas: string[],
+  text: string,
   usage = { input_tokens: 100, output_tokens: 50 },
-): Anthropic.Message {
+) {
   return {
-    id: 'msg-2',
-    type: 'message',
-    role: 'assistant',
-    model: 'claude-sonnet-4-20250514',
-    stop_reason: 'tool_use',
-    content: toolCalls.map(tc => ({
-      type: 'tool_use' as const,
-      id: tc.id,
-      name: tc.name,
-      input: tc.input,
-    })),
-    usage,
-  } as Anthropic.Message
+    streamedDeltas: [text],
+    streamedThinkingDeltas: thinkingDeltas,
+    hadThinking: true,
+    thinkingStartTime: Date.now() - 500,
+    response: {
+      content: [{ type: 'text' as const, text }],
+      stop_reason: 'end_turn',
+      usage,
+    },
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -263,14 +334,10 @@ function toolUseMessage(
 // ---------------------------------------------------------------------------
 
 describe('TAOR loop — tools, thinking, streaming', () => {
-  let mockStream: ReturnType<typeof makeMockStream>
-  let mockClientInstance: { messages: { stream: Mock } }
-
   beforeEach(async () => {
     vi.clearAllMocks()
 
     // Reset mocks that tests override with mockReturnValue / mockResolvedValue
-    // (clearAllMocks only clears calls/instances, not implementations)
     const { generatePlan, isTrivialMessage } = await import('@/lib/agent/planner')
     ;(generatePlan as Mock).mockResolvedValue({
       stages: [],
@@ -299,17 +366,12 @@ describe('TAOR loop — tools, thinking, streaming', () => {
     ;(detectLeak as Mock).mockReturnValue({ leaked: false, patterns: [] })
     ;(guardAndHumanize as Mock).mockImplementation((t: string) => t)
 
-    // Default: model returns a simple text response
-    mockStream = makeMockStream(
-      [{ type: 'content_block_delta', delta: { type: 'text_delta', text: 'Hello there' } }],
-      textMessage('Hello there'),
-    )
+    // Wire the gateway mock
+    const gatewayAdapter = await import('@/lib/ai/gateway-adapter')
+    __mockCallModelViaGateway = gatewayAdapter.callModelViaGateway as Mock
 
-    // Wire the Anthropic constructor to delegate to our mock
-    mockClientInstance = {
-      messages: { stream: vi.fn().mockReturnValue(mockStream) },
-    }
-    __mockClientInstance = mockClientInstance
+    // Default: model returns a simple text response
+    __mockCallModelViaGateway.mockResolvedValue(makeTextGatewayResult('Hello there'))
   })
 
   // ── 1. Tool execution: executeToolBatchStreaming called on tool_use ──
@@ -317,23 +379,17 @@ describe('TAOR loop — tools, thinking, streaming', () => {
     const { executeToolBatchStreaming } = await import('../tool-executor')
     const { runTAORLoop } = await import('../taor-loop')
 
-    const toolMsg = toolUseMessage([{ id: 'call-1', name: 'search_memory', input: { query: 'test' } }])
-    const finalTextMsg = textMessage('Here is the result')
-
     // First call returns tool_use, second returns text
     let callCount = 0
-    mockClientInstance.messages.stream.mockImplementation(() => {
+    __mockCallModelViaGateway.mockImplementation(async () => {
       callCount++
       if (callCount === 1) {
-        return makeMockStream([], toolMsg)
+        return makeToolUseGatewayResult([{ id: 'call-1', name: 'search_memory', input: { query: 'test' } }])
       }
-      return makeMockStream(
-        [{ type: 'content_block_delta', delta: { type: 'text_delta', text: 'Here is the result' } }],
-        finalTextMsg,
-      )
+      return makeTextGatewayResult('Here is the result')
     })
 
-    // Mock executeToolBatchStreaming as an async generator
+    // Mock executeToolBatchStreaming as a generator
     const mockToolResults: Anthropic.ToolResultBlockParam[] = [
       { type: 'tool_result', tool_use_id: 'call-1', content: '{"found": true}' },
     ]
@@ -365,9 +421,9 @@ describe('TAOR loop — tools, thinking, streaming', () => {
 
     await collectEvents(runTAORLoop('generate a detailed financial analysis with comparisons', makeConfig()))
 
-    // Check that the stream was called with thinking config
-    const streamCall = mockClientInstance.messages.stream.mock.calls[0][0]
-    expect(streamCall.thinking).toEqual({ type: 'enabled', budget_tokens: 8192 })
+    // Check that the gateway was called with thinking config
+    const gatewayCall = __mockCallModelViaGateway.mock.calls[0][0] as GatewayCallConfig
+    expect(gatewayCall.thinking).toEqual({ type: 'enabled', budget_tokens: 8192 })
   })
 
   // ── 3. Extended thinking: complexity='medium' → budget_tokens=2048 ────
@@ -384,24 +440,21 @@ describe('TAOR loop — tools, thinking, streaming', () => {
 
     await collectEvents(runTAORLoop('what was my last invoice?', makeConfig()))
 
-    const streamCall = mockClientInstance.messages.stream.mock.calls[0][0]
-    expect(streamCall.thinking).toEqual({ type: 'enabled', budget_tokens: 2048 })
+    const gatewayCall = __mockCallModelViaGateway.mock.calls[0][0] as GatewayCallConfig
+    expect(gatewayCall.thinking).toEqual({ type: 'enabled', budget_tokens: 2048 })
   })
 
   // ── 4. Extended thinking: complexity='low' → no thinking config ───────
   it('omits thinking config for low complexity', async () => {
-    const { generatePlan } = await import('@/lib/agent/planner')
     const { isTrivialMessage } = await import('@/lib/agent/planner')
     const { runTAORLoop } = await import('../taor-loop')
 
     ;(isTrivialMessage as Mock).mockReturnValueOnce(true)
-    // When trivial, no plan is generated. Fallback estimateComplexity with
-    // a short message + 0 entities + 0 stages should yield 'low'.
 
     await collectEvents(runTAORLoop('hi', makeConfig()))
 
-    const streamCall = mockClientInstance.messages.stream.mock.calls[0][0]
-    expect(streamCall.thinking).toBeUndefined()
+    const gatewayCall = __mockCallModelViaGateway.mock.calls[0][0] as GatewayCallConfig
+    expect(gatewayCall.thinking).toBeUndefined()
   })
 
   // ── 5. Response guard: scrubLeaks called on content_delta text ────────
@@ -409,14 +462,17 @@ describe('TAOR loop — tools, thinking, streaming', () => {
     const { scrubLeaks } = await import('@/lib/agent/response-guard')
     const { runTAORLoop } = await import('../taor-loop')
 
-    mockStream = makeMockStream(
-      [
-        { type: 'content_block_delta', delta: { type: 'text_delta', text: 'I am Claude, an AI' } },
-        { type: 'content_block_delta', delta: { type: 'text_delta', text: ' made by Anthropic' } },
-      ],
-      textMessage('I am Claude, an AI made by Anthropic'),
-    )
-    mockClientInstance.messages.stream.mockReturnValue(mockStream)
+    __mockCallModelViaGateway.mockResolvedValue({
+      streamedDeltas: ['I am Claude, an AI', ' made by Anthropic'],
+      streamedThinkingDeltas: [],
+      hadThinking: false,
+      thinkingStartTime: null,
+      response: {
+        content: [{ type: 'text', text: 'I am Claude, an AI made by Anthropic' }],
+        stop_reason: 'end_turn',
+        usage: { input_tokens: 100, output_tokens: 50 },
+      },
+    })
 
     const events = await collectEvents(runTAORLoop('who are you?', makeConfig()))
 
@@ -443,10 +499,10 @@ describe('TAOR loop — tools, thinking, streaming', () => {
     await collectEvents(runTAORLoop('search for my notes', makeConfig()))
 
     expect(selectRelevantTools).toHaveBeenCalled()
-    // The stream should only receive the filtered tool set
-    const streamCall = mockClientInstance.messages.stream.mock.calls[0][0]
-    expect(streamCall.tools).toHaveLength(1)
-    expect(streamCall.tools[0].name).toBe('search_memory')
+    // The gateway should only receive the filtered tool set
+    const gatewayCall = __mockCallModelViaGateway.mock.calls[0][0] as GatewayCallConfig
+    expect(gatewayCall.tools).toHaveLength(1)
+    expect(gatewayCall.tools[0].name).toBe('search_memory')
   })
 
   // ── 7. Deferred tools prompt appended when no toolGroups specified ────
@@ -460,9 +516,9 @@ describe('TAOR loop — tools, thinking, streaming', () => {
 
     expect(buildDeferredToolsPrompt).toHaveBeenCalled()
     // The system prompt should include the deferred tools section
-    const streamCall = mockClientInstance.messages.stream.mock.calls[0][0]
-    expect(streamCall.system).toContain('Additional Tools (On-Demand)')
-    expect(streamCall.system).toContain('resolve_tool')
+    const gatewayCall = __mockCallModelViaGateway.mock.calls[0][0] as GatewayCallConfig
+    expect(gatewayCall.system).toContain('Additional Tools (On-Demand)')
+    expect(gatewayCall.system).toContain('resolve_tool')
   })
 
   // ── 8. Deferred tools prompt NOT appended when toolGroups specified ───
@@ -474,10 +530,9 @@ describe('TAOR loop — tools, thinking, streaming', () => {
 
     await collectEvents(runTAORLoop('hello', makeConfig({ toolGroups: ['core'] })))
 
-    // buildDeferredToolsPrompt is still called (it's invoked unconditionally),
-    // but the result should NOT be appended to the system prompt
-    const streamCall = mockClientInstance.messages.stream.mock.calls[0][0]
-    expect(streamCall.system).not.toContain('Additional Tools')
+    // The result should NOT be appended to the system prompt
+    const gatewayCall = __mockCallModelViaGateway.mock.calls[0][0] as GatewayCallConfig
+    expect(gatewayCall.system).not.toContain('Additional Tools')
   })
 
   // ── 9. Run logging includes skills_activated when skills are active ───
@@ -519,20 +574,16 @@ describe('TAOR loop — tools, thinking, streaming', () => {
     const { executeToolBatchStreaming } = await import('../tool-executor')
     const { runTAORLoop } = await import('../taor-loop')
 
-    const toolMsg = toolUseMessage([
-      { id: 'call-1', name: 'search_memory', input: { query: 'a' } },
-      { id: 'call-2', name: 'send_message', input: { to: 'bob', text: 'hi' } },
-    ])
-    const finalTextMsg = textMessage('Done')
-
     let callCount = 0
-    mockClientInstance.messages.stream.mockImplementation(() => {
+    __mockCallModelViaGateway.mockImplementation(async () => {
       callCount++
-      if (callCount === 1) return makeMockStream([], toolMsg)
-      return makeMockStream(
-        [{ type: 'content_block_delta', delta: { type: 'text_delta', text: 'Done' } }],
-        finalTextMsg,
-      )
+      if (callCount === 1) {
+        return makeToolUseGatewayResult([
+          { id: 'call-1', name: 'search_memory', input: { query: 'a' } },
+          { id: 'call-2', name: 'send_message', input: { to: 'bob', text: 'hi' } },
+        ])
+      }
+      return makeTextGatewayResult('Done')
     })
 
     const mockToolResults: Anthropic.ToolResultBlockParam[] = [
@@ -569,18 +620,13 @@ describe('TAOR loop — tools, thinking, streaming', () => {
       skills: [],
     })
 
-    // Simulate a stream with thinking blocks followed by text
-    const thinkingStream = makeMockStream(
-      [
-        { type: 'content_block_start', content_block: { type: 'thinking' } },
-        { type: 'content_block_delta', delta: { type: 'thinking_delta', thinking: 'Let me think about this...' } },
-        { type: 'content_block_delta', delta: { type: 'thinking_delta', thinking: 'I should search memory.' } },
-        { type: 'content_block_stop' },
-        { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Here is your answer' } },
-      ],
-      textMessage('Here is your answer'),
+    // Return gateway result with thinking deltas
+    __mockCallModelViaGateway.mockResolvedValue(
+      makeThinkingGatewayResult(
+        ['Let me think about this...', 'I should search memory.'],
+        'Here is your answer',
+      ),
     )
-    mockClientInstance.messages.stream.mockReturnValue(thinkingStream)
 
     const events = await collectEvents(runTAORLoop('complex analysis', makeConfig()))
 
