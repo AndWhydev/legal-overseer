@@ -16,6 +16,7 @@ export type SignalType =
   | 'relationship'
   | 'pricing'
   | 'fiduciary'
+  | 'delegated_action'
 
 export type DomainType =
   | 'financial'

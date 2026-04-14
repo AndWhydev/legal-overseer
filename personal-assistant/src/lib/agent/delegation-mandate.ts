@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/core/logger'
+import { emitToWAL } from '@/lib/brain/wal-emitter'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -183,6 +184,19 @@ export async function logDelegatedAction(
   if (error || !data) {
     throw new Error(error?.message ?? 'Failed to log delegated action')
   }
+
+  // Dual-write to Knowledge WAL so Section Librarians can fold this action
+  // into the entity's dossier. Fire-and-forget — WAL emission is best-effort
+  // and must never block or fail the delegation audit trail.
+  emitToWAL(supabase, {
+    org_id: params.org_id,
+    entity_ids: [params.entity_id],
+    signal_type: 'delegated_action',
+    content: params.action_summary,
+    confidence: 1.0,
+    source_memory_id: null,
+    source_thread_id: null,
+  }).catch(() => {})
 
   return data
 }
