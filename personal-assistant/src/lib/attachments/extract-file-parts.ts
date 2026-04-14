@@ -36,6 +36,7 @@ interface ExtractResult {
 // ---------------------------------------------------------------------------
 
 const MAX_DATA_URL_SIZE = 10 * 1024 * 1024 // 10 MB decoded
+const MAX_FILES_PER_MESSAGE = 5
 const DATA_URL_PREFIX = 'data:'
 
 // ---------------------------------------------------------------------------
@@ -106,11 +107,20 @@ export async function extractFilePartAttachments(
     return { attachmentIds: [], errors: [] }
   }
 
+  // Cap file count to prevent unbounded uploads from a single message
+  const cappedParts = fileParts.slice(0, MAX_FILES_PER_MESSAGE)
+  if (fileParts.length > MAX_FILES_PER_MESSAGE) {
+    logger.warn('[extract-file-parts] File count exceeds limit, truncating', {
+      received: fileParts.length,
+      limit: MAX_FILES_PER_MESSAGE,
+    })
+  }
+
   const attachmentIds: string[] = []
   const errors: string[] = []
 
-  for (let i = 0; i < fileParts.length; i++) {
-    const part = fileParts[i]
+  for (let i = 0; i < cappedParts.length; i++) {
+    const part = cappedParts[i]
 
     try {
       const id = await processFilePart(part, i, supabase, orgId, userId, threadId)
@@ -289,6 +299,9 @@ async function processUrlFile(
 
   const fileId = crypto.randomUUID()
 
+  // Store external URL in source_url, not storage_path — storage_path is
+  // expected to be a Supabase Storage key by getDownloadUrl(). Using
+  // storage_path: null signals this is an external reference.
   const { data: attachment, error: dbError } = await supabase
     .from('attachments')
     .insert({
@@ -299,7 +312,8 @@ async function processUrlFile(
       filename,
       mime_type: mimeType,
       size: 0, // Unknown for URL references
-      storage_path: part.url, // Store the original URL
+      storage_path: null,
+      source_url: part.url,
       status: 'ready',
     })
     .select('id')
