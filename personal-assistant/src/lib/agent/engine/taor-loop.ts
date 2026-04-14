@@ -43,8 +43,9 @@ import type { EngineConfig, AgentEvent } from './types'
 import { preFlightChecks } from './pre-flight'
 import { executeToolBatchStreaming, type ToolExecutionResult } from './tool-executor'
 import { resolveEntityOverrides } from '@/lib/agent/entity-overrides'
-import { detectDelegationIntent, resolveEntityFromMention, generateActivationConfirmation, generateRevocationConfirmation } from '@/lib/agent/delegation-intent'
+import { detectDelegationIntent, resolveEntityCandidates, generateActivationConfirmation, generateRevocationConfirmation, generateAmbiguityClarification } from '@/lib/agent/delegation-intent'
 import { setEntityMandate, revokeEntityMandate } from '@/lib/agent/delegation-mandate'
+import { buildTaorExecOptions } from './taor-loop-utils'
 import { buildTierContextBlock } from './tool-resolver'
 
 // ---------------------------------------------------------------------------
@@ -152,11 +153,32 @@ export async function* runTAORLoop(
   const delegationIntent = detectDelegationIntent(message)
   if (delegationIntent && delegationIntent.confidence >= 0.6) {
     try {
-      const entity = await resolveEntityFromMention(
+      const candidates = await resolveEntityCandidates(
         config.supabase,
         config.orgId,
         delegationIntent.entityMention,
       )
+
+      // Ambiguity guard: when the mention matches multiple entities, ask
+      // the user to disambiguate rather than acting on the wrong one.
+      // Critical for revocation — we don't want to silently revoke the
+      // wrong mandate.
+      if (candidates.length > 1) {
+        const clarification = generateAmbiguityClarification(
+          delegationIntent.entityMention,
+          candidates,
+        )
+        logger.info('[taor] Delegation intent ambiguous — asking user to disambiguate', {
+          mention: delegationIntent.entityMention,
+          candidateCount: candidates.length,
+          type: delegationIntent.type,
+        })
+        yield { type: 'message', data: clarification }
+        yield { type: 'done', data: {} }
+        return
+      }
+
+      const entity = candidates[0] ?? null
       if (entity) {
         if (delegationIntent.type === 'activate') {
           await setEntityMandate(
@@ -562,18 +584,10 @@ export async function* runTAORLoop(
 
   userMessages.push(message)
 
-  // Build execution options once (shared across all tool batches)
-  const execOptions: ExecuteToolOptions | undefined = config.agentConfigId
-    ? {
-        agentConfigId: config.agentConfigId,
-        orgSettings: config.orgSettings,
-        agentType: config.agentType,
-        calibratedThresholds: config.calibratedThresholds,
-        spawnDepth: config._spawnDepth ?? 0,
-        maxSpawnDepth: config.maxDepth ?? 3,
-        parentAgentId: config.parentAgentId,
-      }
-    : undefined
+  // Build execution options once (shared across all tool batches).
+  // Uses buildTaorExecOptions to ensure Phase 43 delegation plumbing
+  // (delegationMandate, entityId) is threaded through from the engine config.
+  const execOptions: ExecuteToolOptions | undefined = buildTaorExecOptions(config)
 
   // ── 7. THE LOOP: Think → Act → Observe → Repeat ───────────────────
   while (iterationCount < effectiveIterationCap) {

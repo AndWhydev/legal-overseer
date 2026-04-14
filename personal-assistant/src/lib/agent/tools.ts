@@ -29,6 +29,7 @@ import { executeApprovedAction, requeueExpiredAction } from './action-executor'
 import { notifyApproval } from './approval-notifier'
 import { recordActionOutcome } from '@/lib/intelligence/confidence-calibrator'
 import { shouldAutoExecute, type OrgAutonomyOverrides } from '@/lib/intelligence/autonomy-levels'
+import { buildExecOptionsDelegation, checkDelegationRateLimit } from './delegation-mandate'
 import { dispatchNotification } from '@/lib/notifications/dispatcher'
 import { graphSearch, hasTemporalSignal, MemorySearch } from '@/lib/memory-palace/memory-search'
 import { createProcedure } from '@/lib/knowledge-graph/procedural-memory'
@@ -1121,6 +1122,18 @@ export interface ExecuteToolOptions {
   spawnDepth?: number
   maxSpawnDepth?: number
   parentAgentId?: string
+  /**
+   * Active delegation mandate for the target entity.
+   * When `infinite_autopilot`, enables the autonomy-level short-circuit
+   * and the approval-queue bypass (subject to `checkDelegationRateLimit`).
+   * Required together with `entityId`.
+   */
+  delegationMandate?: 'infinite_autopilot' | 'supervised' | 'standard'
+  /**
+   * Target entity for the delegation bypass + audit logging.
+   * Paired with `delegationMandate`.
+   */
+  entityId?: string
 }
 
 export async function executeAgentTool(
@@ -1158,9 +1171,39 @@ export async function executeAgentTool(
   // Autonomy pre-filter: check tool risk level BEFORE confidence routing.
   // L4 (silent) and L3 (notify) bypass the approval queue entirely.
   // L2 (propose) and L1 (approve) fall through to existing confidence routing.
+  //
+  // Phase 43 delegation short-circuit: if the caller supplies
+  // `delegationMandate` + `entityId`, we enforce a per-entity hourly action
+  // cap before allowing the `infinite_autopilot` bypass. If the cap is hit,
+  // the mandate is demoted to null and routing falls back to standard
+  // confidence gates (a user-visible approval is queued). This protects
+  // against prompt-injection-driven unbounded execution.
   // ---------------------------------------------------------------------------
   const confidenceScore = options?.confidenceScore ?? 1 // Default to 1 (max confidence) for chat-driven calls
-  const autonomy = shouldAutoExecute(name, confidenceScore, options?.orgAutonomyOverrides)
+
+  let effectiveDelegation = buildExecOptionsDelegation(
+    options?.delegationMandate,
+    options?.entityId,
+  )
+  if (effectiveDelegation?.mandate === 'infinite_autopilot' && options?.entityId) {
+    const rateCheck = await checkDelegationRateLimit(supabase, orgId, options.entityId)
+    if (!rateCheck.allowed) {
+      logger.warn('[tools] Delegation rate limit hit — demoting to standard routing', {
+        orgId,
+        entityId: options.entityId,
+        count: rateCheck.count,
+        limit: rateCheck.limit,
+      })
+      effectiveDelegation = null
+    }
+  }
+
+  const autonomy = shouldAutoExecute(
+    name,
+    confidenceScore,
+    options?.orgAutonomyOverrides,
+    effectiveDelegation,
+  )
 
   if (autonomy.execute) {
     // L4 or L3 with sufficient confidence — execute directly
@@ -1204,6 +1247,7 @@ export async function executeAgentTool(
       options.orgSettings,
       options.agentType,
       options.calibratedThresholds,
+      effectiveDelegation ?? undefined,
     )
 
     // Record auto-act outcomes for calibration (fire-and-forget)
@@ -1232,6 +1276,8 @@ export async function executeAgentTool(
           confidence_score: options.confidenceScore,
           agentConfig: options.agentConfig,
           orgSettings: options.orgSettings,
+          entityDelegation: effectiveDelegation ?? undefined,
+          entity_id: options.entityId,
         })
 
         if (approval) {
