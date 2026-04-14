@@ -14,7 +14,6 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { DecisionLogEntry } from '@/lib/memory-palace/types'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -190,12 +189,16 @@ async function queryAgentRuns(
   try {
     // Query recent successful runs that have a result_summary
     // and whose trigger_payload contains a message field
+    // Time-bound to last 90 days to avoid scanning old rows
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 3600_000).toISOString()
+
     const { data, error } = await supabase
       .from('agent_runs')
       .select('trigger_payload, result_summary, status, created_at, routing_decision')
       .eq('org_id', orgId)
       .in('status', ['success', 'error'])
       .not('result_summary', 'is', null)
+      .gte('created_at', ninetyDaysAgo)
       .order('created_at', { ascending: false })
       .limit(50) // fetch more, filter client-side for relevance
 
