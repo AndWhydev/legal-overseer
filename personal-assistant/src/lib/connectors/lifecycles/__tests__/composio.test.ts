@@ -26,7 +26,7 @@ vi.mock('../../../composio/dispatch-crawl', async () => ({
   dispatchConnectionCrawl: vi.fn().mockResolvedValue({ enqueued: true, jobId: 'crawl:acc-1' }),
 }))
 
-function makeSupabase() {
+function makeSupabase(opts: { failConnectedUpdate?: string } = {}) {
   const updates: Record<string, unknown>[] = []
   const inserts: Record<string, unknown>[] = []
   const deletes: string[] = []
@@ -42,12 +42,18 @@ function makeSupabase() {
     })),
     update: vi.fn((u: Record<string, unknown>) => {
       updates.push({ ...u, __table: table })
+      const updateError =
+        table === 'org_connections' &&
+        u.status === 'connected' &&
+        opts.failConnectedUpdate
+          ? { message: opts.failConnectedUpdate }
+          : null
       // Support two shapes:
       //  1. .update(u).eq(id)                               — fire-and-forget update
       //  2. .update(u).eq(id).neq(col, val).select('id')    — CAS claim
       return {
         eq: vi.fn(() => {
-          const p: any = Promise.resolve({ error: null })
+          const p: any = Promise.resolve({ error: updateError })
           p.neq = vi.fn(() => ({
             select: vi.fn().mockResolvedValue({ data: [{ id: 'c1' }], error: null }),
           }))
@@ -128,6 +134,42 @@ describe('ComposioLifecycle', () => {
       expect(lastUpdate.connected_account_id).toBe('acc-1')
       expect(lastUpdate.trigger_ids).toEqual(['trig-1'])
       expect(lastUpdate.auth_expires_at).toBe('2027-01-01T00:00:00.000Z')
+    })
+
+    it('marks needs_reauth when activate is called without an account id', async () => {
+      const { supabase, updates } = makeSupabase()
+      const lifecycle = new ComposioLifecycle({ supabase, appUrl: 'https://app.bitbit.chat' })
+
+      const conn = {
+        id: 'c1',
+        org_id: 'org-1',
+        provider: 'gmail',
+        transport: 'composio',
+        config: {},
+      } as unknown as OrgConnection
+
+      await lifecycle.activate(conn, {})
+
+      expect(updates.some((u) => u.status === 'needs_reauth')).toBe(true)
+      expect(updates.some((u) => u.status === 'connected')).toBe(false)
+    })
+
+    it('throws and marks error when connection row update fails', async () => {
+      const { supabase, updates } = makeSupabase({ failConnectedUpdate: 'write failed' })
+      const lifecycle = new ComposioLifecycle({ supabase, appUrl: 'https://app.bitbit.chat' })
+
+      const conn = {
+        id: 'c1',
+        org_id: 'org-1',
+        provider: 'gmail',
+        transport: 'composio',
+        config: {},
+      } as unknown as OrgConnection
+
+      await expect(lifecycle.activate(conn, { accountId: 'acc-1' })).rejects.toThrow(
+        'activate update failed: write failed',
+      )
+      expect(updates.some((u) => u.status === 'error')).toBe(true)
     })
   })
 

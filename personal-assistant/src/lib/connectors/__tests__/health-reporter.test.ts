@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ConnectionHealthReporter } from '../health-reporter'
 
-function makeSupabase(initial: { consecutive_failures?: number; status?: string } = {}) {
+function makeSupabase(
+  initial: { consecutive_failures?: number; status?: string; readError?: string } = {},
+) {
   const updateCalls: Record<string, unknown>[] = []
   const single = vi.fn().mockResolvedValue({
     data: { consecutive_failures: initial.consecutive_failures ?? 0, status: initial.status ?? 'connected' },
-    error: null,
+    error: initial.readError ? { message: initial.readError } : null,
   })
   const from = vi.fn(() => ({
     select: vi.fn(() => ({
@@ -97,5 +99,14 @@ describe('ConnectionHealthReporter', () => {
     expect(updateCalls[0].last_error).toBe('expired')
     expect(updateCalls[0].auth_expires_at).toBeNull()
     expect(updateCalls[0].consecutive_failures).toBeUndefined()
+  })
+
+  it('returns early when reading current state fails', async () => {
+    const { supabase, updateCalls } = makeSupabase({ readError: 'rls denied' })
+    const reporter = new ConnectionHealthReporter(supabase)
+
+    await reporter.report({ connectionId: 'c1', healthy: false, error: 'boom' })
+
+    expect(updateCalls).toHaveLength(0)
   })
 })
