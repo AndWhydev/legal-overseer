@@ -62,16 +62,28 @@ BitBit understands the business better than the business owner — when Andy say
 
 ### Active
 
-#### Current Milestone: v2.0 Autonomous Execution
+#### Current Milestone: v3.0 Omniscience Activation
 
-**Goal:** Transform BitBit from an agent that understands and plans into one that autonomously executes real-world tasks — browser automation, multi-step workflows, async background jobs — reliably and generically across industries.
+**Goal:** Wire BitBit's Living Brain into production responses and build transformative AGI features — making BitBit genuinely omniscient across entity relationships, causal reasoning, and proactive intelligence.
 
 **Target features:**
-- Computer Use Agent (CUA) — browser automation as universal execution fallback
-- Long-running async task executor — background jobs with multi-step orchestration, failure handling, completion reporting
-- Tool priority chain — structured API first → browser fallback → human handoff
-- Workflow learning — remember successful execution patterns for reuse
-- Execution verification — confirm tasks completed, screenshot evidence, status reporting
+
+**Level 1 — Wire existing dead code:**
+- Entity dossiers replace old entity_profiles in context assembly
+- Spreading activation drives proactive recall (not just vector similarity)
+- Neural decay feeds into recall scoring (low-confidence memories rank lower)
+- Predictive coding surprises surfaced to users proactively
+
+**Level 2 — Transformative features:**
+- Theory of Mind — model what each entity knows vs ground truth
+- Causal Graph — "A causes B" edges, causal chain tracing, counterfactual reasoning
+- Anomaly Detection + Proactive Surfacing — pattern breaks surfaced to user
+- Active Learning — generate clarifying questions when confidence is low
+
+**Level 3 — Unforkable moats:**
+- Temporal Constraint Solver — deadline propagation, conflict detection
+- Goal Decomposition — explicit goal hierarchy with critical path analysis
+- Metacognition — track confidence per knowledge domain, know what it doesn't know
 
 ### Out of Scope
 
@@ -113,4 +125,4 @@ Mobile: React Native/Expo app with streaming chat, voice input, push notificatio
 | Entity context capped at 4000 chars | Stay within token budget while providing context | ⚠️ Revisit — may need dynamic budget |
 
 ---
-*Last updated: 2026-03-31 after v2.0 milestone started*
+*Last updated: 2026-04-14 after v3.0 Omniscience Activation milestone start*
