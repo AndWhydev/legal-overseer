@@ -302,11 +302,13 @@ export async function* runTAORLoop(
     : { useGlobalWorkspace: true }
 
   let systemPrompt: string
+  let systemContentBlocks: Array<{ type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }> | undefined
   if (config.threadId && config.userId) {
     try {
-      const assembler = new ContextAssembler({ userProfile, channel: config.channel, ...assemblerOverrides })
+      const assembler = new ContextAssembler({ userProfile, channel: config.channel, usePromptCache: true, ...assemblerOverrides })
       const ctx = await assembler.assemble(config.supabase, config.userId, config.orgId, config.threadId, message)
       systemPrompt = ctx.systemPrompt
+      systemContentBlocks = ctx.systemContentBlocks
       config.history = ctx.messageHistory
       previousSurfacedMemoryIds = ctx.metadata.surfacedMemoryIds ?? []
       yield {
@@ -319,6 +321,7 @@ export async function* runTAORLoop(
             assemblyMs: ctx.metadata.assemblyMs,
             tiersLoaded: ctx.metadata.tiersLoaded.length,
             assembler: true,
+            promptCacheEnabled: !!systemContentBlocks,
           },
         },
       }
@@ -602,6 +605,24 @@ export async function* runTAORLoop(
     }
   }
 
+  // ── 5b. Rebuild systemContentBlocks with full dynamic content ──────
+  // The assembler's systemContentBlocks only cover the base system prompt.
+  // After appending plan, skills, tools, voice mode, and traces above,
+  // we need to split the full prompt into cached prefix + dynamic suffix.
+  if (systemContentBlocks && systemContentBlocks.length > 0) {
+    // The first block (with cache_control) is the brain state prefix (dossiers, profiles).
+    // Everything added after the assembler is dynamic and should not be cached.
+    const cachedPrefix = systemContentBlocks.find(b => b.cache_control)
+    const dynamicAdditions = fullSystemPrompt.slice(systemPrompt.length)
+
+    if (cachedPrefix && dynamicAdditions.length > 0) {
+      systemContentBlocks = [
+        cachedPrefix,
+        { type: 'text' as const, text: dynamicAdditions },
+      ]
+    }
+  }
+
   // ── 6. Build initial messages array ────────────────────────────────
   const userMessageContent: string | Anthropic.ContentBlockParam[] = config.contentBlocks?.length
     ? [
@@ -675,6 +696,7 @@ export async function* runTAORLoop(
           model,
           maxTokens,
           system: fullSystemPrompt,
+          systemContentBlocks,
           tools,
           messages: messages as unknown as GatewayCallConfig['messages'],
           thinking,

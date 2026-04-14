@@ -25,10 +25,19 @@ interface AnthropicMessageParam {
 
 // ── Public types ───────────────────────────────────────────────────────────
 
+/** Anthropic-compatible content block with optional cache_control. */
+export interface SystemContentBlock {
+  type: 'text'
+  text: string
+  cache_control?: { type: 'ephemeral' }
+}
+
 export interface GatewayCallConfig {
   model: string // Gateway model ID, e.g. 'anthropic/claude-sonnet-4.6'
   maxTokens: number
   system: string
+  /** When provided, used as the system parameter for prompt caching support. Falls back to `system` string. */
+  systemContentBlocks?: SystemContentBlock[]
   tools: AnthropicTool[]
   messages: AnthropicMessageParam[]
   thinking?: { type: 'enabled'; budget_tokens: number }
@@ -177,18 +186,34 @@ export async function callModelViaGateway(
     throw convErr
   }
 
+  // Build providerOptions: merge thinking + prompt caching when present
+  const anthropicOptions: Record<string, unknown> = {}
+  if (config.thinking) {
+    anthropicOptions.thinking = config.thinking
+  }
+  if (config.systemContentBlocks && config.systemContentBlocks.length > 0) {
+    anthropicOptions.cacheControl = true
+  }
+  const providerOptions = Object.keys(anthropicOptions).length > 0
+    ? { anthropic: anthropicOptions }
+    : undefined
+
+  // When systemContentBlocks are provided, join their text for the system string
+  // but enable cacheControl so the provider can apply cache_control markers.
+  // The AI SDK Anthropic provider uses cacheControl: true to add breakpoints
+  // at the end of the system prompt automatically.
+  const systemText = config.systemContentBlocks && config.systemContentBlocks.length > 0
+    ? config.systemContentBlocks.map(b => b.text).join('\n\n')
+    : config.system
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const streamResult = streamText({
     model: _testModel ?? gateway(config.model),
-    system: config.system,
+    system: systemText,
     messages: messages as Parameters<typeof streamText>[0]['messages'],
     tools,
     maxOutputTokens: config.maxTokens,
-    ...(config.thinking && {
-      providerOptions: {
-        anthropic: { thinking: config.thinking },
-      },
-    }),
+    ...(providerOptions && { providerOptions }),
   } as any)
 
   // Collect streaming events
