@@ -219,17 +219,6 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
       required: ['to', 'text'],
     },
   },
-  {
-    name: 'initiate_facetime_call',
-    description: 'Start a FaceTime audio call with someone. BitBit joins as a voice AI participant that can converse naturally. Use when the user explicitly asks to "call" someone or "FaceTime" them. NOTE: Requires a Sendblue FaceTime line — currently in preview.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        phone_number: { type: 'string', description: 'Phone number to call in E.164 format' },
-      },
-      required: ['phone_number'],
-    },
-  },
 ]
 
 async function readJsonCache<T>(filename: string): Promise<T[]> {
@@ -1507,28 +1496,5 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     return result.success
       ? { success: true, data: { to, textLength: text.length } }
       : { success: false, error: result.error || 'Voice memo failed' }
-  },
-
-  async initiate_facetime_call(input, orgId) {
-    const phoneNumber = input.phone_number as string
-    if (!phoneNumber) return { success: false, error: 'Missing phone_number' }
-
-    const { initiateFaceTimeCall } = await import('@/lib/voice/call-session')
-    const userId = 'unknown'
-
-    const session = await initiateFaceTimeCall(userId, orgId, phoneNumber)
-    if (!session) {
-      return { success: false, error: 'FaceTime call initiation failed — check Sendblue FaceTime line config' }
-    }
-
-    return {
-      success: true,
-      data: {
-        callId: session.id,
-        status: session.status,
-        phoneNumber: session.phoneNumber,
-        note: 'FaceTime call initiated. BitBit will join the audio channel automatically.',
-      },
-    }
   },
 }
