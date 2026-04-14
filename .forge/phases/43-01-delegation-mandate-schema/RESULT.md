@@ -1,6 +1,6 @@
 # Phase 43-01: Delegation Mandate Schema & Service Layer
 
-**Status:** COMPLETE (retroactively documented)
+**Status:** COMPLETE + VERIFIED (17 tests passing, retroactively documented)
 **Implementation landed:** ~2026-04-10 (migration timestamp); committed alongside `feat(44-03)` (commit `9e32fbd`, 2026-04-11)
 **Documented:** 2026-04-14
 **Branch:** `claude/review-forge-access-Aas4D`
@@ -118,9 +118,9 @@ exercises the core service-layer functions. Additional test coverage added
 by downstream phases (43-02, 43-04, 43-05, 43-03) indirectly validates 43-01
 behaviour through their mocks.
 
-**Test execution caveat:** Vitest hangs in the current environment — tests
-are structurally correct but unverified pending the Step 2 fix of the
-2026-04-14 continuity plan.
+**Verified 2026-04-14:** 17/17 tests passing (`delegation-mandate.test.ts`)
+after installing deps. Original "vitest hangs" report was caused by missing
+`node_modules` in the workspace, not by any test issue.
 
 ## Files
 
