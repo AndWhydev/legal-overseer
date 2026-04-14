@@ -1,224 +1,346 @@
-# Feature Landscape: Autonomous Execution (v2.0)
+# Feature Landscape: Cognitive Omniscience (v3.0)
 
-**Domain:** Autonomous AI agent execution -- browser automation, async task management, workflow orchestration, execution verification
-**Researched:** 2026-03-31
-**Confidence:** MEDIUM-HIGH (grounded in real product analysis of Devin, Operator, Anthropic CUA, Stagehand, and industry patterns; verified against official docs)
+**Domain:** Cognitive intelligence features for an agentic AI personal/business assistant
+**Researched:** 2026-04-14
+**Confidence:** MEDIUM-HIGH (grounded in production system analysis, academic research, and existing BitBit codebase audit; verified against official docs and multiple independent sources)
+
+---
+
+## Existing Foundation (Already Built)
+
+Before enumerating new features, here is what BitBit already has that these cognitive features build on:
+
+| Existing System | Status | Relevant To |
+|----------------|--------|-------------|
+| Entity dossiers + schema_json | Built, workers not deployed | Theory of Mind, Anomaly Detection |
+| Predictive coding (surprise scoring) | Built, not integrated | Anomaly Detection |
+| Spreading activation (neural graph) | Built, not wired to TAOR | Causal Reasoning, Goal Decomposition |
+| Query gate (System 1/2) | Built, not wired to TAOR | Metacognition |
+| Global workspace (competitive allocation) | Built, flag OFF | Metacognition |
+| Reflexion loop (strategy_memories) | Working in production | Active Learning, Metacognition |
+| Knowledge WAL (dual-write live) | Signals accumulating | All features (event stream) |
+| 3-tier worker hierarchy (intake/librarian/chief) | Built, not deployed | All features (background processing) |
+| Proactive recall (blended scoring) | Working | Theory of Mind, Anomaly Detection |
+| Confidence routing (act/ask/escalate) | Working | Active Learning, Metacognition |
+| Neural decay on memories | Working | Temporal Reasoning |
 
 ---
 
 ## Table Stakes
 
-Features users expect from an autonomous execution platform. Missing any of these and the system feels broken or unsafe.
+Features users expect from a cognitive AI assistant. Without these, the "omniscient" claim falls flat.
 
-| Feature | Why Expected | Complexity | Dependencies on Existing BitBit | Notes |
-|---------|-------------|------------|--------------------------------|-------|
-| **Real-time execution visibility** | Every major product (Devin, Operator, Claude Cowork) shows what the agent is doing in real-time. Users refuse to trust a black box. | Med | Extends existing `AgentEvent` SSE streaming in TAOR loop | Devin shows Shell/Browser/Editor/Planner tabs with <50ms latency. Operator shows a live browser view with narration. BitBit needs equivalent: a live activity feed showing current step, elapsed time, and what tool is active. |
-| **Step-by-step execution plan** | Operator, Devin, and Pulumi Neo all show the plan before or during execution. Users need to see "here are the 5 things I will do" before the agent acts. | Low | Extends existing `PlanStage` system (planner.ts already generates plans) | BitBit already has plan generation and plan_stage_update events. Extend to cover multi-step async executions, not just single-turn tool calls. |
-| **Human confirmation for sensitive actions** | Anthropic CUA, Operator, and Claude Cowork all pause for confirmation on logins, payments, form submissions, and consent actions. This is table stakes for trust and safety. | Med | Extends existing approval-queue.ts and confidence routing | BitBit already has approval flow with confidence thresholds (act/ask/escalate). Extend to cover real-time execution pauses where the agent stops mid-workflow and waits for user confirmation. Currently approvals are fire-and-forget; needs to become synchronous mid-execution gates. |
-| **Task cancellation** | MCP async tasks spec, Devin, and Operator all support user-initiated cancellation. An unstoppable autonomous agent is terrifying. | Med | New -- no existing cancellation mechanism for in-flight tool executions | Must implement clean cancellation semantics: stop current step, transition to `cancelled` state, never resume. The TAOR loop's safety ceiling (50 iterations) is not the same as user-initiated cancel. |
-| **Execution progress tracking** | Users need to know: how far along is this task? MCP Tasks spec defines `working`/`completed`/`failed`/`cancelled` states. Devin shows a Progress tab. | Med | Extends existing `tool_progress` event type in AgentEvent | Current `tool_progress` only tracks elapsed_ms for a single tool. Need durable task state: a DB-backed task record with lifecycle states, percentage progress, and status messages. |
-| **Error recovery and retry** | Long-running tasks fail. Every production system implements retry with exponential backoff and dead letter queues. Research shows "doubling task duration quadruples the failure rate." | High | Extends existing DLQ (dlq.ts) and circuit breaker (circuit-breaker.ts) | BitBit already has circuit breakers and a dead letter queue. Extend to per-step retry within multi-step executions, with configurable retry policies per action type. |
-| **Execution history and audit log** | Users need to review what the agent did after the fact. Devin records every terminal command, file edit, and browser action in a full replay timeline. | Med | Extends existing run-logger.ts (logAgentRun) | Current logging tracks token usage and cost. Extend to capture every action taken, every screenshot captured, every decision made, stored in a durable execution_steps table. |
-| **Tool priority chain (API-first, browser fallback)** | The "all-or-nothing" approach to autonomy is brittle. Best practice: try structured API first, fall back to browser automation if no API exists, escalate to human if browser fails. | High | New orchestration layer above existing tool system | This is the architectural core of v2.0. Current tools are all API-based (invoice, email, etc.). Need a resolver that: (1) checks if a structured tool exists, (2) falls back to CUA/browser, (3) escalates to human. Each level has different cost, speed, and reliability characteristics. |
+### 1. Theory of Mind: Information Asymmetry Tracking
+
+**What it is:** Track what each entity (contact, user) knows versus ground truth. When Andy's client Sezer emails about a payment that BitBit knows was already processed, BitBit should recognize the information gap and tell Andy "Sezer doesn't know the payment cleared yet."
+
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|-------------|------------|--------------|-------|
+| **Per-entity belief ledger** | Core ToM primitive. Without tracking what each person knows, the agent cannot reason about information gaps. | Med | Entity dossiers (exists), Knowledge WAL (exists) | Each entity dossier gains a `known_facts[]` section: facts the entity has been exposed to (via messages they sent/received). Contrast with `ground_truth[]` from all sources. Delta = information asymmetry. |
+| **Information gap detection** | When responding, surface "X doesn't know Y" when relevant. Table stakes for proactive value. | Med | Per-entity belief ledger, context assembly | During context assembly, compare belief ledger of mentioned entities against current ground truth. Surface gaps as a context block: "Note: Sezer has not been informed that invoice #4521 was paid on April 10." |
+| **Exposure tracking on outbound** | Track what information was shared with whom, via which channel. Without this, belief ledger is incomplete. | Med | Sent message capture (Epic B1 -- not yet built), Knowledge WAL | Every outbound message (email, WhatsApp, iMessage) logs which facts were communicated to which entity. Critical dependency: B1 (sent-message capture) must land first. |
+
+**Complexity:** Medium overall. The data model is straightforward (extend entity dossiers with belief state). The hard part is reliably inferring "what was communicated" from natural language messages.
+
+**Why table stakes:** Every business context involves information asymmetry. "Did the client know we raised the rate?" "Has the developer been told about the scope change?" Without this, BitBit is just a search engine, not an intelligence layer.
+
+---
+
+### 2. Anomaly Detection: Pattern Break Surfacing
+
+**What it is:** Detect when observed behavior deviates from established patterns and proactively alert the user. "Sezer usually pays within 14 days -- it's been 21 days, which is unusual."
+
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|-------------|------------|--------------|-------|
+| **Schema-deviation alerts** | When the predictive coding engine scores a fact above the surprise threshold, surface it to the user proactively instead of just logging it. | Low | Predictive coding engine (exists), surprise threshold (0.3, exists) | The engine already scores surprise. The missing link: route high-surprise facts (>0.5) through the proactive surfacing pipeline instead of silently storing them. This is plumbing, not new ML. |
+| **Behavioral baseline per entity** | The schema_json in entity dossiers IS the behavioral baseline. Needs to be populated and maintained by the section librarian workers. | Med | Section librarian workers (built, not deployed), entity dossiers | Deploy the Living Brain workers (Epic D1). Once dossiers are actively maintained, schema_json naturally accumulates behavioral baselines from repeated patterns. |
+| **Temporal pattern detection** | Detect changes in frequency/timing, not just content. "Client X used to email weekly, hasn't in 3 weeks." | Med | Knowledge WAL timestamps, section librarian | Add frequency tracking to entity schemas: `{ contact_frequency: "weekly", last_contact: "2026-03-25", expected_next: "2026-04-01" }`. Section librarian flags when expected_next passes without contact. |
+| **Alert routing and priority** | Not every anomaly deserves a notification. Need priority scoring based on entity importance, anomaly severity, and user attention budget. | Med | Proactive recall scoring (exists), user attention model | Use the existing blended scoring (0.4 relevance + 0.3 confidence + 0.2 recency + 0.1 edge weight) but add anomaly_severity as a factor. Surface only top-N anomalies per day. |
+
+**Complexity:** Low-Medium. Most infrastructure exists. The predictive coding engine, surprise scoring, and entity schemas are built. The work is (a) deploying the workers that maintain schemas, and (b) routing high-surprise events to a proactive surfacing channel.
+
+**Why table stakes:** This is the core "proactive intelligence" promise. Every personal AI assistant in 2026 (ChatGPT Pulse, Arahi, Google Gemini Advanced) is moving toward proactive surfacing. Pattern break detection is how you do it without annoying the user with noise.
+
+---
+
+### 3. Active Learning: Confidence-Driven Clarification
+
+**What it is:** When the agent's confidence is low on a decision or action, ask a targeted clarifying question instead of guessing or doing nothing. "I found two invoices matching 'White House work' -- the $3,200 from January or the $5,800 from March. Which one?"
+
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|-------------|------------|--------------|-------|
+| **Confidence-gated question generation** | When confidence < threshold for a specific decision, generate a clarifying question instead of proceeding. | Med | Confidence routing (exists, act/ask/escalate thresholds), TAOR loop | BitBit already has the act/ask/escalate confidence tiers. The gap: when in "ask" territory, the agent doesn't generate a specific clarifying question. It either asks for blanket approval or proceeds tentatively. Need to generate targeted disambiguating questions. |
+| **Ambiguity detection in entity resolution** | When entity resolution returns multiple candidates, present the ambiguity to the user. Already partially exists in entity-resolution's 5-step fuzzy match. | Low | Entity resolution (exists), approval queue | The 5-step fuzzy matcher already scores candidates. If top-2 scores are within 0.1, that's ambiguity. Surface as a clarifying question rather than picking the top match silently. |
+| **Learning from corrections** | When the user corrects a choice, record the disambiguation pattern for next time. Closes the feedback loop. | Low | Reflexion loop (working in production) | The reflexion loop already records corrected actions as strategy_memories. Extend: when a disambiguation question gets answered, store the resolution pattern ("when Andy says 'Sezer,' he means Sezer Karahasan, not Sezer Kilic"). |
+| **Question budget per conversation** | Don't ask 5 clarifying questions in a row. Budget questions to avoid being annoying. Max 1-2 per conversation turn. | Low | TAOR loop | Simple counter: track questions asked this turn. After 2, proceed with best guess and note uncertainty. |
+
+**Complexity:** Low-Medium. The confidence routing infrastructure exists. The main new work is generating specific disambiguating questions (LLM prompt engineering) and wiring them into the conversation flow at the right points.
+
+**Why table stakes:** Zendesk, Intercom, and every production AI agent system uses confidence thresholds with tiered responses. The pattern is well-established: >90% confidence = act autonomously, 60-90% = clarify, <60% = escalate. BitBit has the thresholds but doesn't generate the clarifying questions.
+
+---
+
+### 4. Temporal Reasoning: Time-Aware Intelligence
+
+**What it is:** Understand deadlines, sequences, and temporal relationships. "The proposal is due Friday, but the developer estimate won't be ready until Thursday, leaving only 1 day for review."
+
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|-------------|------------|--------------|-------|
+| **Deadline extraction from messages** | Automatically extract dates, deadlines, and temporal commitments from conversations. "I'll have it by Friday" -> deadline: Friday. | Med | Knowledge WAL, intake clerk workers | The intake clerk (Tier 1 worker) already extracts entities and facts. Extend the extraction prompt to identify temporal commitments: deadlines, due dates, scheduled events. Store as structured data in knowledge_log with signal_type='commitment'. |
+| **Deadline propagation** | When a deadline changes, propagate the impact to dependent items. "If the design is delayed 3 days, the dev estimate and proposal deadline shift too." | High | Entity graph edges (exists), event_tuples (exists) | Requires a dependency graph between tasks/deadlines. BitBit has entity_edges with types like 'LEADS_TO' and 'PART_OF'. Need to add 'DEPENDS_ON' or 'BLOCKS' temporal edges. Propagation is BFS through these edges. |
+| **Overdue detection** | Flag items past their deadline. "Invoice #4521 was due April 5 and hasn't been paid." | Low | Deadline extraction, cron job | Simple: query all extracted deadlines where date < now() AND status != 'completed'. Surface via proactive surfacing pipeline. This is low complexity because it's just a time comparison. |
+| **Timeline reconstruction** | When asked "what happened with the White House project?", reconstruct a chronological narrative from scattered signals across channels. | Med | Knowledge WAL (exists), entity dossiers (exists) | Query knowledge_log WHERE entity_ids overlaps with project entity, ORDER BY created_at. The section librarian already compiles dossier_markdown. Add a chronological timeline section to the dossier template. |
+
+**Complexity:** Medium overall. Deadline extraction is prompt engineering. Overdue detection is trivial. Timeline reconstruction is a query pattern. Deadline propagation is the hard part -- it requires a constraint solver, which is higher complexity.
+
+**Why table stakes:** Every business operates on deadlines. If BitBit can't reason about time ("when is this due?", "what's late?", "what depends on what?"), it's missing the most basic operational intelligence.
+
+---
 
 ## Differentiators
 
-Features that would set BitBit apart. Not expected by users, but create significant competitive advantage.
+Features that set BitBit apart from competing AI assistants. Not expected, but create significant competitive advantage.
 
-| Feature | Value Proposition | Complexity | Dependencies on Existing BitBit | Notes |
-|---------|-------------------|------------|--------------------------------|-------|
-| **Workflow learning and replay** | Remember successful multi-step executions and replay them faster next time. Stagehand v3's auto-caching (cache selector paths, replay without LLM inference, re-engage AI only on failure) is the gold standard. AFLOW (ICLR 2025) uses MCTS to preserve and reuse workflow experiences. | High | Extends existing Memory Palace and workflow-rule-engine | When BitBit successfully completes "invoice Sezer for White House RE work" via 4 steps, store that execution trace. Next time a similar request comes in, replay the cached workflow without full LLM reasoning on each step. Falls back to LLM reasoning only when the cached path fails. This compounds -- the more BitBit works, the faster and cheaper it gets. |
-| **Evidence capture and verification** | After completing a task, capture proof: screenshots of the result, API response confirmations, before/after state comparison. No competing product for business operations does this well. | Med | Extends existing file attachment system (signed URLs, storage) | Screenshot the invoice after sending, capture the confirmation email, store the Stripe payment receipt. Users can see "here is proof I did what you asked." This is the difference between "I sent the invoice" and "here is the sent invoice, the recipient email, and the delivery confirmation." |
-| **Proactive execution suggestions** | When the agent notices a pattern ("you invoice Sezer every month around the 15th"), suggest pre-building the next execution. Move from reactive to proactive without being asked. | Med | Extends existing role tick scheduler and workflow templates | BitBit already has proactive role ticks and workflow rules. Layer execution pattern recognition on top: detect recurring multi-step tasks, suggest automating them, and eventually auto-execute with high-confidence approval bypass. |
-| **Cross-role orchestration for multi-step tasks** | A single user request like "Onboard new client FooBar" might need Sales (create contact, log deal), Finance (set up billing), Comms (send welcome email), and Builder (spin up staging site). Orchestrate across roles seamlessly. | High | Extends existing role system (5 roles) and workflow-tool-bridge.ts | BitBit already has cross-role tool bridge and role registry. Need an orchestrator that decomposes a complex request into role-specific sub-tasks, executes them in the right order (respecting dependencies), and aggregates results. Similar to Devin's "orchestrate Devins" feature where a coordinator delegates to specialists. |
-| **Execution cost prediction** | Before executing, show the user "this will cost ~$0.45 in API calls and take ~3 minutes." Users can then decide if it is worth running autonomously vs. doing it manually. | Low | Extends existing cost-guard.ts and estimateRunCost | No competing product surfaces cost prediction pre-execution for business operations agents. BitBit already tracks per-execution costs. Extend to predict costs based on historical execution data for similar tasks. |
-| **Contextual browser session management** | For CUA tasks, maintain browser sessions with saved cookies, logins, and state across executions. Reuse sessions for the same service (e.g., always logged into the client's WordPress admin). | High | New -- requires session persistence layer | Operator runs ephemeral browser sessions (cookies discarded). For a business ops agent, persistent sessions are more valuable -- stay logged into Xero, WordPress, Asana. Requires careful security (encrypted credential vault, session isolation per org). |
-| **Async task inbox/dashboard** | A dedicated view showing all running, completed, and failed background tasks. Like a "job queue" UI that non-technical users understand. | Med | Extends existing role dashboard (activity feed, status cards) | Current role dashboard shows role activity. Add a "Tasks" view that shows background executions: running tasks with live progress, completed tasks with evidence links, failed tasks with retry buttons. |
+### 5. Causal Reasoning: "A Causes B" Graph
+
+**What it is:** Explicitly model cause-and-effect relationships between events/decisions, enabling counterfactual reasoning ("What would have happened if we'd sent the proposal earlier?") and root cause analysis ("Why did the client churn?").
+
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| **Causal edge type on knowledge graph** | Add 'CAUSES' and 'PREVENTS' edge types to entity_edges. When the intake clerk processes "We lost the client because of the late delivery," extract a causal edge: late_delivery -> CAUSES -> client_loss. | Med | Entity graph (exists), intake clerk workers | The neural graph already has SynapseType union. Add 'CAUSES', 'PREVENTS', 'ENABLES' to the union. Intake clerk prompt extended to extract causal relationships. No new infrastructure -- just new edge types. |
+| **Causal chain tracing** | "Why did we lose the Morrison project?" -> trace backward through CAUSES edges to find root causes. Spreading activation already supports multi-hop traversal. | Med | Causal edges (new), spreading activation (exists) | Use the existing `activate()` function but constrain traversal to CAUSES edges only, traversing backward (target -> source). Returns a chain of causal factors. |
+| **Counterfactual reasoning via LLM** | "What if we'd sent the proposal 2 days earlier?" -> LLM reasons over the causal chain with the counterfactual substitution. | Med | Causal chain tracing, LLM (exists) | Not a formal causal inference engine (that would be overkill). Instead: retrieve the causal chain, present it to the LLM with the counterfactual, let the LLM reason about the likely alternative outcome. Practical, not mathematically rigorous. Good enough for business context. |
+| **Pattern-based causal templates** | Common business causal patterns: late_delivery -> client_dissatisfaction -> churn. payment_delay -> cash_flow_issue -> missed_payroll. Build a library of domain-specific causal templates. | Low | Causal edge type | Seed 20-30 common business causal templates. The section librarian uses these as priors when extracting causal relationships from new signals. Analogous to how the predictive coding schemas serve as priors for anomaly detection. |
+
+**Complexity:** Medium. The graph infrastructure exists. Adding edge types is trivial. Causal extraction from text is the main new work (LLM prompt engineering). Counterfactual reasoning is LLM-powered, not formal causal inference.
+
+**Why differentiating:** No personal AI assistant currently offers explicit causal reasoning over a user's business operations. Graphiti/Zep tracks temporal edges but not causal direction. This is a genuine moat: the more causal edges BitBit accumulates, the better its predictions and explanations become, and competitors can't copy the accumulated graph.
+
+---
+
+### 6. Goal Decomposition: Explicit Goal Hierarchy
+
+**What it is:** Maintain an explicit tree of the user's goals, from high-level objectives ("Grow revenue 20% this quarter") down to specific tasks ("Send follow-up email to lead X"). Track progress against each node.
+
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| **Goal tree data model** | Hierarchical goal structure: strategic goals -> tactical objectives -> operational tasks -> atomic actions. Each node has: description, owner, deadline, status, progress, dependencies. | Med | Entity graph (exists), new table or entity type | Implement as a new entity type in the knowledge graph ('Goal') with hierarchical PART_OF edges. Or a dedicated goals table with parent_id FK. The graph approach is more flexible and integrates with existing traversal. |
+| **Goal elicitation from conversation** | When the user states "I want to grow the agency this year," detect this as a goal statement and extract it into the goal tree. Over time, build the tree from natural conversation, not forced input. | Med | Intake clerk workers, Knowledge WAL | Extend the intake clerk prompt to detect goal statements. Signal_type: 'goal'. The section librarian promotes goals into the goal tree and links them to existing entities (projects, clients). |
+| **Critical path analysis** | Given a goal tree with dependencies and deadlines, compute the critical path: which tasks, if delayed, would delay the goal. | High | Goal tree, deadline propagation (from Temporal Reasoning) | Classic project management algorithm (CPM). Inputs: goal tree nodes with durations and dependencies. Output: the longest path through the dependency graph. Flags tasks on the critical path as high-priority. |
+| **Progress tracking via signal correlation** | When BitBit sees a new invoice sent or a client onboarded, automatically update progress on related goals. "Revenue goal: $45K / $60K target (75%)." | High | Goal tree, entity linking, signal correlation | This is the hardest part. Requires mapping signals (invoice_sent, client_onboarded) to goal metrics. Semi-automated: the section librarian proposes correlations, user confirms. Over time, correlations become automatic. |
+
+**Complexity:** High. The data model is straightforward, but reliably extracting goals from conversation, maintaining the hierarchy, and computing critical paths is significant new functionality.
+
+**Why differentiating:** No competing personal AI assistant maintains an explicit goal hierarchy derived from conversations. Planner apps (Notion, Asana) require manual input. AI assistants (ChatGPT, Claude) don't persist goals across sessions. BitBit's Living Brain architecture is uniquely positioned to extract and maintain goals from the continuous signal stream.
+
+---
+
+### 7. Metacognition: Self-Aware Knowledge Boundaries
+
+**What it is:** BitBit explicitly tracks what it knows well, what it knows poorly, and what it doesn't know at all. Per knowledge domain, per entity. "I'm very confident about Sezer's payment history (12 invoices tracked) but have no information about their technical preferences."
+
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| **Domain confidence map** | Per-entity, per-domain confidence score. Domains: financial, relational, operational, technical, preferences. Computed from signal density (how many facts) and signal recency (how fresh). | Med | Entity dossiers (exists), domain_profiles (exists) | The domain_profiles table already exists with domains: financial, relational, operational, behavioral. Add a `confidence_by_domain` JSONB column to entity_dossiers: `{ financial: 0.92, relational: 0.7, operational: 0.3, technical: 0.1 }`. Computed by the section librarian from fact count and recency per domain. |
+| **Knowledge gap identification** | When asked about a domain where confidence is low, explicitly flag the gap. "I don't have much information about Sezer's technical preferences -- would you like me to ask?" | Low | Domain confidence map, TAOR loop | Check domain confidence before responding. If confidence < 0.3 for the relevant domain, prepend: "Note: I have limited information about [domain] for [entity]." If confidence < 0.1: "I have no information about [domain] for [entity] -- would you like me to find out?" |
+| **Confidence decay and refresh** | Confidence decays over time as information becomes stale. "I was confident about Morrison's project scope 3 months ago, but haven't heard anything since." | Low | Neural decay (exists) | BitBit already has memory decay rates per category. Apply the same decay to domain confidence: if no new signals in domain X for entity Y in 30 days, decay confidence by 10%. The section librarian refreshes confidence when new signals arrive. |
+| **Proactive knowledge acquisition** | When BitBit identifies a critical knowledge gap (low confidence in an important domain for an active entity), suggest ways to fill it. "I notice I have no financial history for new client FooBar. Should I check if they have any invoices in Xero?" | Med | Knowledge gap identification, tool awareness | Combine low-confidence domains with available tools: if financial confidence is low and Xero is connected, suggest querying Xero. If relational confidence is low and CRM is connected, suggest looking up the contact. This bridges metacognition to action. |
+
+**Complexity:** Medium. Domain confidence computation is straightforward. Knowledge gap flagging is low-effort. Proactive acquisition requires mapping gaps to available tools, which adds moderate complexity.
+
+**Why differentiating:** Current AI assistants hallucinate when they don't know something. BitBit would instead say "I don't know this, but I could find out by checking Xero." This is the "SMART agent" pattern from recent research: distinguishing between problems solvable with internal knowledge and those requiring tool use. Builds deep user trust.
+
+---
 
 ## Anti-Features
 
-Features to explicitly NOT build. These look tempting but would damage the product.
+Features to explicitly NOT build. These look tempting but would damage the product or waste effort.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |-------------|-----------|-------------------|
-| **Full desktop/OS control (a la Claude Cowork)** | BitBit is a web platform, not a desktop app. Desktop CUA requires OS-level access, introduces massive security surface area, and is not relevant for business operations. Anthropic's own CUA is macOS-only and requires local installation. | Use headless browser automation (Browserbase/Stagehand) running server-side. Users see the result, not the agent controlling their computer. This is the Operator model, not the Cowork model. |
-| **Autonomous social media posting** | Anthropic explicitly limits CUA for social media impersonation. Autonomous posting risks brand damage, legal liability, and platform bans. Even Claude refuses this. | Build draft-and-approve workflows for social content. The agent drafts the post, the human reviews and publishes. Never auto-publish. |
-| **Unrestricted autonomous execution without escape hatch** | "All-or-nothing autonomy is too brittle." Research consistently shows the hybrid model (human can interrupt at any time) outperforms fully autonomous systems in trust, adoption, and actual outcomes. | Always provide: (1) live visibility, (2) ability to pause, (3) ability to cancel, (4) ability to take over manually. The agent should never be running where the user cannot intervene. |
-| **Building a custom browser engine** | Stagehand v3 already removed Playwright dependency and talks directly to CDP. Building a browser from scratch is years of work. Even OpenAI uses a custom browser (Atlas) but it is their core product. | Use Browserbase + Stagehand (TypeScript-native, CDP-direct, auto-caching, self-healing). Or Playwright for the structured 80% and Stagehand for the AI-driven 20%. |
-| **Real-time screen sharing / co-browsing** | Technically cool but enormously complex (WebRTC, low-latency streaming, coordinate synchronization). Devin does this because it IS a coding workspace. BitBit is an operations platform. | Show task progress via event stream and screenshots. Users do not need to watch the agent browse in real-time for business tasks. Periodic screenshot evidence is sufficient. |
-| **Autonomous financial transactions without confirmation** | Even with high confidence routing, auto-executing payments, wire transfers, or contract signatures is a liability disaster. Every major platform blocks this by default. | Financial actions always require human confirmation, regardless of confidence score. This is a hard rule, not a threshold. |
-| **Per-website custom scrapers** | Tempting to build custom integrations for every SaaS tool. This does not scale and creates massive maintenance burden. Skyvern specifically exists because per-site customization fails. | Use CUA/browser automation as the universal fallback. It works on any website without per-site code. Build structured API integrations only for high-frequency, high-value services (Stripe, Xero, Gmail -- which BitBit already has). |
-| **Multi-tab browser orchestration** | Complex, fragile, and full of edge cases. Popups, modals, cross-origin iframes all break. | One tab per task. If multi-tab is needed, spawn separate CUA sessions. Keep each browser context simple and isolated. |
+| **Full causal inference engine (Pearl's do-calculus)** | Mathematically rigorous causal inference requires interventional data, large sample sizes, and formal DAGs. Business conversations don't generate this data. Building a real SCM solver is years of research-grade work. | Use LLM-powered causal reasoning over extracted causal edges. Not mathematically rigorous, but practically useful for business questions. The causal graph provides structure; the LLM provides reasoning. |
+| **Emotion detection / sentiment analysis as a core feature** | Sentiment analysis from text is unreliable (irony, cultural context, code-switching). Treating detected emotions as ground truth and acting on them is dangerous. "Sezer seems upset" based on text analysis could be wrong. | Track behavioral patterns (response time, tone changes) as anomaly signals, but never claim to know how someone feels. Surface behavioral changes: "Sezer's response time has increased from hours to days" -- let the user interpret the emotion. |
+| **Autonomous goal setting** | BitBit should never decide what the user's goals should be. Goals are deeply personal and contextual. An AI that says "you should grow revenue 20%" is overstepping. | Extract goals from user statements and conversations. Suggest sub-goals and decomposition. But never originate top-level goals. The hierarchy is user-declared, AI-maintained. |
+| **Real-time cognitive modeling of LLM internals** | Attempting to model the LLM's internal representations, attention patterns, or hidden states for metacognition. This is research-grade work (activation probing, representation engineering). | Use external signals for metacognition: confidence from the model's own verbalized uncertainty, domain fact density, signal recency. These are observable and sufficient. Don't try to peer inside the model. |
+| **Formal temporal logic constraint solver** | Building a full Allen's Interval Algebra or CTL model checker for deadline propagation. Academic overhead for business scheduling. | Simple forward propagation: if task A blocks task B, and A's deadline shifts, shift B's deadline. BFS through dependency edges. No formal temporal logic needed. |
+| **Mind-reading from message metadata** | Inferring intent from typing indicators, read receipts, or message timing alone (e.g., "they read your message 3 hours ago and haven't replied, they must be upset"). | Only surface objective metadata: "Message was read 3 hours ago, no reply yet." Let the user draw conclusions. Never infer emotional state from metadata. |
+| **Per-user cognitive profiles (MBTI, learning style)** | Pseudo-science categorization. MBTI and similar frameworks have no predictive validity. Storing them suggests they matter. | Track concrete behavioral preferences: "prefers brief emails," "responds faster on WhatsApp than email," "asks for spreadsheets not summaries." Observable, actionable, not pseudoscientific. |
+
+---
 
 ## Feature Dependencies
 
 ```
-Execution Visibility -----> SSE Event System (existing)
-       |
-       v
-Step-by-Step Plans -------> Planner (existing, extend)
-       |
-       v
-Durable Task Store -------> New DB table: execution_tasks
-       |                         |
-       v                         v
-Progress Tracking           Task Cancellation
-       |                         |
-       v                         v
-Error Recovery & Retry ---> Circuit Breaker (existing, extend)
-       |
-       v
-Tool Priority Chain ------> New: ToolResolver layer
-       |                    |              |
-       v                    v              v
-  API Tools (existing)  CUA/Browser    Human Handoff
-                        (new)          (approval-queue, extend)
-       |
-       v
-Evidence Capture ---------> File Storage (existing, extend)
-       |
-       v
-Workflow Learning --------> Memory Palace (existing, extend)
-       |
-       v
-Execution History --------> run-logger (existing, extend)
+                    [Living Brain Workers Deploy (D1)]
+                    (ALL cognitive features depend on this)
+                           |
+            +--------------+----------------+
+            |              |                |
+            v              v                v
+   [Entity Dossier     [Knowledge WAL    [Section Librarian
+    Population]         Consumer]         Running]
+            |              |                |
+            v              v                v
+   +--------+--------+    |    +-----------+-----------+
+   |                  |    |    |                       |
+   v                  v    v    v                       v
+[Theory of Mind]  [Anomaly Detection]          [Metacognition]
+   |                  |                            |
+   |                  v                            v
+   |         [Temporal Pattern                [Domain Confidence
+   |          Detection]                       Map]
+   |              |                                |
+   |              v                                v
+   |     [Deadline Extraction]             [Knowledge Gap
+   |              |                         Identification]
+   |              v                                |
+   |     [Deadline Propagation]            [Proactive Knowledge
+   |              |                         Acquisition]
+   |              v
+   |     [Goal Decomposition] -----> [Critical Path Analysis]
+   |
+   v
+[Sent Message Capture (B1)] ---> [Exposure Tracking] ---> [Belief Ledger]
+                                                               |
+                                                               v
+                                                      [Information Gap
+                                                       Detection]
+
+[Confidence Routing (exists)] ---> [Active Learning / Clarification]
+         |                                   |
+         v                                   v
+[Reflexion Loop (exists)] ---------> [Learning from Corrections]
+
+[Entity Graph (exists)] ---+
+                           |
+                           v
+                   [Causal Edge Types] ---> [Causal Chain Tracing]
+                           |                        |
+                           v                        v
+                   [Causal Templates]       [Counterfactual Reasoning]
 ```
 
-Key dependency chain:
-1. **Durable Task Store** must exist before anything else (progress tracking, cancellation, retry all depend on it)
-2. **Tool Priority Chain** (ToolResolver) must exist before CUA can be a fallback
-3. **CUA/Browser automation** requires headless browser infrastructure (Browserbase or self-hosted)
-4. **Workflow Learning** depends on Evidence Capture (need to know what succeeded) and Execution History (need the trace to replay)
+### Critical Path
+
+1. **Living Brain Workers Deploy (D1)** -- everything depends on this. Without background workers maintaining dossiers and schemas, none of the cognitive features have data to operate on.
+2. **Sent Message Capture (B1)** -- Theory of Mind's belief ledger requires knowing what was communicated outbound.
+3. **Entity Dossier Population** -- Anomaly Detection, Theory of Mind, and Metacognition all need populated entity dossiers with schema_json.
+4. **Causal Edge Types** -- Causal Reasoning requires new edge types on the existing graph.
+
+### Independent Tracks
+
+These can be built in parallel because they share infrastructure but not data dependencies:
+- **Active Learning** (only needs existing confidence routing + TAOR loop)
+- **Anomaly Detection** (only needs deployed workers + existing predictive coding)
+- **Metacognition** (only needs domain confidence computation on existing dossiers)
+
+---
 
 ## MVP Recommendation
 
-### Phase 1: Async Task Engine + Execution Visibility (foundation)
-Build the durable task store, progress tracking, cancellation, and execution visibility first. These are the infrastructure that everything else depends on.
+### Phase 1: Foundation -- Deploy Living Brain + Wire Existing Code (prerequisite)
 
-Prioritize:
-1. **Durable execution_tasks table** with lifecycle states (pending, working, paused, completed, failed, cancelled) -- follows MCP Tasks 5-state FSM
-2. **Extended AgentEvent streaming** for multi-step async executions
-3. **Task cancellation** via user action (AbortController pattern)
-4. **Execution history** stored per-step in execution_steps table
+This is not a cognitive feature phase -- it's the foundation everything else depends on.
 
-### Phase 2: Tool Priority Chain + Human Handoff Extensions
-Build the ToolResolver that implements API-first, browser-fallback, human-handoff. This is the architectural core.
+1. **Deploy BullMQ + Redis workers on Fly.io** (Epic D1)
+2. **Wire query gate into TAOR** (D2)
+3. **Enable predictive coding in intake clerk** (D7)
+4. **Populate entity dossiers via section librarian**
 
-Prioritize:
-1. **ToolResolver abstraction** that wraps existing tool system with priority resolution
-2. **Human handoff as synchronous mid-execution gate** (extend approval-queue to support blocking waits)
-3. **Confirmation flow for sensitive actions** during execution (per-tool gates, not per-agent)
+### Phase 2: Anomaly Detection + Active Learning (highest ROI, lowest risk)
 
-### Phase 3: CUA / Browser Automation
-Add headless browser automation as the universal fallback tool.
+These deliver immediate user-visible value with minimal new architecture.
 
-Prioritize:
-1. **Browserbase + Stagehand integration** (TypeScript-native, auto-caching, self-healing) on Fly.io workers
-2. **Screenshot capture pipeline** for evidence and verification
-3. **Anthropic Computer Use API integration** via beta header for vision-driven browser control
+1. **Route high-surprise facts to proactive surfacing** (plumbing from predictive coding to user)
+2. **Temporal pattern detection** (frequency tracking in entity schemas)
+3. **Confidence-gated clarifying questions** (extend act/ask/escalate with question generation)
+4. **Ambiguity detection in entity resolution** (surface when top-2 candidates are close)
 
-### Phase 4: Workflow Learning + Evidence + Dashboard
-Layer intelligence on top of the working execution engine.
+### Phase 3: Theory of Mind + Temporal Reasoning (medium effort, high differentiation)
 
-Prioritize:
-1. **Evidence capture** (screenshots, API confirmations, before/after state)
-2. **Execution pattern detection** and cached replay (Stagehand auto-caching model)
-3. **Async task inbox/dashboard** UI
+1. **Per-entity belief ledger** (extend dossier with known_facts)
+2. **Deadline extraction from messages** (extend intake clerk)
+3. **Overdue detection** (simple temporal query)
+4. **Information gap detection** (compare belief ledger vs ground truth during assembly)
 
-Defer:
-- **Contextual browser sessions** (persistent logins) -- complex security implications, revisit after core CUA is proven
-- **Cross-role orchestration** -- start with single-role multi-step, add cross-role after patterns emerge
-- **Cost prediction** -- nice to have, build after enough execution history exists to make predictions meaningful
-- **Proactive execution suggestions** -- depends on workflow learning being mature
+### Phase 4: Causal Reasoning + Metacognition (advanced, high moat)
 
-## Product Comparisons: How Others Handle Each Feature
+1. **Causal edge types** (extend neural graph)
+2. **Domain confidence map** (computed by section librarian)
+3. **Knowledge gap identification** (surface low-confidence domains)
+4. **Causal chain tracing** (constrained spreading activation)
 
-### Execution Transparency
+### Phase 5: Goal Decomposition (most complex, requires maturity)
 
-| Product | Approach | Lesson for BitBit |
-|---------|----------|-------------------|
-| **Devin** | 4-tab workspace (Shell, Browser, Editor, Planner) with "Following" mode showing real-time tab switching. Full replay timeline with slide bar. Pulsating indicator + text description of current action. Time to first action reduced to ~10 seconds. | Best-in-class but overkill for business ops. BitBit needs the activity feed and current-step indicator, not a full IDE view. |
-| **OpenAI Operator** | Small browser window with on-screen narration of each action. Users can interrupt and take over at any point. Now integrated into ChatGPT as "agent mode" dropdown. | Right model for BitBit: show a compact progress view with narration text, not a full workspace. |
-| **Claude Cowork** | Desktop control with user confirmation before actions. Natural language explanations of what it will do. Safety guardrails block trading/banking/adult content. | Confirmation-before-action is essential. BitBit should narrate intent before each significant step. |
+1. **Goal tree data model** (new entity type)
+2. **Goal elicitation from conversation** (extend intake clerk)
+3. **Critical path analysis** (once goal tree has data)
+4. **Progress tracking** (once signal correlation patterns emerge)
 
-### Browser Automation
+### Defer:
 
-| Product | Approach | Lesson for BitBit |
-|---------|----------|-------------------|
-| **Anthropic CUA API** | Screenshot-analyze-act loop. Client-side tool: you provide the browser, Claude provides the intelligence. Beta header `computer-use-2025-11-24` for Opus 4.6/Sonnet 4.6. TypeScript SDK supported. 735 tokens per tool definition. Enhanced actions include zoom for detailed region inspection. | Direct integration path via Anthropic SDK (BitBit already uses). Run headless browser server-side, send screenshots to Claude, execute returned actions. |
-| **Stagehand v3** | AI-native browser automation. CDP-direct (no Playwright dependency). `act()` for single actions, `agent()` for multi-step. Auto-caching: cache selector paths, replay without LLM, re-engage on failure. 44% faster than v2. Self-healing execution adapts when DOM shifts. | Best option for BitBit. TypeScript-native. Auto-caching aligns perfectly with workflow learning goal. `agent()` method handles multi-step browser tasks natively. |
-| **Browserbase** | Cloud browser infrastructure. Stealth mode, session recording, proxy rotation. Managed browsers that Stagehand connects to. | Pairs with Stagehand. Provides the headless browser infra without self-hosting. Critical for server-side execution (BitBit runs on Fly.io/Vercel). |
-| **Skyvern** | LLM + computer vision to automate workflows on unseen websites. No per-site customization. No-code builder for non-developers. | Good for handling broken accessibility on government/insurance portals. Overkill for BitBit's use case -- Stagehand + Anthropic CUA covers the same ground with more control. |
+- **Full counterfactual reasoning** -- valuable but depends on a mature causal graph
+- **Proactive knowledge acquisition** -- depends on metacognition + mature tool catalog
+- **Progress tracking via signal correlation** -- requires extensive mapping work, premature until goal tree is populated
+- **Deadline propagation** -- requires a reliable dependency graph; start with simple overdue detection
 
-### Async Task Management
-
-| Product | Approach | Lesson for BitBit |
-|---------|----------|-------------------|
-| **MCP Tasks Spec** | 5-state FSM (working, input_required, completed, failed, cancelled). Durable task store pattern. Polling via `tasks/get`. Blocking result fetch via `tasks/result`. Progress via `progressToken`. TTL-based task expiry. Idempotency keys for retry dedup. | The specification to follow. Implement this state machine in the execution_tasks table. |
-| **Devin** | Session-based. Each task runs in an isolated cloud sandbox with full environment. Coordinator can delegate to parallel sub-Devins. | Overkill for BitBit. But the "coordinator delegates to parallel workers" pattern maps well to cross-role orchestration. |
-| **Azure Agent Framework** | 202 Accepted + task ID pattern. Background workers. Client polls for status with real-time progress. Durable state storage. | Standard REST pattern. BitBit should expose task creation via API route that returns task ID immediately, then SSE for live updates. |
-
-### Human Handoff
-
-| Product | Approach | Lesson for BitBit |
-|---------|----------|-------------------|
-| **OpenAI Operator** | Pauses for login credentials, CAPTCHAs, and sensitive actions. Monitoring model detects suspicious content and pauses. | Two-layer approach: (1) predefined rules for known sensitive actions, (2) model-level detection for unexpected situations. |
-| **OpenAI Agents SDK** | Handoff primitive: agent delegates to another agent (or human) via special tool call. Full conversation context transfers. | BitBit already has approval-queue with context_snapshot. Extend to support real-time mid-execution handoff, not just queued approvals. |
-| **Microsoft Semantic Kernel** | HITL gates scoped to specific tool invocations, not full agent outputs. Low-risk actions proceed autonomously; sensitive operations require approval. | Exactly what BitBit needs: per-tool confirmation gates. The tool priority chain should mark certain tool categories (financial, external communication, account changes) as always-confirm. |
-
-### Workflow Learning
-
-| Product | Approach | Lesson for BitBit |
-|---------|----------|-------------------|
-| **Stagehand v3 Auto-Caching** | When an AI-driven action succeeds, record the selector path. Replay on subsequent runs without LLM. If replay fails, re-engage AI and update cache. | Direct implementation path for BitBit. Cache successful tool call sequences. Replay them. Fall back to LLM reasoning on cache miss/failure. |
-| **AFLOW (ICLR 2025)** | MCTS-based workflow optimization. Preserves exploration tree. Reuses past successful experiences. Records performance metrics per workflow. | Academic but the principle applies: track which execution paths work, prune failures, and exploit successes. BitBit's Memory Palace can store workflow traces. |
-| **AgentQ** | Self-critique + Monte Carlo Tree Search + DPO fine-tuning. The agent literally improves its own decision-making over time. | Too heavy for BitBit's use case. The simpler Stagehand-style caching is sufficient for business operations workflows. |
+---
 
 ## Complexity Assessment
 
-| Feature Category | Complexity | Rationale |
-|-----------------|------------|-----------|
-| Durable Task Store | **Medium** | New DB table + state machine. Well-understood pattern (MCP spec provides the exact design). |
-| Execution Visibility | **Low-Medium** | Extends existing SSE events. BitBit already streams agent events to the frontend. |
-| Task Cancellation | **Medium** | Requires clean shutdown of in-flight operations. AbortController pattern in Node.js. |
-| Tool Priority Chain | **High** | New architectural layer. Needs resolver logic, fallback chain, and integration with all existing tools. |
-| CUA / Browser Automation | **High** | New infrastructure: headless browser (Browserbase), Stagehand integration, screenshot pipeline, Anthropic CUA API integration. Runs on Fly.io workers. |
-| Human Handoff Extensions | **Medium** | Extends existing approval-queue to support synchronous blocking during execution. |
-| Evidence Capture | **Medium** | Screenshot storage, API response archival. Extends existing file attachment system. |
-| Workflow Learning | **High** | Execution trace storage, pattern matching, cached replay, fallback logic. Novel for BitBit. |
-| Async Task Dashboard | **Medium** | New UI page. Data already flows through execution_tasks table. |
-| Cross-Role Orchestration | **High** | Dependency graph resolution, parallel sub-task execution, result aggregation across 5 roles. |
+| Feature | Complexity | Rationale |
+|---------|-----------|-----------|
+| Schema-deviation alerts | **Low** | Predictive coding engine exists. Wire output to proactive surfacing. |
+| Overdue detection | **Low** | Temporal query on extracted deadlines. Trivial. |
+| Ambiguity detection in entity resolution | **Low** | Extend existing 5-step fuzzy matcher with threshold check. |
+| Question budget per conversation | **Low** | Simple counter in TAOR loop. |
+| Knowledge gap identification | **Low** | Check domain confidence, surface when low. |
+| Confidence decay and refresh | **Low** | Extend existing neural decay to domain confidence. |
+| Per-entity belief ledger | **Med** | Extend dossier schema. Hard part: inferring "what was communicated" from messages. |
+| Information gap detection | **Med** | Belief ledger diff against ground truth during context assembly. |
+| Exposure tracking on outbound | **Med** | Depends on sent message capture (B1). Logging is simple; the dependency is the blocker. |
+| Confidence-gated question generation | **Med** | Prompt engineering for targeted questions. Integration with TAOR flow. |
+| Temporal pattern detection | **Med** | Frequency tracking in schemas. Section librarian extension. |
+| Deadline extraction from messages | **Med** | Extend intake clerk prompt. Temporal NER is well-understood. |
+| Timeline reconstruction | **Med** | Query + rendering. Data exists, presentation is the work. |
+| Domain confidence map | **Med** | Compute from signal density/recency per domain per entity. |
+| Causal edge types | **Med** | Add to SynapseType union + extraction prompt. |
+| Causal chain tracing | **Med** | Constrain existing spreading activation to causal edges. |
+| Counterfactual reasoning | **Med** | LLM reasoning over causal chain. Prompt engineering. |
+| Causal templates | **Low** | Manual seed of 20-30 business causal patterns. |
+| Behavioral baseline per entity | **Med** | Deploy workers to maintain schema_json. Infrastructure exists. |
+| Alert routing and priority | **Med** | Extend proactive recall scoring with anomaly severity. |
+| Goal tree data model | **Med** | New entity type or table. Graph integration. |
+| Goal elicitation from conversation | **Med** | Extend intake clerk with goal detection. |
+| Proactive knowledge acquisition | **Med** | Map knowledge gaps to available tools. |
+| Deadline propagation | **High** | Dependency graph + BFS propagation + conflict detection. |
+| Critical path analysis | **High** | Classic CPM algorithm, but requires reliable dependency data. |
+| Progress tracking via signal correlation | **High** | Mapping signals to goal metrics. Semi-automated correlation. |
+
+---
 
 ## Sources
 
-### Official Documentation (HIGH confidence)
-- [Anthropic Computer Use Tool API](https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool) -- Tool definition format, supported actions, TypeScript SDK, beta headers, implementation guide
-- [Anthropic Computer Use Reference Implementation](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo) -- Docker container, agent loop, tool implementations
-- [AI SDK Computer Use Guide](https://ai-sdk.dev/cookbook/guides/computer-use) -- Vercel AI SDK integration for Computer Use
-- [OpenAI Operator Introduction](https://openai.com/index/introducing-operator/) -- Product launch, CUA model, confirmation patterns
-- [OpenAI CUA](https://openai.com/index/computer-using-agent/) -- Technical architecture, perception-reasoning-action loop
-- [OpenAI OWL/Atlas Architecture](https://openai.com/index/building-chatgpt-atlas/) -- How they built the agent browser
-- [Stagehand v3 Launch](https://www.browserbase.com/blog/stagehand-v3) -- AI-native rewrite, CDP-direct, auto-caching, 44% faster
-- [Stagehand GitHub](https://github.com/browserbase/stagehand) -- Open source, TypeScript, act/agent/extract API
-- [Browserbase](https://www.browserbase.com) -- Cloud browser infrastructure for AI agents
-- [Devin Session Tools Docs](https://docs.devin.ai/work-with-devin/devin-session-tools) -- Shell, IDE, Browser workspace
-- [MCP Async Tasks](https://workos.com/blog/mcp-async-tasks-ai-agent-workflows) -- Task lifecycle, polling, cancellation, durable store pattern
-- [MCP Long-Running Operations Issue](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1391) -- SEP-1391 specification discussion
-- [OpenAI Agents SDK Handoffs](https://openai.github.io/openai-agents-python/handoffs/) -- Agent-to-agent and agent-to-human handoff pattern
+### Production Systems and Frameworks (HIGH confidence)
+- [Letta (MemGPT) Agent Memory Architecture](https://docs.letta.com/guides/agents/memory/) -- Stateful agents with self-modifying memory blocks
+- [Zep/Graphiti Temporal Knowledge Graph](https://arxiv.org/abs/2501.13956) -- Bi-temporal edges, 94.8% accuracy, production-grade 2025-2026
+- [Graphiti GitHub](https://github.com/getzep/graphiti) -- Temporal context graph engine, causal-adjacent edges
+
+### Cognitive AI Research (MEDIUM confidence)
+- [Agent-C: Enforcing Temporal Constraints for LLM Agents](https://arxiv.org/abs/2512.23738) -- Runtime temporal constraint enforcement via SMT solving
+- [Artificial Metacognition Framework](https://theconversation.com/artificial-metacognition-giving-an-ai-the-ability-to-think-about-its-thinking-270026) -- Mathematical framework for LLM self-monitoring
+- [Metacognitive Sensitivity in AI Decision Making](https://pmc.ncbi.nlm.nih.gov/articles/PMC12103939/) -- Confidence calibration for trust optimization
+- [Agentic Metacognition: Self-Aware Low-Code](https://arxiv.org/pdf/2509.19783) -- Production metacognition patterns
+- [Confidence Paradox: Can LLMs Know When They're Wrong?](https://arxiv.org/html/2506.23464) -- Epistemic uncertainty in LLMs
+- [Causal Agent based on LLM](https://arxiv.org/abs/2408.06849) -- LLM-based causal graph construction
+- [CausalKG: Causal Knowledge Graph](https://arxiv.org/pdf/2201.03647) -- Hyper-relational causal representation
+- [Counterfactual Causal Inference in Natural Language](https://arxiv.org/html/2410.06392) -- Extracting causal graphs from text
 
 ### Industry Analysis (MEDIUM confidence)
-- [Agentic Browser Landscape 2026](https://nohacks.co/blog/agentic-browser-landscape-2026) -- Comprehensive comparison of Stagehand, Browser Use, Playwright, Skyvern
-- [Stagehand vs Browser Use vs Playwright](https://www.nxcode.io/resources/news/stagehand-vs-browser-use-vs-playwright-ai-browser-automation-2026) -- Comparison matrix
-- [Browser Use vs Stagehand](https://www.skyvern.com/blog/browser-use-vs-stagehand-which-is-better/) -- Detailed feature comparison
-- [AI Agent Design Patterns - Azure](https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/ai-agent-design-patterns) -- Orchestration patterns including handoff
-- [Cognition Devin 2025 Performance Review](https://cognition.ai/blog/devin-annual-performance-review-2025) -- PR merge rate improvement, execution patterns
-- [Designing for Autonomy UX Principles](https://www.uxmatters.com/mt/archives/2025/12/designing-for-autonomy-ux-principles-for-agentic-ai.php) -- Transparency, trust, and control in agentic UX
-- [Enterprise Browser Agents](https://engineering.silnahealth.com/posts/autonomous-browser-agents-enterprise) -- Production experience: context management > model scale
-
-### Research (MEDIUM confidence)
-- [AFLOW - ICLR 2025](https://arxiv.org/pdf/2410.10762) -- Workflow optimization via MCTS, experience caching and replay
-- [Agent Skills Architecture](https://arxiv.org/html/2602.12430v3) -- Skill acquisition, security, agent-tool integration
-- [AgentQ](https://github.com/sentient-engineering/agent-q) -- Self-critique + MCTS + DPO for browser agents
-- [Checkpoint/Restore for AI Agents](https://eunomia.dev/blog/2025/05/11/checkpointrestore-systems-evolution-techniques-and-applications-in-ai-agents/) -- State persistence, recovery patterns
-- [Atomix: Transactional Tool Use](https://arxiv.org/html/2602.14849v1) -- Reliability patterns for agentic workflows
-- [Building Browser Agents: Architecture and Security](https://arxiv.org/html/2511.19477v1) -- Architecture decisions > model scale
+- [Causal AI Decision Intelligence 2026](https://thecuberesearch.com/why-causal-ai-decision-intelligence-2026/) -- Mainstream enterprise adoption prediction
+- [Beyond Context Graphs: Agentic Memory, Causality, and Explainability](https://volodymyrpavlyshyn.substack.com/p/beyond-context-graphs-why-2026-must) -- Memory + causality as interconnected system
+- [Long-Running AI Agents and Task Decomposition](https://zylos.ai/research/2026-01-16-long-running-ai-agents) -- Task duration scaling, hierarchical planning
+- [Proactive AI: Moving Beyond the Prompt](https://www.alpha-sense.com/resources/research-articles/proactive-ai/) -- Proactive intelligence patterns
+- [Active Questioning in Agentic AI](https://medium.com/@milesk_33/when-agents-learn-to-ask-active-questioning-in-agentic-ai-f9088e249cf7) -- When to ask vs proceed
+- [Proactive AI Agents: Components and Business Value](https://slack.com/blog/productivity/proactive-ai-agents-definition-core-components-and-business-value) -- Enterprise proactive agent patterns
+- [Confidence Thresholds for AI Agents](https://support.zendesk.com/hc/en-us/articles/8357749625498-About-confidence-thresholds-for-advanced-AI-agents) -- Zendesk's production confidence tiers
