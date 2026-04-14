@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/supabase/auth-context'
+import { getServiceClient } from '@/lib/supabase/service-client'
+import { createConnectorManager } from '@/lib/connectors'
 
 export const dynamic = 'force-dynamic'
 
@@ -90,7 +92,10 @@ export async function PATCH(
 
 /**
  * DELETE /api/connections/[id]
- * Soft delete — sets status to 'disabled'.
+ * Full transport-aware disconnect via ConnectorManager (destroys external
+ * resources, revokes Composio accounts, rotates webhook secrets, etc).
+ *
+ * Equivalent to POST /api/connections/[id]/disconnect with `{hard: true}`.
  */
 export async function DELETE(
   request: NextRequest,
@@ -107,9 +112,10 @@ export async function DELETE(
   }
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Ownership check against the user's RLS-scoped client.
   const { data: existing } = await ctx.supabase
     .from('org_connections')
-    .select('id')
+    .select('id, transport')
     .eq('id', id)
     .eq('org_id', ctx.orgId)
     .single()
@@ -118,13 +124,14 @@ export async function DELETE(
     return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
   }
 
-  const { error } = await ctx.supabase
-    .from('org_connections')
-    .update({ status: 'disabled', updated_at: new Date().toISOString() })
-    .eq('id', id)
+  const manager = createConnectorManager(getServiceClient())
+  const result = await manager.disconnect(id, {
+    hard: true,
+    initiator: 'user',
+  })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!result.ok) {
+    return NextResponse.json({ error: result.reason }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })

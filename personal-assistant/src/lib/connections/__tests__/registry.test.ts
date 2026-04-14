@@ -16,7 +16,10 @@ describe('ProviderRegistry', () => {
   it('registers and retrieves a provider', () => {
     const registry = new ProviderRegistry()
     registry.register(mockProvider)
-    expect(registry.get('test-provider')).toBe(mockProvider)
+    const retrieved = registry.get('test-provider')
+    expect(retrieved).toMatchObject(mockProvider)
+    expect(retrieved?.lifecycle).toBe('bridge')
+    expect(retrieved?.source).toBe('builtin')
   })
 
   it('returns undefined for unknown provider', () => {

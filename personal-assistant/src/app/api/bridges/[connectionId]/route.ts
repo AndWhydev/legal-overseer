@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getServiceClient } from '@/lib/supabase/service-client'
 import { getActiveOrgId } from '@/lib/tenancy'
-import { createProvisioner } from '@/lib/bridges'
+import { createConnectorManager } from '@/lib/connectors'
 
+/**
+ * DELETE /api/bridges/[connectionId]
+ *
+ * Legacy endpoint kept for the bridge-specific UI flow. Routes through
+ * the unified ConnectorManager so external resources (Fly machine,
+ * volume, Mac VPS) are torn down consistently with /api/connections.
+ */
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ connectionId: string }> },
@@ -18,20 +26,21 @@ export async function DELETE(
 
   const { data: conn } = await supabase
     .from('org_connections')
-    .select('id, config')
+    .select('id')
     .eq('id', connectionId)
     .eq('org_id', orgId)
     .single()
 
   if (!conn) return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
 
-  const config = conn.config as Record<string, string>
-  const provisioner = createProvisioner(supabase)
+  const manager = createConnectorManager(getServiceClient())
+  const result = await manager.disconnect(connectionId, {
+    hard: true,
+    initiator: 'user',
+  })
 
-  try {
-    await provisioner.destroy(connectionId, config.fly_machine_id, config.fly_volume_id)
-    return NextResponse.json({ ok: true })
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+  if (!result.ok) {
+    return NextResponse.json({ error: result.reason }, { status: 500 })
   }
+  return NextResponse.json({ ok: true })
 }

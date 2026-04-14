@@ -1,15 +1,30 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { IconRefresh, IconPlugOff, IconTestPipe, IconLoader2, IconX } from '@tabler/icons-react'
+import {
+  IconRefresh,
+  IconPlugOff,
+  IconTestPipe,
+  IconLoader2,
+  IconX,
+  IconKey,
+  IconAlertTriangle,
+} from '@tabler/icons-react'
 import type { OrgConnection, SyncLogEntry } from '@/lib/connections'
+import { ConnectionStateBadge } from './connection-state-badge'
 
 interface ConnectionDetailDrawerProps {
   connection: OrgConnection
   onClose: () => void
+  /**
+   * Called after a successful disconnect so the parent can refetch.
+   * The drawer handles the network request itself now.
+   */
   onDisconnect: (id: string) => void
+  /** Called when the user asks to reconnect an expired integration. */
+  onReconnect?: (connection: OrgConnection) => void
 }
 
 function timeSince(iso: string) {
@@ -20,15 +35,47 @@ function timeSince(iso: string) {
   return new Date(iso).toLocaleDateString()
 }
 
+function timeUntil(iso: string): { label: string; expired: boolean } {
+  const delta = new Date(iso).getTime() - Date.now()
+  if (delta <= 0) return { label: 'expired', expired: true }
+  const mins = Math.floor(delta / 60_000)
+  if (mins < 60) return { label: `in ${mins}m`, expired: false }
+  const hours = Math.floor(mins / 60)
+  if (hours < 48) return { label: `in ${hours}h`, expired: false }
+  const days = Math.floor(hours / 24)
+  return { label: `in ${days}d`, expired: false }
+}
+
+/**
+ * Transport-aware disconnect confirmation copy. We don't want to show
+ * the iMessage user "This revokes BitBit's access in Gmail" — context
+ * matters for trust + understanding.
+ */
+function disconnectCopy(connection: OrgConnection): string {
+  if (connection.transport === 'composio') {
+    return `Disconnect ${connection.display_name}? This revokes BitBit's access and removes the connected account in Composio.`
+  }
+  if (connection.transport === 'bridge') {
+    return `Disconnect ${connection.display_name}? This destroys the bridge instance and removes all linked state.`
+  }
+  if (connection.transport === 'webhook') {
+    return `Disconnect ${connection.display_name}? The incoming webhook secret will be rotated and new events will be rejected.`
+  }
+  return `Disconnect ${connection.display_name}?`
+}
+
 export function ConnectionDetailContent({
   connection,
   onClose,
   onDisconnect,
+  onReconnect,
 }: ConnectionDetailDrawerProps) {
   const [logs, setLogs] = useState<SyncLogEntry[]>([])
   const [syncing, setSyncing] = useState(false)
   const [testing, setTesting] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
   const [testResult, setTestResult] = useState<string | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const fetchLogs = useCallback(async () => {
     const res = await fetch(`/api/connections/${connection.id}/logs?limit=10`)
@@ -64,9 +111,29 @@ export function ConnectionDetailContent({
     }
   }
 
-  const accountEmail = (connection.config as Record<string, string>)?.account_email || connection.provider
+  const handleConfirmDisconnect = async () => {
+    setDisconnecting(true)
+    try {
+      const res = await fetch(`/api/connections/${connection.id}/disconnect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hard: true, reason: 'user_action' }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setTestResult(data.error || 'Disconnect failed')
+        return
+      }
+      onDisconnect(connection.id)
+      setConfirmOpen(false)
+    } finally {
+      setDisconnecting(false)
+    }
+  }
 
-  // Proper display names for known providers
+  const accountEmail =
+    (connection.config as Record<string, string>)?.account_email || connection.provider
+
   const DISPLAY_NAMES: Record<string, string> = {
     imessage: 'iMessage',
     gmail: 'Gmail',
@@ -75,6 +142,16 @@ export function ConnectionDetailContent({
     'google-calendar': 'Google Calendar',
   }
   const displayName = DISPLAY_NAMES[connection.provider] || connection.display_name
+
+  const expiryInfo = useMemo(() => {
+    if (!connection.auth_expires_at) return null
+    return timeUntil(connection.auth_expires_at)
+  }, [connection.auth_expires_at])
+
+  const needsReconnect =
+    connection.status === 'auth_expired' ||
+    connection.status === 'needs_reauth' ||
+    (expiryInfo?.expired ?? false)
 
   return (
     <div className="flex h-full flex-col">
@@ -93,11 +170,49 @@ export function ConnectionDetailContent({
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {/* Badges */}
         <div className="flex flex-wrap gap-1.5">
-          <Badge variant={connection.status === 'connected' ? 'default' : 'destructive'} className="text-[11px]">
-            {connection.status}
-          </Badge>
+          <ConnectionStateBadge
+            status={connection.status}
+            error={connection.last_error}
+            authExpiresAt={connection.auth_expires_at}
+          />
           <Badge variant="outline" className="text-[11px]">{connection.transport}</Badge>
+          {connection.consecutive_failures > 0 && (
+            <Badge variant="outline" className="text-[11px]" title="Consecutive health-check failures">
+              {connection.consecutive_failures} recent failure{connection.consecutive_failures > 1 ? 's' : ''}
+            </Badge>
+          )}
         </div>
+
+        {/* Reconnect callout */}
+        {needsReconnect && onReconnect && (
+          <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs">
+            <IconKey size={14} className="mt-0.5 shrink-0 text-amber-500" />
+            <div className="flex-1">
+              <p className="font-medium text-amber-700 dark:text-amber-300">
+                Re-authorisation required
+              </p>
+              <p className="mt-0.5 text-muted-foreground">
+                {connection.last_error ?? 'The linked account token is no longer valid.'}
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2 h-7 text-xs"
+                onClick={() => onReconnect(connection)}
+              >
+                Reconnect
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Error callout */}
+        {connection.status === 'error' && connection.last_error && (
+          <div className="mt-3 flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs">
+            <IconAlertTriangle size={14} className="mt-0.5 shrink-0 text-red-500" />
+            <p className="flex-1 text-red-600 dark:text-red-300">{connection.last_error}</p>
+          </div>
+        )}
 
         <div className="my-3" />
 
@@ -114,8 +229,12 @@ export function ConnectionDetailContent({
             <div className="text-[11px] text-muted-foreground">Last sync</div>
           </div>
           <div>
-            <div className="text-lg font-semibold">{connection.last_error ? '1' : '0'}</div>
-            <div className="text-[11px] text-muted-foreground">Errors</div>
+            <div className="text-lg font-semibold">
+              {expiryInfo ? expiryInfo.label : '\u2014'}
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              {expiryInfo?.expired ? 'Auth expired' : 'Auth renews'}
+            </div>
           </div>
         </div>
 
@@ -146,7 +265,9 @@ export function ConnectionDetailContent({
         </div>
 
         {testResult && (
-          <div className={`mt-2 rounded-md p-2 text-xs ${testResult === 'passed' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+          <div
+            className={`mt-2 rounded-md p-2 text-xs ${testResult === 'passed' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}
+          >
             {testResult === 'passed' ? 'Connection test passed' : testResult}
           </div>
         )}
@@ -190,15 +311,42 @@ export function ConnectionDetailContent({
 
       {/* Footer */}
       <div className="border-t px-4 py-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 text-xs"
-          onClick={() => onDisconnect(connection.id)}
-        >
-          <IconPlugOff className="mr-1.5 size-3.5" />
-          Disconnect
-        </Button>
+        {confirmOpen ? (
+          <div className="flex flex-col gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+            <p className="text-xs text-foreground">{disconnectCopy(connection)}</p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs"
+                onClick={() => setConfirmOpen(false)}
+                disabled={disconnecting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10 text-xs"
+                onClick={handleConfirmDisconnect}
+                disabled={disconnecting}
+              >
+                {disconnecting && <IconLoader2 className="mr-1.5 size-3.5 animate-spin" />}
+                Yes, disconnect
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 text-xs"
+            onClick={() => setConfirmOpen(true)}
+          >
+            <IconPlugOff className="mr-1.5 size-3.5" />
+            Disconnect
+          </Button>
+        )}
       </div>
     </div>
   )

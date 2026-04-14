@@ -1,17 +1,39 @@
 import { builtInProviders } from './built-in-providers'
 import type { ProviderPlugin } from './types'
+import { asManifest, type ConnectorManifest } from '../connectors/manifest'
 
 export class ProviderRegistry {
-  private providers = new Map<string, ProviderPlugin>()
+  private providers = new Map<string, ConnectorManifest>()
 
-  register(plugin: ProviderPlugin): void {
-    if (this.providers.has(plugin.id)) {
-      throw new Error(`Provider "${plugin.id}" already registered`)
+  /**
+   * Register a provider. Accepts either the legacy ProviderPlugin shape
+   * (automatically upgraded to a ConnectorManifest with defaults) or a
+   * full ConnectorManifest — used by the Composio dynamic loader.
+   */
+  register(plugin: ProviderPlugin | ConnectorManifest): void {
+    const manifest = 'lifecycle' in plugin && 'source' in plugin
+      ? plugin as ConnectorManifest
+      : asManifest(plugin)
+
+    if (this.providers.has(manifest.id)) {
+      throw new Error(`Provider "${manifest.id}" already registered`)
     }
-    this.providers.set(plugin.id, plugin)
+    this.providers.set(manifest.id, manifest)
   }
 
-  get(id: string): ProviderPlugin | undefined {
+  /**
+   * Register a manifest, replacing any existing entry. Used by the
+   * dynamic Composio loader which re-syncs from the Composio catalog.
+   */
+  registerManifest(manifest: ConnectorManifest): void {
+    this.providers.set(manifest.id, manifest)
+  }
+
+  unregister(id: string): boolean {
+    return this.providers.delete(id)
+  }
+
+  get(id: string): ConnectorManifest | undefined {
     return this.providers.get(id)
   }
 
@@ -19,16 +41,20 @@ export class ProviderRegistry {
     return this.providers.has(id)
   }
 
-  list(): ProviderPlugin[] {
+  list(): ConnectorManifest[] {
     return Array.from(this.providers.values())
   }
 
-  listByCategory(category: string): ProviderPlugin[] {
+  listByCategory(category: string): ConnectorManifest[] {
     return this.list().filter(p => p.category === category)
   }
 
-  listConnectable(): ProviderPlugin[] {
+  listConnectable(): ConnectorManifest[] {
     return this.list().filter(p => !p.comingSoon)
+  }
+
+  listBySource(source: ConnectorManifest['source']): ConnectorManifest[] {
+    return this.list().filter(p => p.source === source)
   }
 }
 
@@ -47,4 +73,15 @@ export function getProviderRegistry(): ProviderRegistry {
   }
 
   return providerRegistry
+}
+
+/**
+ * Test-only: reset the registry singleton. Exposed so tests can
+ * re-register manifests without leaking state between runs.
+ */
+export function _resetProviderRegistryForTest(): void {
+  for (const id of Array.from(providerRegistry.list().map(p => p.id))) {
+    providerRegistry.unregister(id)
+  }
+  providerRegistryInitialized = false
 }
