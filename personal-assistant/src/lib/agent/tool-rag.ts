@@ -66,7 +66,7 @@ const INTENT_KEYWORDS: Record<string, string[]> = {
   web_extract: ['extract', 'data', 'scrape', 'parse', 'selector', 'structured', 'table', 'list', 'field'],
   web_crawl: ['crawl', 'spider', 'site', 'pages', 'sitemap', 'index', 'links', 'explore'],
   fetch_url: ['url', 'link', 'website', 'page', 'fetch', 'read', 'open', 'http', 'https'],
-  browse_website: ['browse', 'website', 'navigate', 'screenshot', 'render', 'page'],
+  spawn_browser_agent: ['browse', 'website', 'navigate', 'screenshot', 'render', 'page', 'automate', 'form', 'scrape'],
 
   // Task tools
   create_task: ['task', 'todo', 'add', 'create', 'new', 'action', 'item', 'kanban'],

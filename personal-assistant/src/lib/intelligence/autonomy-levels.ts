@@ -42,7 +42,7 @@ export const TOOL_AUTONOMY_MAP: Record<string, AutonomyLevel> = {
   search_tasks: 'L4_silent',
   web_search: 'L4_silent',
   fetch_url: 'L4_silent',
-  browse_website: 'L4_silent',
+  spawn_browser_agent: 'L3_notify',
   // Project management tools
   list_projects: 'L4_silent',
   update_project: 'L3_notify',
@@ -70,6 +70,7 @@ export const TOOL_AUTONOMY_MAP: Record<string, AutonomyLevel> = {
   send_email: 'L2_propose',
   send_sms: 'L2_propose',
   send_whatsapp: 'L2_propose',
+  send_image: 'L2_propose',
   send_gmail: 'L2_propose',
   send_outlook: 'L2_propose',
   approve_action: 'L2_propose',

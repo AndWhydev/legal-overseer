@@ -1,9 +1,6 @@
 /**
  * Messaging Persona Module
  *
- * Injects channel-aware behavioral rules into the system prompt when
- * BitBit is responding via a messaging gateway (iMessage, WhatsApp, Telegram).
- *
  * Designed to make BitBit indistinguishable from a human texting friend.
  */
 

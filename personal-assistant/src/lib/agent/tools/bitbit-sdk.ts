@@ -604,7 +604,7 @@ export class BitBitSDK {
 
   /**
    * Fetch a URL. Restricted to GET requests and allowlisted domains.
-   * For general web access, use the browse_website or web_search tools instead.
+   * For general web access, use the web_search or fetch_url tools instead.
    */
   async fetch(url: string, options?: { method?: string; headers?: Record<string, string> }): Promise<{
     status: number

@@ -219,6 +219,19 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
       required: ['to', 'text'],
     },
   },
+  {
+    name: 'send_image',
+    description: 'Send an image to someone via iMessage. Deliver a photo URL as a native iMessage photo. Use when the user asks to share a photo, screenshot, or visual.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        to: { type: 'string', description: 'Phone number in E.164 format' },
+        image_url: { type: 'string', description: 'Public URL of the image to send' },
+        caption: { type: 'string', description: 'Optional caption text sent alongside the image' },
+      },
+      required: ['to', 'image_url'],
+    },
+  },
 ]
 
 async function readJsonCache<T>(filename: string): Promise<T[]> {
@@ -1496,5 +1509,28 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     return result.success
       ? { success: true, data: { to, textLength: text.length } }
       : { success: false, error: result.error || 'Voice memo failed' }
+  },
+
+  async send_image(input) {
+    const to = input.to as string
+    const imageUrl = input.image_url as string
+    const caption = (input.caption as string) || ''
+    if (!to || !imageUrl) return { success: false, error: 'Missing to or image_url' }
+
+    if (
+      typeof imageUrl !== 'string' ||
+      (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://'))
+    ) {
+      return {
+        success: false,
+        error: 'image_url must be a public URL starting with http:// or https://',
+      }
+    }
+
+    const { sendSendblueMedia } = await import('@/lib/channels/sendblue-media')
+    const result = await sendSendblueMedia(to, imageUrl, caption)
+    return result.success
+      ? { success: true, data: { to, imageUrl, caption: caption || undefined } }
+      : { success: false, error: result.error || 'Image send failed' }
   },
 }

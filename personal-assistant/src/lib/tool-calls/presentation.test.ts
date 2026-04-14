@@ -13,6 +13,7 @@ describe('tool call presentation helpers', () => {
     expect(getToolCallCategory('search_memory')).toBe('memory')
     expect(getToolCallCategory('create_task')).toBe('tasks')
     expect(getToolCallCategory('spawn_agent')).toBe('handoff')
+    expect(getToolCallCategory('send_image')).toBe('communication')
     expect(getToolCallCategory('resolve_tool')).toBe('retrieve_tools')
   })
 

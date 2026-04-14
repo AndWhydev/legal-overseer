@@ -1,7 +1,5 @@
 /**
  * Sendblue Media Utilities
- *
- * Download inbound media, upload outbound media, and send media messages.
  */
 
 import { logger } from '@/lib/core/logger'
@@ -20,7 +18,6 @@ export interface DownloadedMedia {
   category: MediaCategory
 }
 
-// Back-compat alias
 export type SendblueMedia = DownloadedMedia
 
 function inferMimeFromUrl(url: string): string {
@@ -54,7 +51,6 @@ export async function downloadSendblueMedia(mediaUrl: string | undefined): Promi
   try {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS)
-
     const res = await fetch(mediaUrl, { signal: controller.signal })
     clearTimeout(timeout)
 
@@ -103,7 +99,10 @@ export async function uploadMediaToSendblue(buffer: Buffer, filename: string, mi
   if (!apiKey || !apiSecret) return null
 
   try {
-    const blob = new Blob([buffer], { type: mimeType })
+    const bytes = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+    const arrayBuffer = new ArrayBuffer(bytes.byteLength)
+    new Uint8Array(arrayBuffer).set(bytes)
+    const blob = new Blob([arrayBuffer], { type: mimeType })
     const formData = new FormData()
     formData.append('media', blob, filename)
 

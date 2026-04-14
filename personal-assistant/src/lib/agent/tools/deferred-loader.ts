@@ -7,7 +7,7 @@ const EAGER_GROUPS: Set<ToolGroup> = new Set(['core', 'memory', 'channel'])
 // Additional tools always eager regardless of group
 const EAGER_TOOL_NAMES: Set<string> = new Set([
   'web_search', 'web_read', 'web_extract', 'web_crawl',
-  'fetch_url', 'browse_website',
+  'fetch_url', 'spawn_browser_agent',
   'execute_code', 'approve_action', 'spawn_agent',
   'send_email', 'send_sms', 'send_whatsapp', 'send_imessage',
 ])

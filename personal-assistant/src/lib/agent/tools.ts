@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { channelToolDefinitions, channelToolHandlers } from './tools/channel-tools'
-import { superpowerToolDefinitions, superpowerToolHandlers } from './tools/superpower-tools'
+import { commsToolDefinitions, commsToolHandlers } from './tools/comms-tools'
 import { codeExecutionToolDefinitions, codeExecutionToolHandlers } from './tools/code-execution'
 import { invoiceToolDefinition, handleGenerateInvoice } from './tools/invoice-tool'
 import { adToolDefinitions, adToolHandlers } from './tools/ad-tools'
@@ -77,13 +77,13 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'channel',
     label: 'Channel Integration',
     description: 'Sync, search, and interact with communication channels (Gmail, Calendar, etc.)',
-    tools: ['find_messages', 'read_message', 'draft_reply', 'summarize_inbox', 'get_upcoming', 'create_reminder', 'schedule_event', 'send_gmail', 'send_outlook'],
+    tools: ['find_messages', 'read_message', 'draft_reply', 'summarize_inbox', 'get_upcoming', 'create_reminder', 'schedule_event', 'send_gmail', 'send_outlook', 'send_image'],
   },
   web: {
     id: 'web',
     label: 'Web & Research',
     description: 'Search the web and fetch URL content for research',
-    tools: ['web_search', 'web_read', 'web_extract', 'web_crawl', 'fetch_url', 'browse_website'],
+    tools: ['web_search', 'web_read', 'web_extract', 'web_crawl', 'fetch_url'],
   },
   comms: {
     id: 'comms',
@@ -181,7 +181,7 @@ export const JIT_INSTRUCTIONS: Record<string, string> = {
   // Web & Research
   web_search: 'Use these search results to answer the user\'s question. Cite sources with URLs when relevant. If results are insufficient, refine your search query and try again.',
   fetch_url: 'Use the extracted page content to answer the user\'s question. Summarize key points rather than dumping raw text. Note if the content was truncated.',
-  browse_website: 'Use the extracted page content to answer the user\'s question. This content was rendered by a real browser, so JavaScript-generated content is included. If a screenshot was captured, describe what you see. Summarize key points rather than dumping raw text.',
+  send_image: 'Image sent. Confirm briefly: "Sent the photo to [recipient]." Do not describe the image content unless the user asks.',
 
   // Contacts
   search_contacts: 'Use the matched contact(s) to proceed with the user\'s request. If multiple matches exist, ask the user to clarify which one. Use the contact ID for subsequent tool calls.',
@@ -1040,7 +1040,7 @@ const handlers: Record<string, AgentToolHandler> = {
 const allHandlers: Record<string, AgentToolHandler> = {
   ...handlers,
   ...channelToolHandlers,
-  ...superpowerToolHandlers,
+  ...commsToolHandlers,
   ...codeExecutionToolHandlers,
   ...adToolHandlers,
   ...seoToolHandlers,
@@ -1070,7 +1070,7 @@ const allHandlers: Record<string, AgentToolHandler> = {
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...superpowerToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, ...webToolDefinitions, ...graphTraversalToolDefinitions, ...imageToolDefinitions, ...composioToolDefinitions, ...workspaceToolDefinitions, ...browserToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition, cancelTaskToolDefinition, spawnAsyncTaskDefinition, humanHandoffToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...commsToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, ...webToolDefinitions, ...graphTraversalToolDefinitions, ...imageToolDefinitions, ...composioToolDefinitions, ...workspaceToolDefinitions, ...browserToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition, cancelTaskToolDefinition, spawnAsyncTaskDefinition, humanHandoffToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])

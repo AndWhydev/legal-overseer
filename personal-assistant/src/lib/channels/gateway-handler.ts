@@ -51,19 +51,8 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/** Max word count for voice memo replies. Longer responses use text. */
 const VOICE_REPLY_MAX_WORDS = 30;
 
-/**
- * Shared gateway response handler for all messaging webhooks.
- *
- * Runs the inbound message through UnifiedConversationPipeline and
- * sends the response back via the channel-specific send function.
- *
- * Voice note heuristic: if inbound was a voice note AND the response
- * is short enough (≤30 words), reply with a voice memo. Longer
- * responses use text bubbles since voice would be too long to listen to.
- */
 export async function handleGatewayMessage(params: GatewayMessageParams): Promise<void> {
   const { channel, text, identity, replyTo, threadId, channelMetadata, contentBlocks } = params;
 
@@ -83,12 +72,7 @@ export async function handleGatewayMessage(params: GatewayMessageParams): Promis
   try {
     const events = pipeline.handleMessage(
       { content: text, channel, channelMetadata },
-      {
-        supabase,
-        identity,
-        threadId,
-        contentBlocks,
-      },
+      { supabase, identity, threadId, contentBlocks },
     );
 
     for await (const event of events) {
@@ -110,7 +94,6 @@ export async function handleGatewayMessage(params: GatewayMessageParams): Promis
   const isSendblue = channel === "sendblue" || channel === "sms";
   const wordCount = responseText.split(/\s+/).length;
 
-  // Voice memo reply: short responses to voice notes get sent as audio
   if (isSendblue && channelMetadata?.isVoiceNote && wordCount <= VOICE_REPLY_MAX_WORDS) {
     await sendTypingIndicator(replyTo);
     const voiceResult = await sendVoiceMemoBubble(replyTo, responseText);
@@ -118,9 +101,7 @@ export async function handleGatewayMessage(params: GatewayMessageParams): Promis
       logger.info("[gateway-handler] Voice memo reply sent", { replyTo, wordCount });
       return;
     }
-    logger.warn("[gateway-handler] Voice memo failed, falling back to text", {
-      error: voiceResult.error,
-    });
+    logger.warn("[gateway-handler] Voice memo failed, falling back to text", { error: voiceResult.error });
   }
 
   const bubbles = splitIntoBubbles(responseText);

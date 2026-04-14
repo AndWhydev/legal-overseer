@@ -10,12 +10,32 @@ import { markdownNewProvider } from '@/lib/web/providers/markdown-new'
 import { rawFetchProvider } from '@/lib/web/providers/raw-fetch'
 import { canUse, recordUse } from '@/lib/web/rate-limiter'
 import type { WebSearchProvider, WebReadProvider } from '@/lib/web/provider-types'
+import { logger } from '@/lib/core/logger'
 import type { AgentToolHandler } from '../tools'
 
 const searchProviders: WebSearchProvider[] = [tavilyProvider, serperProvider, exaProvider]
 const readProviders: WebReadProvider[] = [jinaProvider, markdownNewProvider, rawFetchProvider]
 
 export const webToolDefinitions: Anthropic.Tool[] = [
+  {
+    name: 'fetch_url',
+    description:
+      'Fetch and extract readable text from a URL. Use when the user shares a link or when web_search returns a result that needs deeper reading. Handles HTML (extracts article text), JSON (returns raw), and plain text. Do NOT use for private/authenticated URLs — they will fail.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        url: {
+          type: 'string',
+          description: 'The full URL to fetch (must start with http:// or https://)',
+        },
+        max_chars: {
+          type: 'number',
+          description: 'Maximum characters to return (default: 8000)',
+        },
+      },
+      required: ['url'],
+    },
+  },
   {
     name: 'web_search',
     description:
@@ -264,4 +284,131 @@ export const webToolHandlers: Record<string, AgentToolHandler> = {
       return { success: false, error: err instanceof Error ? err.message : String(err) }
     }
   },
+
+  async fetch_url(input, _orgId, _supabase) {
+    const url = input.url as string
+    const maxChars = (input.max_chars as number) || 8000
+
+    try {
+      if (typeof url !== 'string' || url.length === 0) {
+        return { success: false, error: 'URL must be a non-empty string' }
+      }
+
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return { success: false, error: 'URL must start with http:// or https://' }
+      }
+
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15000)
+
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'BitBit-Agent/1.0 (https://bitbit.chat)',
+          Accept: 'text/html, application/json, text/plain, */*',
+        },
+        redirect: 'follow',
+      })
+
+      clearTimeout(timeout)
+
+      if (!response.ok) {
+        return { success: false, error: `Fetch failed: ${response.status} ${response.statusText}` }
+      }
+
+      const contentType = response.headers.get('content-type') ?? ''
+
+      // JSON response — return raw
+      if (contentType.includes('application/json')) {
+        const json = await response.json()
+        const text = JSON.stringify(json, null, 2)
+        return {
+          success: true,
+          data: {
+            url,
+            content_type: 'json',
+            content: text.slice(0, maxChars),
+            truncated: text.length > maxChars,
+          },
+        }
+      }
+
+      // HTML — extract readable text
+      const html = await response.text()
+      const text = extractReadableText(html)
+
+      // Try to extract title
+      const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)
+      const title = titleMatch ? titleMatch[1].trim().replace(/\s+/g, ' ') : undefined
+
+      return {
+        success: true,
+        data: {
+          url,
+          title,
+          content_type: contentType.includes('text/html') ? 'html' : 'text',
+          content: text.slice(0, maxChars),
+          truncated: text.length > maxChars,
+          char_count: text.length,
+        },
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return { success: false, error: 'Request timed out (15s)' }
+      }
+      logger.error('[fetch_url] Error:', err)
+      return { success: false, error: `Fetch error: ${String(err)}` }
+    }
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract readable text from HTML by stripping tags, scripts, styles, and
+ * collapsing whitespace. Lightweight — no external dependency needed.
+ */
+function extractReadableText(html: string): string {
+  let text = html
+
+  // Remove script and style blocks
+  text = text.replace(/<script[\s\S]*?<\/script>/gi, '')
+  text = text.replace(/<style[\s\S]*?<\/style>/gi, '')
+  text = text.replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+
+  // Remove HTML comments
+  text = text.replace(/<!--[\s\S]*?-->/g, '')
+
+  // Remove nav, header, footer elements (usually boilerplate)
+  text = text.replace(/<nav[\s\S]*?<\/nav>/gi, '')
+  text = text.replace(/<footer[\s\S]*?<\/footer>/gi, '')
+
+  // Convert block elements to newlines
+  text = text.replace(/<\/(p|div|h[1-6]|li|tr|blockquote|article|section)>/gi, '\n')
+  text = text.replace(/<br\s*\/?>/gi, '\n')
+  text = text.replace(/<hr\s*\/?>/gi, '\n---\n')
+
+  // Convert links to text with URL
+  text = text.replace(/<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, '$2 ($1)')
+
+  // Remove all remaining tags
+  text = text.replace(/<[^>]+>/g, '')
+
+  // Decode common HTML entities
+  text = text.replace(/&amp;/g, '&')
+  text = text.replace(/&lt;/g, '<')
+  text = text.replace(/&gt;/g, '>')
+  text = text.replace(/&quot;/g, '"')
+  text = text.replace(/&#039;/g, "'")
+  text = text.replace(/&nbsp;/g, ' ')
+  text = text.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+
+  // Collapse whitespace
+  text = text.replace(/[ \t]+/g, ' ')
+  text = text.replace(/\n\s*\n/g, '\n\n')
+  text = text.trim()
+
+  return text
 }

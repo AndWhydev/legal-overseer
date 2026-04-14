@@ -160,8 +160,8 @@ const TOOL_EMOTIONS: Record<string, AvatarEmotion[]> = {
   // Reading — focused, absorbing information
   read_message: ['focused', 'attentive', 'focused', 'contemplating', 'focused'],
 
-  // Browsing — alert, exploring
-  browse_website: ['alert', 'curious', 'impressed', 'alert', 'curious'],
+  // Browser agent — alert, exploring
+  spawn_browser_agent: ['alert', 'curious', 'impressed', 'alert', 'curious'],
 
   // Creating — determined, productive
   create_task: ['determined', 'focused', 'determined', 'proud', 'determined'],

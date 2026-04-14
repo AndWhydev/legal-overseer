@@ -52,7 +52,9 @@ const TOOL_PAYLOAD_CHAR_LIMIT = 1400
 
 const TOOL_DISPLAY_NAMES: Record<string, string> = {
   add_memory: 'Saving to memory',
-  browse_website: 'Browsing website',
+  spawn_browser_agent: 'Launching browser',
+  fetch_url: 'Fetching page',
+  send_image: 'Sending image',
   compose_creator_notification_mockup: 'Composing notification',
   create_invoice: 'Creating invoice',
   create_task: 'Creating task',
@@ -86,7 +88,9 @@ const TOOL_DISPLAY_NAMES: Record<string, string> = {
 
 const TOOL_CATEGORY_OVERRIDES: Record<string, string> = {
   add_memory: 'memory',
-  browse_website: 'web',
+  spawn_browser_agent: 'web',
+  fetch_url: 'web',
+  send_image: 'communication',
   compose_creator_notification_mockup: 'gmail',
   create_event: 'google_calendar',
   create_invoice: 'finance',
@@ -286,11 +290,25 @@ export function extractToolDetail(name: string, input: unknown, result?: unknown
     if (typeof content === 'string' && content.length > 0) return truncate(content, 50)
   }
 
-  if (name === 'browse_website') {
-    const url = inp.url || inp.website || inp.href
+  if (name === 'spawn_browser_agent') {
+    const instruction = inp.instruction
+    if (typeof instruction === 'string' && instruction.length > 0) return truncate(instruction, 50)
+    const url = inp.start_url
     if (typeof url === 'string' && url.length > 0) {
       return url.replace(/^https?:\/\//, '').replace(/\/$/, '')
     }
+  }
+
+  if (name === 'fetch_url') {
+    const url = inp.url || inp.href
+    if (typeof url === 'string' && url.length > 0) {
+      return url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+    }
+  }
+
+  if (name === 'send_image') {
+    const to = inp.to as string
+    if (typeof to === 'string' && to.length > 0) return `to ${to}`
   }
 
   if (name === 'web_search') {
@@ -358,7 +376,9 @@ export function extractResultSummary(name: string, result?: unknown, success?: b
   if (name === 'create_invoice') return 'Invoice created'
   if (name === 'draft_reply') return 'Draft ready'
   if (name === 'read_message' || name === 'get_contact') return 'Done'
-  if (name === 'browse_website') return 'Page loaded'
+  if (name === 'spawn_browser_agent') return 'Browser done'
+  if (name === 'fetch_url') return 'Page loaded'
+  if (name === 'send_image') return 'Image sent'
   if (name === 'get_calendar' || name === 'schedule_event' || name === 'get_upcoming') return 'Done'
   if (name === 'web_search') {
     if (Array.isArray(res.results)) {

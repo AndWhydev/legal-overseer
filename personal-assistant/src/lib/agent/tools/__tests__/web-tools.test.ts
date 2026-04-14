@@ -82,6 +82,12 @@ describe('web tools', () => {
       expect(tool!.description).toContain('Search the web')
     })
 
+    it('defines fetch_url', () => {
+      const tool = webToolDefinitions.find(t => t.name === 'fetch_url')
+      expect(tool).toBeDefined()
+      expect(tool!.description).toContain('Fetch and extract readable text')
+    })
+
     it('defines web_read', () => {
       const tool = webToolDefinitions.find(t => t.name === 'web_read')
       expect(tool).toBeDefined()
@@ -117,6 +123,18 @@ describe('web tools', () => {
       const result = await webToolHandlers.web_search({}, 'org-1', mockSupabase)
       expect(result.success).toBe(false)
       expect(result.error).toContain('query')
+    })
+  })
+
+  describe('fetch_url handler', () => {
+    it('returns a clear error when url is missing', async () => {
+      const result = await webToolHandlers.fetch_url({}, 'org-1', mockSupabase)
+      expect(result).toEqual({ success: false, error: 'URL must be a non-empty string' })
+    })
+
+    it('returns a clear error when url is not a string', async () => {
+      const result = await webToolHandlers.fetch_url({ url: { href: 'https://example.com' } }, 'org-1', mockSupabase)
+      expect(result).toEqual({ success: false, error: 'URL must be a non-empty string' })
     })
   })
 

@@ -262,7 +262,7 @@ export async function executeToolBatch(
       }
 
       // Truncate tool results to prevent token overflow (200K API limit).
-      // Large results from fetch_url/browse_website can blow the context window.
+      // Large results from fetch_url/web_read can blow the context window.
       toolResults.push({
         type: 'tool_result',
         tool_use_id: tool.id,

@@ -50,6 +50,7 @@ import { buildTaorExecOptions, mergeEntityOverrides } from './taor-loop-utils'
 import { buildTierContextBlock } from './tool-resolver'
 import { generateFollowUps } from '@/lib/agent/follow-up-generator'
 import { retrieveRelevantTraces, formatTracesAsContext } from './decision-trace-retriever'
+import { getSurpriseFacts, formatSurpriseForChannel, type SurfaceChannel } from '@/lib/brain/surprise-surfacer'
 
 // ---------------------------------------------------------------------------
 // Correction detection for memory contradiction feedback
@@ -980,6 +981,32 @@ export async function* runTAORLoop(
         }
       } catch {
         // Silent — follow-ups are non-critical
+      }
+
+      // Surface high-surprise proactive insights (best-effort, non-blocking)
+      if (config.entityId) {
+        try {
+          const surpriseFacts = await getSurpriseFacts(
+            config.supabase,
+            config.orgId,
+            [config.entityId],
+          )
+          if (surpriseFacts.length > 0) {
+            const rawChannel = config.channel as SurfaceChannel | 'sms' | undefined
+            const channel: SurfaceChannel = rawChannel === 'sms' ? 'sendblue' : (rawChannel ?? 'web')
+            const formatted = formatSurpriseForChannel(surpriseFacts, channel)
+            if (formatted) {
+              yield { type: 'message', data: formatted }
+              logger.info('[taor] Proactive surprise insights surfaced', {
+                count: surpriseFacts.length,
+                channel,
+                entityId: config.entityId,
+              })
+            }
+          }
+        } catch {
+          // Non-critical: surprise surfacing is best-effort
+        }
       }
 
       logger.info('ai_response_complete', { model, purpose, tokens: response.usage })
