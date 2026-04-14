@@ -86,7 +86,8 @@ export function verifyVoiceSessionToken(token: string): VoiceSessionClaims | nul
     typeof claims.org !== 'string' || !claims.org ||
     typeof claims.iat !== 'number' ||
     typeof claims.exp !== 'number' ||
-    typeof claims.jti !== 'string' || !claims.jti
+    typeof claims.jti !== 'string' || !claims.jti ||
+    (claims.thread !== undefined && typeof claims.thread !== 'string')
   ) {
     return null
   }

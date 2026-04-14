@@ -77,6 +77,7 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
             <motion.div
               key={`${whisper.source}-${index}`}
               role="group"
+              aria-label="Whisper suggestion"
               className="group flex items-center gap-1.5 max-w-[280px] sm:max-w-[360px] rounded-full border border-border bg-secondary px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-left"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -97,7 +98,7 @@ export function Whispers({ onTapWhisper, visible }: WhispersProps) {
               <button
                 type="button"
                 tabIndex={0}
-                className="shrink-0 flex items-center justify-center h-4 w-4 rounded-full opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity cursor-pointer bg-transparent border-none p-0"
+                className="shrink-0 flex items-center justify-center h-4 w-4 rounded-full opacity-0 group-hover:opacity-60 hover:!opacity-100 focus-visible:opacity-100 transition-opacity cursor-pointer bg-transparent border-none p-0"
                 onClick={(e) => handleDismiss(index, e)}
                 aria-label="Dismiss whisper"
               >
