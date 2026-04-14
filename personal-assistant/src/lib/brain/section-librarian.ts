@@ -181,6 +181,29 @@ export async function processDomainJob(
   }
 }
 
+// ─── Direct-call entry point (no BullMQ) ───────────────────────────────────
+
+/**
+ * Process a domain dossier compilation directly — no BullMQ queue required.
+ * Used by the brain-consolidation cron route.
+ */
+export async function processDomainJobDirect(
+  supabase: SupabaseClient,
+  orgId: string,
+  entityName: string,
+  walEntryIds: string[],
+  domain: DomainType,
+): Promise<void> {
+  return processDomainJob(supabase, {
+    org_id: orgId,
+    entity_name: entityName,
+    entity_id: entityName,
+    fact_ids: walEntryIds,
+    domain,
+    facts: [],
+  })
+}
+
 // ─── startSectionLibrarians ─────────────────────────────────────────────────
 
 const DOMAIN_QUEUES: DomainType[] = [

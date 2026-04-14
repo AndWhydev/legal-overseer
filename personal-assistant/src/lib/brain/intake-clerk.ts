@@ -116,6 +116,57 @@ export async function extractFactsFromBatch(
   }
 }
 
+// ─── Entity → WAL Entry Grouping ──────────────────────────────────────────
+
+export interface EntityEntryGroup {
+  domain: DomainType
+  entity_name: string
+  entry_ids: string[]
+}
+
+/**
+ * Map extracted facts back to their source WAL entry IDs by entity name.
+ *
+ * For each unique (domain, entity_name) pair from the extracted facts,
+ * find which WAL entries mention that entity (case-insensitive content match).
+ * Falls back to all entry IDs if no match is found (conservative).
+ */
+export function groupEntriesByEntity(
+  entries: KnowledgeLogEntry[],
+  facts: ExtractedFact[],
+): Map<string, EntityEntryGroup> {
+  const grouped = new Map<string, EntityEntryGroup>()
+
+  for (const fact of facts) {
+    const key = `${fact.domain}:${fact.entity_name}`
+    if (!grouped.has(key)) {
+      const nameLower = fact.entity_name.toLowerCase()
+      const matchingIds = entries
+        .filter((e) => e.content.toLowerCase().includes(nameLower))
+        .map((e) => e.id)
+
+      grouped.set(key, {
+        domain: fact.domain,
+        entity_name: fact.entity_name,
+        entry_ids: matchingIds.length > 0 ? matchingIds : entries.map((e) => e.id),
+      })
+    } else {
+      const group = grouped.get(key)!
+      const nameLower = fact.entity_name.toLowerCase()
+      for (const entry of entries) {
+        if (
+          entry.content.toLowerCase().includes(nameLower) &&
+          !group.entry_ids.includes(entry.id)
+        ) {
+          group.entry_ids.push(entry.id)
+        }
+      }
+    }
+  }
+
+  return grouped
+}
+
 // ─── WAL Batch Processing ──────────────────────────────────────────────────
 
 interface DomainQueues {

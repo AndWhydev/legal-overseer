@@ -568,7 +568,6 @@ export async function* runTAORLoop(
     fullSystemPrompt += deferredPromptSection
   }
 
-<<<<<<< HEAD
   // Voice-mode prompt fragment.
   //
   // Appended AFTER the cached prefix so prompt-cache hits are preserved —
