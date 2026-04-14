@@ -12,6 +12,7 @@ import { ArrowUp, AudioLines, Mic, Plus } from 'lucide-react';
 import { MiniWaveform } from '../ui/mini-waveform';
 import { Loader } from '@/components/ui/loader';
 import { useFileUpload, type UploadItem } from '@/hooks/use-file-upload';
+import { useVoiceFeedback } from '@/hooks/use-voice-feedback';
 import { useVoiceInput } from '../chat/use-voice-input';
 import { CommandPalette, DEFAULT_CHAT_COMMANDS, type ChatCommand } from '../chat/command-palette';
 // prompt-kit PromptInput available but using native textarea for docked mode
@@ -87,12 +88,28 @@ export function VoicePill({
   // File upload hook
   const fileUpload = useFileUpload(threadId);
 
-  // Voice input hook — auto-submit on final recognition result
+  // Haptic + tone feedback on mic tap (respects prefers-reduced-motion)
+  const voiceFeedback = useVoiceFeedback();
+
+  // Voice input hook — auto-submit on final recognition result.
+  //
+  // Three refs coordinate the lifecycle:
+  //   • pendingVoiceSubmitRef — a voice result just landed; next textValue
+  //     effect should schedule the auto-submit timer.
+  //   • userCancelledSubmitRef — user typed during the debounce window; the
+  //     timer should skip submit and the effect should NOT start a new one.
+  //   • voiceJustLandedRef — the most recent textValue change came from the
+  //     voice callback (not a keystroke); lets handleTextChange distinguish
+  //     voice-set text from typed text.
   const pendingVoiceSubmitRef = useRef(false);
+  const userCancelledSubmitRef = useRef(false);
+  const voiceJustLandedRef = useRef(false);
   const [voiceAutoSending, setVoiceAutoSending] = useState(false);
   const voice = useVoiceInput((text) => {
+    voiceJustLandedRef.current = true;
     setTextValue(text);
     pendingVoiceSubmitRef.current = true;
+    userCancelledSubmitRef.current = false;
   });
 
   useEffect(() => {
@@ -133,14 +150,24 @@ export function VoicePill({
     return () => pill.removeEventListener('animationend', onEnd);
   }, [isExiting]);
 
-  // Auto-submit after voice recognition delivers final text
+  // Auto-submit after voice recognition delivers final text.
+  //
+  // Guard: only enter when a voice result just landed (pendingVoiceSubmitRef)
+  // AND the user hasn't already cancelled in the current submit window. This
+  // prevents re-entry when the effect re-runs because of a keystroke during
+  // the 600 ms debounce — the cancelled state sticks until the next voice
+  // callback resets it.
   useEffect(() => {
-    if (pendingVoiceSubmitRef.current && textValue.trim() && !voice.isListening) {
+    if (
+      pendingVoiceSubmitRef.current &&
+      !userCancelledSubmitRef.current &&
+      textValue.trim() &&
+      !voice.isListening
+    ) {
       pendingVoiceSubmitRef.current = false;
       setVoiceAutoSending(true);
       const timer = setTimeout(() => {
-        // Only submit if user hasn't started typing (cancel-on-type)
-        if (pendingVoiceSubmitRef.current === false) {
+        if (!userCancelledSubmitRef.current) {
           onTextSubmit(textValue.trim());
           setTextValue('');
         }
@@ -153,14 +180,39 @@ export function VoicePill({
     }
   }, [textValue, voice.isListening, onTextSubmit]);
 
-  // Cancel voice auto-submit when user starts typing manually
+  // Cancel voice auto-submit when the user starts typing manually.
+  // If the textValue change came from the voice callback itself, it's not a
+  // keystroke — let it through untouched.
   const handleTextChange = useCallback((val: string) => {
+    if (voiceJustLandedRef.current) {
+      voiceJustLandedRef.current = false;
+      setTextValue(val);
+      return;
+    }
     setTextValue(val);
-    if (voiceAutoSending) {
-      pendingVoiceSubmitRef.current = true; // Prevent the pending submit
+    if (voiceAutoSending || pendingVoiceSubmitRef.current) {
+      userCancelledSubmitRef.current = true;
       setVoiceAutoSending(false);
     }
   }, [voiceAutoSending]);
+
+  // Tap handler for the mic button: plays haptic + tone cue, then toggles.
+  const handleVoiceToggle = useCallback(() => {
+    if (voice.isListening) {
+      voiceFeedback.onRecordStop();
+    } else {
+      voiceFeedback.onRecordStart();
+    }
+    voice.toggleListening();
+  }, [voice, voiceFeedback]);
+
+  // Auto-dismiss voice error after 3 seconds so the pill doesn't get stuck
+  // showing a stale "Microphone access denied" message.
+  useEffect(() => {
+    if (!voice.error) return;
+    const timer = setTimeout(() => voice.clearError(), 3000);
+    return () => clearTimeout(timer);
+  }, [voice.error, voice.clearError]);
 
   useEffect(() => {
     if (mode === 'text' || (docked && displayMode === 'text')) {
@@ -438,7 +490,8 @@ export function VoicePill({
                 </div>
               )}
 
-              {/* Live transcript preview */}
+              {/* Live transcript preview (aria-live announces partial speech
+                  to screen readers) */}
               <AnimatePresence>
                 {voice.isListening && voice.transcript && (
                   <motion.div
@@ -446,9 +499,29 @@ export function VoicePill({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.15 }}
+                    aria-live="polite"
+                    aria-atomic="true"
                     className="mx-4 mb-1 px-3 py-1.5 rounded-lg bg-muted/50 text-sm text-muted-foreground italic"
                   >
                     &ldquo;{voice.transcript}&rdquo;
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Voice error notice (mic permission denied, etc.) */}
+              <AnimatePresence>
+                {voice.error && (
+                  <motion.div
+                    key="voice-error"
+                    role="alert"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    transition={{ duration: 0.15 }}
+                    className="mx-4 mb-1 px-3 py-1.5 rounded-lg bg-destructive/10 text-sm text-destructive"
+                    data-testid="voice-error"
+                  >
+                    {voice.error}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -520,9 +593,10 @@ export function VoicePill({
                           animate={{ scale: 1, opacity: 1 }}
                           exit={{ scale: 0.8, opacity: 0 }}
                           transition={{ duration: 0.15 }}
-                          onClick={voice.toggleListening}
+                          onClick={handleVoiceToggle}
                           type="button"
                           aria-label="Stop listening"
+                          aria-pressed={true}
                           className={cn(
                             'flex items-center gap-1 h-9 px-2 rounded-full',
                             'border border-destructive/30 bg-destructive/10',
@@ -551,9 +625,10 @@ export function VoicePill({
                             variant="outline"
                             size="icon"
                             className="size-9 rounded-full"
-                            onClick={voice.toggleListening}
+                            onClick={handleVoiceToggle}
                             type="button"
                             aria-label="Voice input"
+                            aria-pressed={false}
                           >
                             <Mic size={18} />
                           </Button>
