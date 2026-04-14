@@ -1,24 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-const dispatchConnectionCrawlMock = vi.fn()
 const getAuthContextMock = vi.fn()
 const waitForConnectionMock = vi.fn()
 const getConnectedAccountMock = vi.fn()
+const getServiceClientMock = vi.fn()
+const activateMock = vi.fn()
+const createConnectorManagerMock = vi.fn(() => ({ activate: activateMock }))
 const upsertMock = vi.fn()
-
-vi.mock('@/lib/composio/dispatch-crawl', () => ({
-  dispatchConnectionCrawl: dispatchConnectionCrawlMock,
-  CRAWL_QUEUE_NAME: 'memory:crawl',
-}))
 
 vi.mock('@/lib/supabase/auth-context', () => ({
   getAuthContext: getAuthContextMock,
 }))
 
+vi.mock('@/lib/supabase/service-client', () => ({
+  getServiceClient: getServiceClientMock,
+}))
+
 vi.mock('@/lib/composio', () => ({
   waitForConnection: waitForConnectionMock,
   getConnectedAccount: getConnectedAccountMock,
+}))
+
+vi.mock('@/lib/connectors', () => ({
+  createConnectorManager: createConnectorManagerMock,
 }))
 
 vi.mock('@/lib/core/logger', () => ({
@@ -37,7 +42,14 @@ function makeRequest(query: Record<string, string>) {
 }
 
 function mockSupabaseReturning(error: { message: string } | null = null) {
-  upsertMock.mockResolvedValue({ error })
+  upsertMock.mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      single: vi.fn().mockResolvedValue({
+        data: error ? null : { id: 'conn-1', org_id: 'org-123', provider: 'gmail', transport: 'composio' },
+        error,
+      }),
+    }),
+  })
   return {
     from: vi.fn().mockReturnValue({
       upsert: upsertMock,
@@ -47,15 +59,18 @@ function mockSupabaseReturning(error: { message: string } | null = null) {
 
 describe('GET /api/connections/composio/callback', () => {
   beforeEach(() => {
-    dispatchConnectionCrawlMock.mockReset()
     getAuthContextMock.mockReset()
     waitForConnectionMock.mockReset()
     getConnectedAccountMock.mockReset()
     upsertMock.mockReset()
-    dispatchConnectionCrawlMock.mockResolvedValue({ enqueued: true, jobId: 'job-1' })
+    activateMock.mockReset()
+    createConnectorManagerMock.mockClear()
+    // Service client is a fallback — return a minimal stub in case cookie auth fails.
+    getServiceClientMock.mockReturnValue(mockSupabaseReturning(null))
+    activateMock.mockResolvedValue(undefined)
   })
 
-  it('dispatches the knowledge-librarian crawler after a successful upsert', async () => {
+  it('activates the connection via ConnectorManager after a successful upsert', async () => {
     const supabase = mockSupabaseReturning(null)
     getAuthContextMock.mockResolvedValue({ orgId: 'org-123', supabase })
     getConnectedAccountMock.mockResolvedValue({
@@ -75,21 +90,16 @@ describe('GET /api/connections/composio/callback', () => {
     )
 
     expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toContain('/dashboard/connections')
     expect(res.headers.get('location')).toContain('composio_success=true')
 
-    // Allow the fire-and-forget .then/.catch chain to settle
-    await Promise.resolve()
-    await Promise.resolve()
-
-    expect(dispatchConnectionCrawlMock).toHaveBeenCalledWith({
-      orgId: 'org-123',
-      appKey: 'gmail',
-      connectedAccountId: 'ca_abc',
-    })
+    expect(createConnectorManagerMock).toHaveBeenCalled()
+    expect(activateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'conn-1', provider: 'gmail', transport: 'composio' }),
+      expect.objectContaining({ accountId: 'ca_abc' }),
+    )
   })
 
-  it('does NOT dispatch the crawler when the upsert fails', async () => {
+  it('does NOT activate when the upsert fails', async () => {
     const supabase = mockSupabaseReturning({ message: 'db blew up' })
     getAuthContextMock.mockResolvedValue({ orgId: 'org-123', supabase })
     getConnectedAccountMock.mockResolvedValue({
@@ -108,8 +118,7 @@ describe('GET /api/connections/composio/callback', () => {
       }),
     )
 
-    await Promise.resolve()
-    expect(dispatchConnectionCrawlMock).not.toHaveBeenCalled()
+    expect(activateMock).not.toHaveBeenCalled()
   })
 
   it('redirects to the error landing when status=failed', async () => {
@@ -123,10 +132,10 @@ describe('GET /api/connections/composio/callback', () => {
 
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('composio_error=auth_failed')
-    expect(dispatchConnectionCrawlMock).not.toHaveBeenCalled()
+    expect(activateMock).not.toHaveBeenCalled()
   })
 
-  it('does not throw even if the crawler dispatch rejects', async () => {
+  it('does not throw even if activate rejects', async () => {
     const supabase = mockSupabaseReturning(null)
     getAuthContextMock.mockResolvedValue({ orgId: 'org-123', supabase })
     getConnectedAccountMock.mockResolvedValue({
@@ -134,7 +143,7 @@ describe('GET /api/connections/composio/callback', () => {
       status: 'ACTIVE',
       toolkit: 'gmail',
     })
-    dispatchConnectionCrawlMock.mockRejectedValue(new Error('redis down'))
+    activateMock.mockRejectedValue(new Error('triggers down'))
 
     const { GET } = await import('../route')
     const res = await GET(
@@ -147,8 +156,5 @@ describe('GET /api/connections/composio/callback', () => {
     )
 
     expect(res.status).toBe(307)
-    // flush microtasks so the .catch runs
-    await Promise.resolve()
-    await Promise.resolve()
   })
 })

@@ -80,40 +80,9 @@ export const builtInProviders: ProviderPlugin[] = [
     defaultTransport: 'poll',
     capabilities: ['send'],
   },
-  {
-    id: 'slack',
-    name: 'Slack',
-    description: 'Message your team on Slack',
-    category: 'communication',
-    auth: { method: 'oauth' },
-    defaultTransport: 'composio',
-    capabilities: ['pull', 'send'],
-  },
-  {
-    id: 'notion',
-    name: 'Notion',
-    description: 'Connect your docs and notes',
-    category: 'productivity',
-    auth: { method: 'oauth' },
-    defaultTransport: 'composio',
-    capabilities: ['pull'],
-  },
-  {
-    id: 'hubspot',
-    name: 'HubSpot',
-    description: 'Manage contacts and deals',
-    category: 'productivity',
-    auth: { method: 'oauth' },
-    defaultTransport: 'composio',
-    capabilities: ['pull'],
-  },
-  {
-    id: 'xero',
-    name: 'Xero',
-    description: 'Accounting and invoices',
-    category: 'finance',
-    auth: { method: 'oauth' },
-    defaultTransport: 'composio',
-    capabilities: ['pull'],
-  },
+  // NOTE: Composio-backed providers (Slack, Notion, HubSpot, Xero, etc.)
+  // used to live here as hard-coded entries. They are now registered
+  // dynamically from the Composio catalog by
+  // `src/lib/connectors/composio-manifest-loader.ts`, so adding a new
+  // Composio toolkit requires no code change.
 ]

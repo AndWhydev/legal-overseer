@@ -1,7 +1,15 @@
 export type TransportType = 'poll' | 'bridge' | 'webhook' | 'composio'
 export type PayloadType = 'message' | 'event' | 'record' | 'signal'
 export type Capability = 'pull' | 'push' | 'send' | 'webhook' | 'search' | 'delete'
-export type ConnectionStatus = 'pending' | 'provisioning' | 'connected' | 'suspended' | 'error' | 'disabled'
+export type ConnectionStatus =
+  | 'pending'
+  | 'provisioning'
+  | 'connected'
+  | 'suspended'
+  | 'error'
+  | 'disabled'
+  | 'auth_expired'
+  | 'needs_reauth'
 export type TemplateSlug = 'email' | 'crm' | 'task-tracker' | 'webhook' | 'custom'
 
 export interface Envelope {
@@ -41,6 +49,13 @@ export interface OrgConnection {
   config: Record<string, unknown>
   created_at: string
   updated_at: string
+  // Added 2026-04-15 — lifecycle unification (migration 20260415000001)
+  auth_expires_at: string | null
+  connected_account_id: string | null
+  trigger_ids: string[]
+  last_health_at: string | null
+  consecutive_failures: number
+  lifecycle_version: number
 }
 
 export interface ProviderPlugin {

@@ -1,0 +1,20 @@
+{
+  "id": "ca_01HQK8XYZABC123",
+  "status": "ACTIVE",
+  "appName": "gmail",
+  "toolkit": "gmail",
+  "authConfig": {
+    "id": "ac_01HQK8YYZABC999",
+    "toolkit": { "slug": "gmail" },
+    "status": "ENABLED"
+  },
+  "data": {
+    "authSchemeName": "OAUTH2",
+    "access_token": "REDACTED",
+    "refresh_token": "REDACTED",
+    "expiresAt": "2026-05-15T12:34:56.000Z",
+    "scope": "https://www.googleapis.com/auth/gmail.modify"
+  },
+  "createdAt": "2026-04-15T10:00:00.000Z",
+  "updatedAt": "2026-04-15T10:00:00.000Z"
+}

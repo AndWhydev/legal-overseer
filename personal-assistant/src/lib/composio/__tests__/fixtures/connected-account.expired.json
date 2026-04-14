@@ -1,0 +1,11 @@
+{
+  "id": "ca_01HQK8XYZABC123",
+  "status": "EXPIRED",
+  "appName": "gmail",
+  "toolkit": "gmail",
+  "data": {
+    "expiresAt": "2025-01-01T00:00:00.000Z"
+  },
+  "createdAt": "2024-10-01T10:00:00.000Z",
+  "updatedAt": "2026-04-15T09:00:00.000Z"
+}

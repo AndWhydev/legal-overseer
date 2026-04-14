@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/supabase/auth-context'
 import { getServiceClient } from '@/lib/supabase/service-client'
 import { waitForConnection, getConnectedAccount } from '@/lib/composio'
-import { dispatchConnectionCrawl } from '@/lib/composio/dispatch-crawl'
+import { createConnectorManager } from '@/lib/connectors'
 import { logger } from '@/lib/core/logger'
 
 export const dynamic = 'force-dynamic'
@@ -10,16 +10,17 @@ export const dynamic = 'force-dynamic'
 /**
  * GET /api/connections/composio/callback
  *
- * Composio redirects here after OAuth completion.
- * Query params from Composio:
- *   - user_id: the org_id we passed during initiate
- *   - status: 'success' | 'failed'
- *   - connectedAccountId: the Composio connected account ID
- *   - appName: the toolkit name (e.g., 'gmail')
+ * Composio redirects here after OAuth completion. We:
+ *   1. Verify the user (cookie auth, falling back to the `user_id` query
+ *      param Composio echoes back).
+ *   2. Upsert the org_connections row (status: connected).
+ *   3. Delegate to ConnectorManager.activate() so triggers are registered,
+ *      auth_expires_at is captured, and the dossier crawl is enqueued.
  *
- * NOTE: Cookie auth often fails on this callback because the redirect comes
- * from Composio's domain (cross-site). We fall back to the service-role client
- * using the user_id param (which we set during initiate) as the org_id.
+ * Cookie auth often fails on this callback because the redirect comes
+ * from Composio's domain (cross-site). We fall back to the service-role
+ * client using the user_id param (which we set during initiate) as the
+ * org_id.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // Determine the org_id: prefer cookie auth, fall back to Composio's user_id param
+  // Determine the org_id: prefer cookie auth, fall back to Composio's user_id param.
   let orgId: string | null = null
   let supabase = getServiceClient()
 
@@ -79,46 +80,38 @@ export async function GET(request: NextRequest) {
       if (account && account.status === 'ACTIVE') {
         const provider = appName || account.toolkit || 'unknown'
 
-        const { error } = await supabase
+        // Upsert minimal row so we have a primary key to activate against.
+        // ConnectorManager.activate() fills in triggers + expiry + crawl.
+        const { data: row, error } = await supabase
           .from('org_connections')
-          .upsert({
-            org_id: orgId,
-            provider,
-            display_name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} (Composio)`,
-            transport: 'composio',
-            status: 'connected',
-            capabilities: ['pull', 'send'],
-            config: {
-              composio_connected_account_id: accountId,
-              composio_toolkit: account.toolkit,
-              connected_at: new Date().toISOString(),
+          .upsert(
+            {
+              org_id: orgId,
+              provider,
+              display_name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} (Composio)`,
+              transport: 'composio',
+              status: 'provisioning',
+              capabilities: ['pull', 'send'],
+              connected_account_id: accountId,
+              config: {
+                composio_connected_account_id: accountId,
+                composio_toolkit: account.toolkit,
+              },
             },
-            last_sync_at: new Date().toISOString(),
-          }, {
-            onConflict: 'org_id,provider',
-          })
+            { onConflict: 'org_id,provider' },
+          )
+          .select()
+          .single()
 
-        if (error) {
+        if (error || !row) {
           logger.error('[composio/callback] Failed to upsert org_connection', {
-            orgId, provider, error: error.message,
+            orgId, provider, error: error?.message,
           })
         } else {
-          logger.info('[composio/callback] Connected account stored', {
-            orgId, provider, accountId,
-          })
-
-          dispatchConnectionCrawl({
-            orgId,
-            appKey: provider,
-            connectedAccountId: accountId,
-          }).then((r) => {
-            logger.info('[composio/callback] Crawler dispatch', {
-              orgId, provider, enqueued: r.enqueued, skipped: r.skipped, jobId: r.jobId,
-            })
-          }).catch((err) => {
-            logger.error('[composio/callback] Crawler dispatch failed', {
-              error: err instanceof Error ? err.message : String(err),
-            })
+          const manager = createConnectorManager(supabase, { skipBridge: true })
+          await manager.activate(row as never, { accountId, metadata: account as unknown as Record<string, unknown> })
+          logger.info('[composio/callback] Connection activated', {
+            orgId, provider, connectionId: row.id, accountId,
           })
         }
       } else {
