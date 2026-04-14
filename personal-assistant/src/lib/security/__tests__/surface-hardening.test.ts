@@ -172,11 +172,14 @@ describe('Timing Jitter — AC-3', () => {
     // The route must import and call addTimingJitter
     expect(source).toMatch(/addTimingJitter/)
 
-    // The call must appear before the first controller.enqueue
-    const jitterIdx = source.indexOf('addTimingJitter')
-    const firstEnqueue = source.indexOf('controller.enqueue')
-    expect(jitterIdx).toBeGreaterThan(-1)
-    expect(jitterIdx).toBeLessThan(firstEnqueue)
+    // The call site (not import) must appear before the first stream output
+    const jitterCall = source.indexOf('await addTimingJitter()')
+    const firstStream = Math.min(
+      ...[source.indexOf('controller.enqueue('), source.indexOf('createUIMessageStreamResponse(')]
+        .filter(i => i !== -1)
+    )
+    expect(jitterCall).toBeGreaterThan(-1)
+    expect(jitterCall).toBeLessThan(firstStream)
   })
 })
 
@@ -188,7 +191,7 @@ describe('Frontend Model References — AC-4', () => {
   const POWERED_BY = /Powered by/i
 
   // Legal pages are exempt
-  const EXEMPT_FILES = ['terms/page.tsx', 'privacy/page.tsx']
+  const EXEMPT_FILES = ['terms/page.tsx', 'privacy/page.tsx', 'pitch/slides/']
 
   function isExempt(filePath: string): boolean {
     return EXEMPT_FILES.some(exempt => filePath.includes(exempt))

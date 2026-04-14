@@ -9,15 +9,30 @@ const mockDownloadFile = vi.fn()
 const mockListFiles = vi.fn()
 const mockDestroy = vi.fn()
 
-vi.mock('@/lib/workspaces/e2b-provider', () => ({
-  E2BProvider: vi.fn().mockImplementation(() => ({
-    create: mockCreate,
-    exec: mockExec,
-    uploadFile: mockUploadFile,
-    downloadFile: mockDownloadFile,
-    listFiles: mockListFiles,
-    destroy: mockDestroy,
-  })),
+vi.mock('@/lib/workspaces/e2b-provider', () => {
+  const MockE2BProvider = vi.fn().mockImplementation(function(this: Record<string, unknown>) {
+    this.create = mockCreate
+    this.exec = mockExec
+    this.uploadFile = mockUploadFile
+    this.downloadFile = mockDownloadFile
+    this.listFiles = mockListFiles
+    this.destroy = mockDestroy
+  })
+  return { E2BProvider: MockE2BProvider }
+})
+
+vi.mock('@/lib/workspaces/lifecycle', () => ({
+  checkWorkspaceBudget: vi.fn().mockResolvedValue({ allowed: true, currentCostUsd: 0, limitUsd: 10 }),
+  completeWorkspace: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('@/lib/workspaces/workspace-store', () => ({
+  createWorkspaceSession: vi.fn().mockResolvedValue(undefined),
+  getWorkspaceSessionBySandboxId: vi.fn().mockResolvedValue(null),
+}))
+
+vi.mock('@/lib/workspaces/output-delivery', () => ({
+  deliverWorkspaceOutput: vi.fn().mockResolvedValue({ inline: '', truncated: false, storedArtifactIds: [] }),
 }))
 
 vi.mock('@/lib/core/logger', () => ({
@@ -29,7 +44,8 @@ vi.mock('@/lib/core/logger', () => ({
   },
 }))
 
-import { workspaceToolDefinitions, workspaceToolHandlers } from '../workspace-tools'
+import { workspaceToolDefinitions, workspaceToolHandlers, activeProviders } from '../workspace-tools'
+import { E2BProvider } from '@/lib/workspaces/e2b-provider'
 
 const mockSupabase = {} as SupabaseClient
 
@@ -91,6 +107,17 @@ describe('workspace tool definitions', () => {
 describe('workspace tool handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Pre-populate activeProviders so handlers can find the workspace
+    activeProviders.clear()
+    const mockProvider = {
+      create: mockCreate,
+      exec: mockExec,
+      uploadFile: mockUploadFile,
+      downloadFile: mockDownloadFile,
+      listFiles: mockListFiles,
+      destroy: mockDestroy,
+    } as unknown as InstanceType<typeof E2BProvider>
+    activeProviders.set('sb-abc', mockProvider)
   })
 
   describe('spawn_ephemeral_workspace', () => {

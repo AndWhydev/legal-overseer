@@ -11,18 +11,18 @@ const mockAgentExecute = vi.fn()
 const mockAgent = vi.fn(() => ({ execute: mockAgentExecute }))
 
 vi.mock('@browserbasehq/stagehand', () => ({
-  Stagehand: vi.fn().mockImplementation(() => ({
-    init: mockInit,
-    act: vi.fn(),
-    observe: vi.fn(),
-    extract: vi.fn(),
-    close: mockClose,
-    agent: mockAgent,
-    modelName: 'anthropic/claude-sonnet-4-20250514',
-    context: {
+  Stagehand: vi.fn().mockImplementation(function (this: Record<string, unknown>) {
+    this.init = mockInit
+    this.act = vi.fn()
+    this.observe = vi.fn()
+    this.extract = vi.fn()
+    this.close = mockClose
+    this.agent = mockAgent
+    this.modelName = 'anthropic/claude-sonnet-4-20250514'
+    this.context = {
       pages: () => [{ goto: mockGoto }],
-    },
-  })),
+    }
+  }),
 }))
 
 vi.mock('@/lib/core/logger', () => ({

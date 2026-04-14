@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
       stack: err instanceof Error ? err.stack : undefined,
     })
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : 'Pipeline failed' }),
+      JSON.stringify({ error: 'Something went wrong. Try again in a moment.' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } },
     )
   }
