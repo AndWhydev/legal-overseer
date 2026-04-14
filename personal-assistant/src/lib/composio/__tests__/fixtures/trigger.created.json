@@ -1,0 +1,8 @@
+{
+  "id": "trg_01HQK8TRIG123",
+  "status": "ACTIVE",
+  "triggerType": "GMAIL_NEW_EMAIL",
+  "connectedAccountId": "ca_01HQK8XYZABC123",
+  "webhookUrl": "https://app.bitbit.chat/api/webhooks/composio",
+  "config": {}
+}

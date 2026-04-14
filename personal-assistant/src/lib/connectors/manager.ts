@@ -22,6 +22,7 @@ import {
   SuspendReason,
 } from './lifecycle'
 import { ConnectionHealthReporter } from './health-reporter'
+import { writeAuditLog } from './audit-log'
 
 export interface ConnectorManagerDeps {
   supabase: SupabaseClient
@@ -138,8 +139,16 @@ export class ConnectorManager {
       })
     }
 
+    const start = Date.now()
     try {
       await this.for(conn.transport).disconnect(conn, effectiveOpts)
+      await writeAuditLog(this.deps.supabase, {
+        connectionId,
+        op: 'disconnect',
+        status: 'success',
+        note: `${opts.initiator ?? 'unknown'}${shadow ? '/shadow' : ''}${opts.reason ? `: ${opts.reason}` : ''}`,
+        durationMs: Date.now() - start,
+      })
       return { ok: true }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -149,6 +158,13 @@ export class ConnectorManager {
         error: message,
       })
       await this.reporter.setStatus(connectionId, 'error', { error: message })
+      await writeAuditLog(this.deps.supabase, {
+        connectionId,
+        op: 'disconnect',
+        status: 'error',
+        note: message,
+        durationMs: Date.now() - start,
+      })
       return { ok: false, reason: message }
     }
   }
