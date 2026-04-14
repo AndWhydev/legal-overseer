@@ -76,8 +76,23 @@ export async function loadComposioManifests(opts: LoadOptions = {}): Promise<{
     }
 
     const newIds: string[] = []
+    let skipped = 0
     for (const tk of toolkits) {
       const manifest = toolkitToManifest(tk)
+      // Don't overwrite native/bespoke providers (e.g. `gmail`, `whatsapp`,
+      // `asana`) if Composio returns a toolkit with a colliding slug.
+      // Only manifests whose lifecycle is already `'composio'` (static
+      // fallbacks registered at bootstrap) are safe to replace.
+      const existing = registry.get(manifest.id)
+      if (existing && existing.lifecycle !== 'composio') {
+        skipped++
+        logger.warn('[composio-manifest-loader] skipping toolkit — id collides with non-composio provider', {
+          id: manifest.id,
+          existingLifecycle: existing.lifecycle,
+          existingSource: existing.source,
+        })
+        continue
+      }
       registry.registerManifest(manifest)
       newIds.push(manifest.id)
     }
@@ -85,7 +100,10 @@ export async function loadComposioManifests(opts: LoadOptions = {}): Promise<{
     state.manifestIds = newIds
     state.lastLoadedAt = Date.now()
 
-    logger.info('[composio-manifest-loader] registered manifests', { count: newIds.length })
+    logger.info('[composio-manifest-loader] registered manifests', {
+      count: newIds.length,
+      skipped,
+    })
     return { loaded: newIds.length, cached: false }
   } catch (err) {
     logger.error('[composio-manifest-loader] load failed', {

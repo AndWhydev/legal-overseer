@@ -33,11 +33,22 @@ export class ConnectionHealthReporter {
     const threshold = input.failureThreshold ?? 3
 
     // Fetch current streak so we can increment atomically-ish.
-    const { data: current } = await this.supabase
+    const { data: current, error: readError } = await this.supabase
       .from('org_connections')
       .select('consecutive_failures, status')
       .eq('id', input.connectionId)
       .single()
+
+    if (readError) {
+      // Bail rather than silently assuming 0 failures — a failed read
+      // (RLS/migration not applied/transient DB error) would otherwise
+      // hide real failure streaks.
+      logger.error('[health-reporter] failed to read current health state', {
+        connectionId: input.connectionId,
+        error: readError.message,
+      })
+      return
+    }
 
     const currentFailures = (current?.consecutive_failures as number | undefined) ?? 0
 

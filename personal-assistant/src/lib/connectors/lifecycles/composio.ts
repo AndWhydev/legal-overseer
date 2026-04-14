@@ -123,9 +123,15 @@ export class ComposioLifecycle implements ConnectorLifecycle {
       undefined
 
     if (!accountId) {
+      const lastError =
+        'Activation failed: missing Composio connected account id. Reauthenticate and retry.'
+
       logger.warn('[composio-lifecycle] activate called without accountId', {
         connectionId: conn.id,
+        error: lastError,
       })
+
+      await this.health.setStatus(conn.id, 'needs_reauth', { error: lastError })
       return
     }
 
@@ -153,7 +159,7 @@ export class ComposioLifecycle implements ConnectorLifecycle {
       })
     }
 
-    await this.deps.supabase
+    const { error: updateError } = await this.deps.supabase
       .from('org_connections')
       .update({
         status: 'connected',
@@ -172,6 +178,18 @@ export class ComposioLifecycle implements ConnectorLifecycle {
         updated_at: new Date().toISOString(),
       })
       .eq('id', conn.id)
+
+    if (updateError) {
+      // Row didn't update — avoid split-brain where triggers are registered
+      // remotely but the local row still says 'provisioning'. Surface a
+      // status the UI can act on and let the caller fail the callback.
+      logger.error('[composio-lifecycle] activate row update failed', {
+        connectionId: conn.id,
+        error: updateError.message,
+      })
+      await this.health.setStatus(conn.id, 'error', { error: updateError.message })
+      throw new Error(`[composio-lifecycle] activate update failed: ${updateError.message}`)
+    }
 
     // Fire-and-forget crawl dispatch — idempotent so re-activation is safe.
     dispatchConnectionCrawl({
