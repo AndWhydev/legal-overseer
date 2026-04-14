@@ -1302,13 +1302,15 @@ export async function executeAgentTool(
     )
 
     // Record auto-act outcomes for calibration (fire-and-forget)
+    // IMPORTANT: record raw confidence, not trust-adjusted, to avoid feedback loop
+    // where trust scores influence their own future training data.
     if (routing.decision === 'act' && options.agentType) {
       recordActionOutcome(
         supabase,
         orgId,
         options.agentType,
         name,
-        confidenceScore, // trust-adjusted
+        rawConfidenceScore, // raw — avoids trust feedback loop
         true, // auto-acted = implicitly approved
         null, // correctness unknown at execution time
         routing.thresholdSource ?? 'static',
