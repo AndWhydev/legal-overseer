@@ -23,6 +23,8 @@ import type {
   EntityEdge,
   EventTuple,
 } from '@/lib/knowledge-graph/types'
+import { activate, strengthen } from '@/lib/neural-graph/engine'
+import type { ActivationResult } from '@/lib/neural-graph/types'
 import type {
   MemoryPalaceEntry,
   DecisionLogEntry,
@@ -188,6 +190,33 @@ export async function graphAwareRecall(
   const seenDescriptions = new Set<string>()
   let totalTokens = 0
 
+  // ── Spreading activation: fire from each mentioned entity ──
+  const activationMap = new Map<string, number>()
+  for (const entityId of entityNodeIds) {
+    try {
+      const activations = await activate(supabase, orgId, entityId, { maxDepth: 2, decayFactor: 0.7 })
+      for (const ar of activations) {
+        const existing = activationMap.get(ar.entityId) ?? 0
+        activationMap.set(ar.entityId, Math.max(existing, ar.activation))
+      }
+    } catch (err) {
+      logger.warn('[proactive-recall] spreading activation failed for entity', {
+        entityId,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+
+  // ── Hebbian strengthening for co-occurring entity pairs (fire-and-forget) ──
+  if (entityNodeIds.length >= 2) {
+    for (let i = 0; i < entityNodeIds.length; i++) {
+      for (let j = i + 1; j < entityNodeIds.length; j++) {
+        // Intentionally not awaited — fire-and-forget
+        strengthen(supabase, orgId, entityNodeIds[i], entityNodeIds[j])
+      }
+    }
+  }
+
   for (const entityId of entityNodeIds.slice(0, 3)) {
     if (totalTokens >= MAX_RECALL_TOKENS) break
 
@@ -232,6 +261,28 @@ export async function graphAwareRecall(
           if (!seenDescriptions.has(item.description)) {
             seenDescriptions.add(item.description)
             scoredItems.push(item)
+          }
+        }
+      }
+
+      // Boost scores using spreading activation results
+      for (const item of scoredItems) {
+        if (item.type === 'edge') {
+          // Extract neighbor entity from description (edges reference neighbors)
+          // Check all activated entities for a match
+          for (const [activatedId, activationLevel] of activationMap) {
+            const neighborId = (() => {
+              for (const edge of neighborhood.edges) {
+                const nId = edge.source_id === entityId ? edge.target_id : edge.source_id
+                const nName = neighborMap.get(nId) ?? ''
+                if (item.description.includes(nName) && nId === activatedId) return nId
+              }
+              return null
+            })()
+            if (neighborId) {
+              item.blendedScore *= (1 + activationLevel)
+              break
+            }
           }
         }
       }
