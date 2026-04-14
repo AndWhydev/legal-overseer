@@ -142,11 +142,13 @@ export async function getSkillTrustScore(
 // ---------------------------------------------------------------------------
 
 /**
- * Look up the per-entity trust score from execution_reliability.
+ * Look up the per-entity trust score using outcome data.
  *
- * Queries the reliability summary view for the entity's org, filtered to
- * the specific service/tool. For entity-level trust, we look at the overall
- * success rate across all tools used in that entity's context.
+ * Strategy:
+ *   1. Query delegation_action_log for the entity's agent_run_ids
+ *   2. Query agent_action_outcomes for those runs to get success/failure data
+ *   3. Compute trust from outcome rates, weighted by recency
+ *   4. Fall back to volume-only scoring if no outcome data exists
  *
  * Returns NEUTRAL_TRUST on any error or insufficient data.
  */
@@ -160,47 +162,77 @@ export async function getEntityTrustScore(
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    // Query action_outcomes scoped to this entity (via metadata or entity_id column if present)
-    // The action_outcomes table tracks outcomes per org+agent+action; for per-entity,
-    // we use the delegation_action_log which is per-entity.
-    const { data, error } = await supabase
+    // Step 1: Get delegation actions with their agent_run_ids
+    const { data: delegationData, error: delegationError } = await supabase
       .from('delegation_action_log')
-      .select('action_type, financial_impact, created_at')
+      .select('action_type, financial_impact, agent_run_id, created_at')
       .eq('org_id', query.orgId)
       .eq('entity_id', query.entityId)
       .gte('created_at', thirtyDaysAgo.toISOString())
       .order('created_at', { ascending: false })
       .limit(100)
 
-    if (error) {
-      logger.warn('[trust-score-reader] Failed to query entity trust score', {
-        error: error.message,
+    if (delegationError) {
+      logger.warn('[trust-score-reader] Failed to query entity delegation log', {
+        error: delegationError.message,
         entityId: query.entityId,
         orgId: query.orgId,
       })
       return { ...NEUTRAL_TRUST }
     }
 
-    if (!data || data.length < MIN_TRUST_SAMPLES) {
+    if (!delegationData || delegationData.length < MIN_TRUST_SAMPLES) {
       return {
         ...NEUTRAL_TRUST,
-        sampleSize: data?.length ?? 0,
-        reasoning: `Only ${data?.length ?? 0}/${MIN_TRUST_SAMPLES} entity actions for "${query.entityId}" — defaulting to neutral trust`,
+        sampleSize: delegationData?.length ?? 0,
+        reasoning: `Only ${delegationData?.length ?? 0}/${MIN_TRUST_SAMPLES} entity actions for "${query.entityId}" — defaulting to neutral trust`,
       }
     }
 
-    // For entity trust, having a history of delegated actions is a positive signal.
-    // The score is based on volume + recency (more recent actions = more trust).
-    const score = Math.min(1.0, data.length / 20) // scales linearly up to 20 actions
+    // Step 2: Collect agent_run_ids and query outcomes
+    const runIds = delegationData
+      .map(d => d.agent_run_id)
+      .filter((id): id is string => id != null)
+
+    if (runIds.length > 0) {
+      const { data: outcomeData, error: outcomeError } = await supabase
+        .from('agent_action_outcomes')
+        .select('outcome, action_type, created_at, agent_run_id')
+        .eq('org_id', query.orgId)
+        .in('agent_run_id', runIds)
+        .order('created_at', { ascending: false })
+        .limit(100)
+
+      if (!outcomeError && outcomeData && outcomeData.length > 0) {
+        return computeEntityTrustFromOutcomes(
+          outcomeData,
+          delegationData.length,
+          query.entityId,
+        )
+      }
+
+      // Log but don't fail — fall through to volume-based scoring
+      if (outcomeError) {
+        logger.warn('[trust-score-reader] Failed to query entity action outcomes, falling back to volume scoring', {
+          error: outcomeError.message,
+          entityId: query.entityId,
+        })
+      }
+    }
+
+    // Step 3: Fallback — volume-only scoring (backwards compatible)
+    // Having a history of delegated actions is a positive signal, but weaker
+    // than outcome-based trust since we can't verify success/failure.
+    const score = Math.min(1.0, delegationData.length / 20)
     const gate = deriveGate(score)
 
     return {
       score,
-      sampleSize: data.length,
+      sampleSize: delegationData.length,
       sufficient: true,
-      streak: data.length, // delegation actions are inherently "successful"
+      streak: delegationData.length,
       gate,
-      reasoning: `Entity has ${data.length} delegated actions in 30 days — trust ${score.toFixed(2)} → ${gate}`,
+      reasoning: `Entity has ${delegationData.length} delegated actions (no outcome data) — volume trust ${score.toFixed(2)} → ${gate}`,
     }
   } catch (err) {
     logger.warn('[trust-score-reader] Unexpected error querying entity trust', {
@@ -369,6 +401,83 @@ export function computeTrustFromOutcomes(
     reasoning: `"${label}": ${approved}/${outcomes.length} approved (${(approvalRate * 100).toFixed(0)}%)${
       correctRate !== null ? `, ${(correctRate * 100).toFixed(0)}% correct` : ''
     }, streak=${streak} → trust ${score.toFixed(2)} → ${gate}`,
+  }
+}
+
+/** Valid outcome values from agent_action_outcomes table. */
+type ActionOutcome = 'success' | 'failure' | 'partial' | 'corrected' | 'unknown'
+
+/** Outcome weight map: how much each outcome type counts as "success". */
+const OUTCOME_WEIGHTS: Record<ActionOutcome, number> = {
+  success: 1.0,
+  corrected: 0.7, // corrected is a partial success — the agent got it wrong but it was fixable
+  partial: 0.5,
+  unknown: 0.5,   // unknown is neutral — don't penalise or reward
+  failure: 0.0,
+}
+
+/**
+ * Compute entity trust from agent_action_outcomes data.
+ *
+ * Uses outcome success rates weighted by recency: recent outcomes matter more.
+ * The recency weight uses exponential decay with a 14-day half-life.
+ *
+ * Exported for testing.
+ */
+export function computeEntityTrustFromOutcomes(
+  outcomes: Array<{
+    outcome: string
+    action_type?: string
+    created_at?: string
+    agent_run_id?: string | null
+  }>,
+  totalDelegationActions: number,
+  entityId: string,
+): TrustScore {
+  if (outcomes.length === 0) return { ...NEUTRAL_TRUST }
+
+  const now = Date.now()
+  const HALF_LIFE_MS = 14 * 24 * 60 * 60 * 1000 // 14 days
+  const LN2 = Math.LN2
+
+  let weightedSuccessSum = 0
+  let totalWeight = 0
+
+  for (const o of outcomes) {
+    // Recency weight: exponential decay, half-life = 14 days
+    const age = o.created_at ? now - new Date(o.created_at).getTime() : 0
+    const recencyWeight = Math.exp((-LN2 * age) / HALF_LIFE_MS)
+
+    const outcomeWeight = OUTCOME_WEIGHTS[o.outcome as ActionOutcome] ?? 0.5
+    weightedSuccessSum += outcomeWeight * recencyWeight
+    totalWeight += recencyWeight
+  }
+
+  const score = totalWeight > 0 ? weightedSuccessSum / totalWeight : 0.5
+
+  // Calculate success streak (consecutive recent successes/corrected)
+  let streak = 0
+  for (const o of outcomes) {
+    if (o.outcome === 'success' || o.outcome === 'corrected') {
+      streak++
+    } else {
+      break
+    }
+  }
+
+  const sufficient = outcomes.length >= MIN_TRUST_SAMPLES
+  const gate = sufficient ? deriveGate(score) : 'allow'
+
+  const successCount = outcomes.filter(o => o.outcome === 'success').length
+  const failureCount = outcomes.filter(o => o.outcome === 'failure').length
+
+  return {
+    score,
+    sampleSize: outcomes.length,
+    sufficient,
+    streak,
+    gate,
+    reasoning: `Entity "${entityId}": ${successCount} success, ${failureCount} failure out of ${outcomes.length} outcomes (${totalDelegationActions} total actions), recency-weighted trust ${score.toFixed(2)} → ${gate}`,
   }
 }
 
