@@ -71,6 +71,7 @@ function mockAllSources() {
         graph_distance: 1,
       },
     },
+    source: 'profile',
     computedAt: '2026-03-20T10:00:00Z',
     validUntil: '2026-03-27T10:00:00Z',
     eventCount: 25,

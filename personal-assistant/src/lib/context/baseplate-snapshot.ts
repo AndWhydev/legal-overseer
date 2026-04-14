@@ -14,6 +14,10 @@ export interface BaseplateSnapshot {
       graph_distance: number
     }
   }
+  /** Rich LLM-compiled dossier markdown (present when source='dossier'). */
+  dossierMarkdown?: string
+  /** Which data source produced this snapshot. */
+  source: 'dossier' | 'profile'
   computedAt: string
   validUntil: string
   eventCount: number
@@ -24,7 +28,76 @@ export async function getBaseplateSnapshot(
   supabase: SupabaseClient,
   orgId: string,
   entityType: string,
-  entityId: string
+  entityId: string,
+  entityName?: string,
+): Promise<BaseplateSnapshot | null> {
+  // ── Primary source: entity_dossiers (Living Brain pipeline) ───────────
+  if (entityName) {
+    const dossierResult = await tryDossierSource(supabase, orgId, entityName)
+    if (dossierResult) return dossierResult
+  }
+
+  // ── Fallback: entity_profiles (legacy baseplate) ──────────────────────
+  return tryProfileSource(supabase, orgId, entityType, entityId)
+}
+
+// ─── Dossier source ────────────────────────────────────────────────────────
+
+async function tryDossierSource(
+  supabase: SupabaseClient,
+  orgId: string,
+  entityName: string,
+): Promise<BaseplateSnapshot | null> {
+  const { data, error } = await supabase
+    .from('entity_dossiers')
+    .select('entity_id, entity_name, dossier_markdown, last_compiled_at, token_count, version')
+    .eq('org_id', orgId)
+    .ilike('entity_name', entityName)
+    .order('last_compiled_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data || !data.dossier_markdown) {
+    logger.debug('[baseplate-snapshot] No usable dossier found, will try profile fallback', {
+      entityName,
+      hasData: !!data,
+      hasMarkdown: !!data?.dossier_markdown,
+    })
+    return null
+  }
+
+  logger.debug('[baseplate-snapshot] Source: dossier', {
+    entityName: data.entity_name,
+    version: data.version,
+    tokenCount: data.token_count,
+  })
+
+  // Build a minimal profile from dossier metadata (the markdown is the rich source)
+  const emptyProfile: BaseplateSnapshot['profile'] = {
+    recent_events: [],
+    relationships: [],
+    memories: [],
+    event_summary: { total: 0, channels: [], last_event_at: null },
+  }
+
+  return {
+    profile: emptyProfile,
+    dossierMarkdown: data.dossier_markdown,
+    source: 'dossier',
+    computedAt: data.last_compiled_at,
+    validUntil: data.last_compiled_at, // Dossiers don't expire the same way
+    eventCount: 0,
+    stale: false,
+  }
+}
+
+// ─── Profile source (legacy) ───────────────────────────────────────────────
+
+async function tryProfileSource(
+  supabase: SupabaseClient,
+  orgId: string,
+  entityType: string,
+  entityId: string,
 ): Promise<BaseplateSnapshot | null> {
   const { data, error } = await supabase
     .from('entity_profiles')
@@ -35,6 +108,11 @@ export async function getBaseplateSnapshot(
     .maybeSingle()
 
   if (error || !data) return null
+
+  logger.debug('[baseplate-snapshot] Source: profile (fallback)', {
+    entityType,
+    entityId,
+  })
 
   const profile = { ...data.profile_data } as BaseplateSnapshot['profile']
 
@@ -77,6 +155,7 @@ export async function getBaseplateSnapshot(
 
   return {
     profile,
+    source: 'profile',
     computedAt: data.computed_at,
     validUntil: data.valid_until,
     eventCount: data.event_count_at_compute,
