@@ -8,6 +8,8 @@
 - v1.4 Media, Billing & Growth Roles -- Phases 20-28 (shipped 2026-03-27)
 - v1.5 Beta Launch & First Revenue -- Phases 29-36 (shipped 2026-03-28)
 - v2.0 Autonomous Execution -- Phases 37-43 (shipped 2026-04-14)
+- v2.0+ Living Brain v2 -- Phase 44 (code-complete 2026-04-14, 10 sub-phases)
+- v3.0 Omniscience Activation -- Phases 45-49 (active)
 
 ## Phases
 
@@ -394,3 +396,161 @@ Plans:
 | 43. Infinite Delegation | v2.0 | 5/5 | Complete | 2026-04-14 |
 
 **Overall:** v1.0-v1.5: 113/113 plans (100%). v2.0: 36/36 plans (100%). All shipped 2026-04-14.
+
+---
+
+### v2.0+ Living Brain v2 (Phase 44) -- CODE-COMPLETE 2026-04-14
+
+Phase 44 was built across 10 sub-phases as a bridge between v2.0 and v3.0. Infrastructure is complete but not yet wired into the response pipeline. Consolidated into v3.0 Phase 45 (wiring).
+
+- [x] **Phase 44: Living Brain Architecture v2** -- WAL emitter, neural KG, 3-tier consolidation pipeline, predictive coding, query gate, global workspace, prompt cache, brain consolidation cron (10 sub-phases, all merged)
+
+---
+
+### v3.0 Omniscience Activation (Phases 45-49)
+
+**Milestone Goal:** Wire the Living Brain into every conversation response, then build transformative cognitive features that make BitBit genuinely omniscient — Theory of Mind, causal reasoning, anomaly detection, active learning, temporal constraint solving, goal decomposition, and metacognition.
+
+**Dependency Graph:**
+```
+Phase 45 (Wire Dead Code) ──┐
+                            ├── Phase 46 (Anomaly + Active Learning)
+                            │         │
+                            │         ├── Phase 47 (Theory of Mind + Temporal)
+                            │         │         │
+                            │         │         ├── Phase 48 (Causal + Metacognition)
+                            │         │         │         │
+                            │         │         │         ├── Phase 49 (Goal Decomposition)
+```
+
+### Phase 45: Wire Living Brain into Responses
+**Goal**: Entity dossiers, domain profiles, spreading activation, neural decay, and predictive coding are all live in production conversations — replacing the old entity_profiles system. Every response is brain-powered.
+**Depends on**: Phase 44 (Living Brain v2, code-complete)
+**Requirements**: WIRE-01, WIRE-02, WIRE-03, WIRE-04, WIRE-05, WIRE-06, WIRE-07, INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05
+**Success Criteria** (what must be TRUE):
+  1. ContextAssembler reads entity_dossiers (not entity_profiles) as primary entity context source
+  2. Proactive recall fires spreading activation from mentioned entities, surfacing co-occurring entities and shared projects
+  3. Memory recall ranking weights by neural decay confidence — stale memories rank lower
+  4. Surprise scores >0.7 from predictive coding generate user-facing proactive messages via the messaging channel
+  5. Domain profiles injected into system prompt prefix via prompt cache (L1 cache hit on repeated contexts)
+  6. Global Workspace dynamically allocates context budget across competing memory modules
+  7. Query Gate routes System 1 queries through cached dossier path (<50ms), System 2 through full retrieval
+  8. graphology + simple-statistics installed; all new tables have org-scoped RLS
+**Plans**: TBD (estimate: 4-5 plans)
+
+### Phase 46: Anomaly Detection + Active Learning
+**Goal**: BitBit proactively surfaces pattern breaks ("Alice's payment is 15 days late — unusual") and asks targeted clarifying questions when uncertain, rather than guessing.
+**Depends on**: Phase 45 (dossiers and neural graph must be live for anomaly baselines)
+**Requirements**: ANOM-01, ANOM-02, ANOM-03, ANOM-04, ANOM-05, LEARN-01, LEARN-02, LEARN-03, LEARN-04
+**Success Criteria** (what must be TRUE):
+  1. Anomaly detector computes z-scores per entity per metric during brain consolidation; z>3 anomalies generate proactive alerts
+  2. Alert budget caps at 2-3 per entity per day; alerts include baseline comparison text
+  3. Cross-entity pattern break detection works ("3 clients with late payments this month — cash flow risk?")
+  4. When agent confidence is 50-70%, it generates a targeted clarifying question referencing the specific ambiguity
+  5. User responses to clarifying questions update the relevant entity dossier and raise confidence
+  6. Recurring low-confidence knowledge domains trigger proactive learning prompts
+**Plans**: TBD (estimate: 3-4 plans)
+
+### Phase 47: Theory of Mind + Temporal Reasoning
+**Goal**: BitBit tracks what each entity knows vs ground truth and reasons about temporal relationships — deadlines, sequences, conflicts.
+**Depends on**: Phase 46 (active learning feeds belief updates; anomaly detection surfaces temporal anomalies)
+**Requirements**: TOM-01, TOM-02, TOM-03, TOM-04, TOM-05, TEMP-01, TEMP-02, TEMP-03, TEMP-04
+**Success Criteria** (what must be TRUE):
+  1. belief_states table tracks per-entity beliefs; updated from inbound message analysis during consolidation
+  2. Information gap detection works: "Alice doesn't know Bob is leaving" based on what was communicated
+  3. Belief conflicts surfaced in responses: "Steve thinks rate is $150/hr but you agreed $180"
+  4. Epistemic qualifiers used when belief state uncertain: "Alice may not be aware"
+  5. Event tuples extracted with temporal ordering during consolidation
+  6. Deadline propagation: blocking task A shifts task B's effective deadline
+  7. Schedule conflict detection: "3 things due April 15 and only 10 hours available"
+  8. Temporal patterns recognized: recurring events, seasonal trends
+**Plans**: TBD (estimate: 4-5 plans)
+
+### Phase 48: Causal Reasoning + Metacognition
+**Goal**: BitBit builds causal graphs between entities/events and knows what it doesn't know — tracking confidence per knowledge domain.
+**Depends on**: Phase 47 (temporal data needed for causal ordering; belief states inform metacognitive confidence)
+**Requirements**: CAUS-01, CAUS-02, CAUS-03, CAUS-04, CAUS-05, META-01, META-02, META-03, META-04
+**Success Criteria** (what must be TRUE):
+  1. Entity edges support causal types: CAUSES, LEADS_TO, BLOCKS, ENABLES, CORRELATES_WITH
+  2. 2-signal corroboration required before promoting CORRELATES_WITH to CAUSES
+  3. Causal chain tracing works: given an effect, trace backward through CAUSES edges to root cause
+  4. Counterfactual reasoning in responses: "If you'd invoiced Tuesday, payment would have cleared by now"
+  5. Metacognitive scores computed per knowledge domain (financial, relational, operational, behavioral)
+  6. Domain confidence derived from signal density + recency + dossier completeness
+  7. Low-confidence domains surfaced in responses: "I have weak understanding of Steve's project scope"
+  8. Knowledge gaps identified for domains with zero or stale data
+**Plans**: TBD (estimate: 4-5 plans)
+
+### Phase 49: Goal Decomposition
+**Goal**: BitBit maintains an explicit goal hierarchy per org, routes decisions against the goal tree, and proactively warns when goals are at risk.
+**Depends on**: Phase 48 (causal graph needed for critical path; metacognition informs goal confidence)
+**Requirements**: GOAL-01, GOAL-02, GOAL-03, GOAL-04, GOAL-05, GOAL-06
+**Success Criteria** (what must be TRUE):
+  1. goal_tree table stores hierarchical goals with parent/child relationships and deadlines
+  2. Goal elicitation extracts stated goals and deadlines from conversations during consolidation
+  3. Critical path analysis identifies which subgoals are blocking using graphology DAG traversal
+  4. Incoming tasks/decisions routed against goal tree: "Is this on the critical path?"
+  5. Proactive warnings when goals at risk: "Q3 ship date at risk — need to decide on feature X by April 1"
+  6. Goal decay by mention frequency; stale goals prompt quarterly review to user
+**Plans**: TBD (estimate: 3-4 plans)
+
+## Phase Summary
+
+| # | Phase | Milestone | Plans | Status | Date |
+|---|-------|-----------|-------|--------|------|
+| 1. Platform Deploy | v1.0 | 4/4 | Complete | 2026-02-21 |
+| 2. Schema Expansion | v1.0 | 4/4 | Complete | 2026-02-21 |
+| 3. Semantic Context Engine | v1.0 | 3/3 | Complete | 2026-02-21 |
+| 4. Agent Infrastructure | v1.0 | 4/4 | Complete | 2026-02-21 |
+| 5. Wire Integration Points | v1.0 | 2/2 | Complete | 2026-02-21 |
+| 6. Verification Artifacts | v1.0 | 2/2 | Complete | 2026-02-21 |
+| 7. Infrastructure Foundation | v1.1 | 3/3 | Complete | 2026-02-22 |
+| 8. Domain Agents | v1.1 | 3/3 | Complete | 2026-02-22 |
+| 9. Approval Flow | v1.1 | 3/3 | Complete | 2026-02-22 |
+| 10. Sentry Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
+| 11. Lead Swarm Agent | v1.1 | 4/4 | Complete | 2026-02-22 |
+| 12. Invoice Flow Agent | v1.1 | 3/3 | Complete | 2026-02-22 |
+| 13. Deployment Stability | v1.2 | 4/4 | Complete | 2026-03-01 |
+| 14. Channel Relay & OAuth | v1.2 | 5/5 | Complete | 2026-03-02 |
+| 15. WhatsApp Pipeline | v1.2 | 2/2 | Complete | 2026-03-02 |
+| 16. Confidence Routing Validation | v1.2 | 2/2 | Complete | 2026-03-02 |
+| 17. Invoice & Lead Validation | v1.2 | 3/3 | Complete | 2026-03-02 |
+| 18. Integration Fixes & Tech Debt | v1.2 | 3/3 | Complete | 2026-03-02 |
+| 19. Credential Provisioning & Live Verification | v1.2 | 3/3 | Complete | 2026-03-02 |
+| 20. File Attachments & Multimedia | v1.4 | 3/3 | Complete | 2026-03-18 |
+| 20b. Role Engine Foundation | v1.4 | 4/4 | Complete | 2026-03-26 |
+| 21. Billing Infrastructure | v1.4 | 3/3 | Complete | 2026-03-18 |
+| 21b. Finance Role | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 22. Cost Controls & Ad Script Generator | v1.4 | 2/2 | Complete | 2026-03-18 |
+| 22b. Comms Role | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 23. SEO Monitor & Tender Hunter | v1.4 | 2/2 | Complete | 2026-03-18 |
+| 23b. Sales Role | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 24. Content Creator | v1.4 | 1/1 | Complete | 2026-03-18 |
+| 24b. Intelligence Layer | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 25. Role Dashboard | v1.4 | 3/3 | Complete | 2026-03-26 |
+| 26. SOTA Response Drafter | v1.4 | 2/2 | Complete | 2026-03-26 |
+| 27. Role Runtime Import Fix | v1.4 | 1/1 | Complete | 2026-03-27 |
+| 28. Intelligence Dashboard Wiring | v1.4 | 1/1 | Complete | 2026-03-27 |
+| 29. SEO/Tender Scheduled Monitoring | v1.5 | 1/1 | Complete | 2026-03-27 |
+| 30. Onboarding E2E & First-Run Experience | v1.5 | 3/3 | Complete | 2026-03-27 |
+| 31. Channel Smoke Tests & Production Hardening | v1.5 | 3/3 | Complete | 2026-03-27 |
+| 32. Marketing Site & Checkout Flow | v1.5 | 3/3 | Complete | 2026-03-27 |
+| 33. Beta Program Infrastructure | v1.5 | 1/1 | Complete | 2026-03-27 |
+| 34. Builder Role | v1.5 | 4/4 | Complete | 2026-03-27 |
+| 35. Proactive Workflows | v1.5 | 3/3 | Complete | 2026-03-27 |
+| 36. Mobile-First Experience | v1.5 | 4/4 | Complete | 2026-03-28 |
+| 37. Engine Flexibility | v2.0 | 8/5 | Complete   | 2026-04-09 |
+| 38. Fiduciary Memory | v2.0 | 6/3 | Complete   | 2026-04-08 |
+| 39. Async Task Infrastructure | v2.0 | 5/5 | Complete | 2026-04-14 |
+| 40. Multimodal Web Automation | v2.0 | 4/4 | Complete | 2026-04-14 |
+| 41. Ephemeral Workspaces | v2.0 | 4/4 | Complete | 2026-04-14 |
+| 42. Tool Priority Chain | v2.0 | 4/4 | Complete | 2026-04-14 |
+| 43. Infinite Delegation | v2.0 | 5/5 | Complete | 2026-04-14 |
+| 44. Living Brain v2 | v2.0+ | 10/10 | Complete | 2026-04-14 |
+| 45. Wire Living Brain | v3.0 | TBD | **Pending** | — |
+| 46. Anomaly + Active Learning | v3.0 | TBD | Pending | — |
+| 47. Theory of Mind + Temporal | v3.0 | TBD | Pending | — |
+| 48. Causal + Metacognition | v3.0 | TBD | Pending | — |
+| 49. Goal Decomposition | v3.0 | TBD | Pending | — |
+
+**Overall:** v1.0-v1.5: 113/113 (100%). v2.0: 36/36 (100%). v2.0+: 10/10 (100%). v3.0: 0/~20 (0%).

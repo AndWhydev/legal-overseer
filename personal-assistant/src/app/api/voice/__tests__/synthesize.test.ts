@@ -51,10 +51,12 @@ function makeRequest(body: Record<string, unknown>): NextRequest {
 // ── Tests ───────────────────────────────────────────────────────────────
 describe('POST /api/voice/synthesize', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     // Default: dev bypass enabled so auth doesn't block validation tests
     isDevBypassMock.mockReturnValue(true)
+    checkUserEndpointLimitMock.mockReturnValue(null)
     process.env.OPENAI_API_KEY = 'test-key'
+    delete process.env.AI_GATEWAY_API_KEY
   })
 
   // ── Validation ──────────────────────────────────────────────────────
@@ -142,13 +144,14 @@ describe('POST /api/voice/synthesize', () => {
 
   // ── OpenAI key missing ─────────────────────────────────────────────
 
-  it('returns 503 when OPENAI_API_KEY is not set', async () => {
+  it('returns 503 when neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY is set', async () => {
     delete process.env.OPENAI_API_KEY
+    delete process.env.AI_GATEWAY_API_KEY
 
     const { POST } = await import('../synthesize/route')
     const res = await POST(makeRequest({ text: 'Hello' }))
     expect(res.status).toBe(503)
     const json = await res.json()
-    expect(json.error).toMatch(/not configured/i)
+    expect(json.error).toMatch(/configured/i)
   })
 })

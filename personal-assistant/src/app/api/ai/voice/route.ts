@@ -5,6 +5,7 @@ import { assembleContext } from '@/lib/context/assembler'
 import { getPack, resolveIndustry } from '@/lib/industry/registry'
 import { resolveModel } from '@/lib/agent/model-registry'
 import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
+import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway'
 import { logger } from '@/lib/core/logger';
 
 /**
@@ -56,9 +57,9 @@ export async function POST(request: Request) {
 
   // Transcribe audio
   let transcript: string
-  const openaiKey = process.env.OPENAI_API_KEY
+  const endpoint = getOpenAIEndpoint()
 
-  if (openaiKey) {
+  if (endpoint) {
     try {
       const audioBuffer = Buffer.from(await audioFile.arrayBuffer())
       const whisperForm = new FormData()
@@ -66,9 +67,9 @@ export async function POST(request: Request) {
       whisperForm.append('file', blob, audioFile.name || 'audio.webm')
       whisperForm.append('model', 'whisper-1')
 
-      const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      const whisperRes = await fetch(`${endpoint.baseUrl}/audio/transcriptions`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${openaiKey}` },
+        headers: { Authorization: endpoint.authorization },
         body: whisperForm,
       })
 
@@ -85,9 +86,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Transcription service unavailable' }, { status: 502 })
     }
   } else {
-    // No OpenAI key -- return a structured stub so the client knows transcription is not configured
     return NextResponse.json({
-      error: 'Voice transcription not available',
+      error: 'Voice transcription not available — configure AI_GATEWAY_API_KEY or OPENAI_API_KEY',
       transcript: null,
       response: null,
     }, { status: 503 })

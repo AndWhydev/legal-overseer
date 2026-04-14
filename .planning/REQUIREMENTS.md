@@ -1,162 +1,118 @@
-# Requirements: BitBit v2.0 -- Autonomous Execution
+# Requirements: v3.0 Omniscience Activation
 
-**Defined:** 2026-04-08
-**Core Value:** BitBit acts to maximize user benefit. The fiduciary memory and game theory evaluation determine when to act, when to confirm, and when to escalate -- not hardcoded rules.
-**North Star:** SOTA Agentic Consolidation -- ambiguous by nature, precise in execution. BitBit as an optimal game theory agent that just works.
+**Defined:** 2026-04-15
+**Core Value:** BitBit knows things about relationships that the people in them don't — asymmetric intelligence that makes it genuinely omniscient.
 
-## v2.0 Requirements
+## v3.0 Requirements
 
-### Engine Flexibility
+### Wiring (Level 1 — Connect existing dead code)
 
-- [ ] **ENGINE-01**: TAOR loop supports dynamic iteration caps per entity via delegation mandates (not hardcoded SAFETY_CEILING)
-- [x] **ENGINE-02**: Confidence router accepts entity_id and queries delegation mandates from Context Baseplate
-- [x] **ENGINE-03**: Role cost guard supports LTV-aware dynamic budget scaling for high-value entities
-- [ ] **ENGINE-04**: Token budget manager supports 200K+ context with dedicated dynamic_workspace tier that bypasses aggressive truncation
-- [x] **ENGINE-05**: All flexibility changes are backward-compatible -- existing behavior unchanged for entities without overrides
+- [ ] **WIRE-01**: Entity dossiers replace old entity_profiles as primary context source in ContextAssembler
+- [ ] **WIRE-02**: Spreading activation fires when user mentions an entity, surfacing related entities in proactive recall
+- [ ] **WIRE-03**: Neural decay confidence scores affect recall ranking (low-confidence memories rank lower)
+- [ ] **WIRE-04**: Predictive coding surprise scores >0.7 surface as proactive messages to the user
+- [ ] **WIRE-05**: Domain profiles injected into system prompt via prompt cache (L1 cache hit for repeated contexts)
+- [ ] **WIRE-06**: Global Workspace allocates context budget across dossier/memory/temporal modules dynamically
+- [ ] **WIRE-07**: Query Gate System 1 path reads cached dossiers (<50ms), System 2 does full retrieval
 
-### Fiduciary Memory
+### Anomaly Detection (ANOM)
 
-- [ ] **FIDUC-01**: Memory Palace supports `fiduciary_constraint` memory category
-- [ ] **FIDUC-02**: Sleep consolidation includes Game Theory LTV evaluation stage for entities
-- [ ] **FIDUC-03**: MemoryWriter auto-creates fiduciary constraints for high-LTV entities (e.g., "Do not allow scope creep without invoicing")
-- [ ] **FIDUC-04**: ContextAssembler prioritizes `fiduciary_constraint` memories in system prompt injection
-- [ ] **FIDUC-05**: Fiduciary constraints visible and editable by user in dashboard
+- [ ] **ANOM-01**: Statistical anomaly detector computes z-scores per entity per metric (payment timing, amount, frequency)
+- [ ] **ANOM-02**: Anomalies exceeding z>3 generate proactive alerts routed to user via messaging channel
+- [ ] **ANOM-03**: Alert budget caps at 2-3 per entity per day to prevent fatigue
+- [ ] **ANOM-04**: Pattern break detection across multiple entities ("3 clients with late payments this month")
+- [ ] **ANOM-05**: Anomaly explanations include baseline comparison ("Usually pays day 15, this invoice is day 30")
 
-### Async Task Infrastructure
+### Active Learning (LEARN)
 
-- [ ] **ASYNC-01**: Durable `execution_tasks` table with 7-state FSM (pending, claimed, working, paused, completed, failed, cancelled)
-- [ ] **ASYNC-02**: Real-time execution visibility via Supabase Realtime subscriptions
-- [ ] **ASYNC-03**: User-initiated task cancellation with clean shutdown of in-flight operations
-- [ ] **ASYNC-04**: Per-step progress tracking with status messages and percentage
-- [ ] **ASYNC-05**: Heartbeat monitoring with orphan detection and automatic recovery
-- [ ] **ASYNC-06**: Per-step retry with configurable policies and dead letter queue integration
-- [ ] **ASYNC-07**: Execution history stored per-step in `execution_steps` table
-- [ ] **ASYNC-08**: Async task dashboard showing running/completed/failed tasks with live progress
+- [ ] **LEARN-01**: When agent confidence is in "ask" band (50-70%), generate targeted clarifying questions
+- [ ] **LEARN-02**: Clarifying questions reference specific ambiguity ("White House project — interior redesign or landscaping?")
+- [ ] **LEARN-03**: User responses to clarifying questions update entity dossiers and confidence scores
+- [ ] **LEARN-04**: Confidence gaps tracked per knowledge domain; recurring low-confidence domains trigger proactive learning
 
-### Multimodal Web Automation
+### Theory of Mind (TOM)
 
-- [ ] **CUA-01**: `spawn_browser_agent` tool integrated into TAOR loop tool dispatch
-- [ ] **CUA-02**: Vision-first execution loop: screenshot, AOM parse, Claude determines action, execute
-- [ ] **CUA-03**: Dedicated Fly.io browser worker (2GB, scale-to-zero) running headless Chromium via Playwright
-- [ ] **CUA-04**: Per-org domain allowlist configurable by user (defaults to open for delegated entities)
-- [ ] **CUA-05**: Ephemeral browser containers -- no session reuse between tasks or orgs
-- [ ] **CUA-06**: Configurable confirmation behavior -- defaults to user's autonomy preferences per entity delegation mandate
-- [ ] **CUA-07**: Screenshot evidence capture at each significant step
-- [ ] **CUA-08**: Credential injection via Composio for authenticated site navigation
-- [ ] **CUA-09**: Self-healing navigation -- vision model finds semantic equivalents when DOM shifts
-- [ ] **CUA-10**: Cost circuit breaker -- adaptive limits based on entity LTV and task value, not hardcoded caps
-- [ ] **CUA-11**: Fail-closed CUA gate -- pre-flight checks validate budget and domain authorization before execution
+- [ ] **TOM-01**: Belief ledger per entity tracks what each contact knows vs ground truth
+- [ ] **TOM-02**: Information gap detection: "Alice doesn't know Bob is leaving" based on communication analysis
+- [ ] **TOM-03**: Belief state updates from inbound messages (what they said implies what they believe)
+- [ ] **TOM-04**: Epistemic qualifiers when belief state uncertain ("Alice may not be aware of the rate change")
+- [ ] **TOM-05**: Belief conflicts surfaced: "Steve thinks rate is $150/hr but you agreed $180"
 
-### Ephemeral Workspaces
+### Temporal Reasoning (TEMP)
 
-- [ ] **WKSP-01**: `spawn_ephemeral_workspace` tool integrated into TAOR loop tool dispatch
-- [ ] **WKSP-02**: Fly.io Firecracker MicroVM provisioning via Machines API
-- [ ] **WKSP-03**: Stateful bash shell and Node/Python REPL execution channel
-- [ ] **WKSP-04**: Dynamic tool compilation -- agent installs dependencies and executes scripts at runtime
-- [ ] **WKSP-05**: Auto-destroy on completion, timeout, or cost limit
-- [ ] **WKSP-06**: Output delivery -- workspace results returned to TAOR loop
-- [ ] **WKSP-07**: Network isolation -- workspace cannot access other tenants' resources
-- [ ] **WKSP-08**: Resource limits (CPU, memory, disk) enforced at infrastructure level
+- [ ] **TEMP-01**: Event tuples with temporal ordering extracted during consolidation pipeline
+- [ ] **TEMP-02**: Deadline propagation: if task A blocks task B, B's effective deadline is A's deadline minus lead time
+- [ ] **TEMP-03**: Schedule conflict detection: "3 things due April 15 and only 10 hours available"
+- [ ] **TEMP-04**: Temporal pattern recognition: recurring events, seasonal trends, deadline patterns
 
-### Tool Priority Chain
+### Causal Reasoning (CAUS)
 
-- [ ] **CHAIN-01**: ToolResolver implements API, browser, workspace, human fallback
-- [ ] **CHAIN-02**: Integration registry mapping services to execution tier
-- [ ] **CHAIN-03**: Per-site reliability tracking informing automatic tier escalation
-- [ ] **CHAIN-04**: Human handoff as synchronous mid-execution gate (extends approval queue for real-time blocking waits)
+- [ ] **CAUS-01**: Causal edges (CAUSES, LEADS_TO, BLOCKS, ENABLES) on existing entity_edges table
+- [ ] **CAUS-02**: Causal chain tracing: given effect, trace back through CAUSES edges to root cause
+- [ ] **CAUS-03**: Counterfactual reasoning: "If you'd invoiced Tuesday, payment would have cleared by now"
+- [ ] **CAUS-04**: 2-signal corroboration required before creating CAUSES edges (prevent hallucinated causation)
+- [ ] **CAUS-05**: CORRELATES_WITH as weaker interim edge type before promotion to CAUSES
 
-### Infinite Delegation
+### Metacognition (META)
 
-- [ ] **DELEG-01**: Entity-level `delegation_mandate` field (infinite_autopilot, supervised, standard)
-- [ ] **DELEG-02**: Confidence router returns `auto_delegated` for infinite_autopilot entities
-- [ ] **DELEG-03**: Fiduciary risk evaluation -- actions assessed against user benefit via Game Theory LTV matrix, not hardcoded category bans
-- [ ] **DELEG-04**: Autonomous action aggregation into Morning Briefing via sleep consolidation
-- [ ] **DELEG-05**: User can set/revoke delegation mandates per entity via dashboard or NL command
-- [ ] **DELEG-06**: All delegated actions fully logged with evidence for audit trail
+- [ ] **META-01**: Confidence scores per knowledge domain (financial, relational, operational, behavioral)
+- [ ] **META-02**: Domain confidence derived from signal density + recency + dossier completeness
+- [ ] **META-03**: Low-confidence domains surfaced: "I have weak understanding of Steve's project scope"
+- [ ] **META-04**: Knowledge gap identification: detect domains with zero or stale data
 
-## v2.1 Requirements
+### Goal Decomposition (GOAL)
 
-### Terminal COO
+- [ ] **GOAL-01**: Explicit goal hierarchy stored per org (top-level goals decomposed into subgoals)
+- [ ] **GOAL-02**: Goal elicitation from conversations: extract stated goals + deadlines
+- [ ] **GOAL-03**: Critical path analysis: identify which subgoals are on the critical path
+- [ ] **GOAL-04**: Goal-task routing: map incoming tasks/decisions against goal tree
+- [ ] **GOAL-05**: Proactive warnings: "Q3 ship date at risk — need to decide on feature X by April 1"
+- [ ] **GOAL-06**: Goal decay by mention frequency; stale goals prompt quarterly review
 
-- **COO-01**: BitBit replaces terminal Claude Code as the user's primary execution interface
-- **COO-02**: Multimodal web handles walled gardens (LinkedIn, Stripe, myGov, WordPress) via injected credentials
-- **COO-03**: Ephemeral workspaces handle unbounded execution (recording scripts, data transforms, custom tooling)
-- **COO-04**: Memory Palace manages relationship continuity across all channels with entity-appropriate tone
+### Infrastructure (INFRA)
 
-### Workflow Intelligence
+- [ ] **INFRA-01**: Install graphology + simple-statistics (only 2 new deps, ~45KB gzipped)
+- [ ] **INFRA-02**: Cost tracking per cognitive feature (token usage per extraction type)
+- [ ] **INFRA-03**: Batch cognitive extraction into single LLM call per entity per consolidation run
+- [ ] **INFRA-04**: New tables: belief_states, anomaly_baselines, goal_tree, metacognitive_scores + extend entity_edges for causal types
+- [ ] **INFRA-05**: All new tables org-scoped with RLS policies
 
-- **WFLOW-01**: Execution trace storage for successful multi-step completions
-- **WFLOW-02**: Pattern detection and cached workflow replay (Stagehand-style auto-caching)
-- **WFLOW-03**: Proactive execution suggestions based on recurring task patterns
-- **WFLOW-04**: Cross-role orchestration for complex multi-step requests
+## v3.1+ Requirements (Deferred)
+
+### Advanced Cognitive Features
+
+- **ADV-01**: Cross-org reasoning (how decision in org A affects org B)
+- **ADV-02**: Collaborative Theory of Mind (multi-party belief modeling in group contexts)
+- **ADV-03**: Causal intervention simulation (do-calculus for "what if" scenario planning)
+- **ADV-04**: Automated goal revision based on achieved/missed milestones
+- **ADV-05**: Sent message capture (Epic B1) — full Theory of Mind exposure tracking
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Multi-tab browser orchestration | Fragile -- one tab per task, spawn separate sessions if needed |
-| Per-website custom scrapers | Doesn't scale -- CUA is the universal fallback |
-| Full desktop/OS control | Not relevant for web operations platform |
-| Real-time screen sharing / co-browsing | Periodic screenshot evidence is sufficient for business ops |
-| Custom browser engine | Use Playwright + Anthropic CUA -- proven, maintained |
+| External graph DB (Neo4j) | Supabase Postgres + graphology sufficient; no new infra |
+| Python ML sidecar | All cognitive features are LLM extraction tasks, not traditional ML |
+| Real-time cognitive streaming | Cron-based consolidation sufficient; real-time adds complexity without value |
+| Bayesian network inference | LLM-powered reasoning more practical for business domain |
+| Personality modeling | Ethical boundary; BitBit models knowledge/beliefs, not personality |
+| Full do-calculus engine | Academic overkill; LLM counterfactual reasoning sufficient for v3.0 |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENGINE-01 | Phase 37 | Pending |
-| ENGINE-02 | Phase 37 | Complete |
-| ENGINE-03 | Phase 37 | Complete |
-| ENGINE-04 | Phase 37 | Pending |
-| ENGINE-05 | Phase 37 | Complete |
-| FIDUC-01 | Phase 38 | Pending |
-| FIDUC-02 | Phase 38 | Pending |
-| FIDUC-03 | Phase 38 | Pending |
-| FIDUC-04 | Phase 38 | Pending |
-| FIDUC-05 | Phase 38 | Pending |
-| ASYNC-01 | Phase 39 | Pending |
-| ASYNC-02 | Phase 39 | Pending |
-| ASYNC-03 | Phase 39 | Pending |
-| ASYNC-04 | Phase 39 | Pending |
-| ASYNC-05 | Phase 39 | Pending |
-| ASYNC-06 | Phase 39 | Pending |
-| ASYNC-07 | Phase 39 | Pending |
-| ASYNC-08 | Phase 39 | Pending |
-| CUA-01 | Phase 40 | Pending |
-| CUA-02 | Phase 40 | Pending |
-| CUA-03 | Phase 40 | Pending |
-| CUA-04 | Phase 40 | Pending |
-| CUA-05 | Phase 40 | Pending |
-| CUA-06 | Phase 40 | Pending |
-| CUA-07 | Phase 40 | Pending |
-| CUA-08 | Phase 40 | Pending |
-| CUA-09 | Phase 40 | Pending |
-| CUA-10 | Phase 40 | Pending |
-| CUA-11 | Phase 40 | Pending |
-| WKSP-01 | Phase 41 | Pending |
-| WKSP-02 | Phase 41 | Pending |
-| WKSP-03 | Phase 41 | Pending |
-| WKSP-04 | Phase 41 | Pending |
-| WKSP-05 | Phase 41 | Pending |
-| WKSP-06 | Phase 41 | Pending |
-| WKSP-07 | Phase 41 | Pending |
-| WKSP-08 | Phase 41 | Pending |
-| CHAIN-01 | Phase 42 | Pending |
-| CHAIN-02 | Phase 42 | Pending |
-| CHAIN-03 | Phase 42 | Pending |
-| CHAIN-04 | Phase 42 | Pending |
-| DELEG-01 | Phase 43 | Pending |
-| DELEG-02 | Phase 43 | Pending |
-| DELEG-03 | Phase 43 | Pending |
-| DELEG-04 | Phase 43 | Pending |
-| DELEG-05 | Phase 43 | Pending |
-| DELEG-06 | Phase 43 | Pending |
+| WIRE-01 — WIRE-07, INFRA-01 — INFRA-05 | Phase 45 | Pending |
+| ANOM-01 — ANOM-05, LEARN-01 — LEARN-04 | Phase 46 | Pending |
+| TOM-01 — TOM-05, TEMP-01 — TEMP-04 | Phase 47 | Pending |
+| CAUS-01 — CAUS-05, META-01 — META-04 | Phase 48 | Pending |
+| GOAL-01 — GOAL-06 | Phase 49 | Pending |
 
 **Coverage:**
-- v2.0 requirements: 47 total
-- Mapped to phases: 47/47
+- v3.0 requirements: 50 total
+- Mapped to phases: 50
 - Unmapped: 0
 
 ---
-*Requirements defined: 2026-04-08*
-*Last updated: 2026-04-08 after v2.0 roadmap finalized (7 phases, 47 requirements mapped)*
+*Requirements defined: 2026-04-15*
+*Last updated: 2026-04-15 after v3.0 milestone definition*

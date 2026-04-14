@@ -1,4 +1,5 @@
 import { logger } from '@/lib/core/logger';
+import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway';
 /**
  * Voice Note Transcription Pipeline
  *
@@ -41,7 +42,6 @@ export interface TranscriptionResult {
   error?: string
 }
 
-const WHISPER_API_URL = 'https://api.openai.com/v1/audio/transcriptions'
 const WHISPER_MODEL = 'whisper-1'
 const TIMEOUT_MS = 30_000
 const MAX_AUDIO_SIZE_BYTES = 25 * 1024 * 1024 // 25 MB (Whisper API limit)
@@ -77,10 +77,10 @@ export async function transcribeVoiceNote(
     prompt?: string
   }
 ): Promise<TranscriptionResult> {
-  const openaiKey = process.env.OPENAI_API_KEY
+  const endpoint = getOpenAIEndpoint()
 
-  if (!openaiKey) {
-    const error = 'OPENAI_API_KEY not configured'
+  if (!endpoint) {
+    const error = 'Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY configured'
     logger.warn('[voice-transcription]', error)
     return {
       text: '',
@@ -145,10 +145,10 @@ export async function transcribeVoiceNote(
 
     let response: Response | undefined
     try {
-      response = await fetch(WHISPER_API_URL, {
+      response = await fetch(`${endpoint.baseUrl}/audio/transcriptions`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${openaiKey}`,
+          Authorization: endpoint.authorization,
         },
         body: formData,
         signal: controller.signal,

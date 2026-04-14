@@ -25,6 +25,7 @@ import type { PipelineEvent } from '@/lib/conversation/unified-pipeline'
 import { createSentenceSplitter } from './sentence-splitter'
 import { synthesizeSentence } from './tts-stream'
 import { inferVoiceHint } from '@/lib/agent/ai-sdk-bridge'
+import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway'
 import { logger } from '@/lib/core/logger'
 import { randomUUID } from 'crypto'
 
@@ -65,9 +66,9 @@ async function transcribe(
   audioBlob: VoiceTurnInput['audioBlob'],
   signal?: AbortSignal,
 ): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is not configured for transcription')
+  const endpoint = getOpenAIEndpoint()
+  if (!endpoint) {
+    throw new Error('Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY is configured for transcription')
   }
 
   const buf = await audioBlob.arrayBuffer()
@@ -76,9 +77,9 @@ async function transcribe(
   form.append('file', blob, audioBlob.name || 'audio.webm')
   form.append('model', 'whisper-1')
 
-  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+  const res = await fetch(`${endpoint.baseUrl}/audio/transcriptions`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}` },
+    headers: { Authorization: endpoint.authorization },
     body: form,
     signal,
   })

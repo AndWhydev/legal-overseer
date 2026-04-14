@@ -1,4 +1,5 @@
 import { logger } from '@/lib/core/logger';
+import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway';
 /**
  * WhatsApp voice note transcription service.
  *
@@ -10,7 +11,6 @@ import { logger } from '@/lib/core/logger';
  * within the 10s SLA (WHATS-04) since the rest of the pipeline is <2s.
  */
 
-const WHISPER_API_URL = 'https://api.openai.com/v1/audio/transcriptions'
 const GRAPH_API_VERSION = 'v21.0'
 
 /**
@@ -27,9 +27,9 @@ export async function transcribeVoiceNote(
   audioBuffer: Buffer,
   mimeType: string
 ): Promise<string | null> {
-  const openaiKey = process.env.OPENAI_API_KEY
-  if (!openaiKey) {
-    logger.warn('[whatsapp-voice] OPENAI_API_KEY not set — voice transcription unavailable')
+  const endpoint = getOpenAIEndpoint()
+  if (!endpoint) {
+    logger.warn('[whatsapp-voice] Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY set — voice transcription unavailable')
     return null
   }
 
@@ -46,10 +46,10 @@ export async function transcribeVoiceNote(
     formData.append('file', blob, `voice.${ext}`)
     formData.append('model', 'whisper-1')
 
-    const response = await fetch(WHISPER_API_URL, {
+    const response = await fetch(`${endpoint.baseUrl}/audio/transcriptions`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${openaiKey}`,
+        Authorization: endpoint.authorization,
       },
       body: formData,
     })

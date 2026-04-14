@@ -13,6 +13,7 @@ import { NextRequest } from 'next/server'
 import { createClient, isDevBypass } from '@/lib/supabase/server'
 import { authenticateBearer } from '@/lib/supabase/bearer-auth'
 import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
+import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway'
 import { logger } from '@/lib/core/logger'
 
 const MAX_TEXT_LENGTH = 4096
@@ -93,15 +94,18 @@ export async function POST(request: NextRequest) {
   const rateLimited = checkUserEndpointLimit(userId, '/api/ai/voice')
   if (rateLimited) return rateLimited
 
-  // ── Call OpenAI TTS via Vercel AI Gateway ────────────────────────────
-  const gatewayUrl = process.env.ANTHROPIC_BASE_URL || 'https://ai-gateway.vercel.sh'
-  const ttsEndpoint = `${gatewayUrl}/openai/v1/audio/speech`
+  // ── Call OpenAI TTS via gateway ───────────────────────────────────────
+  const openaiEndpoint = getOpenAIEndpoint()
+  if (!openaiEndpoint) {
+    return jsonError('Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY configured for TTS', 503)
+  }
 
   try {
-    const ttsResponse = await fetch(ttsEndpoint, {
+    const ttsResponse = await fetch(`${openaiEndpoint.baseUrl}/audio/speech`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: openaiEndpoint.authorization,
       },
       body: JSON.stringify({
         model: 'tts-1',

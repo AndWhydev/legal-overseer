@@ -14,10 +14,10 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/core/logger'
+import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway'
 import { updateMeetingStatus, insertTranscriptSegments } from './meeting-service'
 import type { Meeting, TranscriptSegment } from './types'
 
-const WHISPER_API_URL = 'https://api.openai.com/v1/audio/transcriptions'
 const WHISPER_MODEL = 'whisper-1'
 const MAX_CHUNK_BYTES = 24 * 1024 * 1024 // 24 MB to stay under 25 MB limit
 const TRANSCRIPTION_TIMEOUT_MS = 120_000 // 2 minutes per chunk
@@ -219,14 +219,14 @@ async function transcribeAudio(
   mimeType: string,
   options?: TranscriptionOptions
 ): Promise<TranscriptionResult> {
-  const openaiKey = process.env.OPENAI_API_KEY
-  if (!openaiKey) {
+  const endpoint = getOpenAIEndpoint()
+  if (!endpoint) {
     return {
       success: false,
       segments: [],
       duration: 0,
       language: 'en',
-      error: 'OPENAI_API_KEY not configured',
+      error: 'Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY configured',
     }
   }
 
@@ -256,9 +256,9 @@ async function transcribeAudio(
   const timeout = setTimeout(() => controller.abort(), TRANSCRIPTION_TIMEOUT_MS)
 
   try {
-    const response = await fetch(WHISPER_API_URL, {
+    const response = await fetch(`${endpoint.baseUrl}/audio/transcriptions`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${openaiKey}` },
+      headers: { Authorization: endpoint.authorization },
       body: formData,
       signal: controller.signal,
     })
