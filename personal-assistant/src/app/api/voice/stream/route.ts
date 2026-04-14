@@ -97,14 +97,27 @@ export async function POST(request: NextRequest) {
   if (rateLimited) return rateLimited
 
   // ── Resolve threadId ─────────────────────────────────────────────────
-  const formThread = form.get('threadId')
-  const threadId =
-    (typeof formThread === 'string' && formThread.length > 0 && formThread.length <= 128
-      ? formThread
-      : undefined) ?? claims.thread
-
-  // ── Build supabase client (service role — we've already authed) ──────
+  // claims.thread is already validated at session-mint time. Only the form-field
+  // override needs an ownership check to prevent cross-thread access.
   const supabase = getServiceClient()
+  const formThread = form.get('threadId')
+  let threadId = claims.thread
+
+  if (typeof formThread === 'string' && formThread.length > 0 && formThread.length <= 128) {
+    if (formThread === claims.thread) {
+      threadId = formThread
+    } else {
+      const { data: thread } = await supabase
+        .from('conversation_threads')
+        .select('id')
+        .eq('id', formThread)
+        .eq('user_id', claims.sub)
+        .eq('org_id', claims.org)
+        .maybeSingle()
+
+      threadId = thread ? formThread : claims.thread
+    }
+  }
 
   // ── Wire an abort signal to the client disconnect ────────────────────
   const abortController = new AbortController()

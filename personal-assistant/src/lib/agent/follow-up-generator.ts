@@ -8,8 +8,8 @@
  * Design constraints:
  * - Each suggestion <= 60 chars, natural language, actionable
  * - Uses the cheapest/fastest model (Gemini Flash)
- * - Fire-and-forget — failures return []
- * - Hard timeout to avoid delaying the `done` event
+ * - Best-effort — failures return []
+ * - Hard timeout caps added latency when the caller awaits this function
  */
 
 import { generateText, gateway } from 'ai'

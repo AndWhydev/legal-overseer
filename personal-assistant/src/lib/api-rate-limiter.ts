@@ -110,6 +110,8 @@ export const USER_ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   '/api/account/delete': { maxRequests: 3, windowMs: 3_600_000 },
   '/api/billing/checkout': { maxRequests: 10, windowMs: 3_600_000 },
   '/api/org/invite': { maxRequests: 10, windowMs: 3_600_000 },
+  '/api/voice/session': { maxRequests: 10, windowMs: 60_000 },
+  '/api/voice/stream': { maxRequests: 20, windowMs: 60_000 },
 }
 
 /**
