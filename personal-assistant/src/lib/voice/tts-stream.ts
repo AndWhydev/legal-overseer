@@ -113,6 +113,13 @@ async function* iterateStream(
       if (value) yield value
     }
   } finally {
+    if (signal?.aborted) {
+      try {
+        await reader.cancel()
+      } catch {
+        /* noop */
+      }
+    }
     try {
       reader.releaseLock()
     } catch {

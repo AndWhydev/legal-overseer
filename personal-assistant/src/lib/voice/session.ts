@@ -167,12 +167,24 @@ export async function* runVoiceTurn(input: VoiceTurnInput): AsyncGenerator<Voice
   // Bounded queue between producer (pipeline loop) and consumer (this generator).
   // We need this because TTS synths must yield audio chunks back to the caller,
   // which has to happen from inside this generator. We buffer events from both
-  // sources into a single queue.
+  // sources into a single queue. Capped to prevent unbounded memory growth on
+  // slow clients — non-audio events are dropped when the queue is full.
+  const MAX_QUEUE_SIZE = 500
   const eventQueue: VoiceEvent[] = []
   let queueResolver: (() => void) | null = null
   let producerDone = false
 
   function pushEvent(ev: VoiceEvent) {
+    if (eventQueue.length >= MAX_QUEUE_SIZE) {
+      // Drop oldest non-audio event to make room (preserve audio ordering)
+      const dropIdx = eventQueue.findIndex(e => e.type !== 'tts_audio')
+      if (dropIdx !== -1) {
+        eventQueue.splice(dropIdx, 1)
+      } else {
+        // All audio — drop the oldest
+        eventQueue.shift()
+      }
+    }
     eventQueue.push(ev)
     if (queueResolver) {
       queueResolver()

@@ -80,6 +80,17 @@ export function verifyVoiceSessionToken(token: string): VoiceSessionClaims | nul
     return null
   }
 
+  // Validate required claims are present and well-typed
+  if (
+    typeof claims.sub !== 'string' || !claims.sub ||
+    typeof claims.org !== 'string' || !claims.org ||
+    typeof claims.iat !== 'number' ||
+    typeof claims.exp !== 'number' ||
+    typeof claims.jti !== 'string' || !claims.jti
+  ) {
+    return null
+  }
+
   const now = Math.floor(Date.now() / 1000)
   if (claims.exp < now) return null
   return claims

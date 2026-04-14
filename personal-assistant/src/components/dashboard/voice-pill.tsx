@@ -181,13 +181,13 @@ export function VoicePill({
   }, [textValue, voice.isListening, onTextSubmit]);
 
   // Cancel voice auto-submit when the user starts typing manually.
-  // If the textValue change came from the voice callback itself, it's not a
-  // keystroke — let it through untouched.
+  // Any onChange during an active pending submit is treated as user intent to
+  // edit, regardless of whether voiceJustLandedRef is set — this prevents the
+  // race where a fast keystroke between voice callback and effect scheduling
+  // could bypass cancellation.
   const handleTextChange = useCallback((val: string) => {
     if (voiceJustLandedRef.current) {
       voiceJustLandedRef.current = false;
-      setTextValue(val);
-      return;
     }
     setTextValue(val);
     if (voiceAutoSending || pendingVoiceSubmitRef.current) {

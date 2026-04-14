@@ -203,13 +203,14 @@ export function useVoiceSession(options: UseVoiceSessionOptions = {}): UseVoiceS
   }, []);
 
   // ── Playback queue ─────────────────────────────────────────────────────
+  // Enforce strict sentence order: only play the queue head once it is
+  // complete, even if later sentences have already finished synthesizing.
   const playNext = useCallback(() => {
     if (isPlayingRef.current) return;
-    const next = playbackQueueRef.current.find(p => p.complete);
-    if (!next) return;
+    const next = playbackQueueRef.current[0];
+    if (!next || !next.complete) return;
 
-    const idx = playbackQueueRef.current.indexOf(next);
-    playbackQueueRef.current.splice(idx, 1);
+    playbackQueueRef.current.shift();
 
     const blob = new Blob(next.chunks as BlobPart[], { type: next.contentType });
     const url = URL.createObjectURL(blob);

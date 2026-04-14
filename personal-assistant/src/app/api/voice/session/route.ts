@@ -16,6 +16,7 @@ import { createClient, isDevBypass } from '@/lib/supabase/server'
 import { authenticateBearer } from '@/lib/supabase/bearer-auth'
 import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { signVoiceSessionToken, SESSION_TTL_SECONDS } from '@/lib/voice/session-token'
+import { getServiceClient } from '@/lib/supabase/service-client'
 import { logger } from '@/lib/core/logger'
 
 const DEV_BYPASS_USER_ID = '02ce2616-c01b-45a5-a2ad-16ebe936a6b2'
@@ -95,9 +96,28 @@ export async function POST(request: NextRequest) {
   if (rateLimited) return rateLimited
 
   // ── Validate optional threadId ───────────────────────────────────────
-  const threadId = typeof body.threadId === 'string' && body.threadId.length <= 128
+  let threadId: string | undefined
+  const rawThread = typeof body.threadId === 'string' && body.threadId.length <= 128
     ? body.threadId
     : undefined
+
+  if (rawThread) {
+    const svc = getServiceClient()
+    const { data: thread } = await svc
+      .from('conversation_threads')
+      .select('id')
+      .eq('id', rawThread)
+      .eq('user_id', userId)
+      .eq('org_id', orgId)
+      .maybeSingle()
+
+    if (thread) {
+      threadId = rawThread
+    } else {
+      logger.warn('[voice/session] threadId ownership check failed', { userId, threadId: rawThread })
+      // Omit the thread from the token — don't fail the request
+    }
+  }
 
   // ── Mint token ───────────────────────────────────────────────────────
   let token: string

@@ -922,9 +922,9 @@ export async function* runTAORLoop(
         }, config.supabase).catch(() => {}) // truly fire-and-forget
       }
 
-      // Generate follow-up suggestions (non-blocking, timeout-guarded)
+      // Generate follow-up suggestions (adds up to 3s latency, capped by timeout)
       try {
-        const followUps = await generateFollowUps(message, text)
+        const followUps = await generateFollowUps(message, humanizedText)
         if (followUps.length > 0) {
           yield { type: 'follow_ups', data: { suggestions: followUps } }
         }
