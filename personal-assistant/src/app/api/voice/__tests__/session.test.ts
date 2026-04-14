@@ -43,6 +43,7 @@ describe('POST /api/voice/session', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     isDevBypassMock.mockReturnValue(true)
+    checkUserEndpointLimitMock.mockReturnValue(null)
     // A signing secret must be present for token minting
     process.env.VOICE_SESSION_SECRET = 'test-secret-at-least-32-chars-long-xxxxxx'
     process.env.ELEVENLABS_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'
