@@ -48,6 +48,7 @@ import { setEntityMandate, revokeEntityMandate, getEntityMandate } from '@/lib/a
 import { buildTaorExecOptions, mergeEntityOverrides } from './taor-loop-utils'
 import { buildTierContextBlock } from './tool-resolver'
 import { generateFollowUps } from '@/lib/agent/follow-up-generator'
+import { retrieveRelevantTraces, formatTracesAsContext } from './decision-trace-retriever'
 
 // ---------------------------------------------------------------------------
 // Correction detection for memory contradiction feedback
@@ -567,6 +568,7 @@ export async function* runTAORLoop(
     fullSystemPrompt += deferredPromptSection
   }
 
+<<<<<<< HEAD
   // Voice-mode prompt fragment.
   //
   // Appended AFTER the cached prefix so prompt-cache hits are preserved —
@@ -574,6 +576,30 @@ export async function* runTAORLoop(
   // turn invalidates the cache.
   if (config.voiceMode) {
     fullSystemPrompt += `\n\n## Voice Mode\nYou are being consumed over a realtime voice channel. Respond in 1-3 short sentences unless the user explicitly asks for detail. Avoid markdown, bullet lists, tables, and code fences — they cannot be spoken naturally. Use natural contractions ("I'll", "you're", "that's"). Confirm before destructive actions. If the user asks for data that's best shown visually (a table, a list of many items, code), give a brief spoken summary and note that the full result is on screen.\n`
+  }
+
+  // Inject past decision traces for reflexion learning (non-blocking, best-effort)
+  if (queryComplexity !== 'system1') {
+    try {
+      const traceResult = await retrieveRelevantTraces(
+        config.supabase,
+        config.orgId,
+        message,
+        { entityId: config.entityId, limit: 5 },
+      )
+      const traceBlock = formatTracesAsContext(traceResult.traces)
+      if (traceBlock) {
+        fullSystemPrompt += `\n\n${traceBlock}\n`
+        logger.info('[engine] Decision traces injected', {
+          count: traceResult.traces.length,
+          retrievalMs: traceResult.retrievalMs,
+        })
+      }
+    } catch (err) {
+      logger.warn('[engine] Decision trace injection failed', {
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
   }
 
   // ── 6. Build initial messages array ────────────────────────────────
