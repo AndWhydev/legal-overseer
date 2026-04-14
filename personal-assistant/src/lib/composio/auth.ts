@@ -1,7 +1,27 @@
-import { getComposioClient } from './client'
+/**
+ * Composio OAuth lifecycle — raw HTTP (no SDK).
+ *
+ * The Composio SDK (@composio/core) crashes under Turbopack bundling on
+ * Vercel. All functions here use raw fetch against the Composio REST API.
+ */
+
 import { getToolkitId } from './mapping'
 import type { ChannelType } from '../channels/types'
 import { logger } from '../core/logger'
+
+// ---------------------------------------------------------------------------
+// Constants & helpers
+// ---------------------------------------------------------------------------
+
+const COMPOSIO_BASE = 'https://backend.composio.dev'
+
+function composioHeaders(): Record<string, string> {
+  return { 'x-api-key': process.env.COMPOSIO_API_KEY!, 'Content-Type': 'application/json' }
+}
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 export interface ComposioConnectionRequest {
   redirectUrl: string
@@ -14,14 +34,12 @@ export interface ComposioConnectedAccount {
   toolkit: string
 }
 
+// ---------------------------------------------------------------------------
+// Connection initiation
+// ---------------------------------------------------------------------------
+
 /**
- * Initiate a Composio OAuth connection for a user+app.
- *
- * @param userId   BitBit org_id (used as Composio entity/user ID)
- * @param channel  BitBit channel type to connect
- * @param callbackUrl  URL to redirect after auth (e.g. /connections?composio=callback)
- * @param authConfigId  Optional Composio auth config ID (for white-label OAuth)
- * @returns Redirect URL to send the user to, plus the connection request ID
+ * Initiate a Composio OAuth connection for a user+app via channel type.
  */
 export async function initiateConnection(
   userId: string,
@@ -29,8 +47,7 @@ export async function initiateConnection(
   callbackUrl: string,
   authConfigId?: string,
 ): Promise<ComposioConnectionRequest | null> {
-  const composio = getComposioClient()
-  if (!composio) {
+  if (!process.env.COMPOSIO_API_KEY) {
     logger.warn('[composio/auth] Cannot initiate connection — COMPOSIO_API_KEY not set')
     return null
   }
@@ -42,31 +59,37 @@ export async function initiateConnection(
   }
 
   try {
-    // If no explicit authConfigId, Composio uses its default config for the toolkit
     const configId = authConfigId || toolkit
+    const res = await fetch(`${COMPOSIO_BASE}/api/v3/connected-accounts`, {
+      method: 'POST',
+      headers: composioHeaders(),
+      body: JSON.stringify({
+        auth_config_id: configId,
+        user_id: userId,
+        redirect_url: callbackUrl,
+      }),
+    })
 
-    const connRequest = await composio.connectedAccounts.initiate(
-      userId,
-      configId,
-      { callbackUrl },
-    )
+    if (!res.ok) {
+      const body = await res.text()
+      logger.error('[composio/auth] initiateConnection failed', {
+        userId, channel, toolkit, status: res.status, body: body.slice(0, 300),
+      })
+      return null
+    }
 
+    const data = await res.json() as { id?: string; redirect_url?: string; redirectUrl?: string }
     logger.info('[composio/auth] Connection initiated', {
-      userId,
-      channel,
-      toolkit,
-      connectionRequestId: connRequest.id,
+      userId, channel, toolkit, connectionRequestId: data.id,
     })
 
     return {
-      redirectUrl: connRequest.redirectUrl || '',
-      connectionRequestId: connRequest.id,
+      redirectUrl: data.redirect_url || data.redirectUrl || '',
+      connectionRequestId: data.id || '',
     }
   } catch (err) {
     logger.error('[composio/auth] Failed to initiate connection', {
-      userId,
-      channel,
-      toolkit,
+      userId, channel, toolkit,
       error: err instanceof Error ? err.message : String(err),
     })
     return null
@@ -74,28 +97,126 @@ export async function initiateConnection(
 }
 
 /**
+ * Initiate a Composio OAuth connection by app key directly.
+ * Bypasses the BitBit channel-type mapping — works with any Composio toolkit.
+ */
+export async function initiateConnectionByAppKey(
+  userId: string,
+  appKey: string,
+  callbackUrl: string,
+): Promise<ComposioConnectionRequest | null> {
+  if (!process.env.COMPOSIO_API_KEY) {
+    logger.warn('[composio/auth] Cannot initiate connection — COMPOSIO_API_KEY not set')
+    return null
+  }
+
+  const headers = composioHeaders()
+
+  try {
+    // Step 1: resolve auth config ID for this toolkit slug
+    const cfgRes = await fetch(
+      `${COMPOSIO_BASE}/api/v3/auth-configs?toolkit_slug=${encodeURIComponent(appKey)}&status=ENABLED&limit=10`,
+      { headers },
+    )
+    if (!cfgRes.ok) {
+      const body = await cfgRes.text()
+      logger.error('[composio/auth] authConfigs lookup failed', {
+        appKey, status: cfgRes.status, body: body.slice(0, 300),
+      })
+      return null
+    }
+
+    const cfgData = await cfgRes.json() as {
+      items?: Array<{ id: string; toolkit?: { slug?: string }; status?: string }>
+    }
+    const configs = cfgData.items || []
+    const authConfig = configs.find(
+      c => c.toolkit?.slug?.toLowerCase() === appKey.toLowerCase() && c.status === 'ENABLED',
+    ) || configs[0]
+
+    if (!authConfig) {
+      logger.error('[composio/auth] No enabled auth config found', { appKey, configCount: configs.length })
+      return null
+    }
+
+    // Step 2: initiate the connection
+    const initRes = await fetch(`${COMPOSIO_BASE}/api/v3/connected-accounts`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        auth_config_id: authConfig.id,
+        user_id: userId,
+        redirect_url: callbackUrl,
+      }),
+    })
+
+    if (!initRes.ok) {
+      const body = await initRes.text()
+      logger.error('[composio/auth] connectedAccounts.initiate failed', {
+        appKey, status: initRes.status, body: body.slice(0, 300),
+      })
+      return null
+    }
+
+    const data = await initRes.json() as { id?: string; redirect_url?: string; redirectUrl?: string }
+    logger.info('[composio/auth] Connection initiated by appKey', {
+      userId, appKey, authConfigId: authConfig.id, connectionRequestId: data.id,
+    })
+
+    return {
+      redirectUrl: data.redirect_url || data.redirectUrl || '',
+      connectionRequestId: data.id || '',
+    }
+  } catch (err) {
+    logger.error('[composio/auth] Failed to initiate connection by appKey', {
+      userId, appKey,
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return null
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Connection polling
+// ---------------------------------------------------------------------------
+
+/**
  * Wait for a pending Composio connection to complete (user finished OAuth).
- *
- * @param connectionRequestId  The ID returned from initiateConnection
- * @param timeoutMs  Maximum time to wait (default 60s)
+ * Polls the connected-accounts endpoint until status is ACTIVE or timeout.
  */
 export async function waitForConnection(
   connectionRequestId: string,
   timeoutMs = 60_000,
 ): Promise<ComposioConnectedAccount | null> {
-  const composio = getComposioClient()
-  if (!composio) return null
+  if (!process.env.COMPOSIO_API_KEY) return null
+
+  const headers = composioHeaders()
+  const deadline = Date.now() + timeoutMs
+  const pollInterval = 2_000
 
   try {
-    const account = await composio.connectedAccounts.waitForConnection(
-      connectionRequestId,
-      timeoutMs,
-    )
-    return {
-      id: account.id,
-      status: account.status,
-      toolkit: (account as Record<string, unknown>).appName as string || '',
+    while (Date.now() < deadline) {
+      const res = await fetch(
+        `${COMPOSIO_BASE}/api/v3/connected-accounts?connection_request_id=${encodeURIComponent(connectionRequestId)}&limit=1`,
+        { headers },
+      )
+      if (res.ok) {
+        const data = await res.json() as {
+          items?: Array<{ id: string; status: string; appName?: string; toolkit?: string }>
+        }
+        const account = data.items?.[0]
+        if (account && account.status === 'ACTIVE') {
+          return {
+            id: account.id,
+            status: account.status,
+            toolkit: account.toolkit || account.appName || '',
+          }
+        }
+      }
+      await new Promise(r => setTimeout(r, pollInterval))
     }
+    logger.warn('[composio/auth] waitForConnection timed out', { connectionRequestId, timeoutMs })
+    return null
   } catch (err) {
     logger.error('[composio/auth] waitForConnection failed', {
       connectionRequestId,
@@ -105,25 +226,32 @@ export async function waitForConnection(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Account queries
+// ---------------------------------------------------------------------------
+
 /**
  * List active Composio connected accounts for a user.
  */
 export async function listConnectedAccounts(
   userId: string,
 ): Promise<ComposioConnectedAccount[]> {
-  const composio = getComposioClient()
-  if (!composio) return []
+  if (!process.env.COMPOSIO_API_KEY) return []
 
   try {
-    const result = await composio.connectedAccounts.list({
-      userIds: [userId],
-      statuses: ['ACTIVE'],
-    })
+    const res = await fetch(
+      `${COMPOSIO_BASE}/api/v3/connected-accounts?user_ids=${encodeURIComponent(userId)}&status=ACTIVE&limit=100`,
+      { headers: composioHeaders() },
+    )
+    if (!res.ok) return []
 
-    return result.items.map(item => ({
+    const data = await res.json() as {
+      items?: Array<{ id: string; status: string; appName?: string; toolkit?: string }>
+    }
+    return (data.items || []).map(item => ({
       id: item.id,
       status: item.status,
-      toolkit: (item as Record<string, unknown>).appName as string || '',
+      toolkit: item.toolkit || item.appName || '',
     }))
   } catch (err) {
     logger.error('[composio/auth] listConnectedAccounts failed', {
@@ -140,15 +268,20 @@ export async function listConnectedAccounts(
 export async function getConnectedAccount(
   accountId: string,
 ): Promise<ComposioConnectedAccount | null> {
-  const composio = getComposioClient()
-  if (!composio) return null
+  if (!process.env.COMPOSIO_API_KEY) return null
 
   try {
-    const account = await composio.connectedAccounts.get(accountId)
+    const res = await fetch(
+      `${COMPOSIO_BASE}/api/v3/connected-accounts/${encodeURIComponent(accountId)}`,
+      { headers: composioHeaders() },
+    )
+    if (!res.ok) return null
+
+    const account = await res.json() as { id: string; status: string; appName?: string; toolkit?: string }
     return {
       id: account.id,
       status: account.status,
-      toolkit: (account as Record<string, unknown>).appName as string || '',
+      toolkit: account.toolkit || account.appName || '',
     }
   } catch (err) {
     logger.error('[composio/auth] getConnectedAccount failed', {
@@ -159,73 +292,28 @@ export async function getConnectedAccount(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Disconnect
+// ---------------------------------------------------------------------------
+
 /**
- * Disconnect a Composio connected account.
+ * Disconnect a Composio connected account (revokes remotely).
  */
-/**
- * Initiate a Composio OAuth connection using a Composio app key directly.
- * Unlike initiateConnection(), this bypasses the BitBit channel-type mapping
- * and works with any app in the Composio catalog.
- */
-export async function initiateConnectionByAppKey(
-  userId: string,
-  appKey: string,
-  callbackUrl: string,
-): Promise<ComposioConnectionRequest | null> {
-  const composio = getComposioClient()
-  if (!composio) {
-    logger.warn('[composio/auth] Cannot initiate connection — COMPOSIO_API_KEY not set')
-    return null
-  }
-
-  try {
-    // SDK v0.6.x: connectedAccounts.initiate takes (userId, authConfigId, options)
-    // NOT (userId, toolkitSlug, options). We must resolve the auth config ID first.
-    const allConfigs = await composio.authConfigs.list({ limit: 200 })
-    const configs = Array.isArray(allConfigs) ? allConfigs : allConfigs?.items || []
-    const authConfig = configs.find(
-      (c: { toolkit?: { slug?: string }; status?: string }) =>
-        c.toolkit?.slug === appKey && c.status === 'ENABLED'
-    )
-
-    if (!authConfig) {
-      logger.error('[composio/auth] No enabled auth config found for toolkit', { appKey })
-      return null
-    }
-
-    const connRequest = await composio.connectedAccounts.initiate(
-      userId,
-      authConfig.id,
-      { callbackUrl },
-    )
-
-    logger.info('[composio/auth] Connection initiated by appKey', {
-      userId,
-      appKey,
-      authConfigId: authConfig.id,
-      connectionRequestId: connRequest.id,
-    })
-
-    return {
-      redirectUrl: connRequest.redirectUrl || '',
-      connectionRequestId: connRequest.id,
-    }
-  } catch (err) {
-    logger.error('[composio/auth] Failed to initiate connection by appKey', {
-      userId,
-      appKey,
-      error: err instanceof Error ? err.message : String(err),
-    })
-    return null
-  }
-}
-
 export async function disconnectAccount(accountId: string): Promise<boolean> {
-  const composio = getComposioClient()
-  if (!composio) return false
+  if (!process.env.COMPOSIO_API_KEY) return false
 
   try {
-    await composio.connectedAccounts.delete(accountId)
+    const res = await fetch(
+      `${COMPOSIO_BASE}/api/v3/connected-accounts/${encodeURIComponent(accountId)}`,
+      { method: 'DELETE', headers: composioHeaders() },
+    )
+    if (!res.ok) {
+      const body = await res.text()
+      logger.error('[composio/auth] disconnectAccount HTTP failed', {
+        accountId, status: res.status, body: body.slice(0, 300),
+      })
+      return false
+    }
     logger.info('[composio/auth] Disconnected account', { accountId })
     return true
   } catch (err) {

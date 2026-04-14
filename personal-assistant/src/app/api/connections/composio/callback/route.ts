@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/supabase/auth-context'
 import { getServiceClient } from '@/lib/supabase/service-client'
-import { waitForConnection, getConnectedAccount } from '@/lib/composio'
+import { waitForConnection, getConnectedAccount, invalidateComposioToolCache } from '@/lib/composio'
 import { createConnectorManager } from '@/lib/connectors'
 import { logger } from '@/lib/core/logger'
 
@@ -110,6 +110,8 @@ export async function GET(request: NextRequest) {
         } else {
           const manager = createConnectorManager(supabase, { skipBridge: true })
           await manager.activate(row as never, { accountId, metadata: account as unknown as Record<string, unknown> })
+          // Invalidate the tool cache so the agent picks up the new connection
+          invalidateComposioToolCache(orgId)
           logger.info('[composio/callback] Connection activated', {
             orgId, provider, connectionId: row.id, accountId,
           })
@@ -127,6 +129,6 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.redirect(
-    `${appUrl}/dashboard?composio_success=true&app=${appName || 'unknown'}`
+    `${appUrl}/dashboard/connections?composio_success=true&app=${appName || 'unknown'}`
   )
 }

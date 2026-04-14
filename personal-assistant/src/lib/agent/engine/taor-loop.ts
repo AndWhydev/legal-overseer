@@ -17,7 +17,8 @@ import { callModelViaGateway, type AnthropicLikeResponse, type GatewayCallConfig
 import { models as gatewayModels } from '@/lib/ai'
 import { getAgentTools, type ExecuteToolOptions, type ToolGroup } from '@/lib/agent/tools'
 import { getEagerTools, buildDeferredToolsPrompt, resolveToolSchema } from '@/lib/agent/tools/deferred-loader'
-import { getMCPTools, isMCPEnabled } from '@/lib/composio/mcp-session'
+import { getComposioToolsForOrg } from '@/lib/composio/tool-provider'
+import { isComposioEnabled } from '@/lib/composio/client'
 import { selectRelevantTools } from '@/lib/agent/tool-rag'
 import { buildEntityAwarePrompt } from '@/lib/agent/prompt-builder'
 import { ContextAssembler } from '@/lib/context-assembly/context-assembler'
@@ -346,14 +347,14 @@ export async function* runTAORLoop(
     ? getAgentTools(config.toolGroups as ToolGroup[])
     : getEagerTools()
 
-  // Merge MCP tools if enabled and composio group is active
-  if (isMCPEnabled() && (!config.toolGroups || (config.toolGroups as ToolGroup[]).includes('composio'))) {
-    const mcpTools = await getMCPTools(config.orgId)
-    if (mcpTools.length > 0) {
+  // Merge Composio tools for the user's connected apps
+  if (isComposioEnabled()) {
+    const { tools: composioTools } = await getComposioToolsForOrg(config.orgId, config.supabase)
+    if (composioTools.length > 0) {
       const nativeNames = new Set(tools.map(t => t.name))
-      const uniqueMcp = mcpTools.filter(t => !nativeNames.has(t.name))
-      tools = [...tools, ...uniqueMcp]
-      logger.info('[engine] MCP tools merged', { mcpCount: uniqueMcp.length, totalCount: tools.length })
+      const uniqueComposio = composioTools.filter(t => !nativeNames.has(t.name))
+      tools = [...tools, ...uniqueComposio]
+      logger.info('[engine] Composio tools merged', { composioCount: uniqueComposio.length, totalCount: tools.length })
     }
   }
 
@@ -443,14 +444,14 @@ export async function* runTAORLoop(
       if (combinedToolGroups.length > 0) {
         tools = getAgentTools(combinedToolGroups as ToolGroup[])
 
-        // Merge MCP tools when composio group is selected by planner
-        if (isMCPEnabled() && combinedToolGroups.includes('composio' as ToolGroup)) {
-          const mcpTools = await getMCPTools(config.orgId)
-          if (mcpTools.length > 0) {
+        // Merge Composio tools for connected apps (always, not just when composio group selected)
+        if (isComposioEnabled()) {
+          const { tools: composioTools } = await getComposioToolsForOrg(config.orgId, config.supabase)
+          if (composioTools.length > 0) {
             const nativeNames = new Set(tools.map(t => t.name))
-            const uniqueMcp = mcpTools.filter(t => !nativeNames.has(t.name))
-            tools = [...tools, ...uniqueMcp]
-            logger.info('[engine] MCP tools merged (planner)', { mcpCount: uniqueMcp.length })
+            const uniqueComposio = composioTools.filter(t => !nativeNames.has(t.name))
+            tools = [...tools, ...uniqueComposio]
+            logger.info('[engine] Composio tools merged (planner)', { composioCount: uniqueComposio.length })
           }
         }
 

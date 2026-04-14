@@ -7,3 +7,6 @@ export { ComposioMCPClient, mcpToolsToAnthropicTools, transformMCPResult } from 
 export { getOrCreateMCPSession, invalidateMCPSession, isMCPEnabled, getMCPTools, executeMCPTool, isMCPTool } from './mcp-session'
 export type { MCPSession } from './mcp-session'
 export type { MCPToolLike, MCPCallToolResultLike } from './mcp-types'
+// Connection-aware tool provider (replaces MCP for agent tool exposure)
+export { getComposioToolsForOrg, executeComposioAction, executeComposioToolForOrg, invalidateComposioToolCache, invalidateActionSchemaCache } from './tool-provider'
+export type { ComposioToolSet } from './tool-provider'

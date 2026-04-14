@@ -27,6 +27,7 @@ import {
   getConnectedAccount,
   initiateConnectionByAppKey,
   isComposioEnabled,
+  invalidateComposioToolCache,
 } from '../../composio'
 import { deleteTrigger, setupChannelTrigger } from '../../composio/triggers'
 import { dispatchConnectionCrawl } from '../../composio/dispatch-crawl'
@@ -283,6 +284,7 @@ export class ComposioLifecycle implements ConnectorLifecycle {
     if (accountId && isComposioEnabled()) {
       try {
         await disconnectAccount(accountId)
+        invalidateComposioToolCache(conn.org_id)
       } catch (err) {
         logger.warn('[composio-lifecycle] disconnectAccount failed', {
           connectionId: conn.id,

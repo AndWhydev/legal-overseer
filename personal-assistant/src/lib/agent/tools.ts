@@ -21,7 +21,7 @@ import { imageToolDefinitions, imageToolHandlers } from './tools/image-tools'
 import { composioToolDefinitions, composioToolHandlers } from './tools/composio-tools'
 import { workspaceToolDefinitions, workspaceToolHandlers } from './tools/workspace-tools'
 import { browserToolDefinitions, browserToolHandlers } from './tools/browser-tools'
-import { executeMCPTool } from '@/lib/composio/mcp-session'
+import { executeComposioToolForOrg } from '@/lib/composio/tool-provider'
 import { composeCreatorStudioDeck } from '@/lib/creator-studio'
 import { routeAgentAction } from './confidence-router'
 import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
@@ -136,8 +136,8 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
   composio: {
     id: 'composio',
     label: 'Composio Integrations',
-    description: 'Execute actions across 1000+ third-party apps (HubSpot, Notion, Jira, Salesforce, Slack, and more) via Composio managed integrations',
-    tools: ['composio_list_apps', 'composio_list_actions', 'composio_execute', 'composio_connect_app'],
+    description: 'Connect and execute actions across third-party apps (HubSpot, Notion, Jira, Salesforce, Slack, Gmail, and more) via OAuth. Connected app tools are injected natively — use composio_connect_app to link new ones.',
+    tools: ['composio_connect_app'],
   },
   workspace: {
     id: 'workspace',
@@ -1084,32 +1084,28 @@ export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
 }
 
 /**
- * Get agent tools with MCP tools merged in.
- * Call this instead of getAgentTools() when MCP is enabled.
- * MCP tools are appended to the filtered native tool set.
+ * Get agent tools with connected Composio tools merged in.
+ * Queries org_connections for the user's active Composio connections
+ * and appends their action schemas as native Anthropic tools.
  */
-export async function getAgentToolsWithMCP(
+export async function getAgentToolsWithComposio(
   orgId: string,
+  supabase: SupabaseClient,
   groups?: ToolGroup[],
 ): Promise<Anthropic.Tool[]> {
-  const { getMCPTools, isMCPEnabled } = await import('@/lib/composio/mcp-session')
+  const { getComposioToolsForOrg } = await import('@/lib/composio/tool-provider')
   const nativeTools = getAgentTools(groups)
 
-  if (!isMCPEnabled()) return nativeTools
+  if (!process.env.COMPOSIO_API_KEY) return nativeTools
 
-  // Only load MCP tools when composio group is selected (or no groups = all)
-  if (groups && groups.length > 0 && !groups.includes('composio')) {
-    return nativeTools
-  }
+  const { tools: composioTools } = await getComposioToolsForOrg(orgId, supabase)
+  if (composioTools.length === 0) return nativeTools
 
-  const mcpTools = await getMCPTools(orgId)
-  if (mcpTools.length === 0) return nativeTools
-
-  // Deduplicate: native tools take priority over MCP tools with same name
+  // Deduplicate: native tools take priority
   const nativeNames = new Set(nativeTools.map(t => t.name))
-  const uniqueMcpTools = mcpTools.filter(t => !nativeNames.has(t.name))
+  const uniqueComposio = composioTools.filter(t => !nativeNames.has(t.name))
 
-  return [...nativeTools, ...uniqueMcpTools]
+  return [...nativeTools, ...uniqueComposio]
 }
 
 export interface ExecuteToolOptions {
@@ -1146,10 +1142,10 @@ export async function executeAgentTool(
 ): Promise<ToolResult> {
   const handler = allHandlers[name]
   if (!handler) {
-    // Try MCP tools before returning unknown — dynamically loaded tools
-    // from Composio's MCP endpoint won't have static handlers
-    const mcpResult = await executeMCPTool(orgId, name, input)
-    if (mcpResult) return mcpResult
+    // Try Composio tool-provider — dynamically loaded tools from connected
+    // apps won't have static handlers in allHandlers.
+    const composioResult = await executeComposioToolForOrg(orgId, name, input, supabase)
+    if (composioResult) return composioResult
     return { success: false, error: `Unknown tool: ${name}` }
   }
 

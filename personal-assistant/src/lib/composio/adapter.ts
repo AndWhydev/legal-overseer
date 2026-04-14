@@ -1,7 +1,24 @@
-import { getComposioClient } from './client'
+/**
+ * Composio Channel Adapter — raw HTTP (no SDK).
+ *
+ * Creates ChannelAdapter instances backed by Composio actions for pull/send.
+ * Each adapter calls the Composio REST API with the user's connected_account_id
+ * from org_connections.
+ */
+
 import { getToolkitId, isComposioChannel } from './mapping'
 import type { ChannelAdapter, ChannelMessage, ChannelType } from '../channels/types'
 import { logger } from '../core/logger'
+
+// ---------------------------------------------------------------------------
+// Constants & helpers
+// ---------------------------------------------------------------------------
+
+const COMPOSIO_BASE = 'https://backend.composio.dev'
+
+function composioHeaders(): Record<string, string> {
+  return { 'x-api-key': process.env.COMPOSIO_API_KEY!, 'Content-Type': 'application/json' }
+}
 
 /**
  * Feature flag: set per-channel to enable Composio adapter instead of legacy.
@@ -10,49 +27,58 @@ import { logger } from '../core/logger'
 export function isComposioEnabledForChannel(channel: ChannelType): boolean {
   if (!isComposioChannel(channel)) return false
   if (!process.env.COMPOSIO_API_KEY) return false
-
-  // Global kill switch
   if (process.env.COMPOSIO_DISABLE_ALL === '1') return false
 
-  // Per-channel flag: COMPOSIO_ENABLE_GMAIL=1
   const envKey = `COMPOSIO_ENABLE_${channel.toUpperCase().replace(/-/g, '_')}`
   return process.env[envKey] === '1'
 }
+
+// ---------------------------------------------------------------------------
+// Raw HTTP action execution
+// ---------------------------------------------------------------------------
 
 interface ComposioActionResult {
   data?: Record<string, unknown>
   error?: string
   successfull?: boolean
+  response_data?: unknown
 }
 
 /**
- * Execute a Composio action for a user session.
+ * Execute a Composio action via REST API.
+ * Requires a connected_account_id to scope execution to the user's OAuth token.
  */
 async function executeAction(
-  orgId: string,
   actionName: string,
-  params: Record<string, unknown> = {},
+  params: Record<string, unknown>,
+  connectedAccountId: string,
 ): Promise<ComposioActionResult | null> {
-  const composio = getComposioClient()
-  if (!composio) return null
+  if (!process.env.COMPOSIO_API_KEY) return null
 
   try {
-    // Execute action via Composio's tools API
-    // The SDK handles auth, token refresh, connected account resolution
-    const result = await (composio as unknown as {
-      tools: {
-        execute: (opts: { actionName: string; params: Record<string, unknown>; entityId?: string }) => Promise<ComposioActionResult>
-      }
-    }).tools.execute({
-      actionName,
-      params,
-      entityId: orgId,
-    })
+    const res = await fetch(
+      `${COMPOSIO_BASE}/api/v3/actions/${encodeURIComponent(actionName)}/execute`,
+      {
+        method: 'POST',
+        headers: composioHeaders(),
+        body: JSON.stringify({
+          connected_account_id: connectedAccountId,
+          input: params,
+        }),
+      },
+    )
 
-    return result
+    if (!res.ok) {
+      const body = await res.text()
+      logger.error('[composio/adapter] executeAction HTTP failed', {
+        actionName, status: res.status, body: body.slice(0, 300),
+      })
+      return null
+    }
+
+    return await res.json() as ComposioActionResult
   } catch (err) {
-    logger.error(`[composio/adapter] executeAction failed`, {
-      orgId,
+    logger.error('[composio/adapter] executeAction failed', {
       actionName,
       error: err instanceof Error ? err.message : String(err),
     })
@@ -60,9 +86,10 @@ async function executeAction(
   }
 }
 
-/**
- * Transform a Composio Gmail message response into a BitBit ChannelMessage.
- */
+// ---------------------------------------------------------------------------
+// Per-channel transformers
+// ---------------------------------------------------------------------------
+
 function transformGmailMessage(raw: Record<string, unknown>, index: number): ChannelMessage {
   const messageId = (raw.messageId as string) || (raw.id as string) || `composio-gmail-${index}`
   const from = (raw.sender as string) || (raw.from as string) || 'Unknown'
@@ -70,7 +97,6 @@ function transformGmailMessage(raw: Record<string, unknown>, index: number): Cha
   const body = (raw.messageText as string) || (raw.body as string) || (raw.snippet as string) || ''
   const date = (raw.date as string) || (raw.receivedAt as string)
 
-  // Parse "Name <email>" format
   const emailMatch = from.match(/<([^>]+)>/)
   const senderEmail = emailMatch?.[1] || (from.includes('@') ? from : '')
   const senderName = from.replace(/<[^>]+>/g, '').replace(/"/g, '').trim() || senderEmail || 'Unknown'
@@ -87,17 +113,10 @@ function transformGmailMessage(raw: Record<string, unknown>, index: number): Cha
     receivedAt: date ? new Date(date) : new Date(),
     isActionable: false,
     priority: 'medium',
-    metadata: {
-      source: 'composio',
-      threadId: raw.threadId,
-      labelIds: raw.labelIds,
-    },
+    metadata: { source: 'composio', threadId: raw.threadId, labelIds: raw.labelIds },
   }
 }
 
-/**
- * Generic Composio message transformer — maps common fields across toolkits.
- */
 function transformGenericMessage(
   raw: Record<string, unknown>,
   channel: ChannelType,
@@ -121,16 +140,9 @@ function transformGenericMessage(
     receivedAt: date ? new Date(date) : new Date(),
     isActionable: false,
     priority: 'medium',
-    metadata: {
-      source: 'composio',
-      raw_keys: Object.keys(raw),
-    },
+    metadata: { source: 'composio', raw_keys: Object.keys(raw) },
   }
 }
-
-// ---------------------------------------------------------------------------
-// Per-channel transformers
-// ---------------------------------------------------------------------------
 
 function transformOutlookMessage(raw: Record<string, unknown>, index: number): ChannelMessage {
   const id = (raw.id as string) || `composio-outlook-${index}`
@@ -352,9 +364,10 @@ function transformWordPressPost(raw: Record<string, unknown>, index: number): Ch
   }
 }
 
-/**
- * Channel-specific action names for pulling messages/data.
- */
+// ---------------------------------------------------------------------------
+// Action maps
+// ---------------------------------------------------------------------------
+
 const PULL_ACTIONS: Partial<Record<ChannelType, string>> = {
   gmail: 'GMAIL_LIST_EMAILS',
   outlook: 'OUTLOOK_LIST_EMAILS',
@@ -373,9 +386,6 @@ const PULL_ACTIONS: Partial<Record<ChannelType, string>> = {
   gsc: 'GOOGLESEARCHCONSOLE_GET_SEARCH_ANALYTICS',
 }
 
-/**
- * Channel-specific send action names.
- */
 export const SEND_ACTIONS: Partial<Record<ChannelType, string>> = {
   gmail: 'GMAIL_SEND_EMAIL',
   outlook: 'OUTLOOK_SEND_EMAIL',
@@ -385,9 +395,6 @@ export const SEND_ACTIONS: Partial<Record<ChannelType, string>> = {
   wordpress: 'WORDPRESS_CREATE_POST',
 }
 
-/**
- * Channel-specific transformers.
- */
 const TRANSFORMERS: Partial<Record<ChannelType, (raw: Record<string, unknown>, i: number) => ChannelMessage>> = {
   gmail: transformGmailMessage,
   outlook: transformOutlookMessage,
@@ -402,16 +409,23 @@ const TRANSFORMERS: Partial<Record<ChannelType, (raw: Record<string, unknown>, i
   wordpress: transformWordPressPost,
 }
 
+// ---------------------------------------------------------------------------
+// Adapter factory
+// ---------------------------------------------------------------------------
+
 /**
  * Create a Composio-backed ChannelAdapter for a given channel type.
- * Falls through to the generic transformer if no specific one exists.
+ *
+ * The adapter requires a `connected_account_id` in the config so it can
+ * route API calls to the user's specific OAuth token.
  */
 export function createComposioAdapter(channel: ChannelType): ChannelAdapter | null {
   const toolkit = getToolkitId(channel)
   if (!toolkit) return null
 
   const pullAction = PULL_ACTIONS[channel]
-  const transformer = TRANSFORMERS[channel] || ((raw: Record<string, unknown>, i: number) => transformGenericMessage(raw, channel, i))
+  const transformer = TRANSFORMERS[channel]
+    || ((raw: Record<string, unknown>, i: number) => transformGenericMessage(raw, channel, i))
 
   return {
     type: channel,
@@ -421,8 +435,11 @@ export function createComposioAdapter(channel: ChannelType): ChannelAdapter | nu
 
     async pull(config, since) {
       const orgId = (config.orgId as string) || (config.org_id as string)
-      if (!orgId) {
-        logger.warn(`[composio/adapter] No orgId in config for ${channel} pull`)
+      const connectedAccountId = (config.connected_account_id as string)
+        || (config.composio_connected_account_id as string)
+
+      if (!orgId || !connectedAccountId) {
+        logger.warn(`[composio/adapter] Missing orgId or connected_account_id for ${channel} pull`)
         return []
       }
 
@@ -437,10 +454,9 @@ export function createComposioAdapter(channel: ChannelType): ChannelAdapter | nu
         params.since = since.toISOString()
       }
 
-      const result = await executeAction(orgId, pullAction, params)
+      const result = await executeAction(pullAction, params, connectedAccountId)
       if (!result?.data) return []
 
-      // Composio typically returns results in a data array
       const items = Array.isArray(result.data)
         ? result.data
         : (result.data.messages as Record<string, unknown>[])
@@ -460,7 +476,6 @@ export function createComposioAdapter(channel: ChannelType): ChannelAdapter | nu
     },
 
     async isAvailable() {
-      // Check if Composio is configured and user has an active connection
       return Boolean(process.env.COMPOSIO_API_KEY)
     },
   }
