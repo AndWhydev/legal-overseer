@@ -22,6 +22,7 @@ import {
   getCompositeTrustScore,
   adjustConfidenceByTrust,
   computeTrustFromOutcomes,
+  computeEntityTrustFromOutcomes,
   NEUTRAL_TRUST,
   MIN_TRUST_SAMPLES,
   TRUST_APPROVAL_THRESHOLD,
@@ -39,6 +40,8 @@ function mockSupabase(overrides?: {
   actionOutcomesError?: { message: string }
   delegationActions?: unknown[]
   delegationActionsError?: { message: string }
+  entityOutcomes?: unknown[]
+  entityOutcomesError?: { message: string }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }): any {
   const actionChain = {
@@ -63,14 +66,27 @@ function mockSupabase(overrides?: {
     }),
   }
 
+  const entityOutcomeChain = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnValue({
+      data: overrides?.entityOutcomes ?? [],
+      error: overrides?.entityOutcomesError ?? null,
+    }),
+  }
+
   return {
     from: vi.fn((table: string) => {
       if (table === 'action_outcomes') return actionChain
       if (table === 'delegation_action_log') return delegationChain
+      if (table === 'agent_action_outcomes') return entityOutcomeChain
       return actionChain
     }),
     _actionChain: actionChain,
     _delegationChain: delegationChain,
+    _entityOutcomeChain: entityOutcomeChain,
   }
 }
 
@@ -87,11 +103,30 @@ function makeOutcome(overrides?: {
   }
 }
 
-function makeDelegationAction() {
+let delegationActionCounter = 0
+
+function makeDelegationAction(overrides?: { agent_run_id?: string | null }) {
+  delegationActionCounter++
   return {
     action_type: 'send_email',
     financial_impact: null,
+    agent_run_id: overrides && 'agent_run_id' in overrides
+      ? overrides.agent_run_id
+      : `run-${delegationActionCounter}`,
     created_at: new Date().toISOString(),
+  }
+}
+
+function makeEntityOutcome(overrides?: {
+  outcome?: string
+  created_at?: string
+  agent_run_id?: string
+}) {
+  return {
+    outcome: overrides?.outcome ?? 'success',
+    action_type: 'send_email',
+    created_at: overrides?.created_at ?? new Date().toISOString(),
+    agent_run_id: overrides?.agent_run_id ?? `run-${delegationActionCounter}`,
   }
 }
 
@@ -173,6 +208,132 @@ describe('computeTrustFromOutcomes', () => {
 })
 
 // ---------------------------------------------------------------------------
+// computeEntityTrustFromOutcomes (pure function, no DB)
+// ---------------------------------------------------------------------------
+
+describe('computeEntityTrustFromOutcomes', () => {
+  it('returns NEUTRAL_TRUST for empty outcomes', () => {
+    const result = computeEntityTrustFromOutcomes([], 10, 'ent-1')
+    expect(result.score).toBe(NEUTRAL_TRUST.score)
+    expect(result.sampleSize).toBe(0)
+  })
+
+  it('scores ~1.0 for all-success outcomes', () => {
+    const outcomes = Array.from({ length: 10 }, () => ({
+      outcome: 'success',
+      created_at: new Date().toISOString(),
+    }))
+    const result = computeEntityTrustFromOutcomes(outcomes, 10, 'ent-1')
+    expect(result.score).toBeGreaterThan(0.95)
+    expect(result.sufficient).toBe(true)
+    expect(result.gate).toBe('allow')
+  })
+
+  it('scores ~0.0 for all-failure outcomes', () => {
+    const outcomes = Array.from({ length: 10 }, () => ({
+      outcome: 'failure',
+      created_at: new Date().toISOString(),
+    }))
+    const result = computeEntityTrustFromOutcomes(outcomes, 10, 'ent-1')
+    expect(result.score).toBeLessThan(0.05)
+    expect(result.gate).toBe('block')
+  })
+
+  it('scores ~0.5 for 50/50 success/failure', () => {
+    const outcomes = [
+      ...Array.from({ length: 5 }, () => ({
+        outcome: 'success',
+        created_at: new Date().toISOString(),
+      })),
+      ...Array.from({ length: 5 }, () => ({
+        outcome: 'failure',
+        created_at: new Date().toISOString(),
+      })),
+    ]
+    const result = computeEntityTrustFromOutcomes(outcomes, 10, 'ent-1')
+    expect(result.score).toBeCloseTo(0.5, 1)
+    expect(result.gate).toBe('require_approval')
+  })
+
+  it('weighs "corrected" as 0.7 (partial success)', () => {
+    const outcomes = Array.from({ length: 10 }, () => ({
+      outcome: 'corrected',
+      created_at: new Date().toISOString(),
+    }))
+    const result = computeEntityTrustFromOutcomes(outcomes, 10, 'ent-1')
+    expect(result.score).toBeCloseTo(0.7, 1)
+    expect(result.gate).toBe('allow')
+  })
+
+  it('weighs "partial" as 0.5', () => {
+    const outcomes = Array.from({ length: 10 }, () => ({
+      outcome: 'partial',
+      created_at: new Date().toISOString(),
+    }))
+    const result = computeEntityTrustFromOutcomes(outcomes, 10, 'ent-1')
+    expect(result.score).toBeCloseTo(0.5, 1)
+  })
+
+  it('applies recency weighting (recent successes matter more)', () => {
+    const now = Date.now()
+    // Old failures (28 days ago) + recent successes (today)
+    const outcomes = [
+      ...Array.from({ length: 5 }, () => ({
+        outcome: 'success',
+        created_at: new Date(now).toISOString(),
+      })),
+      ...Array.from({ length: 5 }, () => ({
+        outcome: 'failure',
+        created_at: new Date(now - 28 * 24 * 60 * 60 * 1000).toISOString(),
+      })),
+    ]
+    const result = computeEntityTrustFromOutcomes(outcomes, 10, 'ent-1')
+    // Recent successes should outweigh old failures
+    expect(result.score).toBeGreaterThan(0.7)
+  })
+
+  it('calculates streak from consecutive successes/corrected', () => {
+    const outcomes = [
+      { outcome: 'success', created_at: new Date().toISOString() },
+      { outcome: 'corrected', created_at: new Date().toISOString() },
+      { outcome: 'success', created_at: new Date().toISOString() },
+      { outcome: 'failure', created_at: new Date().toISOString() }, // breaks streak
+      { outcome: 'success', created_at: new Date().toISOString() },
+    ]
+    const result = computeEntityTrustFromOutcomes(outcomes, 5, 'ent-1')
+    expect(result.streak).toBe(3)
+  })
+
+  it('reports insufficient when below MIN_TRUST_SAMPLES', () => {
+    const outcomes = [
+      { outcome: 'success', created_at: new Date().toISOString() },
+      { outcome: 'success', created_at: new Date().toISOString() },
+    ]
+    const result = computeEntityTrustFromOutcomes(outcomes, 2, 'ent-1')
+    expect(result.sufficient).toBe(false)
+    expect(result.gate).toBe('allow') // fail-open
+  })
+
+  it('includes entityId in reasoning string', () => {
+    const outcomes = Array.from({ length: 10 }, () => ({
+      outcome: 'success',
+      created_at: new Date().toISOString(),
+    }))
+    const result = computeEntityTrustFromOutcomes(outcomes, 10, 'ent-42')
+    expect(result.reasoning).toContain('ent-42')
+  })
+
+  it('handles unknown outcomes as neutral (0.5)', () => {
+    const outcomes = Array.from({ length: 10 }, () => ({
+      outcome: 'unknown',
+      created_at: new Date().toISOString(),
+    }))
+    const result = computeEntityTrustFromOutcomes(outcomes, 10, 'ent-1')
+    expect(result.score).toBeCloseTo(0.5, 1)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // getSkillTrustScore
 // ---------------------------------------------------------------------------
 
@@ -249,6 +410,7 @@ describe('getSkillTrustScore', () => {
 describe('getEntityTrustScore', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    delegationActionCounter = 0
   })
 
   it('returns NEUTRAL_TRUST when no entityId provided', async () => {
@@ -265,27 +427,86 @@ describe('getEntityTrustScore', () => {
     expect(result.sufficient).toBe(false)
   })
 
-  it('computes entity trust score from delegation action count', async () => {
-    const actions = Array.from({ length: 15 }, makeDelegationAction)
+  it('uses outcome-based trust when agent_action_outcomes data exists', async () => {
+    const actions = Array.from({ length: 10 }, () => makeDelegationAction())
+    const outcomes = Array.from({ length: 10 }, () => makeEntityOutcome({ outcome: 'success' }))
+    const sb = mockSupabase({ delegationActions: actions, entityOutcomes: outcomes })
+
+    const result = await getEntityTrustScore(sb, { orgId: 'org-1', entityId: 'ent-1' })
+
+    expect(result.sufficient).toBe(true)
+    // All success outcomes with recent timestamps → score ~1.0
+    expect(result.score).toBeGreaterThan(0.95)
+    expect(result.gate).toBe('allow')
+    expect(sb.from).toHaveBeenCalledWith('agent_action_outcomes')
+  })
+
+  it('uses outcome-based trust with mixed outcomes', async () => {
+    const actions = Array.from({ length: 10 }, () => makeDelegationAction())
+    const outcomes = [
+      ...Array.from({ length: 5 }, () => makeEntityOutcome({ outcome: 'success' })),
+      ...Array.from({ length: 5 }, () => makeEntityOutcome({ outcome: 'failure' })),
+    ]
+    const sb = mockSupabase({ delegationActions: actions, entityOutcomes: outcomes })
+
+    const result = await getEntityTrustScore(sb, { orgId: 'org-1', entityId: 'ent-1' })
+
+    expect(result.sufficient).toBe(true)
+    // 50/50 success/failure → score ~0.5
+    expect(result.score).toBeCloseTo(0.5, 1)
+    expect(result.gate).toBe('require_approval')
+  })
+
+  it('falls back to volume scoring when no outcome data exists', async () => {
+    const actions = Array.from({ length: 15 }, () => makeDelegationAction())
+    // No entityOutcomes provided → empty array
     const sb = mockSupabase({ delegationActions: actions })
 
     const result = await getEntityTrustScore(sb, { orgId: 'org-1', entityId: 'ent-1' })
 
     expect(result.sufficient).toBe(true)
-    expect(result.score).toBe(0.75) // 15/20
+    expect(result.score).toBe(0.75) // 15/20 volume fallback
     expect(result.sampleSize).toBe(15)
-    expect(result.gate).toBe('allow') // 0.75 >= 0.6
+    expect(result.gate).toBe('allow')
+    expect(result.reasoning).toContain('no outcome data')
   })
 
-  it('caps entity trust at 1.0 for 20+ actions', async () => {
-    const actions = Array.from({ length: 25 }, makeDelegationAction)
+  it('falls back to volume scoring when delegation actions have no agent_run_ids', async () => {
+    const actions = Array.from({ length: 10 }, () => makeDelegationAction({ agent_run_id: null }))
+    const sb = mockSupabase({ delegationActions: actions })
+
+    const result = await getEntityTrustScore(sb, { orgId: 'org-1', entityId: 'ent-1' })
+
+    expect(result.sufficient).toBe(true)
+    expect(result.score).toBe(0.5) // 10/20 volume fallback
+    // Should NOT have queried agent_action_outcomes since there are no run_ids
+    const fromCalls = sb.from.mock.calls.map((c: string[]) => c[0])
+    expect(fromCalls).not.toContain('agent_action_outcomes')
+  })
+
+  it('falls back to volume scoring when outcome query fails', async () => {
+    const actions = Array.from({ length: 10 }, () => makeDelegationAction())
+    const sb = mockSupabase({
+      delegationActions: actions,
+      entityOutcomesError: { message: 'table not found' },
+    })
+
+    const result = await getEntityTrustScore(sb, { orgId: 'org-1', entityId: 'ent-1' })
+
+    expect(result.sufficient).toBe(true)
+    expect(result.score).toBe(0.5) // 10/20 volume fallback
+    expect(result.reasoning).toContain('no outcome data')
+  })
+
+  it('caps volume-only trust at 1.0 for 20+ actions', async () => {
+    const actions = Array.from({ length: 25 }, () => makeDelegationAction())
     const sb = mockSupabase({ delegationActions: actions })
 
     const result = await getEntityTrustScore(sb, { orgId: 'org-1', entityId: 'ent-1' })
     expect(result.score).toBe(1.0)
   })
 
-  it('returns NEUTRAL_TRUST on database error', async () => {
+  it('returns NEUTRAL_TRUST on delegation query error', async () => {
     const sb = mockSupabase({ delegationActionsError: { message: 'table not found' } })
     const result = await getEntityTrustScore(sb, { orgId: 'org-1', entityId: 'ent-1' })
     expect(result).toEqual(NEUTRAL_TRUST)
@@ -329,8 +550,8 @@ describe('getCompositeTrustScore', () => {
     expect(result.score).toBe(1.0)
   })
 
-  it('uses entity score when only entity has sufficient data', async () => {
-    const actions = Array.from({ length: 10 }, makeDelegationAction)
+  it('uses entity score when only entity has sufficient data (volume fallback)', async () => {
+    const actions = Array.from({ length: 10 }, () => makeDelegationAction())
     const sb = mockSupabase({ delegationActions: actions })
 
     const result = await getCompositeTrustScore(sb, {
@@ -339,14 +560,28 @@ describe('getCompositeTrustScore', () => {
     })
 
     expect(result.sufficient).toBe(true)
-    expect(result.score).toBe(0.5) // 10/20
+    expect(result.score).toBe(0.5) // 10/20 volume fallback (no outcomes)
+  })
+
+  it('uses entity score when entity has outcome data', async () => {
+    const actions = Array.from({ length: 10 }, () => makeDelegationAction())
+    const entityOutcomes = Array.from({ length: 10 }, () => makeEntityOutcome({ outcome: 'success' }))
+    const sb = mockSupabase({ delegationActions: actions, entityOutcomes })
+
+    const result = await getCompositeTrustScore(sb, {
+      orgId: 'org-1',
+      entityId: 'ent-1',
+    })
+
+    expect(result.sufficient).toBe(true)
+    expect(result.score).toBeGreaterThan(0.95) // all success
   })
 
   it('takes minimum of skill and entity scores (conservative)', async () => {
     // Skill: 100% approved → score 1.0
     const outcomes = Array.from({ length: 10 }, () => makeOutcome({ was_approved: true }))
-    // Entity: 10 actions → score 0.5
-    const actions = Array.from({ length: 10 }, makeDelegationAction)
+    // Entity: 10 actions with no outcomes → volume score 0.5 (10/20)
+    const actions = Array.from({ length: 10 }, () => makeDelegationAction())
 
     const sb = mockSupabase({
       actionOutcomes: outcomes,
