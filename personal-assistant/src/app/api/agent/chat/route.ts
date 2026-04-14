@@ -17,6 +17,7 @@ import { UnifiedConversationPipeline } from '@/lib/conversation/unified-pipeline
 import { detectInjection, neutralizeInjection } from '@/lib/agent/injection-guard'
 import { addTimingJitter } from '@/lib/security/timing-jitter'
 import { buildAttachmentContentBlocks } from '@/lib/attachments/content-blocks'
+import { extractFilePartAttachments } from '@/lib/attachments/extract-file-parts'
 import { authenticateBearer } from '@/lib/supabase/bearer-auth'
 import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { bridgeTAORToUIStream } from '@/lib/agent/ai-sdk-bridge'
@@ -35,6 +36,7 @@ export async function POST(request: NextRequest) {
   let message: string
   let threadId: string | undefined
   let attachmentIds: string[] | undefined
+  let pendingFileParts: Array<{ type: string; [key: string]: unknown }> | undefined
 
   if (body.messages && Array.isArray(body.messages)) {
     // AI SDK DefaultChatTransport format
@@ -45,11 +47,19 @@ export async function POST(request: NextRequest) {
       return new Response('No user message found', { status: 400 })
     }
     // Extract text from parts array or fall back to content
-    const parts = lastUserMsg.parts as Array<{ type: string; text?: string }> | undefined
+    const parts = lastUserMsg.parts as Array<{ type: string; text?: string; [key: string]: unknown }> | undefined
     const textPart = parts?.find((p: { type: string }) => p.type === 'text')
     message = textPart?.text || lastUserMsg.content || ''
     threadId = body.chatId || body.id || undefined
-    attachmentIds = undefined // TODO: extract from file parts
+
+    // Extract attachment IDs: prefer explicit body.attachmentIds (sent via
+    // DefaultChatTransport body option), then fall back to inline file parts
+    if (Array.isArray(body.attachmentIds) && body.attachmentIds.length > 0) {
+      attachmentIds = body.attachmentIds
+    } else if (parts?.some((p: { type: string }) => p.type === 'file')) {
+      // File parts present — will be uploaded after auth (needs orgId/userId)
+      pendingFileParts = parts
+    }
   } else {
     // Legacy format
     message = body.message
@@ -143,6 +153,20 @@ export async function POST(request: NextRequest) {
   // Per-user rate limit
   const rateLimited = checkUserEndpointLimit(userId, '/api/agent/chat')
   if (rateLimited) return rateLimited
+
+  // ── Extract file parts from AI SDK messages (post-auth) ──────────────
+  if (pendingFileParts && !attachmentIds) {
+    const result = await extractFilePartAttachments(
+      pendingFileParts,
+      supabase,
+      orgId,
+      userId,
+      threadId,
+    )
+    if (result.attachmentIds.length > 0) {
+      attachmentIds = result.attachmentIds
+    }
+  }
 
   // Injection detection — silent neutralization
   let processedMessage = message
