@@ -100,6 +100,13 @@ export class ConnectorManager {
   /**
    * Idempotent disconnect. Fetches fresh connection state so a late call
    * after an earlier disconnect just no-ops cleanly.
+   *
+   * Shadow mode: when CONNECTOR_MANAGER_WRITES=shadow, the external
+   * cleanup still runs (Composio delete, Fly destroy) but the local row
+   * is never deleted — we just log what we would have done. This is
+   * used during the first 24h of a deploy to sanity-check the new path
+   * before flipping to primary. Soft-disconnects (hard:false) are
+   * unaffected since they don't delete rows.
    */
   async disconnect(
     connectionId: string,
@@ -111,15 +118,28 @@ export class ConnectorManager {
       return { ok: true }
     }
 
+    const shadow = process.env.CONNECTOR_MANAGER_WRITES === 'shadow'
+    const effectiveOpts: DisconnectOptions = shadow && opts.hard
+      ? { ...opts, hard: false, reason: `[shadow] ${opts.reason ?? 'user'}` }
+      : opts
+
     logger.info('[connector-manager] disconnect', {
       connectionId,
       transport: conn.transport,
       hard: opts.hard,
+      shadow,
       initiator: opts.initiator,
     })
 
+    if (shadow && opts.hard) {
+      logger.info('[connector-manager][shadow] would hard-delete — falling back to soft', {
+        connectionId,
+        transport: conn.transport,
+      })
+    }
+
     try {
-      await this.for(conn.transport).disconnect(conn, opts)
+      await this.for(conn.transport).disconnect(conn, effectiveOpts)
       return { ok: true }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)

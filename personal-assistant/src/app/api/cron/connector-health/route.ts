@@ -19,6 +19,16 @@ export async function GET(request: Request) {
   return withCronGuard(request, async (supabase) => {
     const manager = createConnectorManager(supabase, { skipBridge: true })
 
+    // IMPORTANT: We deliberately exclude transport='bridge' here.
+    //
+    // The existing /api/cron/bridge-health cron (every 5 min) owns Fly
+    // machine + BlueBubbles health probing for bridge rows, and routes
+    // its writes through the same ConnectionHealthReporter now. Running
+    // both crons against the same rows risks double-reporting and
+    // flapping consecutive_failures. When phase 7 merges the two
+    // crons we can add 'bridge' here and retire the bridge-health cron.
+    //
+    // Covered by: src/app/api/cron/connector-health/__tests__/partition.test.ts
     const result = await manager.runHealthSweep({
       transports: ['composio', 'poll', 'webhook'],
       maxAgeMs: 60 * 60 * 1000, // 1h

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { BridgeProvisioner } from './bridge-provisioner'
+import { ConnectionHealthReporter } from '../connectors/health-reporter'
 
 /**
  * Suspend bridges that haven't received a message in 7 days.
@@ -45,6 +46,8 @@ export async function checkBridgeHealth(
   supabase: SupabaseClient,
   provisioner: BridgeProvisioner,
 ): Promise<{ checked: number; healthy: number; errors: string[] }> {
+  const reporter = new ConnectionHealthReporter(supabase)
+
   const { data: connections } = await supabase
     .from('org_connections')
     .select('id, config')
@@ -64,22 +67,30 @@ export async function checkBridgeHealth(
       const health = await provisioner.checkHealth(config.fly_machine_id)
       if (health.running) {
         healthy++
+        await reporter.report({ connectionId: conn.id, healthy: true })
       } else {
         try {
           await provisioner.wake(conn.id, config.fly_machine_id)
           healthy++
+          await reporter.report({ connectionId: conn.id, healthy: true })
         } catch (wakeErr) {
           const msg = `${conn.id}: machine ${config.fly_machine_id} down, wake failed: ${wakeErr}`
           errors.push(msg)
-
-          await supabase
-            .from('org_connections')
-            .update({ status: 'error', last_error: msg, updated_at: new Date().toISOString() })
-            .eq('id', conn.id)
+          await reporter.report({
+            connectionId: conn.id,
+            healthy: false,
+            error: msg,
+          })
         }
       }
     } catch (err) {
-      errors.push(`${conn.id}: health check failed: ${err instanceof Error ? err.message : String(err)}`)
+      const msg = err instanceof Error ? err.message : String(err)
+      errors.push(`${conn.id}: health check failed: ${msg}`)
+      await reporter.report({
+        connectionId: conn.id,
+        healthy: false,
+        error: msg,
+      })
     }
   }
 

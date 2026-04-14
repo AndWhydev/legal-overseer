@@ -42,7 +42,18 @@ function makeSupabase() {
     })),
     update: vi.fn((u: Record<string, unknown>) => {
       updates.push({ ...u, __table: table })
-      return { eq: vi.fn().mockResolvedValue({ error: null }) }
+      // Support two shapes:
+      //  1. .update(u).eq(id)                               — fire-and-forget update
+      //  2. .update(u).eq(id).neq(col, val).select('id')    — CAS claim
+      return {
+        eq: vi.fn(() => {
+          const p: any = Promise.resolve({ error: null })
+          p.neq = vi.fn(() => ({
+            select: vi.fn().mockResolvedValue({ data: [{ id: 'c1' }], error: null }),
+          }))
+          return p
+        }),
+      }
     }),
     delete: vi.fn(() => ({
       eq: vi.fn((_col: string, id: string) => {

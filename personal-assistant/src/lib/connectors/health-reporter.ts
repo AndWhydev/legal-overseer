@@ -88,6 +88,37 @@ export class ConnectionHealthReporter {
   }
 
   /**
+   * Atomic "claim" for disconnect paths: flips status to 'disabled'
+   * ONLY IF the row isn't already disabled. Returns true when the
+   * caller wins the CAS (meaning they should proceed with external
+   * cleanup) and false when someone else got there first (meaning the
+   * caller should no-op — cleanup has already been attempted).
+   *
+   * Prevents double-disconnect races between the drawer's Disconnect
+   * button and the connector-health cron when it observes an account
+   * in an unrecoverable state.
+   */
+  async claimForDisconnect(connectionId: string): Promise<boolean> {
+    const now = new Date().toISOString()
+    const { data, error } = await this.supabase
+      .from('org_connections')
+      .update({ status: 'disabled', updated_at: now })
+      .eq('id', connectionId)
+      .neq('status', 'disabled')
+      .select('id')
+
+    if (error) {
+      logger.error('[health-reporter] claimForDisconnect failed', {
+        connectionId,
+        error: error.message,
+      })
+      return false
+    }
+    // Supabase returns an array; if length === 0, another caller won.
+    return Array.isArray(data) && data.length > 0
+  }
+
+  /**
    * Record a hard status override (used by lifecycle operations themselves,
    * e.g. after provision() → 'provisioning', or disconnect() → 'disabled').
    * Doesn't touch `consecutive_failures`.

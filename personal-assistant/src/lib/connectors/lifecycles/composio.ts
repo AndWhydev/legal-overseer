@@ -132,6 +132,9 @@ export class ComposioLifecycle implements ConnectorLifecycle {
     // Pull fresh account state (captures expiry if Composio reports it).
     const account = isComposioEnabled() ? await getConnectedAccount(accountId) : null
     const authExpiresAt = extractExpiry(account) ?? extractExpiry(ctx.metadata) ?? null
+    if (!authExpiresAt) {
+      logExpiryMiss(accountId, account ?? ctx.metadata)
+    }
 
     // Register trigger (best-effort — not every toolkit has one).
     const triggerIds: string[] = []
@@ -227,6 +230,20 @@ export class ComposioLifecycle implements ConnectorLifecycle {
   // ─── disconnect ───────────────────────────────────────────────────────────
 
   async disconnect(conn: OrgConnection, opts: DisconnectOptions): Promise<void> {
+    // CAS: claim the disconnect so concurrent callers no-op cleanly.
+    // For hard deletes we want to run cleanup even if the row was
+    // already 'disabled' (it may have been soft-disabled earlier but
+    // the external account wasn't actually revoked).
+    if (!opts.hard) {
+      const claimed = await this.health.claimForDisconnect(conn.id)
+      if (!claimed) {
+        logger.info('[composio-lifecycle] disconnect already claimed — noop', {
+          connectionId: conn.id,
+        })
+        return
+      }
+    }
+
     const accountId =
       conn.connected_account_id ??
       (conn.config as Record<string, string | undefined>)?.composio_connected_account_id
@@ -330,13 +347,59 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+/**
+ * Extract an OAuth expiry timestamp from a Composio connected-account
+ * payload. The SDK shape isn't officially documented — this scans every
+ * field name we've observed in the wild, including nested `data` and
+ * `metadata` objects. Any callers who discover new field names should
+ * extend this list.
+ *
+ * Returns an ISO-8601 timestamp or undefined. When undefined + the
+ * payload has a non-trivial shape, we emit a warning so we notice
+ * Composio SDK drift in prod logs.
+ */
 function extractExpiry(source: unknown): string | undefined {
   if (!source || typeof source !== 'object') return undefined
   const rec = source as Record<string, unknown>
-  for (const key of ['auth_expires_at', 'expiresAt', 'expires_at', 'expiry', 'tokenExpiresAt']) {
+
+  const candidateKeys = [
+    'auth_expires_at',
+    'authExpiresAt',
+    'expiresAt',
+    'expires_at',
+    'expiry',
+    'expiryDate',
+    'tokenExpiresAt',
+    'token_expires_at',
+    'expiry_time',
+  ]
+
+  for (const key of candidateKeys) {
     const v = rec[key]
     if (typeof v === 'string' && v.length > 0) return v
     if (typeof v === 'number') return new Date(v).toISOString()
   }
+
+  // Composio sometimes nests auth details under data / metadata / params.
+  for (const nestKey of ['data', 'metadata', 'params', 'credentials']) {
+    const nested = rec[nestKey]
+    if (nested && typeof nested === 'object') {
+      const recursive = extractExpiry(nested)
+      if (recursive) return recursive
+    }
+  }
+
   return undefined
+}
+
+function logExpiryMiss(accountId: string, source: unknown): void {
+  // Only warn when the payload is structured enough that an expiry
+  // probably should have been present.
+  if (!source || typeof source !== 'object') return
+  const keys = Object.keys(source as Record<string, unknown>)
+  if (keys.length === 0) return
+  logger.warn('[composio-lifecycle] no expiry extracted — Composio payload drift?', {
+    accountId,
+    sample_keys: keys.slice(0, 15),
+  })
 }
