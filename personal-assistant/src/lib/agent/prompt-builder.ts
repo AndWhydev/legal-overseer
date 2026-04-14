@@ -727,11 +727,19 @@ function formatSnapshotContext(
   contact: ScanContact,
   snapshot: BaseplateSnapshot
 ): string {
-  const parts: string[] = []
-
   // Contact identifier
   const primaryEmail = contact.emails[0]
   const identifier = primaryEmail ? `${contactName} (${primaryEmail})` : contactName
+
+  // ── Prefer dossier markdown when available (richer, LLM-compiled) ─────
+  if (snapshot.dossierMarkdown) {
+    const dossierBlock = `### ${identifier}\n${snapshot.dossierMarkdown}`
+    // Hard limit per entity: ~2000 chars ≈ 500 tokens
+    return dossierBlock.length > 2000 ? dossierBlock.slice(0, 1997) + '...' : dossierBlock
+  }
+
+  // ── Fallback: structured profile fields ───────────────────────────────
+  const parts: string[] = []
 
   // Event summary
   const { event_summary } = snapshot.profile
@@ -862,7 +870,7 @@ export async function buildEntityAwarePrompt(
 
   // Fetch baseplate snapshots in parallel for all matched contacts
   const snapshotResults = await Promise.all(
-    mentions.map(m => getBaseplateSnapshot(supabase, orgId, 'contact', m.contactId))
+    mentions.map(m => getBaseplateSnapshot(supabase, orgId, 'contact', m.contactId, m.contactName))
   )
 
   // Build context lines for contacts that have snapshots
