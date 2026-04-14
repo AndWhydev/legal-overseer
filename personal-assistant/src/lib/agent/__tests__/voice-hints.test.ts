@@ -11,7 +11,7 @@ describe('inferVoiceHint', () => {
   })
 
   it('detects short confirmations with simple text', () => {
-    const hint = inferVoiceHint('Got it, I'll take care of that.')
+    const hint = inferVoiceHint("Got it, I'll take care of that.")
     expect(hint).toEqual({
       shouldSpeak: true,
       reason: 'short_confirmation',
