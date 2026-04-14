@@ -299,7 +299,7 @@ export async function* runTAORLoop(
   // System 1 queries use reduced assembler config for fast path (<50ms)
   const assemblerOverrides = queryComplexity === 'system1'
     ? { maxEntities: 3, includeCompressedHistory: false }
-    : {}
+    : { useGlobalWorkspace: true }
 
   let systemPrompt: string
   if (config.threadId && config.userId) {
