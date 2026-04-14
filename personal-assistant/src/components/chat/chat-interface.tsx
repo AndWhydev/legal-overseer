@@ -37,7 +37,6 @@ import {
   ConfirmationActions,
   ConfirmationAction,
 } from '@/components/ai-elements/confirmation'
-import { Suggestions, Suggestion } from '@/components/ai-elements/suggestion'
 import { cn } from '@/lib/utils'
 import { InvoiceArtifact } from './invoice-artifact'
 import { ChatAttachmentList } from './chat-attachment'
@@ -1338,57 +1337,8 @@ export function ChatInterface() {
                   })
                 }
 
-                // Generate client-side follow-up suggestions from response
-                const contentToAnalyze = toolCalls.length > 0 ? responseContent : assistantContent
-                if (contentToAnalyze.length > 100 && followUps.length === 0) {
-                  // Strip markdown formatting before extracting topics
-                  const cleaned = contentToAnalyze
-                    .replace(/```[\s\S]*?```/g, '')   // remove code blocks
-                    .replace(/\*\*([^*]+)\*\*/g, '$1') // bold → plain
-                    .replace(/\*([^*]+)\*/g, '$1')     // italic → plain
-                    .replace(/`([^`]+)`/g, '$1')       // inline code → plain
-                    .replace(/#{1,6}\s+/g, '')          // headers → plain
-                    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links → text
-                    .replace(/[[\]]/g, '')              // stray brackets
-                    .replace(/[✅❌⚠️🔍📧💡]/g, '')   // emoji noise
-
-                  // Extract meaningful sentences (not fragments)
-                  const sentences = cleaned
-                    .split(/(?<=[.!?])\s+/)
-                    .map(s => s.trim())
-                    .filter(s => s.length > 20 && s.length < 120 && !s.startsWith('-') && !s.startsWith('•'))
-                    .slice(0, 6)
-
-                  const suggestions: string[] = []
-
-                  // Extract key nouns/topics from sentences for natural follow-ups
-                  if (sentences.length > 0) {
-                    // Find a sentence that mentions a person, thing, or action
-                    const topicSentence = sentences.find(s => /[A-Z][a-z]+/.test(s)) || sentences[0]
-                    // Extract the subject at a word boundary (max 45 chars)
-                    const subject = topicSentence
-                      .replace(/^(i |we |the |this |that |it |they |here |there )+/i, '')
-                      .replace(/[.!?]+$/, '')
-                    const truncated = subject.length > 45
-                      ? subject.slice(0, subject.lastIndexOf(' ', 45)) || subject.slice(0, 45)
-                      : subject
-                    if (truncated.length > 5) suggestions.push(`Tell me more about ${truncated.toLowerCase()}`)
-                  }
-                  if (sentences.length > 2) {
-                    const actionSentence = sentences.find(s => /\b(need|should|want|could|can|will)\b/i.test(s))
-                    if (actionSentence) {
-                      const action = actionSentence.replace(/[.!?]+$/, '')
-                      const truncAction = action.length > 50
-                        ? action.slice(0, action.lastIndexOf(' ', 50)) || action.slice(0, 50)
-                        : action
-                      if (truncAction.length > 10) suggestions.push(`${truncAction}?`)
-                    }
-                  }
-                  if (contentToAnalyze.includes('```')) suggestions.push('Can you modify this code?')
-                  if (suggestions.length > 0) setFollowUps(suggestions.slice(0, 3))
-                }
-
                 // Dispatch event for voice mode TTS playback
+                const contentToAnalyze = toolCalls.length > 0 ? responseContent : assistantContent
                 if (contentToAnalyze) {
                   window.dispatchEvent(new CustomEvent('bitbit-chat-response-done', { detail: contentToAnalyze }))
                 }
@@ -2310,18 +2260,22 @@ export function ChatInterface() {
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25, delay: 0.3 }}
-                  className="mt-2 max-w-[600px]"
+                  className="mt-3"
                 >
-                  <Suggestions>
+                  <div className="flex flex-wrap gap-2">
                     {followUps.map((text, i) => (
-                      <Suggestion
+                      <motion.button
                         key={i}
-                        suggestion={text}
-                        onClick={(s) => handleSend(s)}
-                        className="text-muted-foreground hover:text-foreground hover:border-primary/30 whitespace-nowrap"
-                      />
+                        onClick={() => handleSend(text)}
+                        className="rounded-full border border-border bg-secondary px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground hover:border-primary/30 cursor-pointer max-w-[300px] truncate"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.2, delay: 0.3 + i * 0.08 }}
+                      >
+                        {text}
+                      </motion.button>
                     ))}
-                  </Suggestions>
+                  </div>
                 </motion.div>
               )}
             </motion.div>
