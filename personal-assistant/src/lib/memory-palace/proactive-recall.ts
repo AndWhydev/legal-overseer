@@ -107,11 +107,25 @@ function scoreEdge(edge: EntityEdge, neighborName: string, rootEntityId: string)
     recency,
     edgeWeight: 1.0,
   }
+
+  let blendedScore = computeBlendedScore(scores)
+
+  // Neural decay: apply synapse confidence as a multiplier (0–1 range dampens stale edges)
+  blendedScore *= (edge.confidence ?? 1)
+
+  // Neural decay: time-decay penalty based on decay_rate and last_fired_at
+  if (edge.last_fired_at) {
+    const daysSinceLastFired = ageDays(edge.last_fired_at)
+    const decayMultiplier = Math.exp(-(edge.decay_rate ?? 0.01) * daysSinceLastFired)
+    blendedScore *= decayMultiplier
+  }
+  // If last_fired_at is null/undefined, no penalty (multiplier = 1.0)
+
   return {
     type: 'edge',
     description: `${edge.relation_type} ${direction} ${neighborName}`,
     ...scores,
-    blendedScore: computeBlendedScore(scores),
+    blendedScore,
   }
 }
 
