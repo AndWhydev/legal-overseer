@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/core/logger'
+import { aggregateDelegatedActionsByEntity } from './delegation-mandate'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,8 @@ export interface BriefingSummary {
   relationshipAlerts: number
   upcomingEvents: number
   recentLeads: number
+  autonomousActions: number
+  autonomousImpact: number
 }
 
 export interface BriefingSection {
@@ -44,6 +47,9 @@ export async function generateMondayBriefing(
   supabase: SupabaseClient,
   orgId: string,
 ): Promise<BriefingData> {
+  // Window for autonomous-actions aggregation: last 24h by default.
+  const delegationSince = new Date(Date.now() - 24 * 60 * 60 * 1000)
+
   const [
     calendarSection,
     overdueSection,
@@ -52,6 +58,7 @@ export async function generateMondayBriefing(
     relationshipSection,
     leadsSection,
     suggestedActionsSection,
+    delegatedActionsSection,
   ] = await Promise.all([
     fetchUpcomingEvents(supabase, orgId),
     fetchOverdueInvoices(supabase, orgId),
@@ -60,9 +67,11 @@ export async function generateMondayBriefing(
     fetchRelationshipAlerts(supabase, orgId),
     fetchRecentLeads(supabase, orgId),
     fetchSuggestedActions(supabase, orgId),
+    fetchDelegatedActions(supabase, orgId, delegationSince),
   ])
 
   const sections = [
+    delegatedActionsSection,
     calendarSection,
     overdueSection,
     pipelineSection,
@@ -84,6 +93,8 @@ export async function generateMondayBriefing(
     relationshipAlerts: relationshipSection.items.length,
     upcomingEvents: calendarSection.items.length,
     recentLeads: leadsSection.items.length,
+    autonomousActions: delegatedActionsSection.items.length,
+    autonomousImpact: parseFloat(delegatedActionsSection.metric?.toString() ?? '0'),
   }
 
   return {
@@ -483,10 +494,62 @@ async function fetchSuggestedActions(
   return { key: 'actions', title: 'Suggested Actions', emoji: '\u{26A1}', items }
 }
 
+async function fetchDelegatedActions(
+  supabase: SupabaseClient,
+  orgId: string,
+  since: Date,
+): Promise<BriefingSection> {
+  try {
+    const aggregates = await aggregateDelegatedActionsByEntity(supabase, orgId, since)
+
+    const items: BriefingItem[] = aggregates.map((agg) => {
+      const mandateTag = agg.mandateLevel
+        ? ` (${agg.mandateLevel.replace('_', ' ')})`
+        : ''
+      const impactDetail =
+        agg.totalFinancialImpact > 0
+          ? `${agg.actionCount} actions -- $${formatCurrency(agg.totalFinancialImpact)} impact`
+          : `${agg.actionCount} actions`
+      const topSummary = agg.topActions[0]?.summary
+      const detail = topSummary
+        ? `${impactDetail} -- ${truncate(topSummary, 60)}`
+        : impactDetail
+      return {
+        label: `${agg.entityName}${mandateTag}`,
+        detail,
+        urgency: 'normal' as const,
+      }
+    })
+
+    const totalImpact = aggregates.reduce((sum, a) => sum + a.totalFinancialImpact, 0)
+
+    return {
+      key: 'delegated_actions',
+      title: 'Autonomous Actions Overnight',
+      emoji: '\u{1F916}',
+      items,
+      metric: totalImpact > 0 ? totalImpact : undefined,
+    }
+  } catch (err) {
+    logger.warn('[briefing] Failed to fetch delegated actions', { error: err })
+    return {
+      key: 'delegated_actions',
+      title: 'Autonomous Actions Overnight',
+      emoji: '\u{1F916}',
+      items: [],
+    }
+  }
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatCurrency(value: number): string {
   return value.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+}
+
+function truncate(text: string, max: number): string {
+  if (text.length <= max) return text
+  return text.slice(0, max - 1).trimEnd() + '\u2026'
 }
 
 function summaryCard(label: string, value: string, color: string): string {

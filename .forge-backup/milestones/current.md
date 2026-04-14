@@ -5,7 +5,9 @@ created: 2026-04-09T12:00:00Z
 migrated_from: ".planning/"
 source_status: "executing"
 complexity: ambiguous
-phases: 30
+phases: 40
+last_amended: 2026-04-14T00:00:00Z
+amendment_note: "Phase 44 (Living Brain) backfilled retroactively — shipped via torkay/BitBit#15 without original DAG entry. See conductor/handoffs/2026-04-14-phase-43-audit.md."
 ---
 
 ## Acceptance Criteria
@@ -69,3 +71,29 @@ phases: 30
 28. 43-03-morning-briefing-aggregation (depends_on: 38-03, 42-04) — Morning briefing autonomous action aggregation
 29. 43-04-nl-delegation-activation (depends_on: 43-01, 43-02) — NL delegation activation & revocation
 30. 43-05-delegation-audit-trail (depends_on: 43-01, 43-02, 43-03) — Delegation audit trail & integration tests
+
+### Phase 44: Living Brain (depends_on: Phase 38; shipped via torkay/BitBit#15)
+
+Backfilled retroactively during the 2026-04-14 audit — this phase was built
+and merged without a DAG entry. Scope derived from commit log + research
+source at `.planning/research/brain-architecture-v2.md`. Implements the
+write-heavy "workers + librarians" architecture replacing per-turn RAG with
+pre-compiled dossiers and L1/L2/L3 tiered memory.
+
+31. 44-02-wal-dual-write (depends_on: 38-03) — Write-ahead log emitter + MemoryWriter dual-write + tail query. Commits `e4a9171`, `2aa2a65`.
+32. 44-03-neural-entity-graph (depends_on: 44-02) — Neural properties on entity types + unified graph queries. Commit `9e32fbd`.
+33. 44-04-worker-infra-intake-clerk (depends_on: 44-02) — BullMQ worker infrastructure + Tier 1 intake clerk (TDD). Commits `5a34dd1`, `1e65895`.
+34. 44-05-section-librarian-dossiers (depends_on: 44-04) — Section Librarian workers consuming domain queues + dossier compiler with delta-merge. Commits `2455982`, `d9310c1`.
+35. 44-06-chief-librarian-merkle (depends_on: 44-05) — Tier 3 Chief Librarian with Merkle-tree change detection. Commit `3987e79`.
+36. 44-07-predictive-coding-surprise (depends_on: 44-02) — Predictive coding engine with surprise scoring. Commit `e10b46e`.
+37. 44-08-system-1-2-query-gate (depends_on: 44-06) — System 1/2 query complexity classifier + TAOR triage integration. Commits `eb9bffb`, `2a909e2`.
+38. 44-09-global-workspace-selection (depends_on: 44-08) — Global Workspace competitive context selection. Commit `5935882`.
+39. 44-10-l1-prompt-caching (depends_on: 44-05, 44-09) — Brain state prefix builder + L1 prompt caching integration in context assembler. Commits `eee6945`, `bff21cf`.
+
+### Phase 44 follow-up (post-merge)
+
+40. 44-11-knowledge-librarian-composio (depends_on: 44-04) — Knowledge Librarian crawler building dossiers for new Composio connections. Commit `5ba6774` (2026-04-13).
+
+**Not planned here:** A 44-01 sub-phase does not appear in commit history —
+numbering started at 44-02. May represent research/design work absorbed
+into `.planning/research/brain-architecture-v2.md` rather than a code phase.

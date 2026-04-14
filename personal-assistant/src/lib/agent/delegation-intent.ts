@@ -216,3 +216,106 @@ export function generateRevocationConfirmation(entityName: string): string {
     `You're back in the driver's seat. Their messages will come through to you directly now.`
   )
 }
+
+// ---------------------------------------------------------------------------
+// resolveEntityCandidates — returns up to N matches so the caller can
+// surface an ambiguity prompt rather than silently picking the first.
+// Tier order matches `resolveEntityFromMention`:
+//   1. Exact name match (short-circuits further tiers if any hit)
+//   2. Alias contains
+//   3. Prefix fuzzy
+// Query ordering is preserved so a single unique exact match always wins
+// over noisier prefix matches.
+// ---------------------------------------------------------------------------
+
+const DEFAULT_CANDIDATE_CAP = 5
+
+export async function resolveEntityCandidates(
+  supabase: SupabaseClient,
+  orgId: string,
+  mention: string,
+  limit: number = DEFAULT_CANDIDATE_CAP,
+): Promise<Array<{ id: string; name: string }>> {
+  const normalised = mention.toLowerCase().trim()
+
+  // 1. Exact name match (case-insensitive). If ANY hit, short-circuit.
+  const { data: exactRows, error: exactErr } = await supabase
+    .from('entity_nodes')
+    .select('id, name')
+    .eq('org_id', orgId)
+    .eq('is_active', true)
+    .ilike('name', normalised)
+    .limit(limit)
+  if (exactErr) {
+    logger.warn('[delegation-intent] exact candidate lookup failed', {
+      error: exactErr.message,
+      mention,
+    })
+  }
+  if (exactRows && exactRows.length > 0) {
+    return exactRows.slice(0, limit)
+  }
+
+  // 2. Alias array contains the mention.
+  const { data: aliasRows, error: aliasErr } = await supabase
+    .from('entity_nodes')
+    .select('id, name')
+    .eq('org_id', orgId)
+    .eq('is_active', true)
+    .contains('aliases', [normalised])
+    .limit(limit)
+  if (aliasErr) {
+    logger.warn('[delegation-intent] alias candidate lookup failed', {
+      error: aliasErr.message,
+      mention,
+    })
+  }
+  if (aliasRows && aliasRows.length > 0) {
+    return aliasRows.slice(0, limit)
+  }
+
+  // 3. Prefix fuzzy match. Ambiguity lives here most often (e.g. "John" → "John Smith", "John Doe").
+  const { data: prefixRows, error: prefixErr } = await supabase
+    .from('entity_nodes')
+    .select('id, name')
+    .eq('org_id', orgId)
+    .eq('is_active', true)
+    .ilike('name', `${normalised}%`)
+    .limit(limit)
+  if (prefixErr) {
+    logger.warn('[delegation-intent] prefix candidate lookup failed', {
+      error: prefixErr.message,
+      mention,
+    })
+    return []
+  }
+
+  return (prefixRows ?? []).slice(0, limit)
+}
+
+// ---------------------------------------------------------------------------
+// generateAmbiguityClarification — user-facing prompt listing candidates.
+// Used when resolveEntityCandidates returns >1 match so the TAOR loop can
+// ask the user to disambiguate rather than acting on the wrong entity.
+// ---------------------------------------------------------------------------
+
+export function generateAmbiguityClarification(
+  mention: string,
+  candidates: Array<{ id: string; name: string }>,
+): string {
+  const VISIBLE = 5
+  const shown = candidates.slice(0, VISIBLE)
+  const moreCount = candidates.length - shown.length
+
+  const bullets = shown.map((c) => `• ${c.name}`).join('\n')
+  const tail =
+    moreCount > 0
+      ? `\n...and ${moreCount} more. Narrow it down if none of the above match.`
+      : ''
+
+  return (
+    `I found a few matches for "${mention}" — which one did you mean?\n\n` +
+    `${bullets}${tail}\n\n` +
+    `Reply with the full name or the distinguishing detail.`
+  )
+}
