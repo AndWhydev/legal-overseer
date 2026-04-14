@@ -238,7 +238,12 @@ export class E2BProvider implements WorkspaceProvider {
       throw new Error(`Sandbox "${sandboxId}" not found.`)
     }
 
-    await sandbox.files.write(path, content)
+    await sandbox.files.write(
+      path,
+      content instanceof Uint8Array
+        ? new Uint8Array(content).buffer as ArrayBuffer
+        : content,
+    )
 
     logger.info('[e2b-provider] File uploaded', { sandboxId, path })
   }

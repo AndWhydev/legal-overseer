@@ -13,7 +13,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk'
-import { callModelViaGateway, type AnthropicLikeResponse } from '@/lib/ai/gateway-adapter'
+import { callModelViaGateway, type AnthropicLikeResponse, type GatewayCallConfig } from '@/lib/ai/gateway-adapter'
 import { models as gatewayModels } from '@/lib/ai'
 import { getAgentTools, type ExecuteToolOptions, type ToolGroup } from '@/lib/agent/tools'
 import { getEagerTools, buildDeferredToolsPrompt, resolveToolSchema } from '@/lib/agent/tools/deferred-loader'
@@ -631,7 +631,7 @@ export async function* runTAORLoop(
           maxTokens,
           system: fullSystemPrompt,
           tools,
-          messages,
+          messages: messages as unknown as GatewayCallConfig['messages'],
           thinking,
         }),
         { threshold: 5, cooldownMs: 60_000 },

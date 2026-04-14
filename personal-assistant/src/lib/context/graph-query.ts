@@ -208,7 +208,7 @@ export async function searchEntities(
       id: inv.id,
       type: 'invoice',
       label: inv.invoice_number ?? inv.id,
-      snippet: `${inv.status ?? 'draft'} - $${inv.amount ?? 0}`,
+      snippet: `${inv.status ?? 'draft'} - $${inv.total ?? 0}`,
       metadata: inv as Record<string, unknown>,
     })
   }

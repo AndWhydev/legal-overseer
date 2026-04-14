@@ -1296,8 +1296,8 @@ export async function executeAgentTool(
         logger.warn(`[tools] queueAgentAction failed:`, { error: err })
         // Fail closed: do not execute unapproved actions if approval queue is down
         return {
-          status: 'error' as const,
-          data: { error: 'Approval queue unavailable — action blocked for safety' },
+          success: false,
+          error: 'Approval queue unavailable — action blocked for safety',
         }
       }
     }

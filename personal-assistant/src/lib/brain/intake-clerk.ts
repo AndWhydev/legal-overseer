@@ -29,6 +29,7 @@ const SIGNAL_DOMAIN_MAP: Record<SignalType, DomainType> = {
   relationship: 'relational',
   pricing: 'financial',
   fiduciary: 'financial',
+  delegated_action: 'operational',
 }
 
 /**

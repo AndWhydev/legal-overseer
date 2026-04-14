@@ -133,7 +133,7 @@ describe('useVoicePlayback', () => {
     // Make fetch hang so we can observe isLoading
     let resolveFetch!: (value: unknown) => void;
     vi.mocked(fetch).mockImplementationOnce(
-      () => new Promise((resolve) => { resolveFetch = resolve; })
+      () => new Promise((resolve: any) => { resolveFetch = resolve; })
     );
 
     const { result } = renderHook(() => useVoicePlayback());

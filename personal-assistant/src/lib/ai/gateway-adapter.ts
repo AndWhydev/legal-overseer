@@ -177,6 +177,7 @@ export async function callModelViaGateway(
     throw convErr
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const streamResult = streamText({
     model: _testModel ?? gateway(config.model),
     system: config.system,
@@ -188,7 +189,7 @@ export async function callModelViaGateway(
         anthropic: { thinking: config.thinking },
       },
     }),
-  })
+  } as any)
 
   // Collect streaming events
   const streamedDeltas: string[] = []

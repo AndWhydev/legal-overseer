@@ -15,7 +15,7 @@ describe('gateway-adapter (AI SDK v6 regression lock)', () => {
     const model = mockGatewayDirect([
       { type: 'text-delta', id: 'txt1', delta: 'hello ' },
       { type: 'text-delta', id: 'txt1', delta: 'world' },
-      { type: 'finish', usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 } },
+      { type: 'finish', usage: { inputTokens: 1, outputTokens: 2} },
     ])
 
     const result = await callModelViaGateway(BASE_CONFIG, model)
@@ -55,7 +55,7 @@ describe('gateway-adapter (AI SDK v6 regression lock)', () => {
   it('reads v6 usage fields (inputTokens/outputTokens), not v5 prompt/completion', async () => {
     const model = mockGatewayDirect([
       { type: 'text-delta', id: 't1', delta: 'hi' },
-      { type: 'finish', usage: { inputTokens: 12, outputTokens: 34, totalTokens: 46 } },
+      { type: 'finish', usage: { inputTokens: 12, outputTokens: 34} },
     ])
 
     const result = await callModelViaGateway(BASE_CONFIG, model)

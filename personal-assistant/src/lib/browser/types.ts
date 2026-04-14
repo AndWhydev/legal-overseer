@@ -125,5 +125,5 @@ export interface StagehandConfig {
   enableCaching?: boolean
 
   /** Logging verbosity (0 = silent, 1 = info, 2 = debug). */
-  verbose?: number
+  verbose?: 0 | 1 | 2
 }

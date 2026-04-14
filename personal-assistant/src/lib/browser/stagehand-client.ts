@@ -99,8 +99,7 @@ export async function createSession(
     env: config.env,
     apiKey: config.apiKey,
     projectId: config.projectId,
-    modelName: config.modelName,
-    modelClientOptions: config.modelClientOptions,
+    model: config.modelName,
     verbose: config.verbose,
   })
 
@@ -222,7 +221,7 @@ export async function runBrowserTask(
 
     // Use the agent for multi-step instruction execution
     const agent = session.stagehand.agent({
-      model: session.stagehand.modelName,
+      model: (session.stagehand as any)['modelName'],
     })
 
     const agentResult = await agent.execute({

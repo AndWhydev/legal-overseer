@@ -15,7 +15,7 @@ function makeCancelledTask(overrides: Record<string, unknown> = {}) {
     id: 'task-xyz',
     org_id: 'org-1',
     thread_id: null,
-    task_type: 'standard',
+    task_type: 'standard' as const,
     task_name: 'My Task',
     task_payload: {},
     status: 'cancelled',
@@ -53,7 +53,7 @@ describe('handleCancelTask', () => {
 
   it('returns success with task details when cancellation succeeds', async () => {
     const task = makeCancelledTask()
-    mockCancelTask.mockResolvedValue(task as ReturnType<typeof makeCancelledTask>)
+    mockCancelTask.mockResolvedValue(task as never)
 
     const result = await handleCancelTask({ task_id: 'task-xyz' }, 'org-1', mockSupabase)
 
@@ -107,7 +107,7 @@ describe('handleCancelTask', () => {
 
   it('passes the reason field without error (reason is informational only)', async () => {
     const task = makeCancelledTask()
-    mockCancelTask.mockResolvedValue(task as ReturnType<typeof makeCancelledTask>)
+    mockCancelTask.mockResolvedValue(task as never)
 
     const result = await handleCancelTask(
       { task_id: 'task-xyz', reason: 'User changed their mind' },

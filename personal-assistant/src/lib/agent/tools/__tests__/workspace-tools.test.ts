@@ -76,7 +76,7 @@ describe('workspace tool definitions', () => {
   it('all tools have descriptions', () => {
     for (const tool of workspaceToolDefinitions) {
       expect(tool.description).toBeTruthy()
-      expect(tool.description.length).toBeGreaterThan(20)
+      expect(tool.description!.length).toBeGreaterThan(20)
     }
   })
 

@@ -40,7 +40,7 @@ export class VoiceActivityDetector {
   private _isSpeaking = false
   private rafHandle: number | null = null
   private silenceStartedAt: number | null = null
-  private frequencyData: Uint8Array
+  private frequencyData: Uint8Array<ArrayBuffer>
 
   constructor(options: VADOptions) {
     this.analyser = options.analyser

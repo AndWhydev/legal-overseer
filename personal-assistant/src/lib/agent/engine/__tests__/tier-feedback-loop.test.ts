@@ -51,7 +51,8 @@ import {
  * In-memory execution store simulating the Supabase tables.
  * recordExecution inserts rows; getReliabilitySummary aggregates them.
  */
-function createMockSupabase() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createMockSupabase(): any {
   const rows: Array<Record<string, unknown>> = []
 
   const supabase = {

@@ -1445,7 +1445,7 @@ Existing constraints (do NOT duplicate):
 ${existingConstraintTexts || 'None yet.'}
 
 Generate fiduciary constraints for this entity:`,
-        maxTokens: 500,
+        maxOutputTokens: 500,
       })
 
       if (!constraintText || constraintText.trim() === 'NONE') continue

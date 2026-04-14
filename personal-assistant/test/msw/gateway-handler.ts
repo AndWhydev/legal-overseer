@@ -13,7 +13,7 @@ import {
   simulateReadableStream,
   convertArrayToReadableStream,
 } from 'ai/test'
-import type { LanguageModelV3StreamPart, LanguageModelV3Usage } from '@ai-sdk/provider'
+import type { LanguageModelV3StreamPart, LanguageModelV3Usage, LanguageModelV3FinishReason } from '@ai-sdk/provider'
 
 export type SimulatedEvent =
   | { type: 'text-delta'; id?: string; delta: string }
@@ -32,10 +32,10 @@ function makeV3Usage(u?: { inputTokens?: number; outputTokens?: number }): Langu
     inputTokens: { total: u?.inputTokens, noCache: u?.inputTokens, cacheRead: undefined, cacheWrite: undefined },
     outputTokens: {
       total: u?.outputTokens,
-      reasoning: undefined,
+      text: undefined, reasoning: undefined,
       prediction: { accepted: undefined, rejected: undefined },
     },
-  } as LanguageModelV3Usage
+  } as unknown as LanguageModelV3Usage
 }
 
 function expand(events: SimulatedEvent[]): LanguageModelV3StreamPart[] {
@@ -60,7 +60,7 @@ function expand(events: SimulatedEvent[]): LanguageModelV3StreamPart[] {
       }
       parts.push({ type: 'reasoning-delta', id, delta: e.delta })
     } else if (e.type === 'tool-call') {
-      parts.push({ type: 'tool-call', toolCallId: e.toolCallId, toolName: e.toolName, input: e.input })
+      parts.push({ type: 'tool-call', toolCallId: e.toolCallId, toolName: e.toolName, input: e.input as string })
     } else if (e.type === 'error') {
       parts.push({ type: 'error', error: e.error })
     } else if (e.type === 'finish') {
@@ -70,7 +70,7 @@ function expand(events: SimulatedEvent[]): LanguageModelV3StreamPart[] {
       openReasoning.clear()
       parts.push({
         type: 'finish',
-        finishReason: e.finishReason ?? 'stop',
+        finishReason: (e.finishReason ?? 'stop') as unknown as LanguageModelV3FinishReason,
         usage: makeV3Usage(e.usage),
       })
       finishEmitted = true
@@ -81,7 +81,7 @@ function expand(events: SimulatedEvent[]): LanguageModelV3StreamPart[] {
     for (const id of openReasoning) parts.push({ type: 'reasoning-end', id })
     parts.push({
       type: 'finish',
-      finishReason: 'stop',
+      finishReason: 'stop' as unknown as LanguageModelV3FinishReason,
       usage: makeV3Usage(),
     })
   }

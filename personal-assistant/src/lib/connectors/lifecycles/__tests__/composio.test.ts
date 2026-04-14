@@ -80,7 +80,7 @@ function makeSupabase(opts: { failConnectedUpdate?: string } = {}) {
 }
 
 describe('ComposioLifecycle', () => {
-  let mocks: Awaited<ReturnType<typeof import('../../../composio')>>
+  let mocks: Awaited<typeof import('../../../composio')>
 
   beforeEach(async () => {
     vi.clearAllMocks()

@@ -43,7 +43,7 @@ describe('GET /api/agent/tasks', () => {
   it('returns 503 when supabase is not configured', async () => {
     mockCreateClient.mockResolvedValueOnce(null as never)
     const res = await GET(makeRequest('http://localhost/api/agent/tasks'))
-    expect(res.status).toBe(503)
+    expect(res!.status).toBe(503)
   })
 
   it('returns 401 when user is not authenticated', async () => {
@@ -51,7 +51,7 @@ describe('GET /api/agent/tasks', () => {
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
     } as never)
     const res = await GET(makeRequest('http://localhost/api/agent/tasks'))
-    expect(res.status).toBe(401)
+    expect(res!.status).toBe(401)
   })
 
   it('returns 400 when profile has no org_id', async () => {
@@ -64,7 +64,7 @@ describe('GET /api/agent/tasks', () => {
       }),
     } as never)
     const res = await GET(makeRequest('http://localhost/api/agent/tasks'))
-    expect(res.status).toBe(400)
+    expect(res!.status).toBe(400)
   })
 
   it('calls getActiveTasks when active=true query param is set', async () => {
@@ -73,9 +73,9 @@ describe('GET /api/agent/tasks', () => {
     mockGetActiveTasks.mockResolvedValueOnce([])
 
     const res = await GET(makeRequest('http://localhost/api/agent/tasks?active=true'))
-    expect(res.status).toBe(200)
+    expect(res!.status).toBe(200)
     expect(mockGetActiveTasks).toHaveBeenCalledWith(supabase, 'org-1')
-    const body = await res.json()
+    const body = await res!.json()
     expect(body).toEqual({ tasks: [] })
   })
 
@@ -85,7 +85,7 @@ describe('GET /api/agent/tasks', () => {
     mockListTasks.mockResolvedValueOnce([])
 
     const res = await GET(makeRequest('http://localhost/api/agent/tasks?status=working'))
-    expect(res.status).toBe(200)
+    expect(res!.status).toBe(200)
     expect(mockListTasks).toHaveBeenCalledWith(supabase, 'org-1', { status: 'working', task_type: undefined })
   })
 
@@ -112,8 +112,8 @@ describe('GET /api/agent/tasks', () => {
     mockCreateClient.mockResolvedValueOnce(supabase as never)
 
     const res = await GET(makeRequest('http://localhost/api/agent/tasks?thread_id=thread-abc'))
-    expect(res.status).toBe(200)
-    const body = await res.json()
+    expect(res!.status).toBe(200)
+    const body = await res!.json()
     expect(body).toEqual({ tasks: [] })
   })
 
@@ -123,8 +123,8 @@ describe('GET /api/agent/tasks', () => {
     mockListTasks.mockRejectedValueOnce(new Error('DB error'))
 
     const res = await GET(makeRequest('http://localhost/api/agent/tasks'))
-    expect(res.status).toBe(500)
-    const body = await res.json()
+    expect(res!.status).toBe(500)
+    const body = await res!.json()
     expect(body.error).toBe('DB error')
   })
 })

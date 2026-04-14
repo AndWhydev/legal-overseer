@@ -47,7 +47,7 @@ function buildMockSupabase(orgId = 'org-1') {
 }
 
 function makeRequest(url: string, options?: RequestInit) {
-  return new NextRequest(url, options)
+  return new NextRequest(url, options as any)
 }
 
 const makeContext = (taskId: string) => ({
@@ -62,7 +62,7 @@ describe('GET /api/agent/tasks/[taskId]', () => {
   it('returns 503 when supabase is not configured', async () => {
     mockCreateClient.mockResolvedValueOnce(null as never)
     const res = await GET(makeRequest('http://localhost/api/agent/tasks/task-123'), makeContext('task-123'))
-    expect(res.status).toBe(503)
+    expect(res!.status).toBe(503)
   })
 
   it('returns 401 when unauthenticated', async () => {
@@ -70,7 +70,7 @@ describe('GET /api/agent/tasks/[taskId]', () => {
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
     } as never)
     const res = await GET(makeRequest('http://localhost/api/agent/tasks/task-123'), makeContext('task-123'))
-    expect(res.status).toBe(401)
+    expect(res!.status).toBe(401)
   })
 
   it('returns 404 when task does not exist', async () => {
@@ -79,7 +79,7 @@ describe('GET /api/agent/tasks/[taskId]', () => {
     mockGetTaskWithSteps.mockResolvedValueOnce(null)
 
     const res = await GET(makeRequest('http://localhost/api/agent/tasks/task-123'), makeContext('task-123'))
-    expect(res.status).toBe(404)
+    expect(res!.status).toBe(404)
   })
 
   it('returns 404 when task belongs to a different org', async () => {
@@ -91,7 +91,7 @@ describe('GET /api/agent/tasks/[taskId]', () => {
     })
 
     const res = await GET(makeRequest('http://localhost/api/agent/tasks/task-123'), makeContext('task-123'))
-    expect(res.status).toBe(404)
+    expect(res!.status).toBe(404)
   })
 
   it('returns task with steps on success', async () => {
@@ -101,8 +101,8 @@ describe('GET /api/agent/tasks/[taskId]', () => {
     mockGetTaskWithSteps.mockResolvedValueOnce({ task: task as never, steps: [] })
 
     const res = await GET(makeRequest('http://localhost/api/agent/tasks/task-123'), makeContext('task-123'))
-    expect(res.status).toBe(200)
-    const body = await res.json()
+    expect(res!.status).toBe(200)
+    const body = await res!.json()
     expect(body.task.id).toBe('task-123')
     expect(body.steps).toEqual([])
   })
@@ -120,7 +120,7 @@ describe('PATCH /api/agent/tasks/[taskId]', () => {
       }),
       makeContext('task-123'),
     )
-    expect(res.status).toBe(400)
+    expect(res!.status).toBe(400)
   })
 
   it('returns 404 when task does not exist', async () => {
@@ -135,7 +135,7 @@ describe('PATCH /api/agent/tasks/[taskId]', () => {
       }),
       makeContext('task-123'),
     )
-    expect(res.status).toBe(404)
+    expect(res!.status).toBe(404)
   })
 
   it('cancels task and returns updated task', async () => {
@@ -153,8 +153,8 @@ describe('PATCH /api/agent/tasks/[taskId]', () => {
       }),
       makeContext('task-123'),
     )
-    expect(res.status).toBe(200)
-    const body = await res.json()
+    expect(res!.status).toBe(200)
+    const body = await res!.json()
     expect(body.task.status).toBe('cancelled')
   })
 
@@ -172,6 +172,6 @@ describe('PATCH /api/agent/tasks/[taskId]', () => {
       }),
       makeContext('task-123'),
     )
-    expect(res.status).toBe(409)
+    expect(res!.status).toBe(409)
   })
 })

@@ -30,6 +30,12 @@ function mockConnection(overrides?: Partial<OrgConnection['config']>): OrgConnec
     },
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
+    auth_expires_at: null,
+    connected_account_id: null,
+    trigger_ids: [],
+    last_health_at: null,
+    consecutive_failures: 0,
+    lifecycle_version: 0,
   }
 }
 
