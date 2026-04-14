@@ -102,6 +102,12 @@ export interface ChannelMetadata {
   externalId?: string
   subject?: string
   isVoiceNote?: boolean
+  /** True when this message originated from a realtime voice session
+   *  (as opposed to `isVoiceNote` which is for async voice notes). */
+  voice?: boolean
+  /** Groups a user turn + assistant response that originated from the same
+   *  voice interaction (for analytics / debugging). */
+  voiceTurnId?: string
   attachments?: Array<{
     type: string
     url: string

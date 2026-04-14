@@ -58,6 +58,14 @@ export interface EngineConfig {
   budgetPreset?: 'standard' | 'dynamic_workspace'
   /** Explicit iteration cap override from entity_overrides (overrides SAFETY_CEILING). */
   iterationCap?: number
+  /** Abort signal for cancelling an in-flight TAOR run (e.g. voice barge-in).
+   *  Checked at loop boundaries between iterations; does not forcibly kill the
+   *  current Anthropic stream, but prevents subsequent iterations. */
+  abortSignal?: AbortSignal
+  /** Voice mode: the caller is a realtime voice session. When true, the model
+   *  is biased toward short spoken responses and voice-unfriendly formatting
+   *  (tables, code fences, long bullet lists) is discouraged. */
+  voiceMode?: boolean
 }
 
 // ---------------------------------------------------------------------------

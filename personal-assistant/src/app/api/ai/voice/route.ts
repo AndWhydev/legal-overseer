@@ -8,10 +8,31 @@ import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { logger } from '@/lib/core/logger';
 
 /**
- * Voice endpoint: accepts audio via multipart/form-data,
- * transcribes with OpenAI Whisper, then routes through AI text pipeline.
+ * LEGACY voice endpoint: accepts audio via multipart/form-data, transcribes
+ * with OpenAI Whisper, then routes through a lightweight Anthropic call.
+ *
+ * This path BYPASSES the TAOR loop, tool registry, context assembler, and
+ * prompt cache — it produces a meaningfully worse assistant than the text
+ * chat does. It has been superseded by realtime voice mode at
+ * `/api/voice/stream`, which routes every turn through
+ * `UnifiedConversationPipeline`.
+ *
+ * Still active by default because the floating pill's hold-to-talk flow
+ * (`bitbit-overlay.tsx` → `stopVoiceAndProcess`) calls this endpoint. Set
+ * `LEGACY_VOICE=0` to return 410 Gone for this route; scheduled for full
+ * migration + deletion in Phase 4 of the voice-to-voice rollout.
  */
 export async function POST(request: Request) {
+  if (process.env.LEGACY_VOICE === '0') {
+    return NextResponse.json(
+      {
+        error: 'Legacy voice endpoint is disabled. Use /api/voice/stream.',
+        replacement: '/api/voice/stream',
+      },
+      { status: 410 },
+    )
+  }
+
   const supabase = await createClient()
   if (!supabase) return NextResponse.json({ error: 'Not configured' }, { status: 503 })
   const { data: { user } } = await supabase.auth.getUser()
