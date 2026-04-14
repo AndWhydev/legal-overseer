@@ -1509,13 +1509,12 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
       : { success: false, error: result.error || 'Voice memo failed' }
   },
 
-  async initiate_facetime_call(input, _orgId, context) {
+  async initiate_facetime_call(input, orgId) {
     const phoneNumber = input.phone_number as string
     if (!phoneNumber) return { success: false, error: 'Missing phone_number' }
 
     const { initiateFaceTimeCall } = await import('@/lib/voice/call-session')
-    const userId = context?.userId || 'unknown'
-    const orgId = context?.orgId || _orgId
+    const userId = 'unknown'
 
     const session = await initiateFaceTimeCall(userId, orgId, phoneNumber)
     if (!session) {

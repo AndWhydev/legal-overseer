@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import type Anthropic from "@anthropic-ai/sdk";
 import { resolveChannelIdentity } from "@/lib/conversation/identity-resolver";
 import { enrichInboundMessage } from "@/lib/conversation/inbound-enrichment";
 import { handleGatewayMessage } from "@/lib/channels/gateway-handler";
 import { sendSendblueMessage } from "@/lib/channels/sendblue";
+import { downloadSendblueMedia } from "@/lib/channels/sendblue-media";
+import { transcribeVoiceNote } from "@/lib/channels/voice-transcription";
 import { logger } from "@/lib/core/logger";
+import type { ChannelMetadata } from "@/lib/conversation/types";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 interface SendblueWebhook {
   from_number: string;
@@ -17,14 +21,63 @@ interface SendblueWebhook {
   group_id?: string | null;
   date_sent?: string;
   message_handle?: string;
-  // Status callback fields
   status?: string;
   error_code?: string | null;
 }
 
+async function processInboundMedia(
+  mediaUrl: string,
+  textContent: string,
+): Promise<{
+  content: string;
+  channelMetadata: Partial<ChannelMetadata>;
+  contentBlocks: Anthropic.ContentBlockParam[];
+}> {
+  const channelMetadata: Partial<ChannelMetadata> = {};
+  const contentBlocks: Anthropic.ContentBlockParam[] = [];
+  let content = textContent;
+
+  const media = await downloadSendblueMedia(mediaUrl);
+  if (!media) return { content, channelMetadata, contentBlocks };
+
+  channelMetadata.attachments = [{ type: media.mimeType, url: mediaUrl, name: media.filename }];
+
+  if (media.category === "audio") {
+    channelMetadata.isVoiceNote = true;
+    const result = await transcribeVoiceNote(media.buffer, media.mimeType);
+    if (result.success && result.text) {
+      content = content
+        ? `${content}\n\n[voice note]: "${result.text}"`
+        : `[voice note]: "${result.text}"`;
+      logger.info("[webhook/sendblue] Voice memo transcribed", {
+        duration: result.duration, language: result.language, textLength: result.text.length,
+      });
+    } else {
+      content = content || "[voice note — couldn't transcribe]";
+      logger.warn("[webhook/sendblue] Voice memo transcription failed", { error: result.error });
+    }
+  } else if (media.category === "image") {
+    const base64 = media.buffer.toString("base64");
+    const validMediaTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
+    type ValidMediaType = (typeof validMediaTypes)[number];
+    const mediaType = validMediaTypes.includes(media.mimeType as ValidMediaType)
+      ? (media.mimeType as ValidMediaType)
+      : ("image/jpeg" as const);
+
+    contentBlocks.push({
+      type: "image",
+      source: { type: "base64", media_type: mediaType, data: base64 },
+    });
+    if (!content) content = "[sent an image]";
+    logger.info("[webhook/sendblue] Image received", { mimeType: media.mimeType, size: media.buffer.length });
+  } else {
+    if (!content) content = `[sent a ${media.category}: ${media.filename}]`;
+  }
+
+  return { content, channelMetadata, contentBlocks };
+}
+
 export async function POST(request: NextRequest) {
-  // Verify the request is from Sendblue by checking the API key header.
-  // Sendblue doesn't support HMAC signatures — header matching is the method.
   const incomingKey = request.headers.get("sb-api-key-id");
   const expectedKey = process.env.SENDBLUE_API_KEY;
   if (expectedKey && incomingKey && incomingKey !== expectedKey) {
@@ -40,25 +93,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  // Status callback (delivery updates) — log and return
-  if (body.status && !body.content) {
-    logger.info("[webhook/sendblue] Status update", {
-      status: body.status,
-      to: body.to_number,
-      error: body.error_code,
-    });
+  if (body.status && !body.content && !body.media_url) {
+    logger.info("[webhook/sendblue] Status update", { status: body.status, to: body.to_number, error: body.error_code });
     return NextResponse.json({ ok: true });
   }
 
   const fromNumber = body.from_number;
-  const content = body.content;
   const toNumber = body.to_number;
+  let content = body.content || "";
+  const mediaUrl = body.media_url;
 
-  if (!fromNumber || !content) {
-    return NextResponse.json({ ok: true }); // Ignore empty messages
+  if (!fromNumber || (!content && !mediaUrl)) {
+    return NextResponse.json({ ok: true });
   }
 
-  // Echo prevention — ignore messages from our own number
   const ourNumber = process.env.SENDBLUE_FROM_NUMBER;
   if (ourNumber && fromNumber === ourNumber) {
     return NextResponse.json({ ok: true });
@@ -66,7 +114,6 @@ export async function POST(request: NextRequest) {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
   if (!supabaseUrl || !supabaseKey) {
     logger.error("[webhook/sendblue] Missing Supabase env vars");
     return NextResponse.json({ ok: true });
@@ -74,24 +121,34 @@ export async function POST(request: NextRequest) {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Resolve identity via channel_identities table
   const identity = await resolveChannelIdentity(supabase, {
     channelType: "sms",
     channelIdentifier: fromNumber,
   });
 
   if (!identity) {
-    // Unknown number — respond based on open registration setting
     const openRegistration = process.env.SENDBLUE_OPEN_REGISTRATION === "true";
     const replyText = openRegistration
-      ? "hey! I don't recognize this number yet. what's your email so I can link you up?"
-      : "hey, I'm not set up for new numbers just yet. check back soon!";
-
+      ? "hey! don't recognize this number yet\n\nwhat's ur email so i can link you up?"
+      : "hey, not set up for new numbers yet — check back soon";
     await sendSendblueMessage(fromNumber, replyText);
     return NextResponse.json({ ok: true });
   }
 
-  // Store inbound message
+  let channelMetadata: ChannelMetadata | undefined;
+  let contentBlocks: Anthropic.ContentBlockParam[] | undefined;
+
+  if (mediaUrl) {
+    const mediaResult = await processInboundMedia(mediaUrl, content);
+    content = mediaResult.content;
+    if (Object.keys(mediaResult.channelMetadata).length > 0) {
+      channelMetadata = mediaResult.channelMetadata as ChannelMetadata;
+    }
+    if (mediaResult.contentBlocks.length > 0) {
+      contentBlocks = mediaResult.contentBlocks;
+    }
+  }
+
   const externalId = body.message_handle || `sb-${Date.now()}-${fromNumber}`;
   const { data: insertedMsg } = await supabase
     .from("channel_messages")
@@ -109,14 +166,14 @@ export async function POST(request: NextRequest) {
         from_number: fromNumber,
         to_number: toNumber,
         service: body.service,
-        media_url: body.media_url || null,
+        media_url: mediaUrl || null,
         group_id: body.group_id || null,
+        is_voice_note: channelMetadata?.isVoiceNote || false,
       },
     })
     .select("id")
     .single();
 
-  // Fire-and-forget enrichment
   if (insertedMsg) {
     enrichInboundMessage(supabase, {
       messageId: insertedMsg.id as string,
@@ -132,7 +189,6 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // Run pipeline inline — Sendblue has no strict webhook timeout
   try {
     await handleGatewayMessage({
       channel: "sendblue",
@@ -144,6 +200,8 @@ export async function POST(request: NextRequest) {
         displayName: identity.displayName,
       },
       replyTo: fromNumber,
+      channelMetadata,
+      contentBlocks,
     });
   } catch (err) {
     logger.error("[webhook/sendblue] Gateway handler error", {

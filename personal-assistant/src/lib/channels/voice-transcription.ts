@@ -46,6 +46,49 @@ const WHISPER_MODEL = 'whisper-1'
 const TIMEOUT_MS = 30_000
 const MAX_AUDIO_SIZE_BYTES = 25 * 1024 * 1024 // 25 MB (Whisper API limit)
 
+/** Check if a MIME type needs transcoding before Whisper (CAF, AIFF, AMR). */
+function needsTranscoding(mimeType: string): boolean {
+  return mimeType.includes('caf') || mimeType.includes('aiff') || mimeType.includes('amr')
+}
+
+/**
+ * Transcode unsupported audio (CAF/AIFF/AMR) to MP3 via ffmpeg.
+ * CAF is Apple's container format used by iMessage voice memos.
+ * Falls back to returning the original buffer if ffmpeg is unavailable.
+ */
+async function transcodeToMp3(buf: Buffer, inputMime: string): Promise<{ buffer: Buffer; mimeType: string }> {
+  try {
+    const { execFile } = await import('child_process')
+    const { writeFile, readFile, unlink, mkdtemp } = await import('fs/promises')
+    const { join } = await import('path')
+    const { tmpdir } = await import('os')
+
+    const dir = await mkdtemp(join(tmpdir(), 'bitbit-audio-'))
+    const ext = inputMime.includes('caf') ? 'caf' : inputMime.includes('aiff') ? 'aiff' : 'amr'
+    const inputPath = join(dir, `input.${ext}`)
+    const outputPath = join(dir, 'output.mp3')
+
+    await writeFile(inputPath, buf)
+
+    await new Promise<void>((resolve, reject) => {
+      execFile('ffmpeg', ['-i', inputPath, '-vn', '-ar', '16000', '-ac', '1', '-b:a', '64k', outputPath, '-y'], {
+        timeout: 15_000,
+      }, (err) => err ? reject(err) : resolve())
+    })
+
+    const mp3Buffer = await readFile(outputPath)
+    await Promise.all([unlink(inputPath), unlink(outputPath)]).catch(() => {})
+
+    logger.info('[voice-transcription] Transcoded audio', { from: inputMime, outputSize: mp3Buffer.length })
+    return { buffer: mp3Buffer, mimeType: 'audio/mpeg' }
+  } catch (err) {
+    logger.warn('[voice-transcription] ffmpeg transcode failed, trying raw buffer', {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return { buffer: buf, mimeType: inputMime }
+  }
+}
+
 /**
  * Infer file extension from MIME type.
  */
@@ -55,7 +98,8 @@ function getFileExtensionFromMimeType(mimeType: string): string {
   if (mimeType.includes('mp4') || mimeType.includes('m4a')) return 'm4a'
   if (mimeType.includes('wav') || mimeType.includes('wave')) return 'wav'
   if (mimeType.includes('webm')) return 'webm'
-  return 'ogg' // Default for WhatsApp audio
+  if (mimeType.includes('caf')) return 'caf'
+  return 'ogg'
 }
 
 /**
@@ -118,11 +162,20 @@ export async function transcribeVoiceNote(
   }
 
   try {
-    const ext = getFileExtensionFromMimeType(mimeType)
-    const buffer = Buffer.isBuffer(audioBuffer) ? audioBuffer : Buffer.from(audioBuffer)
+    let buffer = Buffer.isBuffer(audioBuffer) ? audioBuffer : Buffer.from(audioBuffer)
+    let effectiveMime = mimeType
+
+    // Transcode unsupported formats (CAF from iMessage, AIFF, AMR) to MP3
+    if (needsTranscoding(mimeType)) {
+      const transcoded = await transcodeToMp3(buffer, mimeType)
+      buffer = Buffer.isBuffer(transcoded.buffer) ? transcoded.buffer : Buffer.from(transcoded.buffer)
+      effectiveMime = transcoded.mimeType
+    }
+
+    const ext = getFileExtensionFromMimeType(effectiveMime)
 
     // Use Blob API (available in Node 18+) to create FormData
-    const blob = new Blob([new Uint8Array(buffer)], { type: mimeType })
+    const blob = new Blob([new Uint8Array(buffer)], { type: effectiveMime })
     const formData = new FormData()
     formData.append('file', blob, `voice.${ext}`)
     formData.append('model', WHISPER_MODEL)
