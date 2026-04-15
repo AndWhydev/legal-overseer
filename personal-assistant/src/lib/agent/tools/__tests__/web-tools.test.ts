@@ -72,8 +72,8 @@ describe('web tools', () => {
   })
 
   describe('tool definitions', () => {
-    it('exports 5 tool definitions', () => {
-      expect(webToolDefinitions).toHaveLength(5)
+    it('exports 4 tool definitions', () => {
+      expect(webToolDefinitions).toHaveLength(4)
     })
 
     it('defines web_search', () => {

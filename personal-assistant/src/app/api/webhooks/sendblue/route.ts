@@ -7,6 +7,15 @@ import { handleGatewayMessage } from "@/lib/channels/gateway-handler";
 import { sendSendblueMessage } from "@/lib/channels/sendblue";
 import { downloadSendblueMedia } from "@/lib/channels/sendblue-media";
 import { transcribeVoiceNote } from "@/lib/channels/voice-transcription";
+import { handleUnknownSender } from "@/lib/channels/sendblue-onboarding";
+import {
+  isRateLimited,
+  isMediaUrlSafe,
+  verifyWebhookKey,
+  checkSmsQuota,
+  trackSmsSend,
+} from "@/lib/channels/sendblue-guard";
+import { sendContactCardIfNeeded } from "@/lib/channels/sendblue-contact-card";
 import { logger } from "@/lib/core/logger";
 import type { ChannelMetadata } from "@/lib/conversation/types";
 
@@ -36,6 +45,12 @@ async function processInboundMedia(
   const channelMetadata: Partial<ChannelMetadata> = {};
   const contentBlocks: Anthropic.ContentBlockParam[] = [];
   let content = textContent;
+
+  // SSRF guard: validate media URL before fetching
+  if (!isMediaUrlSafe(mediaUrl)) {
+    logger.warn("[webhook/sendblue] Blocked unsafe media URL", { url: mediaUrl.slice(0, 100) });
+    return { content, channelMetadata, contentBlocks };
+  }
 
   const media = await downloadSendblueMedia(mediaUrl);
   if (!media) return { content, channelMetadata, contentBlocks };
@@ -78,9 +93,8 @@ async function processInboundMedia(
 }
 
 export async function POST(request: NextRequest) {
-  const incomingKey = request.headers.get("sb-api-key-id");
-  const expectedKey = process.env.SENDBLUE_API_KEY;
-  if (expectedKey && incomingKey && incomingKey !== expectedKey) {
+  // ── Auth: timing-safe API key verification ──────────────────────────
+  if (!verifyWebhookKey(request.headers.get("sb-api-key-id"))) {
     logger.warn("[webhook/sendblue] API key mismatch");
     return NextResponse.json({ ok: false }, { status: 403 });
   }
@@ -93,6 +107,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
+  // Status callbacks (delivery updates) — log and return
   if (body.status && !body.content && !body.media_url) {
     logger.info("[webhook/sendblue] Status update", { status: body.status, to: body.to_number, error: body.error_code });
     return NextResponse.json({ ok: true });
@@ -107,8 +122,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  // Echo prevention
   const ourNumber = process.env.SENDBLUE_FROM_NUMBER;
   if (ourNumber && fromNumber === ourNumber) {
+    return NextResponse.json({ ok: true });
+  }
+
+  // ── Rate limiting: per-number inbound throttle ──────────────────────
+  if (isRateLimited(fromNumber)) {
+    // Silently drop — don't waste Sendblue credits on rate-limited senders
     return NextResponse.json({ ok: true });
   }
 
@@ -121,20 +143,33 @@ export async function POST(request: NextRequest) {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  // ── Identity resolution ─────────────────────────────────────────────
   const identity = await resolveChannelIdentity(supabase, {
     channelType: "sms",
     channelIdentifier: fromNumber,
   });
 
   if (!identity) {
-    const openRegistration = process.env.SENDBLUE_OPEN_REGISTRATION === "true";
-    const replyText = openRegistration
-      ? "hey! don't recognize this number yet\n\nwhat's ur email so i can link you up?"
-      : "hey, not set up for new numbers yet — check back soon";
-    await sendSendblueMessage(fromNumber, replyText);
+    // Unknown sender → onboarding flow (email → OTP → link)
+    const handled = await handleUnknownSender(supabase, fromNumber, content);
+    if (handled) return NextResponse.json({ ok: true });
+
+    // Fallback: registration disabled
+    await sendSendblueMessage(fromNumber, "hey, not set up for new numbers yet — check back soon");
     return NextResponse.json({ ok: true });
   }
 
+  // ── Send quota check ────────────────────────────────────────────────
+  const quotaOk = await checkSmsQuota(supabase, identity.orgId);
+  if (!quotaOk) {
+    logger.warn("[webhook/sendblue] SMS quota exceeded, not responding", {
+      orgId: identity.orgId, from: fromNumber,
+    });
+    // Store message but don't respond — user will see it in dashboard
+    return NextResponse.json({ ok: true });
+  }
+
+  // ── Process media ───────────────────────────────────────────────────
   let channelMetadata: ChannelMetadata | undefined;
   let contentBlocks: Anthropic.ContentBlockParam[] | undefined;
 
@@ -149,6 +184,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // ── Store inbound message ───────────────────────────────────────────
   const externalId = body.message_handle || `sb-${Date.now()}-${fromNumber}`;
   const { data: insertedMsg } = await supabase
     .from("channel_messages")
@@ -189,6 +225,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // ── Run pipeline + send response ────────────────────────────────────
   try {
     await handleGatewayMessage({
       channel: "sendblue",
@@ -203,6 +240,10 @@ export async function POST(request: NextRequest) {
       channelMetadata,
       contentBlocks,
     });
+
+    // Track SMS send for quota + send contact card on first touch
+    trackSmsSend(supabase, identity.orgId).catch(() => {});
+    sendContactCardIfNeeded(supabase, identity.orgId, fromNumber).catch(() => {});
   } catch (err) {
     logger.error("[webhook/sendblue] Gateway handler error", {
       error: err instanceof Error ? err.message : String(err),

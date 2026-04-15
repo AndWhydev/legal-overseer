@@ -186,30 +186,39 @@ export async function callModelViaGateway(
     throw convErr
   }
 
-  // Build providerOptions: merge thinking + prompt caching when present
+  // Build providerOptions: merge thinking when present
   const anthropicOptions: Record<string, unknown> = {}
   if (config.thinking) {
     anthropicOptions.thinking = config.thinking
-  }
-  if (config.systemContentBlocks && config.systemContentBlocks.length > 0) {
-    anthropicOptions.cacheControl = true
   }
   const providerOptions = Object.keys(anthropicOptions).length > 0
     ? { anthropic: anthropicOptions }
     : undefined
 
-  // When systemContentBlocks are provided, join their text for the system string
-  // but enable cacheControl so the provider can apply cache_control markers.
-  // The AI SDK Anthropic provider uses cacheControl: true to add breakpoints
-  // at the end of the system prompt automatically.
-  const systemText = config.systemContentBlocks && config.systemContentBlocks.length > 0
-    ? config.systemContentBlocks.map(b => b.text).join('\n\n')
-    : config.system
+  // When systemContentBlocks are provided, build an array of system parts
+  // with per-part providerOptions for prompt caching. The AI SDK Anthropic
+  // provider reads cacheControl from each part's providerOptions to set
+  // cache_control: { type: 'ephemeral' } on the corresponding content block.
+  let systemParam: string | Array<{ type: 'text'; text: string; providerOptions?: Record<string, unknown> }>
+
+  if (config.systemContentBlocks && config.systemContentBlocks.length > 0) {
+    systemParam = config.systemContentBlocks.map(b => ({
+      type: 'text' as const,
+      text: b.text,
+      ...(b.cache_control && {
+        providerOptions: {
+          anthropic: { cacheControl: b.cache_control },
+        },
+      }),
+    }))
+  } else {
+    systemParam = config.system
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const streamResult = streamText({
     model: _testModel ?? gateway(config.model),
-    system: systemText,
+    system: systemParam,
     messages: messages as Parameters<typeof streamText>[0]['messages'],
     tools,
     maxOutputTokens: config.maxTokens,

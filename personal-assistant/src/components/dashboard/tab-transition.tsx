@@ -7,8 +7,9 @@ import { motion, useAnimationControls } from 'motion/react';
  * KeepAliveTabPanel — renders all visited tabs simultaneously.
  *
  * Active tab: visible + plays a spring enter animation on switch.
- * Inactive tabs: display:none — zero layout/paint cost, full React
- * state + scroll position + fetched data preserved in the DOM.
+ * Inactive tabs: visibility:hidden + absolute positioning — preserves
+ * layout dimensions (so Recharts/ResizeObserver don't report 0x0),
+ * full React state + scroll position + fetched data preserved in the DOM.
  *
  * The splash screen ensures all code is loaded before the user sees
  * anything. Tabs are never unmounted once visited.
@@ -68,7 +69,15 @@ function TabPane({
       aria-labelledby={`tab-${id}`}
       aria-hidden={!isActive}
       tabIndex={isActive ? 0 : -1}
-      style={{ display: isActive ? 'contents' : 'none' }}
+      className="h-full"
+      style={isActive ? undefined : {
+        position: 'absolute',
+        inset: 0,
+        visibility: 'hidden',
+        pointerEvents: 'none',
+        overflow: 'hidden',
+        zIndex: -1,
+      }}
     >
       <motion.div
         animate={controls}
