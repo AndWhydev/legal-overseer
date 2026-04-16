@@ -40,12 +40,12 @@ export function PendingApprovalsWidget() {
   return (
     <WidgetCard
       title="Action Required"
-      subtitle={`${approvals.length} pending approvals`}
+      subtitle={`${approvals.length} waiting at the Gate`}
       icon={<IconShieldCheck size={20} className="text-muted-foreground" />}
     >
       <div className="flex flex-col gap-4">
         {approvals.length === 0 ? (
-          <Empty><EmptyTitle>No pending approvals</EmptyTitle><EmptyDescription>All actions have been reviewed.</EmptyDescription></Empty>
+          <Empty><EmptyTitle>No items waiting at the Gate</EmptyTitle><EmptyDescription>All actions have been reviewed.</EmptyDescription></Empty>
         ) : (
           approvals.map(app => (
             <div key={app.id as string} className="flex items-center justify-between p-3 rounded-xl bg-muted border border-border">

@@ -40,13 +40,13 @@ export function ApprovalQueue() {
       const payload = (await response.json()) as ApprovalsResponse
 
       if (!response.ok) {
-        throw new Error(payload.error ?? 'Failed to load pending approvals')
+        throw new Error(payload.error ?? 'Failed to load items waiting at the Gate')
       }
 
       setApprovals(payload.approvals ?? [])
       setError(null)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load pending approvals'
+      const message = err instanceof Error ? err.message : 'Failed to load items waiting at the Gate'
       setError(message)
     } finally {
       if (!silent) {
@@ -145,7 +145,7 @@ export function ApprovalQueue() {
       {loading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <IconLoader2 className="size-4 animate-spin" />
-          Loading pending approvals...
+          Consulting the Gate...
         </div>
       )}
 

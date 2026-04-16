@@ -30,7 +30,7 @@ export function KpiSummaryWidget() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
       <StatCard
-        label="Pending Approvals"
+        label="Waiting at the Gate"
         value={approvalCount}
         subtitle="Awaiting review"
         color="var(--bb-status-warning)"

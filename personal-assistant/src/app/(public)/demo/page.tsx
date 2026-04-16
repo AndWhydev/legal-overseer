@@ -19,7 +19,7 @@ const SAMPLE_STATS = [
   { label: 'Messages Triaged', value: '1,247', change: '+12%', icon: Inbox },
   { label: 'Avg Response Time', value: '11 min', change: '-38%', icon: Clock },
   { label: 'Proposals Sent', value: '23', change: '+5', icon: TrendingUp },
-  { label: 'Pending Approvals', value: '3', change: '', icon: AlertTriangle },
+  { label: 'Waiting at the Gate', value: '3', change: '', icon: AlertTriangle },
 ]
 
 const SAMPLE_MESSAGES = [
