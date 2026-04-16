@@ -286,6 +286,7 @@ function createSemanticMemoriesSupabase(seed: MemoryRow[] = []) {
 }
 
 type ConnectionRow = {
+  id?: string
   org_id: string
   channel_type: 'gmail'
   provider?: string
