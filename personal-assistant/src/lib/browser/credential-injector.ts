@@ -9,6 +9,7 @@
  * keeping credential material out of agent context/logs.
  */
 
+import { getComposioClient } from '@/lib/composio/client'
 import { logger } from '@/lib/core/logger'
 
 // ---------------------------------------------------------------------------
@@ -43,20 +44,97 @@ interface Credentials {
 // ---------------------------------------------------------------------------
 
 /**
- * Retrieve credentials from a Composio connection.
+ * Retrieve credentials from a Composio connected account.
  *
- * NOTE: `getConnectionCredentials` does not exist in the current composio module.
- * This is a stub that throws until the Composio SDK integration is extended.
+ * Only BASIC auth (username + password) is supported — OAuth/API-key schemes
+ * produce access tokens rather than fillable form credentials, so the browser
+ * auto-fill flow doesn't apply to them.
+ *
+ * Shape of the SDK response (from `@composio/core` ConnectedAccountRetrieveResponse):
+ *   { id, status, toolkit, authConfig, state?: { authScheme, val }, data?, ... }
+ *
+ * For legacy/transitional responses the credentials can also appear under
+ * `data.authSchemeName` + `data.username`/`data.password`, so we check both.
  */
 export async function getComposioCredentials(connectionId: string): Promise<Credentials> {
-  // TODO: Implement once composio/mcp-session.ts exposes getConnectionCredentials.
-  // The composio module currently only supports tool discovery and execution,
-  // not raw credential retrieval. This will be wired when the Composio
-  // Connected Accounts API is integrated.
-  throw new Error(
-    `getComposioCredentials not implemented: Composio connection "${connectionId}" ` +
-    `credential retrieval is not yet available. Wire composio/mcp-session.ts first.`,
-  )
+  const composio = getComposioClient()
+  if (!composio) {
+    throw new Error(
+      'Composio is not configured — COMPOSIO_API_KEY environment variable is missing.',
+    )
+  }
+
+  let account: Record<string, any>
+  try {
+    account = await (composio as unknown as {
+      connectedAccounts: {
+        get: (id: string) => Promise<Record<string, any>>
+      }
+    }).connectedAccounts.get(connectionId)
+  } catch (err) {
+    const errMessage = err instanceof Error ? err.message : String(err)
+    logger.error('[credential-injector] Composio connected-account lookup failed', {
+      connectionId,
+      error: errMessage,
+    })
+    throw new Error(
+      `Composio connected account "${connectionId}" not found or inaccessible: ${errMessage}`,
+    )
+  }
+
+  if (!account || typeof account !== 'object') {
+    throw new Error(`Composio connected account "${connectionId}" returned no data.`)
+  }
+
+  // Prefer the canonical `state` shape (ConnectedAccountRetrieveResponse.state),
+  // fall back to the deprecated `data` field for older connections.
+  const stateBlock = (account.state ?? null) as { authScheme?: string; val?: any } | null
+  const dataBlock = (account.data ?? null) as Record<string, any> | null
+
+  const authScheme: string | undefined =
+    stateBlock?.authScheme ?? dataBlock?.authSchemeName ?? dataBlock?.authScheme
+
+  const status: string | undefined =
+    stateBlock?.val?.status ?? (account.status as string | undefined)
+
+  if (!authScheme) {
+    throw new Error(
+      `Composio connected account "${connectionId}" has no auth scheme metadata ` +
+      `— cannot determine credential type.`,
+    )
+  }
+
+  if (authScheme !== 'BASIC') {
+    throw new Error(
+      `Composio connected account "${connectionId}" uses auth scheme "${authScheme}", ` +
+      `but browser auto-fill requires BASIC (username + password). ` +
+      `OAuth and API-key connections produce access tokens rather than fillable form credentials.`,
+    )
+  }
+
+  if (status !== 'ACTIVE') {
+    throw new Error(
+      `Composio connected account "${connectionId}" is not ACTIVE (status: "${status ?? 'unknown'}"). ` +
+      `Re-authenticate the connection before injecting credentials.`,
+    )
+  }
+
+  const credentialBag = (stateBlock?.val ?? dataBlock ?? {}) as Record<string, unknown>
+  const username = credentialBag.username
+  const password = credentialBag.password
+
+  if (typeof username !== 'string' || username.length === 0) {
+    throw new Error(
+      `Composio BASIC connection "${connectionId}" is missing a username.`,
+    )
+  }
+  if (typeof password !== 'string' || password.length === 0) {
+    throw new Error(
+      `Composio BASIC connection "${connectionId}" is missing a password.`,
+    )
+  }
+
+  return { username, password }
 }
 
 // ---------------------------------------------------------------------------
@@ -127,15 +205,14 @@ export async function injectCredentials(
           }
         }
 
-        // For now, since getComposioCredentials is a stub, we use session.act
-        // to instruct the browser to fill credentials via Composio's approach
+        credentials = await getComposioCredentials(options.composioConnectionId)
+
         const usernameSelector = options.usernameSelector || '#email'
         const passwordSelector = options.passwordSelector || '#password'
 
         await session.act(
-          `Fill the login form: type credentials from Composio connection ` +
-          `"${options.composioConnectionId}" into "${usernameSelector}" ` +
-          `and "${passwordSelector}"`,
+          `Fill "${usernameSelector}" with "${credentials.username}" ` +
+          `and "${passwordSelector}" with the password`,
         )
 
         return { success: true }
