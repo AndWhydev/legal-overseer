@@ -5,8 +5,11 @@
  * - Composio: retrieves credentials from a Composio connection
  * - 1Password: retrieves credentials via `op read` CLI
  *
- * The injector fills login forms via the session's act() method,
- * keeping credential material out of agent context/logs.
+ * The injector fills login forms via Stagehand's act() with the
+ * `variables` parameter: the agent sees only the variable names and
+ * descriptions, never the raw credential values. Stagehand performs the
+ * substitution at the browser layer so credential material never enters
+ * the LLM conversation, prompt cache, or tool logs.
  */
 
 import { getComposioClient } from '@/lib/composio/client'
@@ -37,6 +40,31 @@ export interface CredentialResult {
 interface Credentials {
   username: string
   password: string
+}
+
+/**
+ * The shape of the Stagehand session we need for credential injection.
+ *
+ * We depend on `stagehand.act(instruction, { variables })` so values are
+ * substituted at the browser layer and never sent to the LLM. The broader
+ * Stagehand API surface is intentionally not typed here — the injector
+ * only needs this one call path.
+ */
+export interface CredentialInjectionSession {
+  stagehand: {
+    act: (
+      instruction: string,
+      options?: {
+        variables?: Record<
+          string,
+          | string
+          | number
+          | boolean
+          | { value: string | number | boolean; description?: string }
+        >
+      },
+    ) => Promise<unknown>
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -178,14 +206,51 @@ export async function get1PasswordCredentials(secretRef: string): Promise<Creden
 // ---------------------------------------------------------------------------
 
 /**
+ * Fill the login form by calling Stagehand's act() with variables.
+ *
+ * Stagehand shows the agent only the variable names + descriptions; the raw
+ * values never reach the LLM or the prompt cache. Variables are then
+ * substituted at the browser layer.
+ *
+ * Callers must construct Stagehand with `experimental: true` (and
+ * `disableAPI: true`) so act() uses the local act handler that honours
+ * the `variables` option — the hosted Stagehand API path does not support
+ * experimental features.
+ */
+async function fillLoginForm(
+  session: CredentialInjectionSession,
+  credentials: Credentials,
+  usernameSelector: string,
+  passwordSelector: string,
+): Promise<void> {
+  await session.stagehand.act(
+    `Fill the login form: type %username% into the ${usernameSelector} field ` +
+    `and %password% into the ${passwordSelector} field, then submit.`,
+    {
+      variables: {
+        username: {
+          value: credentials.username,
+          description: 'Email or username for the login form',
+        },
+        password: {
+          value: credentials.password,
+          description: 'Password for the login form',
+        },
+      },
+    },
+  )
+}
+
+/**
  * Inject credentials into a browser session's login form.
  *
- * @param session - Browser automation session with an act() method
+ * @param session - Stagehand-backed browser session. We take the whole
+ *                  session so act() receives the `variables` option.
  * @param source  - Which credential backend to use
  * @param options - Selectors and connection identifiers
  */
 export async function injectCredentials(
-  session: { act: (instruction: string) => Promise<any> },
+  session: CredentialInjectionSession,
   source: CredentialSource,
   options: CredentialOptions,
 ): Promise<CredentialResult> {
@@ -194,7 +259,8 @@ export async function injectCredentials(
   }
 
   try {
-    let credentials: Credentials
+    const usernameSelector = options.usernameSelector || '#email'
+    const passwordSelector = options.passwordSelector || '#password'
 
     switch (source) {
       case 'composio': {
@@ -205,16 +271,8 @@ export async function injectCredentials(
           }
         }
 
-        credentials = await getComposioCredentials(options.composioConnectionId)
-
-        const usernameSelector = options.usernameSelector || '#email'
-        const passwordSelector = options.passwordSelector || '#password'
-
-        await session.act(
-          `Fill "${usernameSelector}" with "${credentials.username}" ` +
-          `and "${passwordSelector}" with the password`,
-        )
-
+        const credentials = await getComposioCredentials(options.composioConnectionId)
+        await fillLoginForm(session, credentials, usernameSelector, passwordSelector)
         return { success: true }
       }
 
@@ -226,16 +284,8 @@ export async function injectCredentials(
           }
         }
 
-        credentials = await get1PasswordCredentials(options.opSecretRef)
-
-        const usernameSelector = options.usernameSelector || '#email'
-        const passwordSelector = options.passwordSelector || '#password'
-
-        await session.act(
-          `Fill "${usernameSelector}" with "${credentials.username}" ` +
-          `and "${passwordSelector}" with the password`,
-        )
-
+        const credentials = await get1PasswordCredentials(options.opSecretRef)
+        await fillLoginForm(session, credentials, usernameSelector, passwordSelector)
         return { success: true }
       }
 
@@ -247,6 +297,10 @@ export async function injectCredentials(
     }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err)
+    // NOTE: never include credential values in logs — errors from
+    // getComposioCredentials/get1PasswordCredentials are already sanitised,
+    // and the only other thrown source is Stagehand's act() which
+    // references variables by name, not value.
     logger.error('[credential-injector] Injection failed', {
       source,
       error: errorMessage,

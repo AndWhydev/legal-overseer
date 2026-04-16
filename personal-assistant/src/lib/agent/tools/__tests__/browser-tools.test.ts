@@ -22,7 +22,43 @@ vi.mock('@/lib/core/logger', () => ({
 
 import { browserToolDefinitions, browserToolHandlers } from '../browser-tools'
 
-const mockSupabase = {} as SupabaseClient
+// ---------------------------------------------------------------------------
+// Supabase test helper: builds a chainable mock that returns either a matching
+// connection row (ownedConnection) or null (not owned by this org).
+// ---------------------------------------------------------------------------
+
+function buildSupabase(
+  rowsByQuery: (filters: Record<string, string>) => { data: unknown; error: unknown },
+): SupabaseClient {
+  const from = vi.fn((_table: string) => {
+    const filters: Record<string, string> = {}
+    const chain: any = {
+      select: vi.fn(() => chain),
+      eq: vi.fn((col: string, val: string) => {
+        filters[col] = val
+        return chain
+      }),
+      maybeSingle: vi.fn(async () => rowsByQuery(filters)),
+      single: vi.fn(async () => rowsByQuery(filters)),
+    }
+    return chain
+  })
+  return { from } as unknown as SupabaseClient
+}
+
+const ownedConnectionSupabase = buildSupabase((filters) => {
+  if (
+    filters.org_id === 'org-1' &&
+    filters.connected_account_id === 'conn_owned'
+  ) {
+    return { data: { id: 'oc_123' }, error: null }
+  }
+  return { data: null, error: null }
+})
+
+const noConnectionSupabase = buildSupabase(() => ({ data: null, error: null }))
+
+const mockSupabase = noConnectionSupabase
 
 // ---------------------------------------------------------------------------
 // Tests: definitions
@@ -46,6 +82,28 @@ describe('browser tool definitions', () => {
     expect(props).toHaveProperty('start_url')
     expect(props).toHaveProperty('max_steps')
     expect(props).toHaveProperty('output_schema')
+  })
+
+  it('spawn_browser_agent accepts credential injection params', () => {
+    const tool = browserToolDefinitions.find(t => t.name === 'spawn_browser_agent')!
+    const props = tool.input_schema.properties as Record<string, any>
+
+    // All four credential-related params must be in the schema so TAOR can
+    // request credential injection.
+    expect(props).toHaveProperty('credential_source')
+    expect(props).toHaveProperty('composio_connection_id')
+    expect(props).toHaveProperty('op_secret_ref')
+    expect(props).toHaveProperty('username_selector')
+    expect(props).toHaveProperty('password_selector')
+
+    // credential_source must be a constrained enum.
+    expect(props.credential_source.enum).toEqual(['none', 'composio', '1password'])
+
+    // None of the credential params are required — they're conditional on
+    // credential_source and validated by the handler.
+    expect(tool.input_schema.required).not.toContain('credential_source')
+    expect(tool.input_schema.required).not.toContain('composio_connection_id')
+    expect(tool.input_schema.required).not.toContain('op_secret_ref')
   })
 })
 
@@ -93,7 +151,7 @@ describe('spawn_browser_agent handler', () => {
     expect(result.error).toContain('BROWSERBASE_PROJECT_ID')
   })
 
-  it('calls runBrowserTask with correct params', async () => {
+  it('calls executeBrowserTask with correct params', async () => {
     mockExecuteBrowserTask.mockResolvedValue({
       status: 'completed',
       message: 'Done',
@@ -124,6 +182,8 @@ describe('spawn_browser_agent handler', () => {
         orgId: 'org-1',
         supabase: mockSupabase,
         ltvMultiplier: 1.0,
+        credentialSource: 'none',
+        credentialOptions: undefined,
       },
     )
     expect(result.success).toBe(true)
@@ -180,5 +240,113 @@ describe('spawn_browser_agent handler', () => {
     expect(result.success).toBe(true)
     const data = result.data as Record<string, unknown>
     expect(data.extractedData).toEqual({ price: '$99/mo', tier: 'Enterprise' })
+  })
+
+  // ---- Credential injection ------------------------------------------------
+
+  it('forwards Composio credential params to executeBrowserTask after ownership check', async () => {
+    mockExecuteBrowserTask.mockResolvedValue({
+      status: 'completed',
+      message: 'Logged in',
+      actions: [],
+      durationMs: 2000,
+    })
+
+    const result = await browserToolHandlers.spawn_browser_agent(
+      {
+        instruction: 'Log in and extract data',
+        start_url: 'https://app.example.com',
+        credential_source: 'composio',
+        composio_connection_id: 'conn_owned',
+        username_selector: '#user',
+        password_selector: '#pw',
+      },
+      'org-1',
+      ownedConnectionSupabase,
+    )
+
+    expect(result.success).toBe(true)
+    expect(mockExecuteBrowserTask).toHaveBeenCalledTimes(1)
+    const [, options] = mockExecuteBrowserTask.mock.calls[0] as [
+      unknown,
+      Record<string, unknown>,
+    ]
+    expect(options.credentialSource).toBe('composio')
+    expect(options.credentialOptions).toEqual({
+      composioConnectionId: 'conn_owned',
+      opSecretRef: undefined,
+      usernameSelector: '#user',
+      passwordSelector: '#pw',
+    })
+  })
+
+  it('rejects a Composio connection that belongs to another org', async () => {
+    const result = await browserToolHandlers.spawn_browser_agent(
+      {
+        instruction: 'Try to use someone else\'s connection',
+        credential_source: 'composio',
+        composio_connection_id: 'conn_from_other_org',
+      },
+      'org-1',
+      ownedConnectionSupabase, // returns null for this connection id
+    )
+
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/not found for this org/i)
+    // Must fail-closed: the browser task must never be invoked when the
+    // ownership check fails.
+    expect(mockExecuteBrowserTask).not.toHaveBeenCalled()
+  })
+
+  it('requires composio_connection_id when credential_source is composio', async () => {
+    const result = await browserToolHandlers.spawn_browser_agent(
+      {
+        instruction: 'Missing connection id',
+        credential_source: 'composio',
+      },
+      'org-1',
+      mockSupabase,
+    )
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('composio_connection_id')
+    expect(mockExecuteBrowserTask).not.toHaveBeenCalled()
+  })
+
+  it('requires op_secret_ref when credential_source is 1password', async () => {
+    const result = await browserToolHandlers.spawn_browser_agent(
+      {
+        instruction: 'Missing op ref',
+        credential_source: '1password',
+      },
+      'org-1',
+      mockSupabase,
+    )
+
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('op_secret_ref')
+    expect(mockExecuteBrowserTask).not.toHaveBeenCalled()
+  })
+
+  it('defaults credential_source to "none" when omitted', async () => {
+    mockExecuteBrowserTask.mockResolvedValue({
+      status: 'completed',
+      message: 'ok',
+      actions: [],
+      durationMs: 1,
+    })
+
+    await browserToolHandlers.spawn_browser_agent(
+      { instruction: 'no creds needed' },
+      'org-1',
+      mockSupabase,
+    )
+
+    const [, options] = mockExecuteBrowserTask.mock.calls[0] as [
+      unknown,
+      Record<string, unknown>,
+    ]
+    expect(options.credentialSource).toBe('none')
+    expect(options.credentialOptions).toBeUndefined()
   })
 })

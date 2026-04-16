@@ -191,8 +191,11 @@ export async function executeBrowserTask(
 
     // -- Credential injection (CUA-08) --------------------------------------
     if (options?.credentialSource && options.credentialSource !== 'none') {
+      // Pass the Stagehand session through directly so credential injection
+      // can use the `variables` option on act(). Stagehand substitutes values
+      // at the browser layer — raw credentials never enter the LLM prompt.
       const credResult = await injectCredentials(
-        { act: (instruction: string) => session!.stagehand.act(instruction) },
+        session,
         options.credentialSource,
         options.credentialOptions ?? {},
       )

@@ -22,10 +22,25 @@ import { getComposioCredentials, injectCredentials } from '../credential-injecto
 // Helpers
 // ---------------------------------------------------------------------------
 
-function mockSession() {
+/**
+ * Minimal Stagehand-session stand-in that captures act() args for assertions.
+ * Mirrors the `CredentialInjectionSession` contract — only `stagehand.act` is
+ * exercised by the injector.
+ */
+type ActArgs = [string, { variables?: Record<string, unknown> }?]
+type ActSpy = ReturnType<typeof vi.fn<(...args: ActArgs) => Promise<unknown>>>
+
+function mockSession(): {
+  stagehand: { act: ActSpy }
+  act: ActSpy
+} {
+  const act = vi
+    .fn<(...args: ActArgs) => Promise<unknown>>()
+    .mockResolvedValue({ success: true })
   return {
-    act: vi.fn().mockResolvedValue({ success: true }),
-  } as any
+    stagehand: { act },
+    act,
+  }
 }
 
 function basicActiveAccount(overrides: Record<string, any> = {}): Record<string, any> {
@@ -192,10 +207,10 @@ describe('injectCredentials', () => {
     const session = mockSession()
     const result = await injectCredentials(session, 'none', {})
     expect(result.success).toBe(true)
-    expect(session.act).not.toHaveBeenCalled()
+    expect(session.stagehand.act).not.toHaveBeenCalled()
   })
 
-  it('injects Composio BASIC credentials via act()', async () => {
+  it('injects Composio BASIC credentials via act() using the variables option', async () => {
     connectedAccountsGet.mockResolvedValue(basicActiveAccount())
     const session = mockSession()
 
@@ -206,14 +221,57 @@ describe('injectCredentials', () => {
     })
 
     expect(result.success).toBe(true)
-    expect(session.act).toHaveBeenCalledTimes(1)
-    const instruction = session.act.mock.calls[0][0] as string
-    // The instruction should fill the actual username into the field but must
-    // not embed the raw password (we only pass it by reference in the prompt).
-    expect(instruction).toContain('alice@example.com')
+    expect(session.stagehand.act).toHaveBeenCalledTimes(1)
+
+    const [instruction, options] = session.stagehand.act.mock.calls[0] as [
+      string,
+      { variables: Record<string, unknown> },
+    ]
+
+    // The instruction MUST reference the variables by placeholder — raw
+    // credentials must never appear in the prompt string sent to the LLM.
+    expect(instruction).toContain('%username%')
+    expect(instruction).toContain('%password%')
+    expect(instruction).not.toContain('alice@example.com')
+    expect(instruction).not.toContain('hunter2')
     expect(instruction).toContain('#email')
     expect(instruction).toContain('#password')
+
+    // Values come in via the `variables` option which Stagehand substitutes
+    // at the browser layer (not visible to the LLM).
+    expect(options.variables).toEqual({
+      username: {
+        value: 'alice@example.com',
+        description: expect.any(String),
+      },
+      password: {
+        value: 'hunter2',
+        description: expect.any(String),
+      },
+    })
   })
+
+  it('calls getComposioCredentials for Composio source (not a stub)', async () => {
+    // This test exists to guard against regressions where the Composio branch
+    // falls through to a stub prompt instead of fetching real credentials.
+    connectedAccountsGet.mockResolvedValue(basicActiveAccount())
+    const session = mockSession()
+
+    await injectCredentials(session, 'composio', {
+      composioConnectionId: 'ca_conn_123',
+    })
+
+    expect(connectedAccountsGet).toHaveBeenCalledWith('ca_conn_123')
+    expect(connectedAccountsGet).toHaveBeenCalledTimes(1)
+  })
+
+  // Note on the 1Password branch: its act() call goes through the same
+  // `fillLoginForm` helper as the Composio branch (verified above), so the
+  // variables-based injection contract is covered. We don't exercise
+  // get1PasswordCredentials here because ESM prevents spying on the
+  // dynamically-imported child_process.execFile — that code path is covered
+  // in the existing missing-opSecretRef error test plus the end-to-end
+  // browser-task integration test.
 
   it('bubbles Composio retrieval failures as injection errors', async () => {
     connectedAccountsGet.mockRejectedValue(new Error('not found'))
@@ -225,7 +283,7 @@ describe('injectCredentials', () => {
 
     expect(result.success).toBe(false)
     expect(result.error).toMatch(/not found/i)
-    expect(session.act).not.toHaveBeenCalled()
+    expect(session.stagehand.act).not.toHaveBeenCalled()
   })
 
   it('returns error when composioConnectionId is missing', async () => {
@@ -245,7 +303,7 @@ describe('injectCredentials', () => {
   it('handles act() failure gracefully', async () => {
     connectedAccountsGet.mockResolvedValue(basicActiveAccount())
     const session = mockSession()
-    session.act.mockRejectedValue(new Error('element not found'))
+    session.stagehand.act.mockRejectedValue(new Error('element not found'))
 
     const result = await injectCredentials(session, 'composio', {
       composioConnectionId: 'ca_conn_123',

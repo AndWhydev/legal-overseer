@@ -26,6 +26,8 @@ Most "AI assistants" wait for instructions. They react. BitBit is different beca
 
 **Tool orchestration.** When you ask BitBit something, it doesn't load every tool it has. A fast planner (Haiku) reads your intent and selects only the relevant tool groups — contacts and comms for "send Sezer a WhatsApp", web tools for "search for plumbers in Sydney", memory for "remember his rate". This keeps the AI focused, fast, and cheap. As tool count grows beyond 50, complex multi-domain queries can escalate to specialist sub-agents that run in parallel.
 
+**Browser automation.** When a task needs a real browser — filling a form, logging into a vendor portal, extracting data from a JS-heavy site — TAOR hands off to `spawn_browser_agent`, which runs Stagehand on an ephemeral Browserbase session. Credential injection uses Stagehand's `variables` API so the agent sees only variable names and descriptions; raw passwords are substituted at the browser layer and never enter the LLM prompt, prompt cache, or tool logs. Composio connection IDs referenced by the tool are verified at the tool boundary against the caller's `org_id` — cross-org references fail-closed before a session is created.
+
 **Personal first, org optional.** Every user gets their own BitBit with their own connections. If you're part of a team, you can share an org where some data surfaces to the group level. But the personal experience comes first.
 
 ## Who BitBit is for
