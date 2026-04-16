@@ -181,6 +181,27 @@ describe('send_imessage tool', () => {
     expect(row.body).toBe('logged please')
     expect((row.metadata as Record<string, unknown>).type).toBe('outgoing')
     expect((row.metadata as Record<string, unknown>).recipient).toBe('+61400123456')
+    // `temp_guid: true` marks this row as a pre-delivery send record; a future
+    // reconciler can match it against the real BB GUID from the inbound webhook.
+    expect((row.metadata as Record<string, unknown>).temp_guid).toBe(true)
+    expect((row.metadata as Record<string, unknown>).truncated).toBe(false)
+  })
+
+  it('flags metadata.truncated when message exceeds 2000 chars', async () => {
+    fetchMock.mockResolvedValue(new Response('ok', { status: 200 }))
+    const supabase = makeSupabase()
+    const longBody = 'a'.repeat(2500)
+
+    await channelToolHandlers.send_imessage(
+      { recipient: '+61400123456', message: longBody },
+      ORG_ID,
+      supabase,
+    )
+
+    const inserts = (supabase as unknown as { _inserts: Array<Record<string, unknown>> })._inserts
+    const row = inserts[0] as Record<string, unknown>
+    expect((row.body as string).length).toBe(2000)
+    expect((row.metadata as Record<string, unknown>).truncated).toBe(true)
   })
 
   it('still succeeds even if channel_messages insert throws (non-critical)', async () => {

@@ -13,6 +13,11 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  *  - Phone number with country code (normalised to +E.164 form)
  *  - AU local number starting with 04 (auto-expanded to +614...)
  * Returns null for anything else.
+ *
+ * NOTE: Only AU local formats are auto-expanded. Users in other regions
+ * (US, UK, SG, etc.) must provide their country code explicitly — e.g.
+ * "+14155551234" rather than "4155551234" — since there's no reliable way
+ * to infer the country from a bare national number.
  */
 export function normaliseIMessageHandle(recipient: string): string | null {
   if (!recipient || typeof recipient !== 'string') return null
@@ -1455,6 +1460,20 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
 
       // Record the outgoing message so it shows up in inbox threads.
       // Non-critical: log but don't fail the send if this insert errors.
+      //
+      // `tempGuid` is our pre-dispatch ID; BlueBubbles assigns the real
+      // message GUID when Apple delivers it and can later echo it via the
+      // `new-message` webhook. We flag the row with `temp_guid: true` so a
+      // future reconciler can match this send to the real GUID and merge
+      // delivery status, without creating duplicate rows in the inbox view.
+      const truncated = message.length > 2000
+      if (truncated) {
+        logger.warn('[send_imessage] Message body truncated for storage', {
+          org: orgId,
+          original_length: message.length,
+          connection_id: imConn.id,
+        })
+      }
       try {
         await supabase.from('channel_messages').insert({
           org_id: orgId,
@@ -1466,7 +1485,13 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
           body: message.slice(0, 2000),
           received_at: sentAt,
           processed: true,
-          metadata: { type: 'outgoing', recipient: handle, connection_id: imConn.id },
+          metadata: {
+            type: 'outgoing',
+            recipient: handle,
+            connection_id: imConn.id,
+            temp_guid: true,
+            truncated,
+          },
         })
       } catch (err) {
         logger.warn('[send_imessage] Failed to record outgoing message', { err: String(err) })
