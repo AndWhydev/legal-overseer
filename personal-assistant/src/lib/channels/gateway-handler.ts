@@ -4,7 +4,7 @@ import { UnifiedConversationPipeline } from "@/lib/conversation/unified-pipeline
 import { sendSendblueMessage, sendTypingIndicator } from "./sendblue";
 import { sendVoiceMemoBubble } from "./sendblue-voice-memo";
 import { sendTelegramMessage } from "./telegram";
-import { sendMessage as sendWhatsAppMessage } from "./whatsapp";
+import { sendTelnyxWhatsApp } from "./telnyx-whatsapp";
 import { logger } from "@/lib/core/logger";
 import type { Channel, ChannelMetadata } from "@/lib/conversation/types";
 
@@ -88,10 +88,13 @@ export async function handleGatewayMessage(params: GatewayMessageParams): Promis
 
   if (!responseText) {
     logger.warn("[gateway-handler] Pipeline returned no message text", { channel, replyTo });
+    await sendErrorReply(channel, replyTo);
     return;
   }
 
   const isSendblue = channel === "sendblue" || channel === "sms";
+  const isWhatsApp = channel === "whatsapp";
+  const isMessaging = isSendblue || isWhatsApp;
   const wordCount = responseText.split(/\s+/).length;
 
   if (isSendblue && channelMetadata?.isVoiceNote && wordCount <= VOICE_REPLY_MAX_WORDS) {
@@ -113,11 +116,13 @@ export async function handleGatewayMessage(params: GatewayMessageParams): Promis
     if (isSendblue) {
       await sendTypingIndicator(replyTo);
       await sleep(typingDelayMs(bubble, isFirst));
+    } else if (isWhatsApp && !isFirst) {
+      await sleep(typingDelayMs(bubble, isFirst));
     }
 
     await sendChannelReply(channel, replyTo, bubble);
 
-    if (isSendblue && i < bubbles.length - 1) {
+    if (isMessaging && i < bubbles.length - 1) {
       await sleep(300 + Math.random() * 400);
     }
   }
@@ -133,9 +138,11 @@ async function sendChannelReply(channel: Channel, replyTo: string, text: string)
       case "telegram":
         await sendTelegramMessage(replyTo, text);
         break;
-      case "whatsapp":
-        await sendWhatsAppMessage(replyTo, text);
+      case "whatsapp": {
+        const result = await sendTelnyxWhatsApp(replyTo, text);
+        if (!result.success) throw new Error(result.error || "Telnyx WhatsApp send failed");
         break;
+      }
       default:
         logger.warn("[gateway-handler] No send function for channel", { channel });
     }

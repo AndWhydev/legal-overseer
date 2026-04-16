@@ -4,6 +4,7 @@ import { logger } from '@/lib/core/logger'
 const DAILY_LIMITS = {
   email: 50,
   sms: 20,
+  whatsapp: 20,
 } as const
 
 type SendChannel = keyof typeof DAILY_LIMITS
