@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logger } from '@/lib/core/logger'
+import { normaliseIMessageHandle } from '@/lib/agent/tools/channel-tools'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChannelType } from '@/lib/channels/types'
 
@@ -110,13 +111,17 @@ async function sendViaChannel(
         .single()
 
       if (imConn?.config?.bb_server_url) {
+        const handle = normaliseIMessageHandle(to)
+        if (!handle) {
+          return { success: false, error: `Invalid iMessage recipient "${to}"` }
+        }
         const cfg = imConn.config as { bb_server_url: string; bb_password: string }
         const bbUrl = cfg.bb_server_url.replace(/\/$/, '')
-        const chatGuid = `iMessage;-;${to}`
+        const chatGuid = `iMessage;-;${handle}`
         const tempGuid = `bitbit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
         const bbRes = await fetch(
-          `${bbUrl}/api/v1/message/text?password=${cfg.bb_password}`,
+          `${bbUrl}/api/v1/message/text?password=${encodeURIComponent(cfg.bb_password)}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

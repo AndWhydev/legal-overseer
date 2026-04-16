@@ -6,6 +6,38 @@ import { resolveAccessToken } from '@/lib/channels/outlook'
 import { logger } from '@/lib/core/logger'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+/**
+ * Normalise an iMessage recipient into a BlueBubbles-compatible handle.
+ * Accepts:
+ *  - Apple ID email (returned as-is, lowercased)
+ *  - Phone number with country code (normalised to +E.164 form)
+ *  - AU local number starting with 04 (auto-expanded to +614...)
+ * Returns null for anything else.
+ */
+export function normaliseIMessageHandle(recipient: string): string | null {
+  if (!recipient || typeof recipient !== 'string') return null
+  const trimmed = recipient.trim()
+  if (!trimmed) return null
+
+  // Email (Apple ID)
+  if (trimmed.includes('@')) {
+    const email = trimmed.toLowerCase()
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null
+  }
+
+  // Phone: strip spaces, dashes, parens, leading +
+  let digits = trimmed.replace(/^\+/, '').replace(/[\s\-()]/g, '')
+  if (!/^\d+$/.test(digits)) return null
+
+  // Convert AU local 04xxxxxxxx → 614xxxxxxxx
+  if (digits.startsWith('04') && digits.length === 10) {
+    digits = '61' + digits.slice(1)
+  }
+
+  if (digits.length < 7 || digits.length > 15) return null
+  return '+' + digits
+}
+
 export const channelToolDefinitions: Anthropic.Tool[] = [
   {
     name: 'find_messages',
@@ -1371,6 +1403,16 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
     const message = input.message as string
     const recipientName = input.recipient_name as string | undefined
 
+    // Normalise recipient: iMessage handles are either Apple ID emails or
+    // phone numbers with a leading '+'. Accept both; reject everything else.
+    const handle = normaliseIMessageHandle(recipient)
+    if (!handle) {
+      return {
+        success: false,
+        error: `Invalid iMessage recipient "${recipient}". Provide an Apple ID email or phone number with country code (e.g. +61400123456).`,
+      }
+    }
+
     try {
       const { data: imConn } = await supabase
         .from('org_connections')
@@ -1387,11 +1429,11 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
 
       const cfg = imConn.config as { bb_server_url: string; bb_password: string }
       const bbUrl = cfg.bb_server_url.replace(/\/$/, '')
-      const chatGuid = `iMessage;-;${recipient}`
+      const chatGuid = `iMessage;-;${handle}`
       const tempGuid = `bitbit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
       const res = await fetch(
-        `${bbUrl}/api/v1/message/text?password=${cfg.bb_password}`,
+        `${bbUrl}/api/v1/message/text?password=${encodeURIComponent(cfg.bb_password)}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1406,12 +1448,33 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
       }
 
       const displayRecipient = recipientName
-        ? `${recipientName} (${recipient})`
-        : recipient
+        ? `${recipientName} (${handle})`
+        : handle
+
+      const sentAt = new Date().toISOString()
+
+      // Record the outgoing message so it shows up in inbox threads.
+      // Non-critical: log but don't fail the send if this insert errors.
+      try {
+        await supabase.from('channel_messages').insert({
+          org_id: orgId,
+          channel: 'imessage',
+          external_id: tempGuid,
+          sender: 'BitBit',
+          sender_email: '',
+          subject: undefined,
+          body: message.slice(0, 2000),
+          received_at: sentAt,
+          processed: true,
+          metadata: { type: 'outgoing', recipient: handle, connection_id: imConn.id },
+        })
+      } catch (err) {
+        logger.warn('[send_imessage] Failed to record outgoing message', { err: String(err) })
+      }
 
       logger.info('[send_imessage] Message sent via BlueBubbles', {
         org: orgId,
-        recipient,
+        recipient: handle,
         connectionId: imConn.id,
       })
 
@@ -1420,7 +1483,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
         data: {
           recipient: displayRecipient,
           message_preview: message.slice(0, 100) + (message.length > 100 ? '...' : ''),
-          sent_at: new Date().toISOString(),
+          sent_at: sentAt,
           sent_via: 'bluebubbles',
         },
       }
