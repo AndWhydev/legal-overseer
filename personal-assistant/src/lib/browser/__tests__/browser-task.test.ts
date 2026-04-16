@@ -411,6 +411,26 @@ describe('executeBrowserTask', () => {
       { composioConnectionId: 'conn_123' },
     )
   })
+
+  it('passes the Stagehand session through to injectCredentials (for the variables option)', async () => {
+    await executeBrowserTask(
+      {
+        instruction: 'Login',
+        startUrl: 'https://app.example.com',
+      },
+      {
+        credentialSource: '1password',
+        credentialOptions: { opSecretRef: 'op://vault/item' },
+      },
+    )
+
+    // The session must be passed whole (not `{ act }`) so the injector can
+    // call `session.stagehand.act(instruction, { variables })`.
+    const sessionArg = vi.mocked(injectCredentials).mock.calls[0][0] as any
+    expect(sessionArg).toBeDefined()
+    expect(sessionArg.stagehand).toBeDefined()
+    expect(typeof sessionArg.stagehand.act).toBe('function')
+  })
 })
 
 // ---------------------------------------------------------------------------

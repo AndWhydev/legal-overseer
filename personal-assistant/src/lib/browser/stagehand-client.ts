@@ -95,12 +95,19 @@ export async function createSession(
   // Dynamic import so the SDK is tree-shaken in client bundles
   const { Stagehand } = await import('@browserbasehq/stagehand')
 
+  // `experimental: true` + `disableAPI: true` are required so that the
+  // `variables` option on act()/agent.execute() is honoured locally instead
+  // of being rejected by the hosted Stagehand API. BitBit relies on that
+  // option for credential injection — raw credential values must stay out
+  // of the LLM prompt and are substituted at the browser layer.
   const stagehand = new Stagehand({
     env: config.env,
     apiKey: config.apiKey,
     projectId: config.projectId,
     model: config.modelName,
     verbose: config.verbose,
+    experimental: true,
+    disableAPI: true,
   })
 
   await stagehand.init()
