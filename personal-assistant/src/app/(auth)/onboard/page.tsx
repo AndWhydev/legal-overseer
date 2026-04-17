@@ -6,7 +6,11 @@ import { createBrowserClient } from '@supabase/ssr'
 import { motion, AnimatePresence } from 'motion/react'
 import { OnboardingChat } from '@/components/onboarding/onboarding-chat'
 import { loadOnboardingProfile } from '@/lib/onboarding/profile'
-import { hasCompletedFirstRunOnboarding, getWorkspaceId } from '@/lib/onboarding/state'
+import {
+  getPendingConnectSurface,
+  getWorkspaceId,
+  hasCompletedFirstRunOnboarding,
+} from '@/lib/onboarding/state'
 import { trackOnboardingEvent } from '@/lib/onboarding/analytics'
 
 type PageState = 'loading' | 'onboarding' | 'transitioning'
@@ -33,6 +37,15 @@ export default function OnboardPage() {
 
       if (hasCompletedFirstRunOnboarding(profile)) {
         router.replace('/dashboard')
+        return
+      }
+
+      // Mid-flow resume: user finished the chat and picked a non-web surface
+      // but hasn't completed or skipped the pairing page yet. Send them
+      // straight there instead of restarting the chat.
+      const pendingSurface = getPendingConnectSurface(profile)
+      if (pendingSurface) {
+        router.replace(`/onboard/connect/${pendingSurface}`)
         return
       }
 
@@ -66,20 +79,48 @@ export default function OnboardPage() {
     void bootstrap()
   }, [router])
 
-  const handleComplete = useCallback(async (threadId: string) => {
-    setState('transitioning')
-    trackOnboardingEvent('onboarding_completed')
+  const handleComplete = useCallback(
+    async (threadId: string, chatSurface: string | null) => {
+      setState('transitioning')
 
-    await fetch('/api/profile/preferences', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ onboarding_completed: true, onboarding_stage: 'complete' }),
-    }).catch(() => {})
+      // Non-web surfaces: chat is done but pairing remains. Stamp the stage
+      // so a refresh lands back on /onboard/connect/<surface> instead of
+      // re-running the onboarding chat, and navigate there now.
+      const needsPairing =
+        chatSurface === 'imessage' ||
+        chatSurface === 'whatsapp' ||
+        chatSurface === 'android-messages' ||
+        chatSurface === 'telegram'
 
-    await new Promise(resolve => setTimeout(resolve, 1500))
+      if (needsPairing && chatSurface) {
+        await fetch('/api/profile/preferences', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            onboarding_stage: 'connect-surface',
+            primary_chat_surface: chatSurface,
+          }),
+        }).catch(() => {})
 
-    router.replace(`/dashboard?tab=chat&conversation=${threadId}`)
-  }, [router])
+        await new Promise(resolve => setTimeout(resolve, 600))
+        router.replace(`/onboard/connect/${chatSurface}`)
+        return
+      }
+
+      // Web surface (or unknown) — onboarding is complete.
+      trackOnboardingEvent('onboarding_completed')
+
+      await fetch('/api/profile/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onboarding_completed: true, onboarding_stage: 'complete' }),
+      }).catch(() => {})
+
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      router.replace(`/dashboard?tab=chat&conversation=${threadId}`)
+    },
+    [router],
+  )
 
   if (state === 'loading') {
     return (

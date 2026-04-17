@@ -49,48 +49,70 @@ function buildStripeEvent(
 // ---------------------------------------------------------------------------
 
 test.describe('Stripe Checkout Flow', () => {
-  test('pricing page renders all tiers', async ({ page }) => {
+  test('pricing page renders paid tiers (no Free tier)', async ({ page }) => {
     await page.goto('/pricing')
     await expect(page.locator('h1')).toContainText('pricing', { ignoreCase: true, timeout: 10_000 })
 
-    // All four tiers should be visible
+    // The three paid tiers plus Enterprise are visible; Free tier is retired.
     for (const tier of ['Starter', 'Growth', 'Scale', 'Enterprise']) {
       await expect(page.getByText(tier, { exact: false }).first()).toBeVisible()
     }
 
-    // "Start Free Trial" buttons should be present for the paid tiers
-    const trialButtons = page.getByText('Start Free Trial')
+    // "Start Trial" buttons for the three paid tiers (Enterprise CTA differs)
+    const trialButtons = page.getByText('Start Trial')
     expect(await trialButtons.count()).toBeGreaterThanOrEqual(3)
+
+    // Free tier should NOT be listed — the name "Free" should not appear as a
+    // tier header (it may appear elsewhere in FAQ copy, so we check the
+    // specific $0 price string that used to exist).
+    const freePrice = page.locator('text=/^\\$0$/').first()
+    expect(await freePrice.count()).toBe(0)
   })
 
-  test('Growth tier CTA links to checkout endpoint', async ({ page }) => {
+  test('Growth tier CTA is a button that kicks off checkout', async ({ page }) => {
     await page.goto('/pricing')
 
     // The Growth card is marked "Most Popular"
     const growthCard = page.locator('div', { hasText: 'Most Popular' }).first()
     await expect(growthCard).toBeVisible({ timeout: 5_000 })
 
-    // The CTA should link to /api/billing/checkout?tier=growth
-    const cta = growthCard.getByRole('link', { name: /Start Free Trial/i })
+    // The CTA is now a <button> that POSTs to /api/billing/checkout
+    // (rather than a <Link>). We verify it exists and is enabled.
+    const cta = growthCard.getByRole('button', { name: /Start Trial/i })
     await expect(cta).toBeVisible()
-    const href = await cta.getAttribute('href')
-    expect(href).toContain('/api/billing/checkout')
-    expect(href).toContain('tier=growth')
+    await expect(cta).toBeEnabled()
   })
 
-  test('checkout GET redirects unauthenticated user to login with tier', async ({ page }) => {
-    // Clear cookies to ensure we are unauthenticated
+  test('unauthed pricing CTA redirects to /signup?tier=<x>', async ({ page }) => {
+    await page.context().clearCookies()
+    await page.goto('/pricing')
+
+    // Click the Growth tier CTA. The 401 from /api/billing/checkout triggers
+    // a client-side redirect to /signup?tier=growth — not to /login anymore,
+    // closing the old "Sign up → /onboard → /login" loop.
+    const growthCta = page
+      .locator('div', { hasText: 'Most Popular' })
+      .first()
+      .getByRole('button', { name: /Start Trial/i })
+
+    await growthCta.click()
+
+    await page.waitForURL(/\/signup\?tier=growth/, { timeout: 10_000 })
+    expect(page.url()).toContain('/signup?tier=growth')
+  })
+
+  test('checkout GET redirects unauthenticated user to /signup (not /login)', async ({ page }) => {
     await page.context().clearCookies()
 
-    // The GET handler on /api/billing/checkout redirects to login
-    const response = await page.goto('/api/billing/checkout?tier=growth', {
+    await page.goto('/api/billing/checkout?tier=growth', {
       waitUntil: 'networkidle',
     })
 
-    // Should end up on the login page with checkout_tier param
+    // Post-refactor: GET handler sends unauthed users to /signup?tier=X. The
+    // signup page then auto-starts checkout after account creation.
     const url = page.url()
-    expect(url).toMatch(/\/login/)
-    expect(url).toContain('checkout_tier=growth')
+    expect(url).toMatch(/\/signup/)
+    expect(url).toContain('tier=growth')
   })
 
   test('checkout POST returns 401 when not authenticated', async ({ page }) => {

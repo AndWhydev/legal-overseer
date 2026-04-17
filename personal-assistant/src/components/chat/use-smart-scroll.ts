@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback, useEffect, type RefObject } from 'react'
+import { useRef, useState, useCallback, useEffect, useMemo, type RefObject } from 'react'
 
 interface UseSmartScrollResult {
   shouldShowScrollButton: boolean
@@ -112,5 +112,10 @@ export function useSmartScroll(
     return () => el.removeEventListener('scroll', onScroll)
   }, [scrollRef, onScroll])
 
-  return { shouldShowScrollButton, scrollToBottom, onScroll, onContentUpdate }
+  // Stabilise the return object so consumers using the whole hook result as
+  // a useEffect dep (common pattern) don't re-fire on every render.
+  return useMemo(
+    () => ({ shouldShowScrollButton, scrollToBottom, onScroll, onContentUpdate }),
+    [shouldShowScrollButton, scrollToBottom, onScroll, onContentUpdate],
+  )
 }

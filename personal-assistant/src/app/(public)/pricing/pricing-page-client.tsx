@@ -1,11 +1,18 @@
 'use client'
 
+// TODO(design-system): S.* / C.* design-tokens are deprecated (see
+// CLAUDE.md "Old system deprecated"). This file is scheduled for migration
+// to Shadcn tokens in a follow-up; left in place here to keep this PR
+// focused on the 0→1 funnel changes.
+
 import type { CSSProperties } from 'react'
 import { useState } from 'react'
 import Link from 'next/link'
 import { Check, ArrowRight, Zap, ChevronDown } from 'lucide-react'
 import PricingComparisonTable from '@/components/marketing/pricing-comparison-table'
 import Footer from '@/components/marketing/footer'
+import { isPaidTier, TIER_DISPLAY, type PaidTier } from '@/lib/billing/checkout'
+import { startCheckoutRedirect } from '@/lib/billing/start-checkout-browser'
 
 /**
  * Inline tokens — formerly imported from @/lib/styles/design-tokens (removed).
@@ -102,30 +109,28 @@ interface Tier {
   highlighted: boolean
 }
 
+// Name + price come from TIER_DISPLAY (single source of truth). Feature
+// bullets, descriptions, and highlight state remain pricing-page concerns
+// since they don't affect billing identity.
+function paidTierRow(
+  key: PaidTier,
+  extra: Pick<Tier, 'description' | 'features' | 'highlighted'>,
+): Tier {
+  const meta = TIER_DISPLAY[key]
+  return {
+    name: meta.name,
+    price: `$${meta.priceMonthlyAUD}`,
+    priceNum: meta.priceMonthlyAUD,
+    period: '/mo',
+    cta: 'Start Trial',
+    tier: key,
+    href: null,
+    ...extra,
+  }
+}
+
 const TIERS: Tier[] = [
-  {
-    name: 'Free',
-    price: '$0',
-    priceNum: 0,
-    period: '/mo',
-    description: 'Explore BitBit with basic monitoring.',
-    features: [
-      '1 user',
-      '1 channel integration',
-      'Basic monitoring dashboard',
-      'Community support',
-      '5k AI tokens/mo',
-    ],
-    cta: 'Get Started',
-    tier: null,
-    href: '/onboard',
-    highlighted: false,
-  },
-  {
-    name: 'Starter',
-    price: '$199',
-    priceNum: 199,
-    period: '/mo',
+  paidTierRow('starter', {
     description: 'For solo operators getting started with AI ops.',
     features: [
       '1 user',
@@ -136,16 +141,9 @@ const TIERS: Tier[] = [
       'Email + WhatsApp triage',
       '50k AI tokens/mo',
     ],
-    cta: 'Start 30-Day Free Trial',
-    tier: 'starter',
-    href: null,
     highlighted: false,
-  },
-  {
-    name: 'Growth',
-    price: '$349',
-    priceNum: 349,
-    period: '/mo',
+  }),
+  paidTierRow('growth', {
     description: 'For growing agencies automating client ops.',
     features: [
       '5 users',
@@ -158,16 +156,9 @@ const TIERS: Tier[] = [
       'Priority support',
       '200k AI tokens/mo',
     ],
-    cta: 'Start 30-Day Free Trial',
-    tier: 'growth',
-    href: null,
     highlighted: true,
-  },
-  {
-    name: 'Scale',
-    price: '$599',
-    priceNum: 599,
-    period: '/mo',
+  }),
+  paidTierRow('scale', {
     description: 'For agencies running full AI-powered operations.',
     features: [
       '15 users',
@@ -178,11 +169,8 @@ const TIERS: Tier[] = [
       'Custom voice profiles',
       '500k AI tokens/mo',
     ],
-    cta: 'Start 30-Day Free Trial',
-    tier: 'scale',
-    href: null,
     highlighted: false,
-  },
+  }),
   {
     name: 'Enterprise',
     price: 'Custom',
@@ -208,8 +196,8 @@ const TIERS: Tier[] = [
 
 const FAQ_ITEMS = [
   {
-    q: 'What happens after my free trial?',
-    a: 'After 30 days, your account downgrades to the Free plan automatically. You keep all your data, contacts, and configuration -- you just lose access to paid agents and higher token limits. Upgrade anytime to pick up where you left off.',
+    q: 'How do invite codes work?',
+    a: 'Invite codes are privately distributed to beta users and high-intent prospects. Apply one at Stripe checkout and your first month is on us. Standard billing resumes in month two — cancel anytime before then to pay nothing.',
   },
   {
     q: 'Can I change plans?',
@@ -225,7 +213,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Is there a setup fee?',
-    a: 'No. Connect your email, WhatsApp, and other services, configure your agents, and you are running. Most teams are fully operational within an hour.',
+    a: 'No. Pick where you want to chat with BitBit — iMessage, WhatsApp, Android Messages, Telegram, or our web app — then connect your email and other sources. Most teams are fully operational within an hour.',
   },
 ]
 
@@ -236,37 +224,21 @@ export default function PricingPageClient() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   async function handleCheckout(tier: string) {
+    if (!isPaidTier(tier)) return
     setLoadingTier(tier)
     setError(null)
 
-    try {
-      const res = await fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier }),
-      })
+    const result = await startCheckoutRedirect(tier)
+    if (result.ok) return
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        if (res.status === 401) {
-          window.location.href = `/login?redirect=/dashboard&checkout_tier=${tier}`
-          return
-        }
-        throw new Error((data as Record<string, string>).error || 'Failed to create checkout session')
-      }
-
-      const { url } = (await res.json()) as { sessionId: string; url: string }
-
-      if (!url) {
-        throw new Error('No checkout URL returned. Please try again.')
-      }
-
-      window.location.href = url
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
-    } finally {
-      setLoadingTier(null)
+    // Unauthed visitors get routed to signup, which resumes checkout post-auth.
+    if (result.status === 401) {
+      window.location.href = `/signup?tier=${tier}`
+      return
     }
+
+    setError(result.error ?? 'Failed to create checkout session')
+    setLoadingTier(null)
   }
 
   return (
@@ -294,8 +266,8 @@ export default function PricingPageClient() {
               lineHeight: 1.5,
             }}
           >
-            AI-powered operations for digital agencies. Start free or trial any paid plan
-            for 30 days, no credit card required.
+            AI-powered operations for digital agencies. Got an invite code? Your first
+            month is on us — apply it at checkout.
           </p>
         </div>
 
@@ -607,7 +579,7 @@ export default function PricingPageClient() {
           }}
         >
           <p style={{ margin: 0 }}>
-            All prices in AUD, exclusive of GST. 30-day free trial on all paid plans.
+            All prices in AUD, exclusive of GST. Invite codes applied at Stripe checkout.
           </p>
           <p style={{ margin: '8px 0 0 0' }}>
             <Link

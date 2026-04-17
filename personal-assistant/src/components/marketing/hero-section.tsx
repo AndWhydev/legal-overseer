@@ -40,8 +40,8 @@ export default function HeroSection() {
         {/* Dual CTA */}
         <div className="flex gap-4 justify-center mb-14 flex-wrap">
           <Button asChild size="lg" className="h-12 px-8 text-base">
-            <Link href="/onboard">
-              Start Free Trial
+            <Link href="/signup">
+              Start Trial
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base">

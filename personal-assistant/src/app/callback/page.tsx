@@ -7,6 +7,8 @@ import { logger } from '@/lib/core/logger'
 import { extractAuthCallbackPayload } from '@/lib/auth/callback'
 import { loadOnboardingProfile } from '@/lib/onboarding/profile'
 import { getCanonicalOnboardingRedirect } from '@/lib/onboarding/state'
+import { consumePendingTier } from '@/lib/billing/pending-tier'
+import { startCheckoutRedirect } from '@/lib/billing/start-checkout-browser'
 
 export default function CallbackPage() {
   const router = useRouter()
@@ -73,6 +75,12 @@ export default function CallbackPage() {
         router.replace('/login?error=auth')
         return
       }
+
+      // Signup flows stash a selected tier before the OAuth round-trip;
+      // honour it by kicking off checkout before we bother loading the
+      // onboarding profile (paying users are redirected to Stripe anyway).
+      const pendingTier = consumePendingTier()
+      if (pendingTier && (await startCheckoutRedirect(pendingTier)).ok) return
 
       const { data: profile, error: profileErr } = await loadOnboardingProfile(
         supabase as any,

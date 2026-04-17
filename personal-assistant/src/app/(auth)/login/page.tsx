@@ -3,37 +3,20 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { extractAuthCallbackPayload } from '@/lib/auth/callback'
+import { extractAuthCallbackPayload, resolveSafeAuthRedirect } from '@/lib/auth/callback'
+import { resolveAuthRedirectOrigin } from '@/lib/auth/redirect-origin'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
+import { Spinner } from '@/components/ui/spinner'
 import { ClawdLoginFace } from '@/components/ui/clawd-login-face'
 import { ForceFieldBackground } from '@/components/ui/force-field-background'
+import { OAuthProviderButtons, type OAuthProvider } from '@/components/auth/oauth-provider-buttons'
+import { useIsDark } from '@/lib/hooks/use-is-dark'
 
 type LoginStatus = 'idle' | 'loading' | 'sent' | 'error'
-type LoginMethod = 'password' | 'google' | 'apple' | null
-type OAuthProvider = 'google' | 'apple'
-
-function resolveAuthRedirectOrigin(): string {
-  if (typeof window === 'undefined') return 'https://app.bitbit.chat'
-  const { hostname, origin } = window.location
-  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.local')) return origin
-  if (hostname === 'app.bitbit.chat') return 'https://app.bitbit.chat'
-  if (hostname === 'bitbit.chat' || hostname.endsWith('.bitbit.chat')) return 'https://app.bitbit.chat'
-  return origin
-}
-
-
-function Spinner() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="animate-spin">
-      <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2" opacity={0.15} />
-      <path d="M9 2a7 7 0 0 1 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  )
-}
+type LoginMethod = 'password' | OAuthProvider | null
 
 function LoginPageContent() {
   const searchParams = useSearchParams()
@@ -48,22 +31,7 @@ function LoginPageContent() {
 
   const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null)
   const [isHoveringSubmit, setIsHoveringSubmit] = useState(false)
-  const [isDark, setIsDark] = useState(true)
-
-  useEffect(() => {
-    const check = () => {
-      setIsDark(
-        document.documentElement.classList.contains('dark') ||
-        window.matchMedia('(prefers-color-scheme: dark)').matches
-      )
-    }
-    check()
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    mq.addEventListener('change', check)
-    const obs = new MutationObserver(check)
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-    return () => { mq.removeEventListener('change', check); obs.disconnect() }
-  }, [])
+  const isDark = useIsDark()
 
   const isBusy = activeMethod !== null
   const canSubmit = email.trim().length > 3 && password.length > 0 && !isBusy
@@ -88,10 +56,9 @@ function LoginPageContent() {
       return
     }
 
-    const redirectOrigin = resolveAuthRedirectOrigin()
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${redirectOrigin}/callback` },
+      options: { redirectTo: `${resolveAuthRedirectOrigin()}/callback` },
     })
 
     if (error) {
@@ -134,9 +101,15 @@ function LoginPageContent() {
       return
     }
 
-    // Redirect to dashboard on success
-    window.location.replace('/dashboard')
+    // Honour explicit ?returnTo= (e.g. /signup?tier=growth for a logged-out
+    // returning user clicking a pricing tier). Defaults to /dashboard.
+    window.location.replace(
+      resolveSafeAuthRedirect(searchParams.get('returnTo'), window.location.origin),
+    )
   }
+
+  const oauthProvider: OAuthProvider | null =
+    activeMethod === 'google' || activeMethod === 'apple' ? activeMethod : null
 
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center bg-background p-6 md:p-10">
@@ -227,41 +200,15 @@ function LoginPageContent() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button
-                      variant="outline"
-                      type="button"
-                      disabled={isBusy}
-                      onClick={() => handleOAuthSignIn('google')}
-                    >
-                      {activeMethod === 'google' ? <Spinner /> : (
-                        <svg viewBox="0 0 24 24" className="mr-2 h-4 w-4">
-                          <path fill="#EA4335" d="M12 10.2v3.98h5.57c-.24 1.28-.97 2.37-2.05 3.11l3.32 2.58c1.93-1.78 3.04-4.39 3.04-7.49 0-.73-.07-1.44-.2-2.13H12z" />
-                          <path fill="#34A853" d="M12 22c2.7 0 4.97-.89 6.63-2.41l-3.32-2.58c-.92.62-2.1.99-3.31.99-2.54 0-4.69-1.72-5.46-4.03l-3.43 2.65A10 10 0 0012 22z" />
-                          <path fill="#4A90E2" d="M6.54 13.97A5.98 5.98 0 016.2 12c0-.68.12-1.34.34-1.97L3.11 7.38A10 10 0 002 12c0 1.61.38 3.14 1.11 4.62l3.43-2.65z" />
-                          <path fill="#FBBC05" d="M12 6c1.47 0 2.8.51 3.84 1.5l2.88-2.88A9.95 9.95 0 0012 2a10 10 0 00-8.89 5.38l3.43 2.65C7.31 7.72 9.46 6 12 6z" />
-                        </svg>
-                      )}
-                      {activeMethod !== 'google' && 'Google'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      type="button"
-                      disabled={isBusy}
-                      onClick={() => handleOAuthSignIn('apple')}
-                    >
-                      {activeMethod === 'apple' ? <Spinner /> : (
-                        <svg viewBox="0 0 24 24" className="mr-2 h-4 w-4" fill="currentColor">
-                          <path d="M16.36 12.48c.02 2.26 1.98 3.01 2 3.02-.01.05-.31 1.06-1.03 2.11-.62.9-1.27 1.8-2.28 1.82-1 .02-1.32-.59-2.47-.59-1.14 0-1.5.57-2.45.61-1 .04-1.75-.99-2.38-1.88-1.29-1.86-2.27-5.25-.95-7.56.66-1.14 1.84-1.86 3.12-1.88.97-.02 1.89.65 2.47.65.57 0 1.66-.8 2.8-.68.48.02 1.84.2 2.72 1.48-.07.04-1.62.95-1.6 2.9zm-2.4-5.32c.52-.63.87-1.5.77-2.37-.75.03-1.65.5-2.2 1.12-.48.56-.9 1.44-.79 2.28.84.06 1.7-.43 2.22-1.03z" />
-                        </svg>
-                      )}
-                      {activeMethod !== 'apple' && 'Apple'}
-                    </Button>
-                  </div>
+                  <OAuthProviderButtons
+                    onSelect={handleOAuthSignIn}
+                    disabled={isBusy}
+                    activeMethod={oauthProvider}
+                  />
 
                   <p className="text-center text-sm text-muted-foreground">
                     Don&apos;t have an account?{' '}
-                    <a href="/onboard" className="underline underline-offset-4 hover:text-primary">
+                    <a href="/signup" className="underline underline-offset-4 hover:text-primary">
                       Sign up
                     </a>
                   </p>

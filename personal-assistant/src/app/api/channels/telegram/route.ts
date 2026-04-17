@@ -2,11 +2,80 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { timingSafeCompare } from '@/lib/security/webhook-verification'
 import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
-import { resolveChannelIdentity } from '@/lib/conversation/identity-resolver'
+import { resolveChannelIdentity, linkChannelIdentity } from '@/lib/conversation/identity-resolver'
 import { handleGatewayMessage } from '@/lib/channels/gateway-handler'
 import { sendTelegramMessage } from '@/lib/channels/telegram'
 import { after } from 'next/server'
 import { logger } from '@/lib/core/logger'
+
+/**
+ * `/start <code>` payload from our onboarding pairing flow. The code is minted
+ * by /api/bridges/telegram/pair and stored on `org_connections.config.pairing_code`.
+ */
+async function consumePairingCode(
+  supabase: ReturnType<typeof createClient>,
+  chatId: string,
+  code: string,
+  senderName: string,
+): Promise<{ orgId: string; userId: string } | null> {
+  const normalized = code.trim().toUpperCase()
+  if (!normalized) return null
+
+  const { data: conn } = await supabase
+    .from('org_connections')
+    .select('id, org_id, config, status')
+    .eq('provider', 'telegram')
+    .eq('status', 'provisioning')
+    .filter('config->>pairing_code', 'eq', normalized)
+    .maybeSingle()
+
+  if (!conn) return null
+
+  const config = conn.config as {
+    pairing_code_expires_at?: string
+    user_id?: string
+  }
+
+  if (config.pairing_code_expires_at && new Date(config.pairing_code_expires_at) < new Date()) {
+    await supabase
+      .from('org_connections')
+      .update({ status: 'error', last_error: 'Pairing code expired' })
+      .eq('id', conn.id)
+    return null
+  }
+
+  const userId = config.user_id ?? 'system'
+
+  // Link the telegram chat_id to this org for future messages, then mark the
+  // connection as connected so /api/bridges/telegram/status returns `linked`.
+  await linkChannelIdentity(
+    supabase,
+    userId,
+    conn.org_id,
+    { channelType: 'telegram', channelIdentifier: chatId } as never,
+    { displayName: senderName, verified: true },
+  )
+
+  const linkedAt = new Date().toISOString()
+  await supabase
+    .from('org_connections')
+    .update({
+      status: 'connected',
+      config: {
+        ...config,
+        chat_id: chatId,
+        linked_at: linkedAt,
+        // Scrub the used code so it can't be replayed.
+        pairing_code: null,
+        pairing_code_expires_at: null,
+      },
+      last_error: null,
+      updated_at: linkedAt,
+    })
+    .eq('id', conn.id)
+
+  return { orgId: conn.org_id, userId }
+}
 
 // Allow up to 60s for agent engine response
 export const maxDuration = 60
@@ -58,6 +127,26 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey)
+
+  // Pairing handshake: `/start <CODE>` from our onboarding pairing flow.
+  // Must run before identity resolution — the chat_id has no identity yet,
+  // that's the whole point of the code. Consuming it creates the link.
+  const startMatch = text.match(/^\/start\s+([A-Z0-9]{4,20})\s*$/i)
+  if (startMatch) {
+    const paired = await consumePairingCode(supabase, chatId, startMatch[1], senderName)
+    if (paired) {
+      logger.info('[webhook/telegram] Pairing consumed', { chatId, orgId: paired.orgId })
+      after(async () => {
+        await sendTelegramMessage(
+          chatId,
+          "You're all set! Your BitBit is listening — send me anything and I'll get to work.",
+        )
+      })
+      return NextResponse.json({ ok: true })
+    }
+    // Fall through if code was invalid/expired — treat as an unknown chat and
+    // let the default unrecognised-chat reply fire below.
+  }
 
   // Try resolving via channel_identities first
   let identity: { userId: string; orgId: string; displayName?: string } | null = null

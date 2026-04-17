@@ -2,6 +2,8 @@ import { logger } from '@/lib/core/logger'
 
 type OnboardingEvent =
   | 'onboarding_started'
+  | 'chat_surface_selected' // user picked iMessage/WhatsApp/Android/Telegram/Web
+  | 'chat_surface_connected' // chosen surface is provisioned & reachable
   | 'workspace_completed'
   | 'connections_entered'
   | 'connection_succeeded'
@@ -15,6 +17,10 @@ type OnboardingEvent =
   | 'onboarding_completed'
   | 'onboarding_abandoned'
   | 'onboarding_error'
+  // ⭐ North-Star event: user has had their first bidirectional exchange with
+  // BitBit on their chosen chat surface. Emitted from the channel ingestion
+  // pipeline on the first round-trip, not from the onboarding UI.
+  | 'activation_reached'
 
 export function trackOnboardingEvent(
   event: OnboardingEvent,

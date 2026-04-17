@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { PixelWordmark } from '@/components/ui/pixel-heading-word'
 
 /** Routes where the NavBar should NOT render */
-const HIDDEN_PREFIXES = ['/dashboard', '/login', '/onboard', '/callback', '/chat']
+const HIDDEN_PREFIXES = ['/dashboard', '/login', '/signup', '/onboard', '/callback', '/chat']
 
 export function NavBar() {
   const pathname = usePathname()
@@ -37,7 +37,7 @@ export function NavBar() {
               <Link href="/login">Log In</Link>
             </Button>
             <Button asChild size="sm">
-              <Link href="/onboard">Sign Up</Link>
+              <Link href="/signup">Sign Up</Link>
             </Button>
           </div>
         </div>

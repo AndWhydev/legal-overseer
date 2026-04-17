@@ -385,11 +385,11 @@ export async function handleTrialEnding(
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
       <h2 style="color: #1a1a1a; margin-bottom: 20px;">Your trial is ending soon</h2>
       <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-        Hi there! Your 30-day free trial for <strong>${orgName}</strong> ends in 3 days.
+        Hi there! Your BitBit trial for <strong>${orgName}</strong> ends in 3 days.
       </p>
       <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-        To keep using all your AI-powered features, subscribe to a plan before your trial expires.
-        If you don't subscribe, your account will be downgraded to the free tier.
+        Your plan will renew automatically at the standard rate. If you'd prefer to cancel
+        before the first charge, head to billing settings — no hard feelings.
       </p>
       <p style="margin-bottom: 20px;">
         <a href="${settingsUrl}" style="display: inline-block; background: #007bff; color: white; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: 500;">

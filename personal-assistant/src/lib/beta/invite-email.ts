@@ -72,7 +72,7 @@ export async function sendBetaInviteEmail(
           <ul style="margin: 0; padding: 0 0 0 20px; color: #CBD5E1; font-size: 14px; line-height: 2;">
             <li>Daily tips to get the most out of BitBit</li>
             <li>Direct feedback channel to the dev team</li>
-            <li>30-day Growth tier trial -- no credit card needed</li>
+            <li>First month on us with your personal invite code at checkout</li>
             <li>Shape the product roadmap with your input</li>
           </ul>
         </div>

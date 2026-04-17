@@ -4,7 +4,7 @@ import PricingPageClient from './pricing-page-client'
 export const metadata: Metadata = {
   title: 'Pricing | BitBit',
   description:
-    'AI operations pricing for agencies. Start free or trial any paid plan for 30 days, no credit card required.',
+    'AI operations pricing for agencies. Pick a plan and meet your AI operator — cancel anytime. Invite codes applied at checkout.',
   keywords: [
     'AI business assistant pricing',
     'automated invoicing plans',
@@ -19,10 +19,10 @@ const faqJsonLd = {
   mainEntity: [
     {
       '@type': 'Question',
-      name: 'What happens after my free trial?',
+      name: 'How do invite codes work?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'After 30 days, your account downgrades to the Free plan automatically. You keep all your data, contacts, and configuration -- you just lose access to paid agents and higher token limits. Upgrade anytime to pick up where you left off.',
+        text: 'Invite codes are privately distributed to beta users and high-intent prospects. Apply one at Stripe checkout and your first month is on us. Standard billing resumes in month two — cancel anytime before then to pay nothing.',
       },
     },
     {
@@ -54,7 +54,7 @@ const faqJsonLd = {
       name: 'Is there a setup fee?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'No. Connect your email, WhatsApp, and other services, configure your agents, and you are running. Most teams are fully operational within an hour.',
+        text: 'No. Pick where you want to chat with BitBit — iMessage, WhatsApp, Android Messages, Telegram, or our web app — then connect your email and other sources. Most teams are fully operational within an hour.',
       },
     },
   ],

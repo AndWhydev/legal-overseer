@@ -2,12 +2,31 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { stripe, getTierToPrice, TRIAL_PERIOD_DAYS } from './stripe-client'
 
 // ---------------------------------------------------------------------------
+// Tier identity — single source of truth used by pricing page, signup page,
+// Stripe checkout route, post-OAuth callback, and client-side validation.
+// ---------------------------------------------------------------------------
+
+export const PAID_TIERS = ['starter', 'growth', 'scale'] as const
+export type PaidTier = (typeof PAID_TIERS)[number]
+
+export function isPaidTier(value: unknown): value is PaidTier {
+  return typeof value === 'string' && (PAID_TIERS as readonly string[]).includes(value)
+}
+
+/** Display metadata — pricing cards and signup CTAs both read from this. */
+export const TIER_DISPLAY: Record<PaidTier, { name: string; priceMonthlyAUD: number; priceLabel: string }> = {
+  starter: { name: 'Starter', priceMonthlyAUD: 199, priceLabel: '$199/mo' },
+  growth: { name: 'Growth', priceMonthlyAUD: 349, priceLabel: '$349/mo' },
+  scale: { name: 'Scale', priceMonthlyAUD: 599, priceLabel: '$599/mo' },
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface CheckoutSessionInput {
   orgId: string
-  tier: 'starter' | 'growth' | 'scale'
+  tier: PaidTier
   successUrl: string
   cancelUrl: string
   customerEmail?: string
@@ -32,13 +51,11 @@ export interface SubscriptionEvent {
 // Create checkout session (Stripe SDK, pre-created prices)
 // ---------------------------------------------------------------------------
 
-const VALID_TIERS = new Set(['starter', 'growth', 'scale'])
-
 export async function createCheckoutSession(
   _client: SupabaseClient,
   input: CheckoutSessionInput,
 ): Promise<CheckoutSessionResult> {
-  if (!VALID_TIERS.has(input.tier)) {
+  if (!isPaidTier(input.tier)) {
     throw new Error(`Invalid tier: ${input.tier}`)
   }
 
@@ -56,6 +73,9 @@ export async function createCheckoutSession(
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
     payment_method_collection: 'always',
+    // Surface Stripe's native promo-code field so invite codes (privately
+    // distributed to high-intent prospects) can grant a 100%-off first month.
+    allow_promotion_codes: true,
     subscription_data: {
       trial_period_days: TRIAL_PERIOD_DAYS,
       metadata: {

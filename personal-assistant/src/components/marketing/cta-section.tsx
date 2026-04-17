@@ -13,12 +13,12 @@ export default function CTASection() {
             Ready to stop doing admin?
           </h2>
           <p className="text-base text-muted-foreground mb-8 leading-relaxed max-w-[480px] mx-auto">
-            Start your 30-day free trial. No credit card required.
+            Pick a plan and meet your AI operator. Cancel anytime.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Button asChild size="lg" className="h-12 px-8 text-base">
-              <Link href="/onboard">
-                Get Started Free
+              <Link href="/signup">
+                Start Trial
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base">

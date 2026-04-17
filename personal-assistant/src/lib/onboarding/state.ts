@@ -31,6 +31,24 @@ export function hasCompletedFirstRunOnboarding(profile: OnboardingProfileState |
   return preferences.onboarding_completed === true
 }
 
+/**
+ * When non-web `primary_chat_surface` is chosen in the onboarding chat, we
+ * mark stage='connect-surface' before completion. Surfaces this to the
+ * bootstrap guard so refreshing /onboard lands on /onboard/connect/<surface>
+ * instead of showing the chat again.
+ */
+export function getPendingConnectSurface(
+  profile: OnboardingProfileState | null | undefined,
+): string | null {
+  const preferences = (profile?.preferences as OnboardingPreferences | null | undefined) ?? {}
+  if (preferences.onboarding_stage !== 'connect-surface') return null
+  const surface = preferences.primary_chat_surface
+  if (typeof surface !== 'string') return null
+  if (surface === 'web') return null
+  if (!['imessage', 'whatsapp', 'android-messages', 'telegram'].includes(surface)) return null
+  return surface
+}
+
 export function requiresWorkspaceConfirmation(profile: OnboardingProfileState | null | undefined) {
   const workspaceId = getWorkspaceId(profile)
 

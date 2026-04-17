@@ -268,8 +268,8 @@ export default function CaseStudyContent() {
             </Link>
           </Button>
           <Button asChild variant="ghost" size="lg">
-            <Link href="/onboard">
-              Start your 30-day free trial
+            <Link href="/signup">
+              Start your trial
               <IconArrowRight size={16} />
             </Link>
           </Button>

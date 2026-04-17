@@ -11,10 +11,18 @@ import { motion, AnimatePresence } from 'motion/react'
 import { Shimmer } from '@/components/ai-elements/shimmer'
 import { useSmartScroll } from '@/components/chat/use-smart-scroll'
 import { IconChevronDown, IconCheck } from '@tabler/icons-react'
+import { trackOnboardingEvent } from '@/lib/onboarding/analytics'
 
 interface OnboardingChatProps {
   hasConnection: boolean
-  onComplete: (threadId: string) => void
+  /**
+   * Fired when the user clicks "Let's go" (or the auto-advance timer fires).
+   * `chatSurface` is the surface selected in the pick-chat-surface stage, or
+   * null if the user was resuming into a crawling-state onboarding. The
+   * parent uses it to decide whether to route to /dashboard (web) or to
+   * /onboard/connect/<surface> (iMessage/WhatsApp/Android/Telegram).
+   */
+  onComplete: (threadId: string, chatSurface: string | null) => void
 }
 
 function adaptMessage(msg: ChatMessage) {
@@ -34,9 +42,12 @@ const APP_ICONS: Record<string, string> = {
   whatsapp: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/88/f4/0d/88f40df9-9a8c-235f-dc2c-48c3bd5b4345/AppIcon-0-0-1x_U007epad-0-0-0-1-0-0-sRGB-0-85-220.png/120x120bb.jpg',
   xero: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/a3/87/98/a3879862-1b54-a12b-5acc-f7184579d615/AppIcon-0-0-1x_U007epad-0-0-0-1-0-0-85-220.png/120x120bb.jpg',
   stripe: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/b8/56/ec/b856eca9-4ed0-513b-0fd3-8f48958db087/AppIcon-0-0-1x_U007ephone-0-1-0-85-220-0.png/120x120bb.jpg',
+  imessage: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/bc/d9/f0/bcd9f003-2b2f-7d8d-19d4-44fe8d1eb7a6/AppIcon-0-0-1x_U007emarketing-0-10-0-85-220-0.png/120x120bb.jpg',
+  'android-messages': 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/fe/87/f4/fe87f4c5-1c5e-db11-bf5e-83a0a41e5cfa/logo_messages_color-0-0-1x_U007emarketing-0-10-0-85-220.png/120x120bb.jpg',
+  telegram: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/d3/4e/2a/d34e2abb-fb7b-6c34-1ff3-09cb14c3fdfc/AppIcon-0-0-1x_U007emarketing-0-10-0-sRGB-85-220-0.png/120x120bb.jpg',
 }
 
-function AppIcon({ id, size = 36 }: { id: string; size?: number }) {
+function AppIcon({ id, size = 36, eager = false }: { id: string; size?: number; eager?: boolean }) {
   const src = APP_ICONS[id]
   if (!src) return null
   const radius = Math.round(size * 0.2237)
@@ -46,7 +57,8 @@ function AppIcon({ id, size = 36 }: { id: string; size?: number }) {
       alt=""
       width={size}
       height={size}
-      loading="lazy"
+      loading={eager ? 'eager' : 'lazy'}
+      fetchPriority={eager ? 'high' : 'auto'}
       className="shrink-0"
       style={{ borderRadius: radius, width: size, height: size }}
     />
@@ -63,9 +75,24 @@ const CALENDAR_PROVIDERS = [
 ]
 
 const MESSAGING_PROVIDERS = [
+  // WhatsApp is a chat surface (where BitBit lives), not a read-source.
   { id: 'slack', label: 'Slack', sublabel: 'Team channels and DMs' },
-  { id: 'whatsapp', label: 'WhatsApp', sublabel: 'Business or personal' },
 ]
+
+/**
+ * Chat surfaces — where BitBit lives. We capture the user's intent here and
+ * persist it on the profile; per-surface bridge provisioning (Fly.io /
+ * mautrix / BlueBubbles, see `src/lib/channels/`) is progressively wired.
+ */
+const CHAT_SURFACES = [
+  { id: 'imessage', label: 'iMessage', sublabel: 'Text BitBit from your iPhone' },
+  { id: 'whatsapp', label: 'WhatsApp', sublabel: 'Personal or Business' },
+  { id: 'android-messages', label: 'Android Messages', sublabel: 'RCS or SMS on your Android' },
+  { id: 'telegram', label: 'Telegram', sublabel: 'Our Telegram bot' },
+  { id: 'web', label: 'Web app', sublabel: 'Right here in your browser' },
+] as const
+
+type ChatSurfaceId = (typeof CHAT_SURFACES)[number]['id']
 
 const FINANCE_PROVIDERS = [
   { id: 'xero', label: 'Xero', sublabel: 'Invoicing and accounting' },
@@ -78,7 +105,12 @@ const EXTRA_CATEGORIES = [
   { heading: 'Finance', providers: FINANCE_PROVIDERS },
 ]
 
-type ConnectionState = 'pick-email' | 'connecting' | 'connected' | 'crawling'
+type ConnectionState =
+  | 'pick-chat-surface'
+  | 'pick-email'
+  | 'connecting'
+  | 'connected'
+  | 'crawling'
 
 export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProps) {
   const {
@@ -94,11 +126,14 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
   } = useOnboardingStream()
 
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const [connState, setConnState] = useState<ConnectionState>(hasConnection ? 'crawling' : 'pick-email')
+  const [connState, setConnState] = useState<ConnectionState>(
+    hasConnection ? 'crawling' : 'pick-chat-surface',
+  )
   const [connectingId, setConnectingId] = useState<string | null>(null)
   const [connectedProvider, setConnectedProvider] = useState<string | null>(null)
   const [connectedExtras, setConnectedExtras] = useState<Set<string>>(new Set())
   const [streamStarted, setStreamStarted] = useState(false)
+  const [chatSurface, setChatSurface] = useState<ChatSurfaceId | null>(null)
 
   const smartScroll = useSmartScroll(scrollAreaRef)
 
@@ -106,6 +141,39 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
   useEffect(() => {
     smartScroll.onContentUpdate()
   }, [messages, worldModel, activatedAgents, phase, smartScroll])
+
+  const handlePickChatSurface = useCallback((id: ChatSurfaceId) => {
+    setChatSurface(id)
+    setConnState('pick-email')
+    trackOnboardingEvent('chat_surface_selected', { surface: id })
+
+    // Fire-and-forget — a failed preference save must not strand the user on
+    // the surface picker. One retry with backoff covers transient 5xx / flaky
+    // network without blocking the UI. Status 4xx (auth, validation) won't
+    // resolve on retry so we log and move on; the user can re-select on a
+    // refresh if the server never learned their choice.
+    const save = async () => {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await fetch('/api/profile/preferences', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ primary_chat_surface: id }),
+          })
+          if (res.ok) return
+          if (res.status < 500) {
+            console.warn('[onboarding] surface PATCH rejected', { status: res.status })
+            return
+          }
+        } catch {
+          // fall through to retry
+        }
+        if (attempt === 0) await new Promise(r => setTimeout(r, 750))
+      }
+      console.warn('[onboarding] surface PATCH failed after retry')
+    }
+    void save()
+  }, [])
 
   /** Verify a channel is actually connected in the DB */
   const verifyConnection = useCallback(async (channelId: string): Promise<boolean> => {
@@ -179,14 +247,17 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
         return
       }
 
-      // Poll for popup close, then verify connection
-      // (postMessage handler may have already updated state)
+      // Poll for popup close, then verify. Capped by a safety timeout so a
+      // user who opens the popup and walks away doesn't leak an interval.
+      const POLL_MS = 500
+      const MAX_WAIT_MS = 5 * 60_000
+      const startedAt = Date.now()
       const timer = window.setInterval(async () => {
-        if (!popup.closed) return
+        const timedOut = Date.now() - startedAt > MAX_WAIT_MS
+        if (!popup.closed && !timedOut) return
         window.clearInterval(timer)
+        if (timedOut && !popup.closed) popup.close()
 
-        // If postMessage already handled it, connectingId will be null
-        // Still verify as a fallback
         const verified = await verifyConnection(id)
 
         if (verified) {
@@ -196,14 +267,11 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
             setConnectedProvider(id)
             setConnState('connected')
           }
-        } else {
-          // OAuth was cancelled or failed — only reset if still in connecting state
-          if (!isExtra) {
-            setConnState(prev => prev === 'connecting' ? 'pick-email' : prev)
-          }
+        } else if (!isExtra) {
+          setConnState(prev => prev === 'connecting' ? 'pick-email' : prev)
         }
         setConnectingId(prev => prev === id ? null : prev)
-      }, 500)
+      }, POLL_MS)
     } catch {
       setConnectingId(null)
       if (!isExtra) setConnState('pick-email')
@@ -226,7 +294,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
   // Notify parent on completion
   useEffect(() => {
     if (phase === 'complete' && threadId) {
-      const timer = setTimeout(() => onComplete(threadId), 500)
+      const timer = setTimeout(() => onComplete(threadId, chatSurface), 500)
       return () => clearTimeout(timer)
     }
   }, [phase, threadId, onComplete])
@@ -240,7 +308,9 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
     ? `${connectedProvider.charAt(0).toUpperCase() + connectedProvider.slice(1)} connected. Give me a moment to read through everything\u2026`
     : connState === 'crawling'
       ? null // No static greeting once crawling, stream messages take over
-      : "Hey, I'm BitBit. Connect an email and I'll learn our world."
+      : connState === 'pick-chat-surface'
+        ? "Hey, I'm BitBit. Where would you like to chat with me?"
+        : "Great. Now connect an email and I'll learn our world."
 
   return (
     <div className="bb-chat flex flex-col h-full">
@@ -262,8 +332,45 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
             </div>
           )}
 
-          {/* Phase 1: Email picker */}
           <AnimatePresence mode="wait">
+            {connState === 'pick-chat-surface' && (
+              <motion.div
+                key="chat-surface-picker"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3, delay: 0.3, ease: 'easeOut' }}
+                className="mt-2 flex flex-col gap-2 max-w-sm"
+              >
+                {CHAT_SURFACES.map(surface => (
+                  <button
+                    key={surface.id}
+                    type="button"
+                    onClick={() => handlePickChatSurface(surface.id)}
+                    className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent/50"
+                  >
+                    {APP_ICONS[surface.id] ? (
+                      <AppIcon id={surface.id} eager />
+                    ) : (
+                      <div
+                        className="shrink-0 flex items-center justify-center rounded-lg bg-muted text-sm font-medium"
+                        style={{ width: 36, height: 36 }}
+                      >
+                        {surface.label.charAt(0)}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium">{surface.label}</div>
+                      <div className="text-sm text-muted-foreground">{surface.sublabel}</div>
+                    </div>
+                  </button>
+                ))}
+                <p className="text-xs text-muted-foreground mt-2 px-1">
+                  You can chat with BitBit on any of these — context and memory stay in sync across all of them.
+                </p>
+              </motion.div>
+            )}
+
             {connState === 'pick-email' && (
               <motion.div
                 key="email-picker"
@@ -462,6 +569,52 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
             </div>
           )}
 
+          {/* Handoff card — surface-aware.
+              After "Let's go", non-web surfaces route to
+              /onboard/connect/<surface> where pairing completes via
+              /api/bridges/provision + /api/bridges/link-status (iMessage,
+              WhatsApp, Android) or /api/bridges/telegram/* (Telegram). */}
+          {phase === 'complete' && chatSurface && chatSurface !== 'web' && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-6"
+            >
+              <BitBitHeader />
+              <div className="bb-chat__bubble--assistant bb-chat__markdown">
+                {chatSurface === 'imessage' && (
+                  <p>
+                    Tap <strong>Let&apos;s go</strong> below and I&apos;ll spin up a Mac in the
+                    cloud to connect iMessage — I&apos;ll walk you through the Apple ID sign-in on
+                    the next screen.
+                  </p>
+                )}
+                {chatSurface === 'whatsapp' && (
+                  <p>
+                    Tap <strong>Let&apos;s go</strong> and I&apos;ll show you a QR on the next
+                    screen — scan it from WhatsApp on your phone (Settings → Linked Devices) and
+                    we&apos;re paired.
+                  </p>
+                )}
+                {chatSurface === 'android-messages' && (
+                  <p>
+                    Tap <strong>Let&apos;s go</strong> and I&apos;ll show you a QR on the next
+                    screen — scan it from Android Messages (menu → Device pairing) and we&apos;re
+                    paired.
+                  </p>
+                )}
+                {chatSurface === 'telegram' && (
+                  <p>
+                    Tap <strong>Let&apos;s go</strong> and I&apos;ll give you a deep-link to our
+                    Telegram bot on the next screen — tap Start in the chat and we&apos;re
+                    paired.
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {/* Let's go */}
           {phase === 'complete' && (
             <motion.div
@@ -470,7 +623,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
               transition={{ delay: 0.8 }}
               className="flex justify-center my-8"
             >
-              <Button size="lg" onClick={() => threadId && onComplete(threadId)} className="px-8">
+              <Button size="lg" onClick={() => threadId && onComplete(threadId, chatSurface)} className="px-8">
                 Let&#8217;s go
               </Button>
             </motion.div>

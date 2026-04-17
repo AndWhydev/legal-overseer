@@ -126,12 +126,12 @@ export default function IndustryPageTemplate({
               {tierPrice}
             </p>
             <p className="mb-8 text-sm text-muted-foreground">
-              30-day free trial. No credit card required.
+              Cancel anytime. Got an invite code? First month is on us — apply at checkout.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button asChild size="lg">
-                <Link href={`/login?redirect=/dashboard&checkout_tier=${recommendedTier.toLowerCase()}`}>
-                  Start Free Trial
+                <Link href={`/signup?tier=${recommendedTier.toLowerCase()}`}>
+                  Start Trial
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
