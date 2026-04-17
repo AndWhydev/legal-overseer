@@ -67,7 +67,10 @@ export async function POST(request: NextRequest) {
   }
   const supabase = getServiceClient()
 
-  // Pre-clean any stale connection — same pattern as the OAuth route.
+  // Look up any existing row (connected, disabled, whatever). We'll
+  // update it in place if found, insert otherwise. The table doesn't
+  // have a UNIQUE(org_id, provider) constraint so upsert+onConflict
+  // breaks — a plain SELECT→UPDATE/INSERT works regardless.
   const { data: existing } = await supabase
     .from('org_connections')
     .select('id, connected_account_id, config')
@@ -88,44 +91,58 @@ export async function POST(request: NextRequest) {
   const result = await connectWithCredentials(ctx.orgId, appKey, credentials, authScheme)
   if (!result) {
     return NextResponse.json(
-      { error: 'Could not verify those credentials. Double-check them and try again.' },
+      { error: 'Those credentials didn\'t work. Double-check and try again.' },
       { status: 400 },
     )
   }
 
-  // Upsert the org_connection row — mirrors the OAuth callback path so the
-  // agent side sees the connection through the usual ConnectorManager flow.
   const displayName = appKey.charAt(0).toUpperCase() + appKey.slice(1)
-  const { data: row, error: upsertErr } = await supabase
-    .from('org_connections')
-    .upsert(
-      {
-        org_id: ctx.orgId,
-        provider: appKey,
-        display_name: displayName,
-        transport: 'composio',
-        status: 'provisioning',
-        capabilities: ['pull', 'send'],
-        connected_account_id: result.connectedAccountId,
-        config: {
-          composio_connected_account_id: result.connectedAccountId,
-          composio_toolkit: appKey,
-          auth_scheme: authScheme,
-        },
-      },
-      { onConflict: 'org_id,provider' },
-    )
-    .select()
-    .single()
+  const rowData = {
+    org_id: ctx.orgId,
+    provider: appKey,
+    display_name: displayName,
+    transport: 'composio',
+    status: 'provisioning',
+    capabilities: ['pull', 'send'],
+    connected_account_id: result.connectedAccountId,
+    config: {
+      composio_connected_account_id: result.connectedAccountId,
+      composio_toolkit: appKey,
+      auth_scheme: authScheme,
+    },
+    updated_at: new Date().toISOString(),
+  }
 
-  if (upsertErr || !row) {
-    logger.error('[composio/connect-byok] Failed to upsert org_connection', {
-      orgId: ctx.orgId, appKey, error: upsertErr?.message,
+  let row: { id: string } | null = null
+  let writeErr: { message: string } | null = null
+
+  if (existing) {
+    const { data, error } = await supabase
+      .from('org_connections')
+      .update(rowData)
+      .eq('id', existing.id)
+      .select('id')
+      .single()
+    row = data
+    writeErr = error
+  } else {
+    const { data, error } = await supabase
+      .from('org_connections')
+      .insert(rowData)
+      .select('id')
+      .single()
+    row = data
+    writeErr = error
+  }
+
+  if (writeErr || !row) {
+    logger.error('[composio/connect-byok] Write failed', {
+      orgId: ctx.orgId, appKey, error: writeErr?.message,
     })
     // Best-effort cleanup of the upstream account so we don't leak it.
     try { await disconnectAccount(result.connectedAccountId) } catch { /* noop */ }
     return NextResponse.json(
-      { error: 'We saved your credentials but couldn\'t finish setting up the connection. Try again in a moment.' },
+      { error: `Couldn't connect ${displayName}. Try again.` },
       { status: 500 },
     )
   }
