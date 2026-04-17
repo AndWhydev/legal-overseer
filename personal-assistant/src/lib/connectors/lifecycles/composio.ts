@@ -117,9 +117,21 @@ export class ComposioLifecycle implements ConnectorLifecycle {
     conn: OrgConnection,
     ctx: { accountId?: string; metadata?: Record<string, unknown> } = {},
   ): Promise<void> {
+    // Defensive guard: callers (OAuth callback, BYOK route) sometimes pass
+    // a stub row `{ id }` rather than the full OrgConnection. Without id
+    // the downstream UPDATE silently no-ops and the row stays stuck in
+    // 'provisioning' — exactly the bug we had with Perplexity.
+    if (!conn?.id) {
+      logger.error('[composio-lifecycle] activate called without conn.id', {
+        conn,
+        ctxAccountId: ctx.accountId,
+      })
+      throw new Error('[composio-lifecycle] activate requires conn.id')
+    }
+
     const accountId =
       ctx.accountId ??
-      (conn.config as Record<string, string | undefined>)?.composio_connected_account_id ??
+      (conn.config as Record<string, string | undefined> | null | undefined)?.composio_connected_account_id ??
       conn.connected_account_id ??
       undefined
 
@@ -160,7 +172,7 @@ export class ComposioLifecycle implements ConnectorLifecycle {
       })
     }
 
-    const { error: updateError } = await this.deps.supabase
+    const { data: updatedRows, error: updateError } = await this.deps.supabase
       .from('org_connections')
       .update({
         status: 'connected',
@@ -179,6 +191,7 @@ export class ComposioLifecycle implements ConnectorLifecycle {
         updated_at: new Date().toISOString(),
       })
       .eq('id', conn.id)
+      .select('id')
 
     if (updateError) {
       // Row didn't update — avoid split-brain where triggers are registered
@@ -190,6 +203,21 @@ export class ComposioLifecycle implements ConnectorLifecycle {
       })
       await this.health.setStatus(conn.id, 'error', { error: updateError.message })
       throw new Error(`[composio-lifecycle] activate update failed: ${updateError.message}`)
+    }
+
+    if (!updatedRows || updatedRows.length === 0) {
+      // No error but the WHERE matched zero rows — typically means the
+      // caller passed a bad/missing id. Loud error so we never silently
+      // leave a row in 'provisioning' again.
+      logger.error('[composio-lifecycle] activate update matched zero rows', {
+        connectionId: conn.id,
+        accountId,
+        provider: conn.provider,
+      })
+      throw new Error(
+        `[composio-lifecycle] activate update matched zero rows for id=${conn.id}. ` +
+          `The connection row may have been deleted or conn.id is invalid.`,
+      )
     }
 
     // Fire-and-forget crawl dispatch — idempotent so re-activation is safe.

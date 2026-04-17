@@ -15,6 +15,7 @@ vi.mock('../../../composio', async () => ({
     auth_expires_at: '2027-01-01T00:00:00.000Z',
   }),
   disconnectAccount: vi.fn().mockResolvedValue(true),
+  invalidateComposioToolCache: vi.fn(),
 }))
 
 vi.mock('../../../composio/triggers', async () => ({
@@ -51,12 +52,17 @@ function makeSupabase(opts: { failConnectedUpdate?: string } = {}) {
       // Support two shapes:
       //  1. .update(u).eq(id)                               — fire-and-forget update
       //  2. .update(u).eq(id).neq(col, val).select('id')    — CAS claim
+      //  3. .update(u).eq(id).select('id')                  — verified update
       return {
         eq: vi.fn(() => {
           const p: any = Promise.resolve({ error: updateError })
           p.neq = vi.fn(() => ({
             select: vi.fn().mockResolvedValue({ data: [{ id: 'c1' }], error: null }),
           }))
+          p.select = vi.fn().mockResolvedValue({
+            data: updateError ? null : [{ id: 'c1' }],
+            error: updateError,
+          })
           return p
         }),
       }
