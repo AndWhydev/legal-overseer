@@ -60,7 +60,7 @@ export async function initiateConnection(
 
   try {
     const configId = authConfigId || toolkit
-    const res = await fetch(`${COMPOSIO_BASE}/api/v3/connected-accounts`, {
+    const res = await fetch(`${COMPOSIO_BASE}/api/v3/connected_accounts`, {
       method: 'POST',
       headers: composioHeaders(),
       body: JSON.stringify({
@@ -115,7 +115,7 @@ export async function initiateConnectionByAppKey(
   try {
     // Step 1: resolve auth config ID for this toolkit slug
     const cfgRes = await fetch(
-      `${COMPOSIO_BASE}/api/v3/auth-configs?toolkit_slug=${encodeURIComponent(appKey)}&status=ENABLED&limit=10`,
+      `${COMPOSIO_BASE}/api/v3/auth_configs?toolkit_slug=${encodeURIComponent(appKey)}&status=ENABLED&limit=10`,
       { headers },
     )
     if (!cfgRes.ok) {
@@ -140,7 +140,7 @@ export async function initiateConnectionByAppKey(
     }
 
     // Step 2: initiate the connection
-    const initRes = await fetch(`${COMPOSIO_BASE}/api/v3/connected-accounts`, {
+    const initRes = await fetch(`${COMPOSIO_BASE}/api/v3/connected_accounts`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -182,7 +182,7 @@ export async function initiateConnectionByAppKey(
 
 /**
  * Wait for a pending Composio connection to complete (user finished OAuth).
- * Polls the connected-accounts endpoint until status is ACTIVE or timeout.
+ * Polls the connected_accounts endpoint until status is ACTIVE or timeout.
  */
 export async function waitForConnection(
   connectionRequestId: string,
@@ -197,7 +197,7 @@ export async function waitForConnection(
   try {
     while (Date.now() < deadline) {
       const res = await fetch(
-        `${COMPOSIO_BASE}/api/v3/connected-accounts?connection_request_id=${encodeURIComponent(connectionRequestId)}&limit=1`,
+        `${COMPOSIO_BASE}/api/v3/connected_accounts?connection_request_id=${encodeURIComponent(connectionRequestId)}&limit=1`,
         { headers },
       )
       if (res.ok) {
@@ -240,7 +240,7 @@ export async function listConnectedAccounts(
 
   try {
     const res = await fetch(
-      `${COMPOSIO_BASE}/api/v3/connected-accounts?user_ids=${encodeURIComponent(userId)}&status=ACTIVE&limit=100`,
+      `${COMPOSIO_BASE}/api/v3/connected_accounts?user_ids=${encodeURIComponent(userId)}&status=ACTIVE&limit=100`,
       { headers: composioHeaders() },
     )
     if (!res.ok) return []
@@ -272,7 +272,7 @@ export async function getConnectedAccount(
 
   try {
     const res = await fetch(
-      `${COMPOSIO_BASE}/api/v3/connected-accounts/${encodeURIComponent(accountId)}`,
+      `${COMPOSIO_BASE}/api/v3/connected_accounts/${encodeURIComponent(accountId)}`,
       { headers: composioHeaders() },
     )
     if (!res.ok) return null
@@ -304,7 +304,7 @@ export async function disconnectAccount(accountId: string): Promise<boolean> {
 
   try {
     const res = await fetch(
-      `${COMPOSIO_BASE}/api/v3/connected-accounts/${encodeURIComponent(accountId)}`,
+      `${COMPOSIO_BASE}/api/v3/connected_accounts/${encodeURIComponent(accountId)}`,
       { method: 'DELETE', headers: composioHeaders() },
     )
     if (!res.ok) {

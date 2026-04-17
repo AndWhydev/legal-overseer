@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch connected accounts for this org
     const caRes = await fetch(
-      `${COMPOSIO_BASE}/api/v3/connected-accounts?user_ids=${encodeURIComponent(ctx.orgId)}&status=ACTIVE&limit=100`,
+      `${COMPOSIO_BASE}/api/v3/connected_accounts?user_ids=${encodeURIComponent(ctx.orgId)}&status=ACTIVE&limit=100`,
       { headers },
     )
     let connectedSlugs = new Set<string>()
