@@ -228,18 +228,6 @@ export function VoicePill({
   }, [mode, docked, displayMode]);
 
   useEffect(() => {
-    if (!docked || displayMode !== 'text') return;
-
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    textarea.style.height = '0px';
-    const minHeight = compactDocked && !isDockedExpanded ? 52 : 88;
-    const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), 188);
-    textarea.style.height = `${nextHeight}px`;
-  }, [textValue, docked, displayMode, compactDocked, isDockedExpanded]);
-
-  useEffect(() => {
     if (!docked) {
       setIsDockedExpanded(false);
       return;
@@ -253,12 +241,33 @@ export function VoicePill({
     const textarea = textareaRef.current;
     if (!textarea) return;
 
+    // Reset height to 0 so scrollHeight reflects true content height,
+    // not the current clientHeight (which is at least minHeight).
+    textarea.style.height = '0px';
+    const contentHeight = textarea.scrollHeight;
+
     const style = window.getComputedStyle(textarea);
     const parsedLineHeight = Number.parseFloat(style.lineHeight || '');
     const lineHeight = Number.isFinite(parsedLineHeight) ? parsedLineHeight : 24;
     const twoLineThreshold = lineHeight * 2;
-    const shouldExpand = textValue.trim() !== '' && textarea.scrollHeight > (twoLineThreshold + 8);
+    const shouldExpand = textValue.trim() !== '' && contentHeight > twoLineThreshold + 8;
     setIsDockedExpanded(shouldExpand);
+
+    const minHeight = shouldExpand ? 88 : 52;
+    const nextHeight = Math.min(Math.max(contentHeight, minHeight), 188);
+    textarea.style.height = `${nextHeight}px`;
+  }, [textValue, docked, displayMode, compactDocked]);
+
+  useEffect(() => {
+    if (docked && compactDocked) return;
+    if (!docked || displayMode !== 'text') return;
+
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = '0px';
+    const nextHeight = Math.min(Math.max(textarea.scrollHeight, 88), 188);
+    textarea.style.height = `${nextHeight}px`;
   }, [textValue, docked, displayMode, compactDocked]);
 
   useEffect(() => {
