@@ -153,12 +153,12 @@ export async function POST(request: NextRequest) {
 
     // Load user timezone (Phase 51 D1) — cheap, single row by PK.
     try {
-      const { data: userRow } = await supabase
-        .from('users')
+      const { data: profileRow } = await supabase
+        .from('profiles')
         .select('timezone')
         .eq('id', userId)
         .maybeSingle()
-      userTimezone = (userRow?.timezone as string | null | undefined) ?? null
+      userTimezone = (profileRow?.timezone as string | null | undefined) ?? null
     } catch (err) {
       logger.debug('[chat] Could not load user timezone — falling back to UTC', { err })
     }

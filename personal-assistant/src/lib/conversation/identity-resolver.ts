@@ -63,12 +63,12 @@ export async function resolveChannelIdentity(
       // Load timezone — Phase 51 D1. Non-fatal on error.
       let timezone: string | null = null
       try {
-        const { data: userRow } = await supabase
-          .from('users')
+        const { data: profileRow } = await supabase
+          .from('profiles')
           .select('timezone')
           .eq('id', identity.user_id)
           .maybeSingle()
-        timezone = (userRow?.timezone as string | null | undefined) ?? null
+        timezone = (profileRow?.timezone as string | null | undefined) ?? null
       } catch {
         // Ignore — timezone falls back to UTC in prompt builder.
       }
