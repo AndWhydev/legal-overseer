@@ -1,39 +1,17 @@
 'use client'
 
-import { useCallback, useRef, useState, useEffect } from 'react'
+/**
+ * useVoiceInput — dictate mode for the chat input.
+ *
+ * Records audio via MediaRecorder, sends it to /api/voice/session +
+ * /api/voice/transcribe for server-side Whisper transcription. This replaces
+ * the browser's SpeechRecognition API which only works reliably in Chrome
+ * and breaks behind VPNs/firewalls.
+ *
+ * The public surface is identical to the old hook so VoicePill doesn't change.
+ */
 
-// Web Speech API types (not in all TS libs)
-interface SpeechRecognitionResult {
-  readonly isFinal: boolean
-  readonly length: number
-  item(index: number): SpeechRecognitionAlternative
-  [index: number]: SpeechRecognitionAlternative
-}
-interface SpeechRecognitionAlternative {
-  readonly transcript: string
-  readonly confidence: number
-}
-interface SpeechRecognitionResultList {
-  readonly length: number
-  item(index: number): SpeechRecognitionResult
-  [index: number]: SpeechRecognitionResult
-}
-interface SpeechRecognitionEvent extends Event {
-  readonly results: SpeechRecognitionResultList
-}
-interface SpeechRecognitionErrorEvent extends Event {
-  readonly error: string
-}
-interface SpeechRecognitionInstance extends EventTarget {
-  continuous: boolean
-  interimResults: boolean
-  lang: string
-  onresult: ((event: SpeechRecognitionEvent) => void) | null
-  onend: (() => void) | null
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null
-  start(): void
-  stop(): void
-}
+import { useCallback, useRef, useState, useEffect } from 'react'
 
 interface UseVoiceInputReturn {
   isListening: boolean
@@ -48,75 +26,32 @@ interface UseVoiceInputReturn {
 }
 
 interface UseVoiceInputOptions {
-  /**
-   * BCP-47 language tag for speech recognition. Defaults to the browser's
-   * `navigator.language` with a final fallback of `'en-AU'`. Pass an explicit
-   * tag (e.g. `'en-US'`, `'es-ES'`) to override.
-   */
   lang?: string
-}
-
-/**
- * Translate Web Speech API error codes into short, user-facing messages.
- * Returns `null` for errors that are benign (e.g. "no-speech") and should not
- * be surfaced to the user.
- */
-function mapRecognitionError(code: string): string | null {
-  switch (code) {
-    case 'not-allowed':
-    case 'service-not-allowed':
-      return 'Microphone access denied'
-    case 'audio-capture':
-      return 'Microphone unavailable'
-    case 'network':
-      return 'Network error — try again'
-    case 'no-speech':
-    case 'aborted':
-      return null
-    default:
-      return 'Speech recognition failed'
-  }
-}
-
-function mapGetUserMediaError(err: unknown): string {
-  if (err instanceof DOMException) {
-    if (err.name === 'NotAllowedError' || err.name === 'SecurityError') {
-      return 'Microphone access denied'
-    }
-    if (err.name === 'NotFoundError' || err.name === 'OverconstrainedError') {
-      return 'Microphone unavailable'
-    }
-  }
-  return 'Could not access microphone'
-}
-
-/**
- * Resolve the recognition language. Prefers explicit override, then the
- * browser's `navigator.language`, then `'en-AU'` as a last-resort fallback.
- */
-function resolveLang(override?: string): string {
-  if (override && override.trim()) return override
-  if (typeof navigator !== 'undefined' && navigator.language) return navigator.language
-  return 'en-AU'
 }
 
 export function useVoiceInput(
   onResult?: (text: string) => void,
-  options: UseVoiceInputOptions = {},
+  _options: UseVoiceInputOptions = {},
 ): UseVoiceInputReturn {
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [frequencyData, setFrequencyData] = useState<Uint8Array | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
+
+  const mediaStreamRef = useRef<MediaStream | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
-  const mediaStreamRef = useRef<MediaStream | null>(null)
+  const chunksRef = useRef<Blob[]>([])
   const rafRef = useRef<number>(0)
+  const onResultRef = useRef(onResult)
+  onResultRef.current = onResult
 
+  // MediaRecorder is available in all modern browsers
   const isSupported =
     typeof window !== 'undefined' &&
-    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+    typeof MediaRecorder !== 'undefined' &&
+    typeof navigator?.mediaDevices?.getUserMedia === 'function'
 
   // Animate frequency data while listening
   useEffect(() => {
@@ -140,7 +75,7 @@ export function useVoiceInput(
     }
   }, [isListening])
 
-  const cleanupAudio = useCallback(() => {
+  const cleanup = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach(t => t.stop())
@@ -151,25 +86,67 @@ export function useVoiceInput(
       audioContextRef.current = null
     }
     analyserRef.current = null
+    mediaRecorderRef.current = null
+    chunksRef.current = []
     setFrequencyData(null)
   }, [])
 
   const clearError = useCallback(() => setError(null), [])
 
+  const transcribeBlob = useCallback(async (blob: Blob) => {
+    setTranscript('Transcribing...')
+    try {
+      const form = new FormData()
+      form.append('audio', blob, 'audio.webm')
+
+      const res = await fetch('/api/voice/transcribe', {
+        method: 'POST',
+        body: form,
+      })
+
+      if (!res.ok) {
+        const body = await res.text().catch(() => '')
+        throw new Error(body || `Transcription failed (${res.status})`)
+      }
+
+      const data = (await res.json()) as { text?: string }
+      const text = (data.text || '').trim()
+
+      if (!text) {
+        setTranscript('')
+        setError('No speech detected')
+        return
+      }
+
+      setTranscript(text)
+      onResultRef.current?.(text)
+      setTranscript('')
+    } catch (err) {
+      setTranscript('')
+      setError(err instanceof Error ? err.message : 'Transcription failed')
+    }
+  }, [])
+
+  const stopListening = useCallback(() => {
+    const recorder = mediaRecorderRef.current
+    if (recorder && recorder.state === 'recording') {
+      recorder.stop() // triggers onstop → transcribeBlob
+    } else {
+      setIsListening(false)
+      cleanup()
+    }
+  }, [cleanup])
+
   const startListening = useCallback(async () => {
     if (!isSupported) return
     setError(null)
+    setTranscript('')
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const Ctor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!Ctor) return
-
-    // Set up AudioContext + analyser for waveform visualization.
-    // If getUserMedia fails here, speech recognition itself also won't work
-    // reliably (permission is shared), so surface an error and bail.
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       mediaStreamRef.current = stream
+
+      // Set up analyser for waveform visualization
       const ctx = new AudioContext()
       audioContextRef.current = ctx
       const source = ctx.createMediaStreamSource(stream)
@@ -178,74 +155,62 @@ export function useVoiceInput(
       analyser.smoothingTimeConstant = 0.7
       source.connect(analyser)
       analyserRef.current = analyser
+
+      // Set up MediaRecorder
+      chunksRef.current = []
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : 'audio/webm'
+      const recorder = new MediaRecorder(stream, { mimeType })
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data)
+      }
+
+      recorder.onstop = () => {
+        const blob = chunksRef.current.length > 0
+          ? new Blob(chunksRef.current, { type: recorder.mimeType })
+          : null
+        setIsListening(false)
+        cleanup()
+
+        if (blob && blob.size > 0) {
+          transcribeBlob(blob)
+        }
+      }
+
+      mediaRecorderRef.current = recorder
+      recorder.start()
+      setIsListening(true)
     } catch (err) {
-      setError(mapGetUserMediaError(err))
-      cleanupAudio()
-      return
-    }
-
-    const recognition: SpeechRecognitionInstance = new Ctor()
-    recognition.continuous = false
-    recognition.interimResults = true
-    recognition.lang = resolveLang(options.lang)
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let text = ''
-      for (let i = 0; i < event.results.length; i++) {
-        text += event.results[i][0].transcript
+      if (err instanceof DOMException) {
+        if (err.name === 'NotAllowedError' || err.name === 'SecurityError') {
+          setError('Microphone access denied')
+        } else if (err.name === 'NotFoundError') {
+          setError('Microphone unavailable')
+        } else {
+          setError('Could not access microphone')
+        }
+      } else {
+        setError('Could not access microphone')
       }
-      setTranscript(text)
-      if (event.results[0]?.isFinal && onResult) {
-        onResult(text)
-        setTranscript('')
-      }
+      cleanup()
     }
+  }, [isSupported, cleanup, transcribeBlob])
 
-    recognition.onend = () => {
-      setIsListening(false)
-      cleanupAudio()
-    }
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      const mapped = mapRecognitionError(event.error)
-      if (mapped) setError(mapped)
-      setIsListening(false)
-      cleanupAudio()
-    }
-
-    recognitionRef.current = recognition
-    recognition.start()
-    setIsListening(true)
-  }, [isSupported, onResult, cleanupAudio, options.lang])
-
-  // Hard cleanup on unmount: if the component is torn down while we're still
-  // listening (e.g. user navigates away mid-utterance), stop recognition and
-  // release the mic + AudioContext immediately.
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      try {
-        recognitionRef.current?.stop()
-      } catch {
-        // recognition may already be stopped
-      }
-      recognitionRef.current = null
+      try { mediaRecorderRef.current?.stop() } catch { /* noop */ }
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(t => t.stop())
-        mediaStreamRef.current = null
       }
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(() => {})
-        audioContextRef.current = null
       }
     }
   }, [])
-
-  const stopListening = useCallback(() => {
-    recognitionRef.current?.stop()
-    setIsListening(false)
-    setTranscript('')
-    cleanupAudio()
-  }, [cleanupAudio])
 
   const toggleListening = useCallback(() => {
     if (isListening) stopListening()

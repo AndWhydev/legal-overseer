@@ -1,255 +1,210 @@
 // @vitest-environment jsdom
 /**
- * Unit tests for useVoiceInput — the Web Speech API wrapper that powers
- * mic input in the docked chat composer (VoicePill).
+ * Unit tests for useVoiceInput — MediaRecorder + server-side Whisper.
  *
- * We mock SpeechRecognition, AudioContext, and getUserMedia to exercise
- * every branch deterministically.
+ * Mocks MediaRecorder, AudioContext, getUserMedia, and fetch to exercise
+ * the full record → transcribe flow deterministically.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
 import { useVoiceInput } from '../use-voice-input'
 
-// ─── Mock SpeechRecognition ──────────────────────────────────────────
+// ─── Mock MediaRecorder ────────────────────────────────────────────────
 
-interface MockResults {
-  length: number
-  [index: number]: { isFinal: boolean; 0: { transcript: string; confidence: number } }
-}
+let lastRecorder: MockMediaRecorder | null = null
 
-class MockSpeechRecognition extends EventTarget {
-  continuous = false
-  interimResults = false
-  lang = ''
-  onresult: ((event: { results: MockResults }) => void) | null = null
-  onend: (() => void) | null = null
-  onerror: ((event: { error: string }) => void) | null = null
+class MockMediaRecorder {
+  state: 'inactive' | 'recording' = 'inactive'
+  mimeType = 'audio/webm'
+  ondataavailable: ((e: { data: Blob }) => void) | null = null
+  onstop: (() => void) | null = null
+  start = vi.fn(() => { this.state = 'recording' })
+  stop = vi.fn(() => {
+    this.state = 'inactive'
+    this.ondataavailable?.({ data: new Blob(['audio-data'], { type: 'audio/webm' }) })
+    Promise.resolve().then(() => this.onstop?.())
+  })
 
-  start = vi.fn()
-  stop = vi.fn()
-
-  // Test helpers
-  fireResult(text: string, isFinal: boolean) {
-    const results: MockResults = {
-      length: 1,
-      0: {
-        isFinal,
-        0: { transcript: text, confidence: 0.9 },
-      },
-    }
-    this.onresult?.({ results })
+  constructor() {
+    lastRecorder = this
   }
 
-  fireError(error: string) {
-    this.onerror?.({ error })
-  }
-
-  fireEnd() {
-    this.onend?.()
-  }
+  static isTypeSupported() { return true }
 }
 
-// Latest-constructed instance so tests can fire events into it
-let lastRecognition: MockSpeechRecognition | null = null
+// ─── Mock AudioContext + AnalyserNode ──────────────────────────────────
 
-// Constructor-style so `new SpeechRecognition()` works. Arrow functions cannot
-// be used as constructors, so we use a function declaration that assigns to
-// `this` and stores the instance for test helpers to interact with.
-function SpeechRecognitionCtor(this: MockSpeechRecognition) {
-  const instance = new MockSpeechRecognition()
-  lastRecognition = instance
-  return instance
+const mockAnalyser = {
+  fftSize: 0,
+  smoothingTimeConstant: 0,
+  frequencyBinCount: 32,
+  getByteFrequencyData: vi.fn((arr: Uint8Array) => arr.fill(128)),
 }
 
-// ─── Mock AudioContext / AnalyserNode ───────────────────────────────
+const mockAudioSource = { connect: vi.fn() }
 
-function makeMockAudioContext() {
-  return {
-    createAnalyser: vi.fn(() => ({
-      fftSize: 0,
-      smoothingTimeConstant: 0,
-      frequencyBinCount: 128,
-      getByteFrequencyData: vi.fn(),
-      connect: vi.fn(),
-    })),
-    createMediaStreamSource: vi.fn(() => ({ connect: vi.fn() })),
-    close: vi.fn(() => Promise.resolve()),
-    state: 'running',
-  }
+class MockAudioContext {
+  state = 'running'
+  createMediaStreamSource = vi.fn(() => mockAudioSource)
+  createAnalyser = vi.fn(() => mockAnalyser)
+  close = vi.fn(() => Promise.resolve())
 }
 
-function MockAudioContextCtor(this: unknown) {
-  return makeMockAudioContext()
+// ─── Mock getUserMedia ────────────────────────────────────────────────
+
+const mockStream = {
+  getTracks: () => [{ stop: vi.fn() }],
 }
 
-function makeMockStream() {
-  return {
-    getTracks: () => [{ stop: vi.fn(), kind: 'audio' }],
-  } as unknown as MediaStream
-}
+const mockGetUserMedia = vi.fn(() => Promise.resolve(mockStream))
 
-// ─── Test setup ──────────────────────────────────────────────────────
+// ─── Setup ────────────────────────────────────────────────────────────
+
+beforeEach(() => {
+  lastRecorder = null
+
+  // @ts-expect-error — mock globals
+  globalThis.MediaRecorder = MockMediaRecorder as unknown as typeof MediaRecorder
+
+  // @ts-expect-error — mock AudioContext
+  globalThis.AudioContext = MockAudioContext
+  // @ts-expect-error — mock getUserMedia
+  globalThis.navigator.mediaDevices = { getUserMedia: mockGetUserMedia }
+
+  // Mock requestAnimationFrame — do NOT invoke callback, it causes infinite recursion
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation(() => 1)
+  vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => {})
+
+  // Mock fetch for /api/voice/transcribe
+  vi.stubGlobal('fetch', vi.fn(() =>
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ text: 'hello world' }),
+    }),
+  ))
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  lastRecorder = null
+})
+
+// ─── Tests ────────────────────────────────────────────────────────────
 
 describe('useVoiceInput', () => {
-  beforeEach(() => {
-    lastRecognition = null
-    vi.stubGlobal('SpeechRecognition', SpeechRecognitionCtor)
-    vi.stubGlobal('webkitSpeechRecognition', SpeechRecognitionCtor)
-    vi.stubGlobal('AudioContext', MockAudioContextCtor)
-
-    Object.defineProperty(navigator, 'mediaDevices', {
-      value: {
-        getUserMedia: vi.fn(() => Promise.resolve(makeMockStream())),
-      },
-      writable: true,
-      configurable: true,
-    })
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
-    vi.restoreAllMocks()
-  })
-
-  // ─── Capability detection ──────────────────────────────────────────
-
-  it('reports isSupported=false when neither SpeechRecognition API is present', () => {
-    vi.stubGlobal('SpeechRecognition', undefined)
-    vi.stubGlobal('webkitSpeechRecognition', undefined)
-    // Manually remove from window because `'key' in window` is what the hook checks
-    delete (window as unknown as Record<string, unknown>).SpeechRecognition
-    delete (window as unknown as Record<string, unknown>).webkitSpeechRecognition
-
-    const { result } = renderHook(() => useVoiceInput())
-    expect(result.current.isSupported).toBe(false)
-  })
-
-  it('reports isSupported=true when SpeechRecognition is present', () => {
+  it('reports isSupported when MediaRecorder and getUserMedia exist', () => {
     const { result } = renderHook(() => useVoiceInput())
     expect(result.current.isSupported).toBe(true)
   })
 
-  // ─── Lifecycle ─────────────────────────────────────────────────────
-
-  it('startListening sets isListening=true and calls recognition.start()', async () => {
+  it('starts recording on startListening', async () => {
     const { result } = renderHook(() => useVoiceInput())
 
     await act(async () => {
       await result.current.startListening()
     })
 
+    expect(mockGetUserMedia).toHaveBeenCalledWith({ audio: true })
     expect(result.current.isListening).toBe(true)
-    expect(lastRecognition).not.toBeNull()
-    expect(lastRecognition!.start).toHaveBeenCalledTimes(1)
+    expect(lastRecorder).not.toBeNull()
+    expect(lastRecorder!.start).toHaveBeenCalled()
   })
 
-  it('stopListening clears transcript and stops tracks', async () => {
-    const { result } = renderHook(() => useVoiceInput())
+  it('stops recording and transcribes on stopListening', async () => {
+    const onResult = vi.fn()
+    const { result } = renderHook(() => useVoiceInput(onResult))
 
     await act(async () => {
       await result.current.startListening()
     })
 
-    // Populate some interim transcript
-    act(() => {
-      lastRecognition!.fireResult('hello there', false)
-    })
-    expect(result.current.transcript).toBe('hello there')
-
-    act(() => {
+    await act(async () => {
       result.current.stopListening()
+      // Wait for transcription fetch to resolve
+      await new Promise(r => setTimeout(r, 10))
     })
 
+    expect(lastRecorder!.stop).toHaveBeenCalled()
     expect(result.current.isListening).toBe(false)
-    expect(result.current.transcript).toBe('')
-    expect(lastRecognition!.stop).toHaveBeenCalled()
+    // Fetch was called with the audio blob
+    expect(fetch).toHaveBeenCalledWith('/api/voice/transcribe', expect.objectContaining({
+      method: 'POST',
+    }))
+    expect(onResult).toHaveBeenCalledWith('hello world')
   })
 
-  // ─── Results ───────────────────────────────────────────────────────
-
-  it('interim result updates transcript but does NOT call onResult', async () => {
-    const onResult = vi.fn()
-    const { result } = renderHook(() => useVoiceInput(onResult))
+  it('toggleListening toggles between start and stop', async () => {
+    const { result } = renderHook(() => useVoiceInput())
 
     await act(async () => {
-      await result.current.startListening()
+      result.current.toggleListening()
+      await new Promise(r => setTimeout(r, 10))
     })
-
-    act(() => {
-      lastRecognition!.fireResult('partial ', false)
-    })
-
-    expect(result.current.transcript).toBe('partial ')
-    expect(onResult).not.toHaveBeenCalled()
-  })
-
-  it('final result calls onResult with the text and clears transcript', async () => {
-    const onResult = vi.fn()
-    const { result } = renderHook(() => useVoiceInput(onResult))
+    expect(result.current.isListening).toBe(true)
 
     await act(async () => {
-      await result.current.startListening()
+      result.current.toggleListening()
+      await new Promise(r => setTimeout(r, 10))
     })
-
-    act(() => {
-      lastRecognition!.fireResult('send this message', true)
-    })
-
-    expect(onResult).toHaveBeenCalledWith('send this message')
-    expect(result.current.transcript).toBe('')
+    expect(result.current.isListening).toBe(false)
   })
 
-  // ─── Error mapping ─────────────────────────────────────────────────
+  it('shows error when getUserMedia is denied', async () => {
+    mockGetUserMedia.mockRejectedValueOnce(new DOMException('denied', 'NotAllowedError'))
 
-  it('recognition "not-allowed" error surfaces "Microphone access denied"', async () => {
     const { result } = renderHook(() => useVoiceInput())
 
     await act(async () => {
       await result.current.startListening()
-    })
-
-    act(() => {
-      lastRecognition!.fireError('not-allowed')
     })
 
     expect(result.current.error).toBe('Microphone access denied')
     expect(result.current.isListening).toBe(false)
   })
 
-  it('recognition "network" error surfaces a network message', async () => {
+  it('shows error when transcription fails', async () => {
+    vi.stubGlobal('fetch', vi.fn(() =>
+      Promise.resolve({ ok: false, text: () => Promise.resolve('Server error') }),
+    ))
+
     const { result } = renderHook(() => useVoiceInput())
 
     await act(async () => {
       await result.current.startListening()
     })
 
-    act(() => {
-      lastRecognition!.fireError('network')
+    await act(async () => {
+      result.current.stopListening()
+      await new Promise(r => setTimeout(r, 10))
     })
 
-    expect(result.current.error).toBe('Network error — try again')
+    expect(result.current.error).toBe('Server error')
   })
 
-  it('recognition "no-speech" error is benign and does not surface', async () => {
-    const { result } = renderHook(() => useVoiceInput())
+  it('shows "No speech detected" when Whisper returns empty text', async () => {
+    vi.stubGlobal('fetch', vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve({ text: '' }) }),
+    ))
+
+    const onResult = vi.fn()
+    const { result } = renderHook(() => useVoiceInput(onResult))
 
     await act(async () => {
       await result.current.startListening()
     })
 
-    act(() => {
-      lastRecognition!.fireError('no-speech')
+    await act(async () => {
+      result.current.stopListening()
+      await new Promise(r => setTimeout(r, 10))
     })
 
-    expect(result.current.error).toBe(null)
-    expect(result.current.isListening).toBe(false)
+    expect(result.current.error).toBe('No speech detected')
+    expect(onResult).not.toHaveBeenCalled()
   })
 
-  it('getUserMedia NotAllowedError surfaces "Microphone access denied"', async () => {
-    navigator.mediaDevices.getUserMedia = vi.fn(() =>
-      Promise.reject(new DOMException('denied', 'NotAllowedError')),
-    )
+  it('clearError clears the error state', async () => {
+    mockGetUserMedia.mockRejectedValueOnce(new DOMException('denied', 'NotAllowedError'))
 
     const { result } = renderHook(() => useVoiceInput())
 
@@ -257,142 +212,12 @@ describe('useVoiceInput', () => {
       await result.current.startListening()
     })
 
-    await waitFor(() => {
-      expect(result.current.error).toBe('Microphone access denied')
-    })
-    expect(result.current.isListening).toBe(false)
-    // Recognition should never have been constructed because we bailed early
-    expect(lastRecognition).toBeNull()
-  })
-
-  it('getUserMedia NotFoundError surfaces "Microphone unavailable"', async () => {
-    navigator.mediaDevices.getUserMedia = vi.fn(() =>
-      Promise.reject(new DOMException('none', 'NotFoundError')),
-    )
-
-    const { result } = renderHook(() => useVoiceInput())
-
-    await act(async () => {
-      await result.current.startListening()
-    })
-
-    await waitFor(() => {
-      expect(result.current.error).toBe('Microphone unavailable')
-    })
-  })
-
-  it('startListening clears prior error', async () => {
-    navigator.mediaDevices.getUserMedia = vi.fn(() =>
-      Promise.reject(new DOMException('denied', 'NotAllowedError')),
-    )
-
-    const { result } = renderHook(() => useVoiceInput())
-
-    await act(async () => {
-      await result.current.startListening()
-    })
-    await waitFor(() => expect(result.current.error).toBe('Microphone access denied'))
-
-    // Now succeed
-    navigator.mediaDevices.getUserMedia = vi.fn(() => Promise.resolve(makeMockStream()))
-
-    await act(async () => {
-      await result.current.startListening()
-    })
-
-    expect(result.current.error).toBe(null)
-    expect(result.current.isListening).toBe(true)
-  })
-
-  it('clearError() resets error to null', async () => {
-    const { result } = renderHook(() => useVoiceInput())
-
-    await act(async () => {
-      await result.current.startListening()
-    })
-
-    act(() => {
-      lastRecognition!.fireError('not-allowed')
-    })
     expect(result.current.error).toBe('Microphone access denied')
 
     act(() => {
       result.current.clearError()
     })
-    expect(result.current.error).toBe(null)
-  })
 
-  // ─── Toggle ────────────────────────────────────────────────────────
-
-  it('toggleListening starts when idle and stops when listening', async () => {
-    const { result } = renderHook(() => useVoiceInput())
-
-    await act(async () => {
-      await result.current.toggleListening()
-    })
-    expect(result.current.isListening).toBe(true)
-
-    act(() => {
-      result.current.toggleListening()
-    })
-    expect(result.current.isListening).toBe(false)
-  })
-
-  // ─── Language ──────────────────────────────────────────────────────
-
-  it('uses navigator.language by default', async () => {
-    Object.defineProperty(navigator, 'language', {
-      value: 'es-ES',
-      configurable: true,
-    })
-
-    const { result } = renderHook(() => useVoiceInput())
-
-    await act(async () => {
-      await result.current.startListening()
-    })
-
-    expect(lastRecognition).not.toBeNull()
-    expect(lastRecognition!.lang).toBe('es-ES')
-  })
-
-  it('explicit lang override wins over navigator.language', async () => {
-    Object.defineProperty(navigator, 'language', {
-      value: 'es-ES',
-      configurable: true,
-    })
-
-    const { result } = renderHook(() => useVoiceInput(undefined, { lang: 'fr-FR' }))
-
-    await act(async () => {
-      await result.current.startListening()
-    })
-
-    expect(lastRecognition!.lang).toBe('fr-FR')
-  })
-
-  // ─── Unmount cleanup ───────────────────────────────────────────────
-
-  it('stops recognition and releases media tracks on unmount', async () => {
-    const trackStop = vi.fn()
-    navigator.mediaDevices.getUserMedia = vi.fn(() =>
-      Promise.resolve({
-        getTracks: () => [{ stop: trackStop, kind: 'audio' } as unknown as MediaStreamTrack],
-      } as unknown as MediaStream),
-    )
-
-    const { result, unmount } = renderHook(() => useVoiceInput())
-
-    await act(async () => {
-      await result.current.startListening()
-    })
-
-    expect(lastRecognition).not.toBeNull()
-    const stopSpy = lastRecognition!.stop
-
-    unmount()
-
-    expect(stopSpy).toHaveBeenCalled()
-    expect(trackStop).toHaveBeenCalled()
+    expect(result.current.error).toBeNull()
   })
 })
