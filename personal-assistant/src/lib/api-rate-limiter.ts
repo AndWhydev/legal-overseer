@@ -112,6 +112,10 @@ export const USER_ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
   '/api/org/invite': { maxRequests: 10, windowMs: 3_600_000 },
   '/api/voice/session': { maxRequests: 10, windowMs: 60_000 },
   '/api/voice/stream': { maxRequests: 20, windowMs: 60_000 },
+  // Telegram onboarding pairing: 5 codes per 5 min per user. Prevents
+  // accidental DB write amplification if the UI retries and keeps the
+  // user from locking themselves out.
+  '/api/bridges/telegram/pair': { maxRequests: 5, windowMs: 300_000 },
 }
 
 /**

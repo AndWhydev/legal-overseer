@@ -29,6 +29,7 @@
     { "path": "/api/cron/bridge-health", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/bridge-lifecycle", "schedule": "0 3 * * *" },
     { "path": "/api/cron/bridge-pool", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/bridge-cost-leak", "schedule": "0 5 * * *" },
     { "path": "/api/cron/task-heartbeat", "schedule": "* * * * *" },
     { "path": "/api/cron/brain-consolidation", "schedule": "*/30 * * * *" }
   ]

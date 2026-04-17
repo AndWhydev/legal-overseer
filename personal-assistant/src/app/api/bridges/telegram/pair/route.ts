@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createClient } from '@/lib/supabase/server'
 import { getActiveOrgId } from '@/lib/tenancy'
+import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { logger } from '@/lib/core/logger'
 
 /**
@@ -22,6 +23,11 @@ export async function POST() {
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // 5 pair requests per 5 min per user — prevents UI retry storms from
+  // blowing up org_connections writes + locks the user out gracefully.
+  const rateLimited = checkUserEndpointLimit(user.id, '/api/bridges/telegram/pair')
+  if (rateLimited) return rateLimited
 
   const botUsername = process.env.TELEGRAM_BOT_USERNAME
   if (!botUsername) {
