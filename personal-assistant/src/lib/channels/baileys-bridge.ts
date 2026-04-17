@@ -50,6 +50,7 @@ import type { WhatsAppSessionStatus } from './whatsapp-monitor'
 import { processWhatsAppMessage } from './whatsapp-parser'
 import { enrichInboundMessage } from '@/lib/conversation/inbound-enrichment'
 import { logger } from '@/lib/core/logger';
+import { assertOutboundAllowed, OutboundBlockedError } from './guards'
 
 // ---------------------------------------------------------------------------
 // Dynamic Baileys import — module works even if @whiskeysockets/baileys is
@@ -606,6 +607,19 @@ export class BaileysBridge {
           try {
             const recipient = row.recipient as string
             const jid = recipient.includes('@') ? recipient : `${recipient}@s.whatsapp.net`
+
+            try {
+              assertOutboundAllowed(recipient, 'baileys')
+            } catch (err) {
+              if (err instanceof OutboundBlockedError) {
+                await this.supabase
+                  .from('whatsapp_outbox')
+                  .update({ status: 'blocked', error: err.message })
+                  .eq('id', row.id)
+                continue
+              }
+              throw err
+            }
 
             await this.sock.sendMessage(jid, { text: row.body as string })
 

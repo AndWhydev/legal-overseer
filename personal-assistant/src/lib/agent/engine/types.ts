@@ -39,6 +39,8 @@ export interface EngineConfig {
   userEmail?: string
   /** User's display name for identity anchoring in the system prompt. */
   userDisplayName?: string
+  /** User's IANA timezone (e.g. 'Australia/Brisbane'). Used to render dates in the system prompt. */
+  userTimezone?: string | null
   /** Channel the message arrived from (web, sendblue, telegram, whatsapp). */
   channel?: 'web' | 'sendblue' | 'telegram' | 'whatsapp'
   /** Multimodal content blocks from file attachments (images, PDFs, documents).

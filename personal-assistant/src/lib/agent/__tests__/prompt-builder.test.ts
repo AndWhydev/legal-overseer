@@ -158,7 +158,7 @@ describe('buildEntityAwarePrompt', () => {
 
   it('includes connected channels from channel_connections', async () => {
     const supabase = createMockSupabase({
-      channel_connections: {
+      connector_last_activity: {
         data: [
           { channel_type: 'whatsapp', status: 'connected', last_sync: '2026-01-01T00:00:00Z', config: {} },
           { channel_type: 'gmail', status: 'connected', last_sync: '2026-01-02T00:00:00Z', config: { account_email: 'tor@gmail.com' } },
@@ -175,7 +175,7 @@ describe('buildEntityAwarePrompt', () => {
   it('shows iMessage routing hint ONLY when iMessage is connected', async () => {
     // With iMessage connected
     const supabaseWithImessage = createMockSupabase({
-      channel_connections: {
+      connector_last_activity: {
         data: [
           { channel_type: 'imessage', status: 'connected', last_sync: '2026-01-01T00:00:00Z', config: {} },
         ],
@@ -188,7 +188,7 @@ describe('buildEntityAwarePrompt', () => {
 
     // Without iMessage
     const supabaseNoImessage = createMockSupabase({
-      channel_connections: {
+      connector_last_activity: {
         data: [
           { channel_type: 'whatsapp', status: 'connected', last_sync: null, config: {} },
         ],
@@ -230,7 +230,7 @@ describe('buildEntityAwarePrompt', () => {
 
   it('shows "No channels connected yet." when no channels exist', async () => {
     const supabase = createMockSupabase({
-      channel_connections: { data: [], error: null },
+      connector_last_activity: { data: [], error: null },
     })
     const result = await buildEntityAwarePrompt(supabase, ORG_ID, 'hello')
     expect(result).toContain('No channels connected yet.')

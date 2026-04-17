@@ -21,6 +21,8 @@ export interface ResolvedIdentity {
   contactId?: string
   displayName?: string
   email?: string
+  /** IANA timezone (e.g. 'Australia/Brisbane'). Loaded from users.timezone at identity resolution. */
+  timezone?: string | null
   isAuthenticated: boolean
 }
 

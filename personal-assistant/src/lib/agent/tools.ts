@@ -19,6 +19,7 @@ import { spawnAsyncTaskDefinition, handleSpawnAsyncTask } from './tools/spawn-as
 import { humanHandoffToolDefinition, handleHumanHandoff } from './tools/human-handoff'
 import { imageToolDefinitions, imageToolHandlers } from './tools/image-tools'
 import { composioToolDefinitions, composioToolHandlers } from './tools/composio-tools'
+import { disconnectConnectorToolDefinitions, disconnectConnectorToolHandlers } from './tools/disconnect-connector'
 import { workspaceToolDefinitions, workspaceToolHandlers } from './tools/workspace-tools'
 import { browserToolDefinitions, browserToolHandlers } from './tools/browser-tools'
 import { executeComposioToolForOrg } from '@/lib/composio/tool-provider'
@@ -137,7 +138,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
     id: 'composio',
     label: 'Composio Integrations',
     description: 'Connect and execute actions across third-party apps (HubSpot, Notion, Jira, Salesforce, Slack, Gmail, and more) via OAuth. Connected app tools are injected natively — use composio_connect_app to link new ones.',
-    tools: ['composio_connect_app'],
+    tools: ['composio_connect_app', 'disconnect_connector'],
   },
   workspace: {
     id: 'workspace',
@@ -1053,6 +1054,7 @@ const allHandlers: Record<string, AgentToolHandler> = {
   ...graphTraversalToolHandlers,
   ...imageToolHandlers,
   ...composioToolHandlers,
+  ...disconnectConnectorToolHandlers,
   ...workspaceToolHandlers,
   ...browserToolHandlers,
   async generate_invoice(input, orgId, supabase) {
@@ -1070,7 +1072,7 @@ const allHandlers: Record<string, AgentToolHandler> = {
 }
 
 export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
-  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...commsToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, ...webToolDefinitions, ...graphTraversalToolDefinitions, ...imageToolDefinitions, ...composioToolDefinitions, ...workspaceToolDefinitions, ...browserToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition, cancelTaskToolDefinition, spawnAsyncTaskDefinition, humanHandoffToolDefinition]
+  const allTools = [...toolDefinitions, ...channelToolDefinitions, ...commsToolDefinitions, ...codeExecutionToolDefinitions, ...adToolDefinitions, ...seoToolDefinitions, ...tenderToolDefinitions, ...contentToolDefinitions, ...builderToolDefinitions, ...projectToolDefinitions, ...standingOrderToolDefinitions, ...webToolDefinitions, ...graphTraversalToolDefinitions, ...imageToolDefinitions, ...composioToolDefinitions, ...disconnectConnectorToolDefinitions, ...workspaceToolDefinitions, ...browserToolDefinitions, invoiceToolDefinition, spawnAgentToolDefinition, cancelTaskToolDefinition, spawnAsyncTaskDefinition, humanHandoffToolDefinition]
   if (!groups || groups.length === 0) return allTools
 
   const selectedGroups = new Set<ToolGroup>(['core', ...groups])

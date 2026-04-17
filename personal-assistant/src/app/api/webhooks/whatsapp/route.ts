@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   }
 
-  let identity: { userId: string; orgId: string; displayName?: string; email?: string } | null = null
+  let identity: { userId: string; orgId: string; displayName?: string; email?: string; timezone?: string | null } | null = null
   try {
     const resolved = await resolveChannelIdentity(supabase, {
       channelType: 'whatsapp',
@@ -165,6 +165,7 @@ export async function POST(request: NextRequest) {
         orgId: resolved.orgId,
         displayName: resolved.displayName,
         email: resolved.email,
+        timezone: resolved.timezone,
       }
     }
   } catch {
@@ -244,6 +245,7 @@ export async function POST(request: NextRequest) {
           orgId: identity.orgId,
           email: identity.email,
           displayName: identity.displayName ?? fromName,
+          timezone: identity.timezone,
         },
         replyTo: fromPhone,
         channelMetadata,

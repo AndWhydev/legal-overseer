@@ -4,7 +4,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { resolveChannelIdentity } from "@/lib/conversation/identity-resolver";
 import { enrichInboundMessage } from "@/lib/conversation/inbound-enrichment";
 import { handleGatewayMessage } from "@/lib/channels/gateway-handler";
-import { sendSendblueMessage } from "@/lib/channels/sendblue";
+import { sendSendblueMessage, normalizePhone } from "@/lib/channels/sendblue";
 import { downloadSendblueMedia } from "@/lib/channels/sendblue-media";
 import { transcribeVoiceNote } from "@/lib/channels/voice-transcription";
 import { handleUnknownSender } from "@/lib/channels/sendblue-onboarding";
@@ -122,9 +122,36 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // Echo prevention
+  // Echo prevention — normalize both sides before comparing so that formatting
+  // differences (spaces, dashes, missing '+') can't bypass the filter and cause
+  // our own outbound message to be replayed as an inbound user turn.
   const ourNumber = process.env.SENDBLUE_FROM_NUMBER;
-  if (ourNumber && fromNumber === ourNumber) {
+  if (ourNumber) {
+    try {
+      if (normalizePhone(fromNumber) === normalizePhone(ourNumber)) {
+        logger.debug("[webhook/sendblue] Dropped echo from our own number", {
+          fromNumber,
+        });
+        return NextResponse.json({ ok: true });
+      }
+    } catch {
+      // If normalization throws on either side, fall back to strict compare
+      if (fromNumber === ourNumber) {
+        return NextResponse.json({ ok: true });
+      }
+    }
+  }
+
+  // Defense-in-depth: Sendblue sometimes sends status-callback webhooks where
+  // `status` is set AND content is populated (e.g. delivery receipt echoes).
+  // The earlier `status && !content && !media_url` check only catches the pure
+  // status case. If a non-error status slips through with content, drop it —
+  // real inbound messages from end-users don't carry a terminal status.
+  if (body.status && (body.status === "SENT" || body.status === "DELIVERED" || body.status === "READ")) {
+    logger.debug("[webhook/sendblue] Dropped terminal-status echo", {
+      status: body.status,
+      from: fromNumber,
+    });
     return NextResponse.json({ ok: true });
   }
 
@@ -235,6 +262,7 @@ export async function POST(request: NextRequest) {
         orgId: identity.orgId,
         email: identity.email,
         displayName: identity.displayName,
+        timezone: identity.timezone,
       },
       replyTo: fromNumber,
       channelMetadata,

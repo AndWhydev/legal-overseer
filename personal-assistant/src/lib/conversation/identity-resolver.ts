@@ -60,10 +60,23 @@ export async function resolveChannelIdentity(
     if (identity) {
       // Fire-and-forget touch
       touchIdentity(supabase, identity.id).catch(() => {})
+      // Load timezone — Phase 51 D1. Non-fatal on error.
+      let timezone: string | null = null
+      try {
+        const { data: userRow } = await supabase
+          .from('users')
+          .select('timezone')
+          .eq('id', identity.user_id)
+          .maybeSingle()
+        timezone = (userRow?.timezone as string | null | undefined) ?? null
+      } catch {
+        // Ignore — timezone falls back to UTC in prompt builder.
+      }
       return {
         userId: identity.user_id,
         orgId: identity.org_id,
         displayName: identity.display_name ?? undefined,
+        timezone,
         isAuthenticated: identity.verified,
       }
     }

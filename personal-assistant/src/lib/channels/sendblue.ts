@@ -1,4 +1,5 @@
 import { logger } from '@/lib/core/logger'
+import { assertOutboundAllowed, OutboundBlockedError } from './guards'
 
 const SENDBLUE_API_BASE = 'https://api.sendblue.co/api'
 
@@ -71,6 +72,18 @@ export async function sendSendblueMessage(
   }
 
   const normalized = normalizePhone(to)
+
+  try {
+    assertOutboundAllowed(normalized, 'sendblue')
+  } catch (err) {
+    if (err instanceof OutboundBlockedError) {
+      if (err.reason === 'dry-run') {
+        return { success: true, messageId: `dry-run-${Date.now()}` }
+      }
+      return { success: false, error: err.message }
+    }
+    throw err
+  }
 
   const body: Record<string, string> = {
     number: normalized,

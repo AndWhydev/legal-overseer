@@ -19,6 +19,8 @@ describe('SMS Adapter', () => {
     process.env.TELNYX_MESSAGING_PROFILE_ID = 'test-profile-id'
     process.env.TELNYX_WEBHOOK_SECRET = 'test-webhook-secret'
     process.env.TELNYX_FROM_NUMBER = '+61412345678'
+    // Phase 51 A2: outbound guard requires allowlisting in non-prod envs.
+    process.env.SENDBLUE_DEV_ALLOWLIST = '+61412345678,+61498765432,+1234'
   })
 
   describe('normalizePhoneNumber', () => {

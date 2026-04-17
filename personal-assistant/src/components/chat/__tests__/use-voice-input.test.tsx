@@ -64,7 +64,6 @@ const mockGetUserMedia = vi.fn(() => Promise.resolve(mockStream))
 beforeEach(() => {
   lastRecorder = null
 
-  // @ts-expect-error — mock globals
   globalThis.MediaRecorder = MockMediaRecorder as unknown as typeof MediaRecorder
 
   // @ts-expect-error — mock AudioContext

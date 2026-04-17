@@ -1,5 +1,6 @@
 import type { ChannelAdapter } from './types'
 import { logger } from '@/lib/core/logger';
+import { assertOutboundAllowed, OutboundBlockedError } from './guards'
 
 /**
  * Send a text message via Telegram Bot API.
@@ -9,6 +10,15 @@ export async function sendTelegramMessage(chatId: string, text: string): Promise
   if (!token) {
     logger.warn('Telegram: TELEGRAM_BOT_TOKEN not set')
     return false
+  }
+
+  try {
+    assertOutboundAllowed(chatId, 'telegram')
+  } catch (err) {
+    if (err instanceof OutboundBlockedError) {
+      return err.reason === 'dry-run'
+    }
+    throw err
   }
 
   try {

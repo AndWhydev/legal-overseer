@@ -5,7 +5,13 @@ describe('sendblue', () => {
   const originalEnv = process.env
 
   beforeEach(() => {
-    process.env = { ...originalEnv, SENDBLUE_API_KEY: 'test-key', SENDBLUE_API_SECRET: 'test-secret', SENDBLUE_FROM_NUMBER: '+15551234567' }
+    process.env = {
+      ...originalEnv,
+      SENDBLUE_API_KEY: 'test-key',
+      SENDBLUE_API_SECRET: 'test-secret',
+      SENDBLUE_FROM_NUMBER: '+15551234567',
+      SENDBLUE_DEV_ALLOWLIST: '+1234,+14155551234,+61412345678',
+    }
     vi.stubGlobal('fetch', vi.fn())
   })
 

@@ -39,7 +39,7 @@ export type { InboundMessage, PipelineResult }
 interface PipelineConfig {
   supabase: SupabaseClient
   /** Pre-resolved identity (web chat provides userId/orgId directly from auth) */
-  identity?: { userId: string; orgId: string; email?: string; displayName?: string }
+  identity?: { userId: string; orgId: string; email?: string; displayName?: string; timezone?: string | null }
   /** Explicit thread to continue */
   threadId?: string
   /** Engine overrides */
@@ -62,8 +62,21 @@ interface PersistedToolTrace {
 /**
  * Convert stored conversation messages to Anthropic MessageParam format
  * for injection into engine history.
+ *
+ * SAFETY-CRITICAL MAPPING:
+ *   conversation_messages.role='user'      → LLM role='user'      (inbound from human)
+ *   conversation_messages.role='assistant' → LLM role='assistant' (outbound from BitBit)
+ *   anything else (tool_call, tool_result, system, null, unknown) is SKIPPED.
+ *
+ * Skipping unknown roles (rather than defaulting to 'user') is deliberate:
+ * if a future schema change adds a new role we haven't taught the LLM about,
+ * the worst case is a truncated history — never a role inversion where the
+ * agent sees its own outbound message as a fresh inbound user turn, which
+ * causes the agent to hallucinate responses to its own prior words.
+ *
+ * See `role-mapping.test.ts` (colocated) for the exhaustive invariant check.
  */
-function messagesToHistory(messages: ConversationMessageRecord[]): Anthropic.MessageParam[] {
+export function messagesToHistory(messages: ConversationMessageRecord[]): Anthropic.MessageParam[] {
   const history: Anthropic.MessageParam[] = []
 
   for (const msg of messages) {
@@ -72,9 +85,10 @@ function messagesToHistory(messages: ConversationMessageRecord[]): Anthropic.Mes
     } else if (msg.role === 'assistant') {
       history.push({ role: 'assistant', content: msg.content })
     }
-    // tool_call and tool_result roles are skipped — the engine replays
-    // tool interactions within its own loop; including partial tool state
-    // in history would confuse the model.
+    // tool_call, tool_result, system, null, unknown roles are skipped —
+    // the engine replays tool interactions within its own loop; including
+    // partial tool state in history would confuse the model. Silently
+    // dropping unknown roles is safer than guessing a mapping.
   }
 
   return history
@@ -127,6 +141,7 @@ export class UnifiedConversationPipeline {
         orgId: config.identity.orgId,
         email: config.identity.email,
         displayName: config.identity.displayName,
+        timezone: config.identity.timezone ?? null,
         isAuthenticated: true,
       }
     } else if (inbound.userId && inbound.orgId) {
@@ -263,6 +278,7 @@ export class UnifiedConversationPipeline {
       // User identity for system prompt anchoring
       userEmail: identity.email,
       userDisplayName: identity.displayName,
+      userTimezone: identity.timezone ?? null,
       // Multimodal content blocks from file attachments
       contentBlocks: config.contentBlocks,
       // Channel the message arrived from

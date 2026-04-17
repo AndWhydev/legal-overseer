@@ -293,8 +293,8 @@ export async function* runTAORLoop(
   // ── 3. Context assembly ────────────────────────────────────────────
   yield { type: 'stage', data: { stage: 'context_assembly', status: 'start' } }
 
-  const userProfile = (config.userEmail || config.userDisplayName)
-    ? { email: config.userEmail, displayName: config.userDisplayName }
+  const userProfile = (config.userEmail || config.userDisplayName || config.userTimezone)
+    ? { email: config.userEmail, displayName: config.userDisplayName, timezone: config.userTimezone ?? null }
     : undefined
 
   // System 1 queries use reduced assembler config for fast path (<50ms)

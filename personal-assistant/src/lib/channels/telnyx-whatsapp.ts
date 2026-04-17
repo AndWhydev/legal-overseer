@@ -11,6 +11,7 @@
  */
 
 import { logger } from '@/lib/core/logger'
+import { assertOutboundAllowed, OutboundBlockedError } from './guards'
 
 const TELNYX_BASE = 'https://api.telnyx.com/v2'
 
@@ -54,6 +55,18 @@ export async function sendTelnyxWhatsApp(
 
   const normalizedTo = normalizeWhatsAppNumber(to)
   const normalizedFrom = normalizeWhatsAppNumber(fromNumber)
+
+  try {
+    assertOutboundAllowed(normalizedTo, 'whatsapp')
+  } catch (err) {
+    if (err instanceof OutboundBlockedError) {
+      if (err.reason === 'dry-run') {
+        return { success: true, messageId: `dry-run-${Date.now()}` }
+      }
+      return { success: false, error: err.message }
+    }
+    throw err
+  }
 
   try {
     const body: Record<string, unknown> = {

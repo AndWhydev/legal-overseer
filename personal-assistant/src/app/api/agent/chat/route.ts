@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
   let userEmail: string | undefined
   let orgId: string
   let displayName: string | undefined
+  let userTimezone: string | null = null
 
   if (isDevBypass()) {
     supabase = getServiceClient()
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
     orgId = '7abcbfb1-67e5-4a3b-aa08-a17cfd2867e9'
     userEmail = 'hi@torkay.com'
     displayName = 'Tor'
+    userTimezone = 'Australia/Brisbane'
     logger.warn('[chat] Using dev bypass auth')
   } else {
     // Try Bearer token auth first (mobile clients), then fall back to cookie auth (web)
@@ -147,6 +149,18 @@ export async function POST(request: NextRequest) {
         || user.user_metadata?.display_name
         || user.email?.split('@')[0]
         || undefined
+    }
+
+    // Load user timezone (Phase 51 D1) — cheap, single row by PK.
+    try {
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('timezone')
+        .eq('id', userId)
+        .maybeSingle()
+      userTimezone = (userRow?.timezone as string | null | undefined) ?? null
+    } catch (err) {
+      logger.debug('[chat] Could not load user timezone — falling back to UTC', { err })
     }
   }
 
@@ -236,6 +250,7 @@ export async function POST(request: NextRequest) {
           orgId,
           email: userEmail,
           displayName,
+          timezone: userTimezone,
         },
         threadId: threadId || undefined,
         contentBlocks: attachmentContentBlocks.length > 0

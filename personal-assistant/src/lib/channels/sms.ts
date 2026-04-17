@@ -3,6 +3,7 @@ import type { ChannelAdapter } from './types'
 import { logger } from '@/lib/core/logger';
 import { smsConversationAdapter } from '@/lib/conversation/sms-adapter'
 import { routeIncomingConversation } from '@/lib/conversation/interface'
+import { assertOutboundAllowed, OutboundBlockedError } from './guards'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -276,6 +277,18 @@ export async function sendSMS(
       success: false,
       error: 'Empty message body',
     }
+  }
+
+  try {
+    assertOutboundAllowed(normalizedTo, 'sms')
+  } catch (err) {
+    if (err instanceof OutboundBlockedError) {
+      if (err.reason === 'dry-run') {
+        return { success: true, messageId: `dry-run-${Date.now()}` }
+      }
+      return { success: false, error: err.message }
+    }
+    throw err
   }
 
   try {

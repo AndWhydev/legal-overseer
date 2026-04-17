@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { timingSafeCompare } from '@/lib/security/webhook-verification'
 import { resolveOrgFromWebhook } from '@/lib/core/resolve-org'
 import { resolveChannelIdentity, linkChannelIdentity } from '@/lib/conversation/identity-resolver'
@@ -13,7 +13,8 @@ import { logger } from '@/lib/core/logger'
  * by /api/bridges/telegram/pair and stored on `org_connections.config.pairing_code`.
  */
 async function consumePairingCode(
-  supabase: ReturnType<typeof createClient>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any, 'public', any, any, any>,
   chatId: string,
   code: string,
   senderName: string,
