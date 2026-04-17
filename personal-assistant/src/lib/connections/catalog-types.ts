@@ -20,6 +20,31 @@ export interface CatalogApp {
   authScheme: string
   /** Whether the org has an ACTIVE ConnectedAccount for this app. */
   connected: boolean
+  /**
+   * True when the user must supply their own credentials (API key / secret)
+   * — no Composio-managed OAuth is available. Frontend should route these
+   * to the BYOK credentials dialog instead of the hosted OAuth redirect.
+   */
+  requiresCredentials?: boolean
+}
+
+/**
+ * Schema for one input field in the BYOK credentials dialog.
+ * Returned by `GET /api/connections/composio/scheme/[appKey]`.
+ */
+export interface AuthSchemeField {
+  name: string
+  displayName: string
+  type: 'string' | 'number' | 'boolean'
+  description: string
+  required: boolean
+}
+
+export interface AuthSchemeResponse {
+  appKey: string
+  mode: 'OAUTH2' | 'API_KEY' | 'BEARER' | 'BASIC' | string
+  fields: AuthSchemeField[]
+  authGuideUrl: string | null
 }
 
 /**

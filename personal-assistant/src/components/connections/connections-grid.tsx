@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ConnectModal, type ConnectModalMode } from '@/components/channels/connect-modal'
 import { BridgeLinkModal } from '@/components/channels/bridge-link-modal'
+import { BYOKConnectDialog } from './byok-connect-dialog'
 import {
   Empty,
   EmptyHeader,
@@ -215,6 +216,8 @@ export function ConnectionsGrid({
   const [modalChannelName, setModalChannelName] = useState('')
   const [bridgeLinkOpen, setBridgeLinkOpen] = useState(false)
   const [bridgeLinkProtocol, setBridgeLinkProtocol] = useState<'imessage' | 'whatsapp' | 'android-messages'>('imessage')
+  const [byokOpen, setByokOpen] = useState(false)
+  const [byokApp, setByokApp] = useState<{ id: string; name: string } | null>(null)
   const handledCallbackRef = useRef<string | null>(null)
 
   /* Debounce search input → debouncedQuery (300 ms) */
@@ -379,6 +382,13 @@ export function ConnectionsGrid({
         logger.warn(
           `No bespoke ConnectModal mode for ${app.id}; falling back to Composio router`,
         )
+      }
+
+      // BYOK toolkits: route to the credentials dialog instead of OAuth.
+      if (app.requiresCredentials) {
+        setByokApp({ id: app.id, name: app.name })
+        setByokOpen(true)
+        return
       }
 
       if (onConnectComposio) {
@@ -608,6 +618,22 @@ export function ConnectionsGrid({
           toast('success', `${bridgeLinkProtocol === 'imessage' ? 'iMessage' : bridgeLinkProtocol} connected`)
         }}
       />
+
+      {byokApp ? (
+        <BYOKConnectDialog
+          open={byokOpen}
+          onOpenChange={(open) => {
+            setByokOpen(open)
+            if (!open) setByokApp(null)
+          }}
+          appKey={byokApp.id}
+          appName={byokApp.name}
+          onSuccess={() => {
+            void fetchOrgConnections()
+            void refetch()
+          }}
+        />
+      ) : null}
     </section>
   )
 }

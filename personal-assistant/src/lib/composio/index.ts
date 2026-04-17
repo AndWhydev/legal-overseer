@@ -1,5 +1,6 @@
 export { getComposioClient, isComposioEnabled } from './client'
-export { initiateConnection, initiateConnectionByAppKey, waitForConnection, listConnectedAccounts, getConnectedAccount, disconnectAccount } from './auth'
+export { initiateConnection, initiateConnectionByAppKey, waitForConnection, listConnectedAccounts, getConnectedAccount, disconnectAccount, getToolkitAuthScheme, connectWithCredentials } from './auth'
+export type { ToolkitAuthScheme, ToolkitAuthSchemeField } from './auth'
 export { createComposioAdapter, isComposioEnabledForChannel, SEND_ACTIONS } from './adapter'
 export { COMPOSIO_TOOLKIT_MAP, CUSTOM_ONLY_CHANNELS, isComposioChannel, getToolkitId, getComposioChannels } from './mapping'
 export { createTrigger, setupChannelTrigger, deleteTrigger, TRIGGER_TYPES } from './triggers'

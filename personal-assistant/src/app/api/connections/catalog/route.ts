@@ -89,31 +89,25 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Only surface toolkits that can actually be connected zero-setup.
-    // That means: (a) Composio has managed credentials (119 toolkits — OAuth
-    // just works), or (b) it's already connected (so we show the row even if
-    // the managed flag later flips). Toolkits that require user-provided
-    // credentials (API keys, custom OAuth apps — ~867 of 1000) are hidden
-    // for now; surfacing them would spawn failing "Connect" buttons.
-    //
-    // Followup: build a BYOK paste-your-API-key UX for custom-auth toolkits
-    // and let them through here too.
+    // Surface every toolkit we can connect — managed OAuth (119 zero-setup)
+    // OR BYOK (user supplies API key / client credentials). The frontend
+    // routes each kind to the right dialog via `requiresCredentials`.
     let catalog = toolkits
       .filter(tk => !tk.no_auth)
-      .filter(tk => {
+      .map(tk => {
         const hasManagedAuth = (tk.composio_managed_auth_schemes || []).length > 0
-        const alreadyConnected = connectedSlugs.has(tk.slug.toLowerCase())
-        return hasManagedAuth || alreadyConnected
+        const firstScheme = (tk.auth_schemes || [])[0] || 'oauth2'
+        return {
+          id: tk.slug,
+          name: tk.name,
+          description: tk.meta?.description || '',
+          categories: (tk.meta?.categories || []).map(c => c.name || c.id),
+          logo: tk.meta?.logo || '',
+          authScheme: firstScheme,
+          connected: connectedSlugs.has(tk.slug.toLowerCase()),
+          requiresCredentials: !hasManagedAuth,
+        }
       })
-      .map(tk => ({
-        id: tk.slug,
-        name: tk.name,
-        description: tk.meta?.description || '',
-        categories: (tk.meta?.categories || []).map(c => c.name || c.id),
-        logo: tk.meta?.logo || '',
-        authScheme: tk.auth_schemes?.[0] || 'oauth2',
-        connected: connectedSlugs.has(tk.slug.toLowerCase()),
-      }))
 
     if (category) {
       catalog = catalog.filter(app =>
@@ -160,6 +154,7 @@ export async function GET(request: NextRequest) {
         logo: '',
         authScheme: provider.auth.method,
         connected: connectedProviders.has(provider.id),
+        requiresCredentials: false,
       })
     }
 
