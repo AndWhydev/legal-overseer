@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { MockLanguageModelV3, simulateReadableStream } from 'ai/test'
 import { callModelViaGateway } from '@/lib/ai/gateway-adapter'
 import { mockGatewayDirect } from '../../../../test/msw/gateway-handler'
 
@@ -88,6 +89,71 @@ describe('gateway-adapter (AI SDK v6 regression lock)', () => {
       name: 'get_weather',
       input: { city: 'BNE' },
     })
+  })
+
+  it('passes systemContentBlocks as SystemModelMessage array (v6 system-param shape)', async () => {
+    // REGRESSION PROOF: commit 8456b5f0 built system parts as
+    //   { type: 'text', text, providerOptions }
+    // which crashed at runtime with:
+    //   "Invalid prompt: system must be a string, SystemModelMessage,
+    //    or array of SystemModelMessage".
+    // v6 requires { role: 'system', content, providerOptions? }. This test
+    // captures the prompt forwarded to the provider and asserts the shape.
+    let capturedPrompt: unknown
+    const model = new MockLanguageModelV3({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      doStream: (async (options: any) => {
+        capturedPrompt = options.prompt
+        return {
+          stream: simulateReadableStream({
+            chunks: [
+              { type: 'stream-start', warnings: [] },
+              { type: 'text-start', id: 't1' },
+              { type: 'text-delta', id: 't1', delta: 'ok' },
+              { type: 'text-end', id: 't1' },
+              {
+                type: 'finish',
+                finishReason: 'stop',
+                usage: {
+                  inputTokens: { total: 1 },
+                  outputTokens: { total: 1, prediction: {} },
+                },
+              },
+            ],
+            chunkDelayInMs: null,
+            initialDelayInMs: null,
+          }),
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }) as any,
+    })
+
+    await callModelViaGateway(
+      {
+        model: 'anthropic/claude-sonnet-4.6',
+        maxTokens: 256,
+        system: 'fallback',
+        systemContentBlocks: [
+          { type: 'text', text: 'cached part', cache_control: { type: 'ephemeral' } },
+          { type: 'text', text: 'uncached part' },
+        ],
+        tools: [],
+        messages: [{ role: 'user' as const, content: 'hello' }],
+      },
+      model,
+    )
+
+    const prompt = capturedPrompt as Array<{
+      role: string
+      content: unknown
+      providerOptions?: Record<string, unknown>
+    }>
+    const systemMsgs = prompt.filter(m => m.role === 'system')
+    expect(systemMsgs).toHaveLength(2)
+    expect(systemMsgs[0].providerOptions?.anthropic).toEqual({
+      cacheControl: { type: 'ephemeral' },
+    })
+    expect(systemMsgs[1].providerOptions).toBeUndefined()
   })
 
   it('does not throw when toolCalls resolves to undefined (length-of-undefined regression)', async () => {

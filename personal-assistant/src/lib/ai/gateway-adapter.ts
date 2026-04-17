@@ -195,16 +195,18 @@ export async function callModelViaGateway(
     ? { anthropic: anthropicOptions }
     : undefined
 
-  // When systemContentBlocks are provided, build an array of system parts
-  // with per-part providerOptions for prompt caching. The AI SDK Anthropic
-  // provider reads cacheControl from each part's providerOptions to set
-  // cache_control: { type: 'ephemeral' } on the corresponding content block.
-  let systemParam: string | Array<{ type: 'text'; text: string; providerOptions?: Record<string, unknown> }>
+  // When systemContentBlocks are provided, build an array of SystemModelMessage
+  // with per-message providerOptions for prompt caching. The AI SDK v6 `system`
+  // parameter accepts `string | SystemModelMessage | Array<SystemModelMessage>`
+  // where SystemModelMessage = { role: 'system', content: string, providerOptions? }.
+  // The Anthropic provider reads cacheControl from each message's providerOptions
+  // to set cache_control: { type: 'ephemeral' } on the corresponding content block.
+  let systemParam: string | Array<{ role: 'system'; content: string; providerOptions?: Record<string, unknown> }>
 
   if (config.systemContentBlocks && config.systemContentBlocks.length > 0) {
     systemParam = config.systemContentBlocks.map(b => ({
-      type: 'text' as const,
-      text: b.text,
+      role: 'system' as const,
+      content: b.text,
       ...(b.cache_control && {
         providerOptions: {
           anthropic: { cacheControl: b.cache_control },
