@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { pairingBreadcrumb } from './pairing-breadcrumbs'
 
 /**
  * BridgePairingPanel
@@ -89,6 +90,10 @@ export function BridgePairingPanel({
   const [state, setState] = useState<LinkingState>('idle')
   const [qrData, setQrData] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Track the connection_id so we can DELETE the in-flight bridge if the
+  // user skips mid-provisioning — otherwise the Fly Machine / Mac VPS stays
+  // orphaned and keeps billing ($1.90–$7.70/mo each).
+  const [connectionId, setConnectionId] = useState<string | null>(null)
 
   // iMessage-specific
   const [appleIdEmail, setAppleIdEmail] = useState(initialAppleIdEmail ?? '')
@@ -159,6 +164,7 @@ export function BridgePairingPanel({
   }, [state, isImessage, vncInfo, showFullDesktop])
 
   const startProvisioning = async () => {
+    pairingBreadcrumb({ surface: protocol, event: 'provisioning_started' })
     setState('provisioning')
     setError(null)
 
@@ -182,8 +188,14 @@ export function BridgePairingPanel({
         link_data?: { vnc?: VncInfo } | null
       }
 
+      setConnectionId(data.connection_id)
       if (isImessage && data.link_data?.vnc) setVncInfo(data.link_data.vnc)
 
+      pairingBreadcrumb({
+        surface: protocol,
+        event: 'provisioning_succeeded',
+        data: { connection_id: data.connection_id, has_vnc: !!data.link_data?.vnc },
+      })
       setState('linking')
 
       pollRef.current = setInterval(async () => {
@@ -211,10 +223,17 @@ export function BridgePairingPanel({
 
           if (statusData.status === 'linked') {
             cleanup()
+            pairingBreadcrumb({ surface: protocol, event: 'linked' })
             setState('connected')
             setTimeout(() => onLinked(), 1200)
           } else if (statusData.status === 'error') {
             cleanup()
+            pairingBreadcrumb({
+              surface: protocol,
+              event: 'link_status_error',
+              level: 'error',
+              data: { error: statusData.error ?? 'unknown' },
+            })
             setState('error')
             setError(statusData.error ?? 'Linking failed')
           }
@@ -223,6 +242,12 @@ export function BridgePairingPanel({
         }
       }, 2500)
     } catch (err) {
+      pairingBreadcrumb({
+        surface: protocol,
+        event: 'provisioning_failed',
+        level: 'error',
+        data: { error: err instanceof Error ? err.message : String(err) },
+      })
       setState('error')
       setError(err instanceof Error ? err.message : 'Provisioning failed')
     }
@@ -235,6 +260,22 @@ export function BridgePairingPanel({
     setQrData(null)
     setSignInState('waiting_for_password')
   }
+
+  // Skip with cleanup: if we've already provisioned a bridge (state is
+  // anything beyond 'idle'), tear it down before navigating — otherwise the
+  // Fly Machine / Mac VPS persists and keeps billing. Fire-and-forget; the
+  // user shouldn't wait for teardown on their exit path.
+  const handleSkip = useCallback(() => {
+    if (!onSkip) return
+    if (connectionId && state !== 'idle' && state !== 'connected') {
+      cleanup()
+      void fetch(`/api/bridges/${connectionId}`, { method: 'DELETE' }).catch(() => {
+        // Intentionally swallow — user is leaving. The cost-leak cron
+        // (/api/cron/bridge-cost-leak) will catch anything we miss here.
+      })
+    }
+    onSkip()
+  }, [connectionId, state, cleanup, onSkip])
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -281,7 +322,7 @@ export function BridgePairingPanel({
               Connect {config.name}
             </Button>
             {onSkip && (
-              <Button variant="ghost" onClick={onSkip}>
+              <Button variant="ghost" onClick={handleSkip}>
                 Skip for now
               </Button>
             )}
@@ -383,7 +424,7 @@ export function BridgePairingPanel({
               Try again
             </Button>
             {onSkip && (
-              <Button variant="ghost" onClick={onSkip}>
+              <Button variant="ghost" onClick={handleSkip}>
                 Skip for now
               </Button>
             )}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, CheckCircle2, AlertCircle, ExternalLink, Copy, Check } from 'lucide-react'
+import { pairingBreadcrumb } from './pairing-breadcrumbs'
 
 /**
  * TelegramPairingPanel
@@ -32,6 +33,10 @@ export function TelegramPairingPanel({ onLinked, onSkip }: TelegramPairingPanelP
   const [code, setCode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  // Track the connection row so Skip can scrub the pairing code and free the
+  // provisioning slot (keeps org_connections from accumulating dead rows even
+  // though there's no infra cost for telegram specifically).
+  const [connectionId, setConnectionId] = useState<string | null>(null)
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -45,6 +50,7 @@ export function TelegramPairingPanel({ onLinked, onSkip }: TelegramPairingPanelP
   useEffect(() => () => cleanup(), [cleanup])
 
   const startPairing = useCallback(async () => {
+    pairingBreadcrumb({ surface: 'telegram', event: 'provisioning_started' })
     setState('provisioning')
     setError(null)
 
@@ -63,6 +69,12 @@ export function TelegramPairingPanel({ onLinked, onSkip }: TelegramPairingPanelP
 
       setBotUrl(data.bot_url)
       setCode(data.code)
+      setConnectionId(data.connection_id)
+      pairingBreadcrumb({
+        surface: 'telegram',
+        event: 'pairing_code_issued',
+        data: { connection_id: data.connection_id },
+      })
       setState('waiting')
 
       pollRef.current = setInterval(async () => {
@@ -79,10 +91,17 @@ export function TelegramPairingPanel({ onLinked, onSkip }: TelegramPairingPanelP
           }
           if (statusData.status === 'linked') {
             cleanup()
+            pairingBreadcrumb({ surface: 'telegram', event: 'linked' })
             setState('connected')
             setTimeout(() => onLinked(), 1200)
           } else if (statusData.status === 'error') {
             cleanup()
+            pairingBreadcrumb({
+              surface: 'telegram',
+              event: 'link_status_error',
+              level: 'error',
+              data: { error: statusData.error ?? 'unknown' },
+            })
             setState('error')
             setError(statusData.error ?? 'Pairing failed')
           }
@@ -91,6 +110,12 @@ export function TelegramPairingPanel({ onLinked, onSkip }: TelegramPairingPanelP
         }
       }, 2500)
     } catch (err) {
+      pairingBreadcrumb({
+        surface: 'telegram',
+        event: 'provisioning_failed',
+        level: 'error',
+        data: { error: err instanceof Error ? err.message : String(err) },
+      })
       setState('error')
       setError(err instanceof Error ? err.message : 'Failed to start pairing')
     }
@@ -110,6 +135,17 @@ export function TelegramPairingPanel({ onLinked, onSkip }: TelegramPairingPanelP
       // Clipboard may be blocked; the code is already visible on screen.
     }
   }
+
+  // Skip with cleanup: if we minted a pairing code but the user never used
+  // it, DELETE the connection to scrub the unused code. Fire-and-forget.
+  const handleSkip = useCallback(() => {
+    if (!onSkip) return
+    if (connectionId && state !== 'connected') {
+      cleanup()
+      void fetch(`/api/bridges/${connectionId}`, { method: 'DELETE' }).catch(() => {})
+    }
+    onSkip()
+  }, [connectionId, state, cleanup, onSkip])
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -163,7 +199,7 @@ export function TelegramPairingPanel({ onLinked, onSkip }: TelegramPairingPanelP
               Waiting for Telegram…
             </Badge>
             {onSkip && (
-              <Button variant="ghost" size="sm" onClick={onSkip}>
+              <Button variant="ghost" size="sm" onClick={handleSkip}>
                 Skip for now
               </Button>
             )}
@@ -190,7 +226,7 @@ export function TelegramPairingPanel({ onLinked, onSkip }: TelegramPairingPanelP
               Try again
             </Button>
             {onSkip && (
-              <Button variant="ghost" onClick={onSkip}>
+              <Button variant="ghost" onClick={handleSkip}>
                 Skip for now
               </Button>
             )}

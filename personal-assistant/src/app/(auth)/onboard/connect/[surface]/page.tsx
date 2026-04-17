@@ -49,6 +49,17 @@ function isSurface(value: string): value is Surface {
   return value === 'imessage' || value === 'whatsapp' || value === 'android-messages' || value === 'telegram'
 }
 
+/**
+ * Heuristic for whether an email is likely to be an Apple ID. Apple IDs must
+ * be on @icloud.com, @me.com, or @mac.com, OR be a non-Apple address the user
+ * has explicitly registered with Apple — we can't detect the latter, so we
+ * only pre-fill on the three known Apple domains. Google-OAuth signups give
+ * us a Gmail address that's almost never their Apple ID.
+ */
+function isLikelyAppleId(email: string): boolean {
+  return /@(icloud|me|mac)\.com$/i.test(email.trim())
+}
+
 export default function ConnectSurfacePage({
   params,
 }: {
@@ -73,9 +84,12 @@ export default function ConnectSurfacePage({
         return
       }
 
-      // Pre-fill Apple ID email from auth.email for iMessage — saves the user
-      // retyping when most of them use the same address.
-      if (surfaceParam === 'imessage' && user.email) {
+      // Pre-fill Apple ID email from auth.email for iMessage, but only when
+      // the domain is plausibly an Apple ID. Most signups come through Google
+      // OAuth → user.email is a Gmail address, which would be wrong 95% of
+      // the time. Leaving blank lets the "you@icloud.com" placeholder do its
+      // job instead of giving the user a wrong value to clear.
+      if (surfaceParam === 'imessage' && user.email && isLikelyAppleId(user.email)) {
         setEmailHint(user.email)
       }
 
@@ -95,11 +109,17 @@ export default function ConnectSurfacePage({
         // Non-fatal — user still gets to the dashboard.
       }
 
-      trackOnboardingEvent(outcome === 'linked' ? 'chat_surface_connected' : 'onboarding_completed')
+      // Pass the surface so the activation funnel (/api/admin/activation-funnel)
+      // can bucket conversion by surface. Without this, the event carries no
+      // surface metadata and the funnel shows everything under 'unknown'.
+      trackOnboardingEvent(
+        outcome === 'linked' ? 'chat_surface_connected' : 'onboarding_completed',
+        { surface: surfaceParam },
+      )
 
       router.replace('/dashboard')
     },
-    [router],
+    [router, surfaceParam],
   )
 
   if (!isSurface(surfaceParam)) {
