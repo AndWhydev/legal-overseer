@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace -- webhook signature verifier uses `declare namespace` to augment global crypto types. Pre-existing; refactor deferred. */
 import { createHmac, timingSafeEqual } from 'crypto'
 import { createRequire } from 'module'
 

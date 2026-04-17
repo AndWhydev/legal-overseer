@@ -472,7 +472,7 @@ describe('getTaskWithSteps', () => {
     const steps = [
       { id: 'step-1', task_id: 'task-123', step_number: 1, step_name: 'Step A', status: 'completed' },
     ]
-    let callIdx = 0
+    const callIdx = 0
 
     const supabase = {
       from: vi.fn().mockImplementation((table: string) => {

@@ -5,8 +5,12 @@ import { config } from 'dotenv'
 
 config({ path: '.env.local' })
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+// Integration test — requires real Supabase creds in .env.local. Skip in CI
+// (where only unit envs are set) rather than blowing up beforeAll.
+const hasSupabaseEnv = Boolean(SUPABASE_URL && SUPABASE_KEY)
 
 let supabase: SupabaseClient
 let testOrgId: string
@@ -18,7 +22,8 @@ const createdEventIds: string[] = []
 const createdMemoryIds: string[] = []
 
 beforeAll(async () => {
-  supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+  if (!hasSupabaseEnv) return
+  supabase = createClient(SUPABASE_URL!, SUPABASE_KEY!)
 
   // Get existing org for tests
   const { data: org } = await supabase
@@ -32,6 +37,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
+  if (!hasSupabaseEnv) return
   // Clean up in reverse dependency order
   if (createdMemoryIds.length > 0) {
     await supabase.from('memory_palace_entries').delete().in('id', createdMemoryIds)
@@ -120,7 +126,7 @@ async function createTestEdge(
   return data!
 }
 
-describe('Sleep Consolidation Pipeline', () => {
+describe.skipIf(!hasSupabaseEnv)('Sleep Consolidation Pipeline', () => {
   // We import dynamically to ensure env is loaded
   let runSleepConsolidation: typeof import('../sleep-consolidation').runSleepConsolidation
 

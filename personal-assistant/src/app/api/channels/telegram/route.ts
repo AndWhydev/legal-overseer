@@ -8,13 +8,23 @@ import { sendTelegramMessage } from '@/lib/channels/telegram'
 import { after } from 'next/server'
 import { logger } from '@/lib/core/logger'
 
+interface TelegramConnectionRow {
+  id: string
+  org_id: string
+  config: Record<string, unknown>
+  status: string
+}
+
 /**
  * `/start <code>` payload from our onboarding pairing flow. The code is minted
  * by /api/bridges/telegram/pair and stored on `org_connections.config.pairing_code`.
+ *
+ * The `supabase` param is the loose `SupabaseClient` (no Database generic) to
+ * match the convention used throughout this webhook file. Row shapes are
+ * narrowed explicitly where we need typed access.
  */
 async function consumePairingCode(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: SupabaseClient<any, 'public', any, any, any>,
+  supabase: SupabaseClient,
   chatId: string,
   code: string,
   senderName: string,
@@ -22,7 +32,7 @@ async function consumePairingCode(
   const normalized = code.trim().toUpperCase()
   if (!normalized) return null
 
-  const { data: conn } = await supabase
+  const { data: connRaw } = await supabase
     .from('org_connections')
     .select('id, org_id, config, status')
     .eq('provider', 'telegram')
@@ -30,6 +40,7 @@ async function consumePairingCode(
     .filter('config->>pairing_code', 'eq', normalized)
     .maybeSingle()
 
+  const conn = connRaw as TelegramConnectionRow | null
   if (!conn) return null
 
   const config = conn.config as {
@@ -49,8 +60,10 @@ async function consumePairingCode(
 
   // Link the telegram chat_id to this org for future messages, then mark the
   // connection as connected so /api/bridges/telegram/status returns `linked`.
+  // Cast required: linkChannelIdentity's SupabaseClient generic differs from
+  // the service-role client's — both are runtime-compatible.
   await linkChannelIdentity(
-    supabase,
+    supabase as Parameters<typeof linkChannelIdentity>[0],
     userId,
     conn.org_id,
     { channelType: 'telegram', channelIdentifier: chatId } as never,

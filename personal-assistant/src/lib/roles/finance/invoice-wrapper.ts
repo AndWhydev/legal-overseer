@@ -37,7 +37,7 @@ export async function runWrappedInvoiceTick(
   const insights: RoleInsight[] = []
 
   let invoiceTick: InvoiceFlowTickResult | null = null
-  let overdueCheck: OverdueCheckResult | null = null
+  const overdueCheck: OverdueCheckResult | null = null
 
   // 1. Run the existing invoice flow tick
   //    This processes approved invoice_create, invoice_duplicate_override,

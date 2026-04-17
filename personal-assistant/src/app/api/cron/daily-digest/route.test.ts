@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-assign-module-variable -- test setup uses `module =` for cron-auth mock. Pre-existing; safe in test scope. */
 import { describe, it, expect } from 'vitest'
 
 // Note: Cron routes are integration endpoints that require full Supabase setup.

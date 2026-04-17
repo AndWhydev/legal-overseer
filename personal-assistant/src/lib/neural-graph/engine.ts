@@ -247,7 +247,7 @@ export async function findNodeByName(
     const nameLower = name.toLowerCase().trim()
 
     // 1. Exact name match
-    let { data } = await supabase
+    const { data } = await supabase
       .from('kg_nodes')
       .select('*')
       .eq('org_id', orgId)

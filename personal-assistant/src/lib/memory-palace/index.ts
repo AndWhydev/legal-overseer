@@ -89,7 +89,7 @@ export function createMemoryPalace(supabase: SupabaseClient, orgId: string) {
     createMemory: (input: any) => writer.storeMemory(input),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createDecision: (input: any) => writer.storeDecision(input),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     forgetEntity: (entityId: string) => supabase.rpc('forget_entity', { p_org_id: orgId, p_entity_id: entityId }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recordDecisionOutcome: (id: string, outcome: any) => supabase.from('memory_decisions').update({ outcome_summary: outcome.summary, status: outcome.status }).eq('id', id).eq('org_id', orgId),

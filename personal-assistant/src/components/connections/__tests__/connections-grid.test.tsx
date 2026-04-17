@@ -72,7 +72,7 @@ vi.mock('@/components/channels/connect-modal', () => ({
   },
 }))
 
-// eslint-disable-next-line import/first
+ 
 import { ConnectionsGrid } from '../connections-grid'
 
 // ─────────────────────────────────────────────────────────────────────

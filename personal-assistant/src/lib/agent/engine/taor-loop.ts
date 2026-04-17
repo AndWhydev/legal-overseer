@@ -399,7 +399,7 @@ export async function* runTAORLoop(
   }
 
   let planComplexity: 'low' | 'medium' | 'high' | null = null
-  let resolvedSkills: ResolvedSkill[] = []
+  const resolvedSkills: ResolvedSkill[] = []
 
   if (planPromise) {
     const raceResult = await Promise.race([

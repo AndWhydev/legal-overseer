@@ -22,7 +22,7 @@ function createMockSupabase() {
   const inserts: Record<string, Record<string, unknown>[]> = {}
 
   function createQueryBuilder(table: string) {
-    let filters: Array<{ type: string; args: unknown[] }> = []
+    const filters: Array<{ type: string; args: unknown[] }> = []
     let selectFields = '*'
     let isSingle = false
     let isMaybeSingle = false

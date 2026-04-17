@@ -141,7 +141,7 @@ function extractDeadlineDays(text: string, receivedAt: Date): number | null {
     const day = parseInt(monthMatch[2], 10)
     if (monthIdx >= 0 && day >= 1 && day <= 31) {
       // Assume current year; if date is far in the past, assume next year
-      let year = receivedAt.getFullYear()
+      const year = receivedAt.getFullYear()
       let target = new Date(year, monthIdx, day)
       if (target.getTime() < receivedAt.getTime() - 90 * 24 * 60 * 60 * 1000) {
         target = new Date(year + 1, monthIdx, day)

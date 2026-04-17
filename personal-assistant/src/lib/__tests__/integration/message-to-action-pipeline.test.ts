@@ -299,7 +299,7 @@ describe('Message to Action Pipeline Integration', () => {
     const classified = await classifyMessageMock(supabase, message, TEST_ORG_ID)
 
     // Base priority would be 'low' for significance 4
-    let priority = scorePriority(classified)
+    const priority = scorePriority(classified)
     expect(['low', 'medium']).toContain(priority)
 
     // With VIP contact boost, priority escalates

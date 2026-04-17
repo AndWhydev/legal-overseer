@@ -219,7 +219,7 @@ export class PricingIntelligence {
     const totalRevenue = amounts.reduce((a, b) => a + b, 0)
 
     // Calculate average payment time
-    let paymentDays: number[] = []
+    const paymentDays: number[] = []
     for (const dp of dataPoints) {
       if (dp.paidAt && dp.issuedAt) {
         const days = (new Date(dp.paidAt).getTime() - new Date(dp.issuedAt).getTime()) / (86400000)

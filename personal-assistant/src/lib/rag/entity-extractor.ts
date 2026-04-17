@@ -344,7 +344,7 @@ function extractMatches(
     // to miss matches if the regex was not fully consumed previously.
     pattern.lastIndex = 0
     let match
-    // eslint-disable-next-line no-cond-assign
+     
     while ((match = pattern.exec(text)) !== null) {
       matches.push({
         value: match[0],

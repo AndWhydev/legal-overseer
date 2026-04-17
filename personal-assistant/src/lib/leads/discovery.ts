@@ -58,7 +58,7 @@ export function normalizeDomain(url: string): string | null {
     let normalized = url.trim()
     if (!normalized.includes('://')) normalized = `https://${normalized}`
     const parsed = new URL(normalized)
-    let domain = parsed.hostname.toLowerCase().replace(/^www\./, '')
+    const domain = parsed.hostname.toLowerCase().replace(/^www\./, '')
     if (!domain.includes('.') || domain.length < 4) return null
     return domain
   } catch {

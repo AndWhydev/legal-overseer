@@ -31,7 +31,7 @@ export async function GET(request: Request) {
  * Resolve org_id from the phone_number_id in the webhook payload
  * by looking up channel_configs. Falls back to env DEFAULT_ORG_ID.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 async function resolveOrgId(
     supabase: any,
     phoneNumberId: string | undefined

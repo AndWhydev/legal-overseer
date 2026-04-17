@@ -234,7 +234,7 @@ function detectActionItems(message: IngestMessage): string[] {
     // Reset lastIndex for global regex
     pattern.lastIndex = 0
     let match
-    // eslint-disable-next-line no-cond-assign
+     
     while ((match = pattern.exec(text)) !== null) {
       const item = match[0].trim()
       // Skip very short matches (likely false positives)

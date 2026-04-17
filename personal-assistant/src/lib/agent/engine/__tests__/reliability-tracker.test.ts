@@ -30,7 +30,7 @@ import { logger } from '@/lib/core/logger'
 // Helpers
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function mockSupabase(overrides?: {
   insertError?: { message: string }
   selectData?: unknown[]

@@ -150,5 +150,5 @@ export function useRealtimeSubscription<T = Record<string, unknown>>(
     );
 
     return unsub;
-  }, [table, filterKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [table, filterKey]);  
 }

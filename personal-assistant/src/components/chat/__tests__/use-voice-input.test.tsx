@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-this-alias -- MediaRecorder test mock requires `function()` callback binding. */
 // @vitest-environment jsdom
 /**
  * Unit tests for useVoiceInput — MediaRecorder + server-side Whisper.

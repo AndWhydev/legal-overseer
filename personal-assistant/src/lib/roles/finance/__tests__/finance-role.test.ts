@@ -18,7 +18,7 @@ function createMockSupabase(data: {
   const upsertedData: Record<string, Record<string, unknown>[]> = {}
 
   function createQueryBuilder(table: string) {
-    let filters: Array<{ type: string; args: unknown[] }> = []
+    const filters: Array<{ type: string; args: unknown[] }> = []
     let isSingle = false
     let upsertPayload: Record<string, unknown> | null = null
 

@@ -199,7 +199,7 @@ Respond ONLY with valid JSON in this exact format:
       const wordCount = (input.word_count as number) || 800
       const brandContext = input.brand_context as string | undefined
 
-      let systemPrompt = `You are an expert blog writer and SEO specialist. Generate a structured blog post draft.
+      const systemPrompt = `You are an expert blog writer and SEO specialist. Generate a structured blog post draft.
 
 SEO best practices:
 - Title: compelling, includes primary keyword, under 60 characters ideal

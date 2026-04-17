@@ -217,7 +217,7 @@ export async function callModelViaGateway(
     systemParam = config.system
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const streamResult = streamText({
     model: _testModel ?? gateway(config.model),
     system: systemParam,

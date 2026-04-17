@@ -124,7 +124,7 @@ export async function executeMemoryPalaceTool(
   try {
     switch (toolName) {
       case 'search_memories': {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const results = await palace.searchMemories({
           query: (input.query as string) ?? '',
           memoryType: input.memory_type as any,
@@ -168,7 +168,7 @@ export async function executeMemoryPalaceTool(
       }
 
       case 'remember_this': {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const id = await palace.createMemory({
           memoryType: (input.memory_type ?? 'fact') as any,
           title: (input.title as string) ?? 'Untitled',

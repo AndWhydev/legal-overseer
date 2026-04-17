@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     const results: Record<string, unknown>[] = []
     let totalActionsCreated = 0
     let orgsProcessed = 0
-    let orgsSkipped = 0
+    const orgsSkipped = 0
     let orgsFailed = 0
 
     for (const org of orgs ?? []) {

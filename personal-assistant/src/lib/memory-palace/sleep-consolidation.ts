@@ -689,7 +689,7 @@ async function stageCommunityDetection(
 
   for (let i = 0; i < qualifiedClusters.length; i++) {
     if (used.has(i)) continue
-    let current = { ...qualifiedClusters[i], memberIds: [...qualifiedClusters[i].memberIds] }
+    const current = { ...qualifiedClusters[i], memberIds: [...qualifiedClusters[i].memberIds] }
     for (let j = i + 1; j < qualifiedClusters.length; j++) {
       if (used.has(j)) continue
       const overlap = current.memberIds.filter(m => qualifiedClusters[j].memberIds.includes(m))
@@ -994,7 +994,7 @@ async function stageMorningBriefing(
   }
 
   // Aggregate delegated actions from the last 24h
-  let delegatedActionSummaries: DelegatedActionSummary[] = []
+  const delegatedActionSummaries: DelegatedActionSummary[] = []
   try {
     const { getRecentDelegatedActions } = await import('@/lib/agent/delegation-mandate')
     const since = new Date(now.getTime() - 24 * 60 * 60 * 1000)

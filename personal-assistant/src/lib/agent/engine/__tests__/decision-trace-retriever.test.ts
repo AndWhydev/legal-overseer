@@ -86,7 +86,7 @@ function mockAgentRunsData() {
   ]
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function mockSupabase(overrides?: {
   decisionData?: unknown[]
   decisionError?: { message: string }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-this-alias -- legacy class pattern, 8 instances. TODO(lint-debt): refactor to arrow functions in a dedicated cleanup PR. */
 /**
  * BitBit SDK — Sandboxed runtime API for agentic code execution.
  *

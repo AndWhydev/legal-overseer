@@ -124,7 +124,7 @@ export function AppDataProvider({ children, onReady }: AppDataProviderProps) {
   }, [refresh]);
 
   // Safety timeout - don't block splash for more than 3s
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isReady) {

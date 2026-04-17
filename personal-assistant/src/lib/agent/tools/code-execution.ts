@@ -110,7 +110,7 @@ async function executeInSandbox(
 
   try {
     // Create the async function with sdk as the only parameter
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+     
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
     const fn = new AsyncFunction('sdk', code)
 

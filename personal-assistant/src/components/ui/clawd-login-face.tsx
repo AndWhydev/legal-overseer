@@ -294,7 +294,7 @@ function asciify(
       const i = (x + y * cols) * 4
       const r = imgData[i], g = imgData[i + 1], b = imgData[i + 2], a = imgData[i + 3]
       if (a === 0) { str += ' '; continue }
-      let gray = (0.3 * r + 0.6 * g + 0.1 * b) / 255
+      const gray = (0.3 * r + 0.6 * g + 0.1 * b) / 255
       let idx = Math.floor((1 - gray) * (CHARSET.length - 1))
       if (invert) idx = CHARSET.length - idx - 1
       str += CHARSET[idx]
@@ -704,8 +704,8 @@ export function ClawdLoginFace({
     if (!drawCtx || !sampleCtx) return
     sampleCtx.imageSmoothingEnabled = false
 
-    let flickerT = 0
-    let wakeHeadDroop = -18
+    const flickerT = 0
+    const wakeHeadDroop = -18
     // 3D head pivot: 0 = facing forward, 1 = looking straight down
     // Controls: vertical offset (face drops below center) + vertical compression (foreshortening)
     let wakePivot = 1.0  // starts fully drooped

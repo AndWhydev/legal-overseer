@@ -95,7 +95,7 @@ export async function runPreToolUseHooks(
   hooks: HookConfig[],
   input: PreToolUseInput,
 ): Promise<PreToolUseOutput> {
-  let merged: PreToolUseOutput = {}
+  const merged: PreToolUseOutput = {}
 
   for (const { matcher, hook, fireAndForget } of hooks) {
     if (!matchesTool(matcher, input.toolName)) continue

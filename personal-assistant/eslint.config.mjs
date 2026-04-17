@@ -30,6 +30,11 @@ const eslintConfig = defineConfig([
       "react-hooks/static-components": "warn",
       "react-hooks/purity": "warn",
       "react-hooks/immutability": "warn",
+      // Downgrade preserve-manual-memoization to warning (pre-existing
+      // violations in kanban.tsx, creator-studio-tab.tsx). TODO: audit
+      // memoization incrementally.
+      "react-hooks/preserve-manual-memoization": "warn",
+      "react-hooks/use-memo": "warn",
       // Allow unescaped entities in JSX (common in copy text)
       "react/no-unescaped-entities": "warn",
       // Allow @ts-nocheck in test/dev files

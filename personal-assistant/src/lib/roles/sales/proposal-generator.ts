@@ -50,7 +50,7 @@ export async function fetchPricingContext(
 
   try {
     // 1. Past invoices (paid or sent) for pricing reference
-    let invoiceQuery = supabase
+    const invoiceQuery = supabase
       .from('invoices')
       .select('id, total, currency, created_at, client_contact_id, metadata')
       .eq('org_id', orgId)
@@ -92,7 +92,7 @@ export async function fetchPricingContext(
     }
 
     // 2. Past proposals (accepted or sent) for pricing reference
-    let proposalQuery = supabase
+    const proposalQuery = supabase
       .from('proposals')
       .select('id, title, project_type, pricing, client_contact_id, created_at, status')
       .eq('org_id', orgId)

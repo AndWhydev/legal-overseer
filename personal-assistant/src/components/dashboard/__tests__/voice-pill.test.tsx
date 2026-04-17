@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- vitest dynamic require() in test mock setup. */
 // @vitest-environment jsdom
 /**
  * Integration tests for <VoicePill> — the docked chat composer that hosts

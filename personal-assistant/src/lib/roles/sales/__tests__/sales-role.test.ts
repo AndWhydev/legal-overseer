@@ -31,7 +31,7 @@ function createMockSupabase(data: {
   const insertedData: Record<string, Record<string, unknown>[]> = {}
 
   function createQueryBuilder(table: string) {
-    let filters: Array<{ type: string; args: unknown[] }> = []
+    const filters: Array<{ type: string; args: unknown[] }> = []
 
     function applyFilters(rows: Record<string, unknown>[]) {
       let result = [...rows]

@@ -44,7 +44,7 @@ vi.mock('@/lib/api-rate-limiter', () => ({
 }))
 
 // Lazily import the route AFTER mocks are registered
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const appHandler = await import('../route')
 
 beforeAll(() => {

@@ -128,6 +128,7 @@ export async function loadContext(
   }))
   scored.sort((a, b) => b.score - a.score)
 
+  // eslint-disable-next-line prefer-const -- declared earlier to satisfy the Promise.all control flow; assigned once here
   contacts = scored
     .slice(0, effectiveContactLimit)
     .map(({ id: _id, emails: _emails, score: _score, ...contact }) => contact)

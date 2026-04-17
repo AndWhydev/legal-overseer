@@ -91,7 +91,7 @@ const NOISE_KEYWORDS = [
 // Sanitize text for Postgres JSONB — removes unsupported Unicode escape sequences
 function sanitizeForJson(text: string): string {
   // Remove null bytes and surrogate pairs that Postgres JSONB can't handle
-  // eslint-disable-next-line no-control-regex
+   
   return text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
     .replace(/[\uD800-\uDFFF]/g, '')
 }

@@ -25,7 +25,7 @@ function createMockSupabase(state: MockDunningState = {}) {
   const mockResult = (data: unknown) => Promise.resolve({ data, error: null })
 
   const makeChain = (table: string, baseData?: unknown) => {
-    let currentData = baseData
+    const currentData = baseData
 
     const chain: Record<string, unknown> = {
       select(columns?: string) {

@@ -148,7 +148,7 @@ export class MemoryExtractor {
           })
           if (id) stored++
         } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           const id = await palace.createMemory({
             memoryType: mem.memory_type as any,
             title: mem.title,

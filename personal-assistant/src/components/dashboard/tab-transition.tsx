@@ -99,8 +99,9 @@ export function KeepAliveTabPanel({ activeTabId, direction, tabs }: KeepAliveTab
           id={tab.id}
           isActive={tab.id === activeTabId}
           direction={direction}
-          children={tab.children}
-        />
+        >
+          {tab.children}
+        </TabPane>
       ))}
     </>
   );
