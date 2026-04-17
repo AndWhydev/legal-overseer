@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/supabase/auth-context'
+import { getServiceClient, isServiceClientConfigured } from '@/lib/supabase/service-client'
 import { connectWithCredentials, disconnectAccount, isComposioEnabled } from '@/lib/composio'
 import { createConnectorManager } from '@/lib/connectors'
 import { logger } from '@/lib/core/logger'
@@ -58,8 +59,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'credentials is required' }, { status: 400 })
   }
 
+  // Use the service-role client for writes (same pattern as the OAuth
+  // callback). RLS would otherwise block the row upsert from a
+  // user-bound client.
+  if (!isServiceClientConfigured()) {
+    return NextResponse.json({ error: 'Server not configured' }, { status: 503 })
+  }
+  const supabase = getServiceClient()
+
   // Pre-clean any stale connection — same pattern as the OAuth route.
-  const { data: existing } = await ctx.supabase
+  const { data: existing } = await supabase
     .from('org_connections')
     .select('id, connected_account_id, config')
     .eq('org_id', ctx.orgId)
@@ -79,15 +88,15 @@ export async function POST(request: NextRequest) {
   const result = await connectWithCredentials(ctx.orgId, appKey, credentials, authScheme)
   if (!result) {
     return NextResponse.json(
-      { error: `Failed to connect "${appKey}". Check your credentials and try again.` },
+      { error: 'Could not verify those credentials. Double-check them and try again.' },
       { status: 400 },
     )
   }
 
   // Upsert the org_connection row — mirrors the OAuth callback path so the
   // agent side sees the connection through the usual ConnectorManager flow.
-  const displayName = `${appKey.charAt(0).toUpperCase() + appKey.slice(1)} (Composio)`
-  const { data: row, error: upsertErr } = await ctx.supabase
+  const displayName = appKey.charAt(0).toUpperCase() + appKey.slice(1)
+  const { data: row, error: upsertErr } = await supabase
     .from('org_connections')
     .upsert(
       {
@@ -116,13 +125,13 @@ export async function POST(request: NextRequest) {
     // Best-effort cleanup of the upstream account so we don't leak it.
     try { await disconnectAccount(result.connectedAccountId) } catch { /* noop */ }
     return NextResponse.json(
-      { error: 'Failed to persist connection.' },
+      { error: 'We saved your credentials but couldn\'t finish setting up the connection. Try again in a moment.' },
       { status: 500 },
     )
   }
 
   try {
-    const manager = createConnectorManager(ctx.supabase, { skipBridge: true })
+    const manager = createConnectorManager(supabase, { skipBridge: true })
     await manager.activate(row as never, {
       accountId: result.connectedAccountId,
       metadata: { toolkit: appKey, status: result.status } as Record<string, unknown>,
