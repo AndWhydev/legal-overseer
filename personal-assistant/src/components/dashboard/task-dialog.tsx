@@ -25,7 +25,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import type { Task, KanbanColumn } from '@/lib/types'
 
-import { MarkdownRenderer } from './markdown-renderer'
+import { MarkdownRenderer } from '@/components/markdown-renderer'
 
 interface TaskDialogProps {
   open: boolean

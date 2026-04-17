@@ -31,7 +31,6 @@ import {
   IconLayoutKanban,
 } from '@tabler/icons-react';
 import type { TopbarConfig } from './topbar';
-import FlipClock from '@/components/ui/flip-clock';
 
 function DashboardBreadcrumb() {
   const [dateStr, setDateStr] = React.useState('');
@@ -51,10 +50,6 @@ function DashboardBreadcrumb() {
   );
 }
 
-function HeaderClock() {
-  return <FlipClock size="xs" variant="outline" />;
-}
-
 function IconBreadcrumb({ icon: Icon, text }: { icon: React.ElementType; text: string }) {
   return (
     <>
@@ -68,7 +63,6 @@ export const TOPBAR_CONFIGS: Record<string, TopbarConfig> = {
   dashboard: {
     title: 'Dashboard',
     breadcrumb: <DashboardBreadcrumb />,
-    centerContent: <HeaderClock />,
   },
   chat: {
     title: 'Chat',

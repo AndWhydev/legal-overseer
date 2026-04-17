@@ -14,7 +14,6 @@ import {
   DollarSign,
   Users,
 } from 'lucide-react'
-import { AIButton } from '../ai-button'
 import {
   ProgressRingIcon,
   StatCard,
@@ -242,15 +241,6 @@ export function DataVizShowcase() {
             color="var(--bb-orange)"
             icon={<Users size={16} />}
           />
-        </div>
-      </Section>
-      {/* Section: AI Button */}
-      <Section title="AIButton (Magic/AI Actions)">
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-          <AIButton size="sm">Small AI Action</AIButton>
-          <AIButton size="md">Generate Report ✨</AIButton>
-          <AIButton size="lg">Run Full Analysis</AIButton>
-          <AIButton size="md" disabled>Disabled State</AIButton>
         </div>
       </Section>
     </div>
