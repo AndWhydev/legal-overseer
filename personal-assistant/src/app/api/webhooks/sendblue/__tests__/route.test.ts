@@ -67,12 +67,16 @@ describe('POST /api/webhooks/sendblue', () => {
   })
 
   it('returns 403 on API key mismatch', async () => {
-    process.env.SENDBLUE_API_KEY = 'correct-key'
-    const res = await POST(makeRequest(
-      { from_number: '+1234', content: 'test' },
-      { 'sb-api-key-id': 'wrong-key' },
-    ))
-    expect(res.status).toBe(403)
+    process.env.SENDBLUE_WEBHOOK_SECRET = 'correct-key'
+    try {
+      const res = await POST(makeRequest(
+        { from_number: '+1234', content: 'test' },
+        { 'sb-api-key-id': 'wrong-key' },
+      ))
+      expect(res.status).toBe(403)
+    } finally {
+      delete process.env.SENDBLUE_WEBHOOK_SECRET
+    }
   })
 
   it('handles status callbacks gracefully', async () => {
