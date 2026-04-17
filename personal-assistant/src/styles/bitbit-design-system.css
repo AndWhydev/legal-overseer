@@ -60,7 +60,7 @@
   --tracking-normal: 0;
 
   /* Type scale — canonical BB tokens.
-     Tailwind's text-*/font-* classes mirror these values via globals.css @theme.
+     Tailwind text and font classes mirror these values via globals.css @theme.
      Use BB tokens directly only when a component needs an explicit non-Tailwind size. */
   --bb-text-xs: 12px;
   --bb-text-sm: 14px;
