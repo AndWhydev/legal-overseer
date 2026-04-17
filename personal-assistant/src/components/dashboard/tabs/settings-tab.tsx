@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { BillingSettings } from '@/components/settings/billing-settings';
-import { QrAuthConnect } from '@/components/ui/qr-auth-connect';
+import { QrAuthConnect } from '@/components/channels/qr-auth-connect';
 import { ConnectionsGrid } from '@/components/connections/connections-grid';
 import { ConnectionDetailContent } from '@/components/connections/connection-detail-drawer';
 import { useDrawer } from '@/components/dashboard/drawer-context';
