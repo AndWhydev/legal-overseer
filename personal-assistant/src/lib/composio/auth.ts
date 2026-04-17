@@ -45,6 +45,126 @@ export interface ComposioConnectedAccount {
 }
 
 // ---------------------------------------------------------------------------
+// Auth config resolution (lookup → auto-provision Composio-managed)
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve an auth_config for a toolkit slug. Returns its ID if one already
+ * exists (ENABLED); otherwise auto-provisions a new one using Composio's
+ * managed OAuth credentials and returns that.
+ *
+ * This is the whole point of using Composio — one integration, no per-app
+ * dashboard setup. For toolkits that support `composio_managed_auth_schemes`
+ * (most OAuth apps), this works with zero operator effort.
+ *
+ * For toolkits that only accept user-provided credentials (e.g. some API-key
+ * services), the auto-create call will fail and we return null. Caller
+ * surfaces that as a clear error so the user knows the app needs manual
+ * setup in the Composio dashboard.
+ */
+async function resolveOrCreateAuthConfig(toolkit: string): Promise<string | null> {
+  const headers = composioHeaders()
+
+  // 1. Look for an existing ENABLED auth_config matching this toolkit
+  try {
+    const cfgRes = await fetch(
+      `${COMPOSIO_BASE}/api/v3/auth_configs?toolkit_slug=${encodeURIComponent(toolkit)}&status=ENABLED&limit=10`,
+      { headers },
+    )
+    if (cfgRes.ok) {
+      const cfgData = (await cfgRes.json()) as {
+        items?: Array<{ id: string; toolkit?: { slug?: string }; status?: string }>
+      }
+      const existing = (cfgData.items || []).find(
+        (c) => c.toolkit?.slug?.toLowerCase() === toolkit.toLowerCase() && c.status === 'ENABLED',
+      )
+      if (existing) return existing.id
+    } else {
+      const body = await cfgRes.text()
+      logger.warn('[composio/auth] auth_configs lookup non-OK', {
+        toolkit, status: cfgRes.status, body: body.slice(0, 200),
+      })
+    }
+  } catch (err) {
+    logger.warn('[composio/auth] auth_configs lookup threw', {
+      toolkit, error: err instanceof Error ? err.message : String(err),
+    })
+    // fall through to auto-create — network flakes shouldn't block the user
+  }
+
+  // 2. None found — auto-provision using Composio-managed OAuth
+  try {
+    const createRes = await fetch(`${COMPOSIO_BASE}/api/v3/auth_configs`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        toolkit: { slug: toolkit },
+        auth_config: { type: 'use_composio_managed_auth' },
+      }),
+    })
+
+    if (!createRes.ok) {
+      const body = await createRes.text()
+      logger.error('[composio/auth] auth_config auto-provision failed', {
+        toolkit, status: createRes.status, body: body.slice(0, 300),
+      })
+      return null
+    }
+
+    const created = (await createRes.json()) as { auth_config?: { id?: string } }
+    const newId = created.auth_config?.id ?? null
+    if (newId) {
+      logger.info('[composio/auth] Auto-provisioned managed auth_config', { toolkit, authConfigId: newId })
+    }
+    return newId
+  } catch (err) {
+    logger.error('[composio/auth] auth_config auto-provision threw', {
+      toolkit, error: err instanceof Error ? err.message : String(err),
+    })
+    return null
+  }
+}
+
+/**
+ * POST /api/v3/connected_accounts with the v3 nested payload shape.
+ * Returns the connection request ID + hosted redirect URL.
+ */
+async function postInitConnection(
+  authConfigId: string,
+  userId: string,
+  callbackUrl: string,
+): Promise<ComposioConnectionRequest | null> {
+  const res = await fetch(`${COMPOSIO_BASE}/api/v3/connected_accounts`, {
+    method: 'POST',
+    headers: composioHeaders(),
+    body: JSON.stringify({
+      auth_config: { id: authConfigId },
+      connection: { user_id: userId, callback_url: callbackUrl },
+    }),
+  })
+
+  if (!res.ok) {
+    const body = await res.text()
+    logger.error('[composio/auth] connected_accounts.init failed', {
+      authConfigId, userId, status: res.status, body: body.slice(0, 300),
+    })
+    return null
+  }
+
+  const data = (await res.json()) as {
+    id?: string
+    redirect_url?: string
+    redirect_uri?: string
+    redirectUrl?: string
+  }
+
+  return {
+    connectionRequestId: data.id || '',
+    redirectUrl: data.redirect_url || data.redirect_uri || data.redirectUrl || '',
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Connection initiation
 // ---------------------------------------------------------------------------
 
@@ -69,34 +189,19 @@ export async function initiateConnection(
   }
 
   try {
-    const configId = authConfigId || toolkit
-    const res = await fetch(`${COMPOSIO_BASE}/api/v3/connected_accounts`, {
-      method: 'POST',
-      headers: composioHeaders(),
-      body: JSON.stringify({
-        auth_config_id: configId,
-        user_id: userId,
-        redirect_url: callbackUrl,
-      }),
-    })
-
-    if (!res.ok) {
-      const body = await res.text()
-      logger.error('[composio/auth] initiateConnection failed', {
-        userId, channel, toolkit, status: res.status, body: body.slice(0, 300),
-      })
+    const resolvedId = authConfigId || (await resolveOrCreateAuthConfig(toolkit))
+    if (!resolvedId) {
+      logger.error('[composio/auth] No auth config resolvable for channel', { userId, channel, toolkit })
       return null
     }
 
-    const data = await res.json() as { id?: string; redirect_url?: string; redirectUrl?: string }
-    logger.info('[composio/auth] Connection initiated', {
-      userId, channel, toolkit, connectionRequestId: data.id,
-    })
+    const result = await postInitConnection(resolvedId, userId, callbackUrl)
+    if (!result) return null
 
-    return {
-      redirectUrl: data.redirect_url || data.redirectUrl || '',
-      connectionRequestId: data.id || '',
-    }
+    logger.info('[composio/auth] Connection initiated', {
+      userId, channel, toolkit, authConfigId: resolvedId, connectionRequestId: result.connectionRequestId,
+    })
+    return result
   } catch (err) {
     logger.error('[composio/auth] Failed to initiate connection', {
       userId, channel, toolkit,
@@ -109,6 +214,7 @@ export async function initiateConnection(
 /**
  * Initiate a Composio OAuth connection by app key directly.
  * Bypasses the BitBit channel-type mapping — works with any Composio toolkit.
+ * Auto-provisions a managed auth_config on first use if none exists.
  */
 export async function initiateConnectionByAppKey(
   userId: string,
@@ -120,63 +226,20 @@ export async function initiateConnectionByAppKey(
     return null
   }
 
-  const headers = composioHeaders()
-
   try {
-    // Step 1: resolve auth config ID for this toolkit slug
-    const cfgRes = await fetch(
-      `${COMPOSIO_BASE}/api/v3/auth_configs?toolkit_slug=${encodeURIComponent(appKey)}&status=ENABLED&limit=10`,
-      { headers },
-    )
-    if (!cfgRes.ok) {
-      const body = await cfgRes.text()
-      logger.error('[composio/auth] authConfigs lookup failed', {
-        appKey, status: cfgRes.status, body: body.slice(0, 300),
-      })
+    const authConfigId = await resolveOrCreateAuthConfig(appKey)
+    if (!authConfigId) {
+      logger.error('[composio/auth] Could not resolve or create auth_config', { appKey })
       return null
     }
 
-    const cfgData = await cfgRes.json() as {
-      items?: Array<{ id: string; toolkit?: { slug?: string }; status?: string }>
-    }
-    const configs = cfgData.items || []
-    const authConfig = configs.find(
-      c => c.toolkit?.slug?.toLowerCase() === appKey.toLowerCase() && c.status === 'ENABLED',
-    ) || configs[0]
+    const result = await postInitConnection(authConfigId, userId, callbackUrl)
+    if (!result) return null
 
-    if (!authConfig) {
-      logger.error('[composio/auth] No enabled auth config found', { appKey, configCount: configs.length })
-      return null
-    }
-
-    // Step 2: initiate the connection
-    const initRes = await fetch(`${COMPOSIO_BASE}/api/v3/connected_accounts`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        auth_config_id: authConfig.id,
-        user_id: userId,
-        redirect_url: callbackUrl,
-      }),
-    })
-
-    if (!initRes.ok) {
-      const body = await initRes.text()
-      logger.error('[composio/auth] connectedAccounts.initiate failed', {
-        appKey, status: initRes.status, body: body.slice(0, 300),
-      })
-      return null
-    }
-
-    const data = await initRes.json() as { id?: string; redirect_url?: string; redirectUrl?: string }
     logger.info('[composio/auth] Connection initiated by appKey', {
-      userId, appKey, authConfigId: authConfig.id, connectionRequestId: data.id,
+      userId, appKey, authConfigId, connectionRequestId: result.connectionRequestId,
     })
-
-    return {
-      redirectUrl: data.redirect_url || data.redirectUrl || '',
-      connectionRequestId: data.id || '',
-    }
+    return result
   } catch (err) {
     logger.error('[composio/auth] Failed to initiate connection by appKey', {
       userId, appKey,
