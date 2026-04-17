@@ -69,10 +69,22 @@ export async function GET(request: NextRequest) {
     )
     let connectedSlugs = new Set<string>()
     if (caRes.ok) {
-      const caData = await caRes.json() as { items?: Array<{ appName?: string; toolkit?: string }> }
+      // Composio v3 returns `toolkit` as an object ({slug, name}), not a string.
+      // Fall back to `appName` (v2-style string) for older connections.
+      const caData = await caRes.json() as {
+        items?: Array<{ appName?: string; toolkit?: string | { slug?: string } }>
+      }
       const items = caData?.items || []
       connectedSlugs = new Set(
-        items.map((a: { toolkit?: string; appName?: string }) => (a.toolkit || a.appName || '').toLowerCase())
+        items
+          .map((a) => {
+            const slug =
+              typeof a.toolkit === 'string'
+                ? a.toolkit
+                : a.toolkit?.slug ?? a.appName ?? ''
+            return slug.toLowerCase()
+          })
+          .filter(Boolean),
       )
     }
 

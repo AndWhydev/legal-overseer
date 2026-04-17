@@ -19,6 +19,16 @@ function composioHeaders(): Record<string, string> {
   return { 'x-api-key': process.env.COMPOSIO_API_KEY!, 'Content-Type': 'application/json' }
 }
 
+/**
+ * Composio v3's `toolkit` field on connected_accounts is an object `{slug, name}`,
+ * but older v2 responses returned a plain string. Normalize both shapes to a slug.
+ */
+function toolkitSlug(toolkit: string | { slug?: string } | undefined | null): string {
+  if (!toolkit) return ''
+  if (typeof toolkit === 'string') return toolkit
+  return toolkit.slug ?? ''
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -202,14 +212,14 @@ export async function waitForConnection(
       )
       if (res.ok) {
         const data = await res.json() as {
-          items?: Array<{ id: string; status: string; appName?: string; toolkit?: string }>
+          items?: Array<{ id: string; status: string; appName?: string; toolkit?: string | { slug?: string } }>
         }
         const account = data.items?.[0]
         if (account && account.status === 'ACTIVE') {
           return {
             id: account.id,
             status: account.status,
-            toolkit: account.toolkit || account.appName || '',
+            toolkit: toolkitSlug(account.toolkit) || account.appName || '',
           }
         }
       }
@@ -246,12 +256,12 @@ export async function listConnectedAccounts(
     if (!res.ok) return []
 
     const data = await res.json() as {
-      items?: Array<{ id: string; status: string; appName?: string; toolkit?: string }>
+      items?: Array<{ id: string; status: string; appName?: string; toolkit?: string | { slug?: string } }>
     }
     return (data.items || []).map(item => ({
       id: item.id,
       status: item.status,
-      toolkit: item.toolkit || item.appName || '',
+      toolkit: toolkitSlug(item.toolkit) || item.appName || '',
     }))
   } catch (err) {
     logger.error('[composio/auth] listConnectedAccounts failed', {
@@ -277,11 +287,11 @@ export async function getConnectedAccount(
     )
     if (!res.ok) return null
 
-    const account = await res.json() as { id: string; status: string; appName?: string; toolkit?: string }
+    const account = await res.json() as { id: string; status: string; appName?: string; toolkit?: string | { slug?: string } }
     return {
       id: account.id,
       status: account.status,
-      toolkit: account.toolkit || account.appName || '',
+      toolkit: toolkitSlug(account.toolkit) || account.appName || '',
     }
   } catch (err) {
     logger.error('[composio/auth] getConnectedAccount failed', {
