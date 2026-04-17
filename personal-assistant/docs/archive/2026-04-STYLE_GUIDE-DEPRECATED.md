@@ -1,4 +1,27 @@
-# BitBit UI Design System — Agent Reference
+# [ARCHIVED 2026-04-17] BitBit UI Design System — Agent Reference
+
+> **DEPRECATED — DO NOT FOLLOW.** This document describes the pre-shadcn glassmorphic system
+> that has been replaced. Following its instructions will produce code incompatible with the
+> current 350-component shadcn-based codebase.
+>
+> **Why archived:**
+> - Mandates inline `style={{}}` for visual design — current system uses Tailwind + shadcn semantic tokens
+> - Forbids shadcn imports — codebase has 39 shadcn components actively in use (CLAUDE.md: "Exclusive Shadcn UI")
+> - Depends on `@/lib/styles/design-tokens` (S./C. exports) — that module has 1 remaining importer (since deleted)
+> - 2-font-size constraint (16/14 only) is actively violated across the entire codebase
+> - "Pure monochrome" rule conflicts with status colors and brand accents in actual use
+>
+> **Current canonical references (in order of authority):**
+> 1. `personal-assistant/COMPONENT_CONTRACTS.md` — archetypes + anti-patterns (the contract)
+> 2. `COMPONENT_AUDIT.md` (repo root) — gap analysis and consolidation proposal
+> 3. `personal-assistant/src/styles/bitbit-design-system.css` — CSS token source
+> 4. `CLAUDE.md` "Styling System" section — system summary
+>
+> **Why kept (not deleted):** historical reference for understanding glassmorphic patterns
+> still visible in some legacy components (e.g., chat surfaces). When migrating those, prefer
+> shadcn equivalents over re-applying the patterns below.
+
+---
 
 ## HARD CONSTRAINTS (no exceptions unless justified for accessibility)
 

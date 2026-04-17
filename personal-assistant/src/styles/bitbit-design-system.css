@@ -59,6 +59,29 @@
   --tracking-tight: -0.02em;
   --tracking-normal: 0;
 
+  /* Type scale — canonical BB tokens.
+     Tailwind's text-*/font-* classes mirror these values via globals.css @theme.
+     Use BB tokens directly only when a component needs an explicit non-Tailwind size. */
+  --bb-text-xs: 12px;
+  --bb-text-sm: 14px;
+  --bb-text-base: 16px;
+  --bb-text-lg: 18px;
+  --bb-text-xl: 20px;
+  --bb-text-2xl: 24px;
+  --bb-text-3xl: 30px;
+  --bb-text-4xl: 36px;
+
+  /* Font weight scale */
+  --bb-weight-regular: 400;
+  --bb-weight-medium: 500;
+  --bb-weight-semibold: 600;
+  --bb-weight-bold: 700;
+
+  /* Line height scale */
+  --bb-line-tight: 1.15;
+  --bb-line-normal: 1.45;
+  --bb-line-relaxed: 1.65;
+
   /* ── Spacing ── */
   --topbar-height: 56px;
   --gap-xs: 4px;

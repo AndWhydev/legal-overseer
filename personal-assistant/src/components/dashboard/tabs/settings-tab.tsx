@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  IconSun, IconMoon, IconDeviceDesktop, IconLoader2, IconCheck, IconX,
+  IconMoon, IconDeviceDesktop, IconLoader2, IconCheck, IconX,
 } from '@tabler/icons-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -372,10 +372,8 @@ export function SettingsAutomationsTab() {
 export function SettingsAppearanceTab() {
   const { theme: currentPalette, setTheme: setPalette } = useTheme();
 
-  const isDev = process.env.NODE_ENV === 'development';
   const themes = [
     { id: 'midnight' as ThemeName, label: 'Midnight', desc: 'Deep dark', bg: 'bg-gradient-to-br from-[#0a0f1a] to-[#141b2d]', icon: <IconMoon className="size-5" /> },
-    ...(isDev ? [{ id: 'aurora' as ThemeName, label: 'Aurora', desc: 'Glassmorphic', bg: 'bg-gradient-to-br from-[#F5E6D8] to-[#AFCADF]', icon: <IconSun className="size-5" /> }] : []),
     { id: 'light' as ThemeName, label: 'Light', desc: 'Clean & minimal', bg: 'bg-gradient-to-br from-[#FAFAF9] to-[#F0F0EE]', icon: <IconDeviceDesktop className="size-5" /> },
   ];
 

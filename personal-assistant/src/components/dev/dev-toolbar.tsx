@@ -119,7 +119,7 @@ export function DevToolbar() {
       {/* Theme */}
       <Section title="Theme">
         <div className="flex gap-1">
-          {(['midnight', 'aurora', 'light'] as const).map(t => {
+          {(['midnight', 'light'] as const).map(t => {
             const active = currentTheme === t;
             return (
               <button

@@ -24,7 +24,10 @@ describe('theme defaults', () => {
     expect(resolveStoredColorMode('dark')).toBe('dark')
     expect(resolveStoredColorMode('light')).toBe('light')
     expect(resolveStoredThemeName('midnight')).toBe('midnight')
-    expect(resolveStoredThemeName('aurora')).toBe('aurora')
     expect(resolveStoredThemeName('light')).toBe('light')
+  })
+
+  it('rejects the removed aurora theme and falls back to the default', () => {
+    expect(resolveStoredThemeName('aurora')).toBe('midnight')
   })
 })

@@ -3,7 +3,6 @@
 @source "../../node_modules/streamdown/dist/*.js";
 @import "../styles/bitbit-design-system.css";
 @import "../styles/theme-midnight.css";
-@import "../styles/theme-aurora.css";
 @import "../styles/theme-light.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -54,34 +53,43 @@
   --color-text-muted: var(--text-muted);
   --color-chat-surface: var(--chat-surface-bg);
   --color-chat-surface-border: var(--chat-surface-border);
-  --text-sm: 1rem;
-  --text-sm--line-height: calc(1.5 / 1);
-  --text-base: 1rem;
-  --text-base--line-height: calc(1.5 / 1);
-  --text-xs: 0.875rem;
-  --text-xs--line-height: calc(1.45 / 0.875);
-  --text-lg: 1rem;
-  --text-lg--line-height: calc(1.5 / 1);
-  --text-xl: 1rem;
-  --text-xl--line-height: calc(1.5 / 1);
-  --text-2xl: 1rem;
-  --text-2xl--line-height: calc(1.5 / 1);
-  --text-3xl: 1rem;
-  --text-3xl--line-height: calc(1.5 / 1);
-  --text-4xl: 1rem;
-  --text-4xl--line-height: calc(1.5 / 1);
-  --text-5xl: 1rem;
-  --text-5xl--line-height: calc(1.5 / 1);
+  /* Type scale — mirrors --bb-text-* tokens in bitbit-design-system.css.
+     Restored from the pre-shadcn STYLE_GUIDE.md override that collapsed every
+     size to 1rem (16px). Tailwind text-* classes now produce the visual
+     hierarchy developers expect. See COMPONENT_CONTRACTS.md for usage. */
+  --text-xs: 0.75rem;     /* 12px */
+  --text-xs--line-height: 1.45;
+  --text-sm: 0.875rem;    /* 14px */
+  --text-sm--line-height: 1.45;
+  --text-base: 1rem;      /* 16px */
+  --text-base--line-height: 1.5;
+  --text-lg: 1.125rem;    /* 18px */
+  --text-lg--line-height: 1.5;
+  --text-xl: 1.25rem;     /* 20px */
+  --text-xl--line-height: 1.4;
+  --text-2xl: 1.5rem;     /* 24px */
+  --text-2xl--line-height: 1.35;
+  --text-3xl: 1.875rem;   /* 30px */
+  --text-3xl--line-height: 1.25;
+  --text-4xl: 2.25rem;    /* 36px */
+  --text-4xl--line-height: 1.15;
+  --text-5xl: 3rem;       /* 48px */
+  --text-5xl--line-height: 1.1;
   --radius-sm: var(--radius-base-sm);
   --radius-md: var(--radius-base-md);
   --radius-lg: var(--radius);
   --radius-xl: var(--radius);
   --radius-2xl: var(--radius);
 
-  --font-weight-semibold: 500;
-  --font-weight-bold: 500;
-  --font-weight-extrabold: 500;
-  --font-weight-black: 500;
+  /* Font weights — mirrors --bb-weight-* tokens. Previously collapsed to 500
+     by the pre-shadcn STYLE_GUIDE.md rule ("400/500 only"). Restored so
+     font-bold actually renders bold. */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
   --spacing-sidebar: 64px;
   --spacing-topbar: 56px;
   --font-heading: var(--font-stack-ui);

@@ -34,6 +34,20 @@ const eslintConfig = defineConfig([
       "react/no-unescaped-entities": "warn",
       // Allow @ts-nocheck in test/dev files
       "@typescript-eslint/ban-ts-comment": "warn",
+      // Visual design must live in Tailwind classes / shadcn components, not
+      // inline style={{}}. See COMPONENT_CONTRACTS.md anti-patterns.
+      // Warn-only (not error) because ~100 existing files still use this
+      // pattern — they'll be migrated progressively. Prevents new regressions.
+      // Allowed: layout/dynamic style (transform, position, opacity,
+      // animation, etc.) — these are not visual design concerns.
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "JSXAttribute[name.name='style'] > JSXExpressionContainer > ObjectExpression > Property[key.name=/^(background|backgroundColor|backgroundImage|color|border|borderColor|borderTop|borderBottom|borderLeft|borderRight|borderStyle|borderWidth|boxShadow|fontSize|fontWeight|fontFamily|lineHeight|letterSpacing)$/]",
+          message:
+            "Inline style={{}} for visual design is disallowed. Use Tailwind classes (bg-*, text-*, border-*, shadow-*) or shadcn semantic tokens (bg-card, bg-muted, etc.). See COMPONENT_CONTRACTS.md. Exception: truly dynamic values (e.g. data-driven colors) — use a CSS var and set it inline via style={{ '--my-var': value }} then reference it in a class.",
+        },
+      ],
     },
   },
 ]);

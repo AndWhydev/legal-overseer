@@ -223,16 +223,14 @@ bitbit/                      # npm workspaces root
 - **Landing page dev**: `cd landing-page && npm run dev`
 - **CI/CD**: 5 GitHub Actions workflows (ci, e2e, deploy, migrate, preview)
 
-## Design System (v4.0 — Monochrome Glassmorphism)
+## Design System (v5.0 — Shadcn UI baseline)
 
-- **Design tokens**: `src/lib/styles/design-tokens.ts` — `S` (composed style objects), `C` (color palette), `statusBadge()`, `hoveredRow()` helpers
-- **Shared components**: `GlassToggle` (segmented toggle), `GlassDropdown` (unified dropdown), `StatusPill` (monochrome badge), `EmptyState` (BitBit logo watermark)
-- **CSS classes**: `bb-glass-input` (standalone inputs), `bb-stagger` (staggered animations), `bb-lift` (hover lift), `bb-modal-enter` / `bb-drawer-enter` (entrance animations)
-- **CSS design system**: `src/styles/bitbit-design-system.css` — CSS vars for all theme-sensitive values, 10 keyframe animations
-- **Glass hierarchy**: Top-level surfaces = backdrop blur + inset shadow. Children inside glass = flat with subtle stroke. Sidebar = minimal.
-- **Palette**: Pure monochrome (black/white/grays). No orange/blue/purple. Status colors (green/yellow/red) only for semantic indicators at 12% opacity.
-- **Theme awareness**: All components use CSS variables that flip for light/dark mode. `--btn-primary-bg`, `--toggle-active-bg`, `--pill-active-bg`, `--toggle-active-shadow`, `--empty-icon-filter`
-- **Style guide**: `personal-assistant/STYLE_GUIDE.md` — 9 rules including glass hierarchy, design tokens import pattern, monochrome palette
+- **Component library**: shadcn UI (39 installed) on Radix primitives — see `personal-assistant/components.json`. CLAUDE.md: "Exclusive Shadcn UI — component contracts enforced".
+- **Tokens**: `src/styles/bitbit-design-system.css` — CSS variables for color, spacing, radius, motion, z-index. Light + dark themes only (Aurora removed 2026-04-17).
+- **Theme files**: `src/styles/theme-light.css`, `src/styles/theme-midnight.css`
+- **Component contract**: `personal-assistant/COMPONENT_CONTRACTS.md` — archetypes (StatCard, ContentCard, DashboardWidget, Empty, Panel, InputGroup, Badge) + anti-patterns (no inline `style={{}}` for visuals, no raw hex/rgba in components, no orange/amber outside status-warning)
+- **Audit / consolidation plan**: `COMPONENT_AUDIT.md` (repo root) — 350-component inventory, missing typography/weight token scale, 8 proposed atoms (Surface/Pill/IconButton/etc.) to absorb duplicated class strings
+- **Deprecated (archived 2026-04-17)**: glassmorphic `S`/`C` tokens (`src/lib/styles/design-tokens.ts`), inline-style + monochrome-only system documented in `personal-assistant/docs/archive/2026-04-STYLE_GUIDE-DEPRECATED.md`
 
 ## Conventions
 

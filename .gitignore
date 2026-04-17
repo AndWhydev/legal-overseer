@@ -63,3 +63,4 @@ demo-1/
 .vercel
 .forge/
 .env*.local
+.worktrees/

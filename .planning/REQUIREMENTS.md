@@ -7,13 +7,13 @@
 
 ### Wiring (Level 1 — Connect existing dead code)
 
-- [ ] **WIRE-01**: Entity dossiers replace old entity_profiles as primary context source in ContextAssembler
-- [ ] **WIRE-02**: Spreading activation fires when user mentions an entity, surfacing related entities in proactive recall
-- [ ] **WIRE-03**: Neural decay confidence scores affect recall ranking (low-confidence memories rank lower)
-- [ ] **WIRE-04**: Predictive coding surprise scores >0.7 surface as proactive messages to the user
-- [ ] **WIRE-05**: Domain profiles injected into system prompt via prompt cache (L1 cache hit for repeated contexts)
-- [ ] **WIRE-06**: Global Workspace allocates context budget across dossier/memory/temporal modules dynamically
-- [ ] **WIRE-07**: Query Gate System 1 path reads cached dossiers (<50ms), System 2 does full retrieval
+- [x] **WIRE-01**: Entity dossiers replace old entity_profiles as primary context source in ContextAssembler
+- [x] **WIRE-02**: Spreading activation fires when user mentions an entity, surfacing related entities in proactive recall
+- [x] **WIRE-03**: Neural decay confidence scores affect recall ranking (low-confidence memories rank lower)
+- [x] **WIRE-04**: Predictive coding surprise scores >0.7 surface as proactive messages to the user
+- [x] **WIRE-05**: Domain profiles injected into system prompt via prompt cache (L1 cache hit for repeated contexts)
+- [x] **WIRE-06**: Global Workspace allocates context budget across dossier/memory/temporal modules dynamically
+- [x] **WIRE-07**: Query Gate System 1 path reads cached dossiers (<50ms), System 2 does full retrieval
 
 ### Anomaly Detection (ANOM)
 
@@ -102,7 +102,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| WIRE-01 — WIRE-07, INFRA-01 — INFRA-05 | Phase 45 | Pending |
+| WIRE-01 — WIRE-07 | Phase 45 | Complete (shipped 2026-04-14) |
+| INFRA-01 — INFRA-05 | Phase 45-46 | Partial — INFRA-01..03 satisfied, INFRA-04/05 deferred to Phase 46+ |
 | ANOM-01 — ANOM-05, LEARN-01 — LEARN-04 | Phase 46 | Pending |
 | TOM-01 — TOM-05, TEMP-01 — TEMP-04 | Phase 47 | Pending |
 | CAUS-01 — CAUS-05, META-01 — META-04 | Phase 48 | Pending |

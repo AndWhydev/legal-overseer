@@ -9,7 +9,7 @@
 - v1.5 Beta Launch & First Revenue -- Phases 29-36 (shipped 2026-03-28)
 - v2.0 Autonomous Execution -- Phases 37-43 (shipped 2026-04-14)
 - v2.0+ Living Brain v2 -- Phase 44 (code-complete 2026-04-14, 10 sub-phases)
-- v3.0 Omniscience Activation -- Phases 45-49 (active)
+- 🚧 **v3.0 Omniscience Activation** -- Phases 45-49 (active)
 
 ## Phases
 
@@ -222,6 +222,9 @@ Full details: milestones/v1.4-ROADMAP.md
 
 </details>
 
+<details>
+<summary>v2.0 Autonomous Execution (Phases 37-43) -- SHIPPED 2026-04-14</summary>
+
 ### v2.0 Autonomous Execution (Phases 37-43)
 
 **Milestone Goal:** Transform BitBit from an agent that understands and plans into one that autonomously executes real-world tasks -- browser automation, ephemeral workspaces, game theory fiduciary intelligence -- reliably and generically across industries. SOTA Consolidation: ambiguous by nature, precise in execution.
@@ -404,6 +407,8 @@ Plans:
 Phase 44 was built across 10 sub-phases as a bridge between v2.0 and v3.0. Infrastructure is complete but not yet wired into the response pipeline. Consolidated into v3.0 Phase 45 (wiring).
 
 - [x] **Phase 44: Living Brain Architecture v2** -- WAL emitter, neural KG, 3-tier consolidation pipeline, predictive coding, query gate, global workspace, prompt cache, brain consolidation cron (10 sub-phases, all merged)
+
+</details>
 
 ---
 

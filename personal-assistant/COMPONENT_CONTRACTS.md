@@ -30,6 +30,27 @@ Every component must conform to one of these archetypes.
 - Section gaps: `gap-4` between cards, `gap-6` between sections
 - No `p-3`, `p-5`, `p-8` on cards
 
+### Typography
+
+Use Tailwind's `text-*` and `font-*` utilities — they map to canonical tokens
+defined in `src/styles/bitbit-design-system.css` (`--bb-text-*`, `--bb-weight-*`,
+`--bb-line-*`) and mirrored into the Tailwind theme via `globals.css`.
+
+| Role | Class | Size | Weight |
+|---|---|---|---|
+| Display / hero | `text-4xl font-semibold` | 36px | 600 |
+| Page title | `text-3xl font-semibold` | 30px | 600 |
+| Section heading | `text-2xl font-semibold` | 24px | 600 |
+| Card title | `text-lg font-medium` | 18px | 500 |
+| Body | `text-base` | 16px | 400 |
+| Secondary / metadata | `text-sm text-muted-foreground` | 14px | 400 |
+| Caption / label | `text-xs text-muted-foreground uppercase tracking-wide` | 12px | 400 |
+
+- Do not use `text-5xl` or larger — reserved for marketing pages only.
+- Do not mix font families; `font-sans` (Inter) is default, `font-mono` is only for numeric displays and code blocks.
+- Use `font-medium` (500) or `font-semibold` (600) for weight emphasis. Avoid `font-bold` (700+) outside marketing surfaces.
+- **Historical note:** before 2026-04-17 the `@theme` block in `globals.css` collapsed every size to 16px and every weight 600+ to 500. That override has been removed; `text-*` classes now produce the hierarchy shown above.
+
 ---
 
 ## Archetypes
@@ -131,3 +152,31 @@ Rules:
 - Different retry buttons (some outline, some ghost, some primary)
 - Inline `style={{}}` for colors, borders, or backgrounds
 - `space-x-*` or `space-y-*` (use `gap-*`)
+
+## Enforcement
+
+An ESLint rule (`no-restricted-syntax` in `eslint.config.mjs`) warns on
+inline `style={{}}` usage of any visual-design property:
+`background`, `backgroundColor`, `backgroundImage`, `color`, `border`,
+`borderColor`, `borderTop`, `borderBottom`, `borderLeft`, `borderRight`,
+`borderStyle`, `borderWidth`, `boxShadow`, `fontSize`, `fontWeight`,
+`fontFamily`, `lineHeight`, `letterSpacing`.
+
+Layout and dynamic values (`transform`, `opacity`, `position`, `top`/`left`,
+`width`/`height`, `gridTemplate*`, `animation*`, `cursor`, etc.) are still
+permitted inline — they're not a design-system concern.
+
+**Exception for data-driven values:** if you need a color/size from a
+runtime value (e.g., category color from a database field), set it as a
+CSS variable inline and reference it from a Tailwind class:
+
+```jsx
+<div
+  className="bg-[var(--category-color)]"
+  style={{ '--category-color': category.color }}
+/>
+```
+
+The rule is currently `warn` (not `error`) because ~100 legacy files still
+use inline visual styling. It prevents regressions on new code while the
+existing files are migrated progressively.

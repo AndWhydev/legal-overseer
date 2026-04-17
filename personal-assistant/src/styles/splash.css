@@ -46,17 +46,6 @@
   --splash-logo-filter: brightness(0);
 }
 
-/* Aurora theme override */
-[data-theme="aurora"] .bb-splash {
-  --ring-track-color: rgba(0, 0, 0, 0.06);
-  --ring-arc-color: rgba(0, 0, 0, 0.35);
-  --particle-color: rgba(0, 0, 0, 0.25);
-  --glow-color: rgba(0, 0, 0, 0.06);
-  --progress-color: rgba(0, 0, 0, 0.35);
-  --sparkle-dot-color: rgba(0, 0, 0, 0.04);
-  --splash-logo-filter: brightness(0);
-}
-
 .bb-splash--exit {
   pointer-events: none;
 }
