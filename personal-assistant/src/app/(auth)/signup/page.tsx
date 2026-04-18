@@ -117,11 +117,22 @@ function SignupPageContent() {
       return
     }
 
+    // Phase 51 D1 — capture browser timezone at signup. Stored in user_metadata
+    // so the profile row trigger can pick it up when the profile is created.
+    const browserTimezone = (() => {
+      try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || null
+      } catch {
+        return null
+      }
+    })()
+
     const { data, error } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
       options: {
         emailRedirectTo: `${resolveAuthRedirectOrigin()}/callback`,
+        data: browserTimezone ? { timezone: browserTimezone } : undefined,
       },
     })
 
@@ -142,6 +153,20 @@ function SignupPageContent() {
       setStatus('verify-email')
       setActiveMethod(null)
       return
+    }
+
+    // Phase 51 D1 — once we have a session, write timezone to profiles.
+    // The handle_new_user trigger creates the row; we update timezone here
+    // because it's not a column the trigger knows about.
+    if (browserTimezone && data.user?.id) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ timezone: browserTimezone })
+          .eq('id', data.user.id)
+      } catch {
+        // Non-fatal — falls back to UTC in prompt builder.
+      }
     }
 
     if (tier && (await startCheckoutRedirect(tier)).ok) return
