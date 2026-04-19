@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 import { isSupportedEmailOtpType, resolveSafeAuthRedirect } from '@/lib/auth/callback'
+import { buildLoginErrorRedirect } from '@/lib/auth/login-redirect'
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
@@ -58,5 +59,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(`${url.origin}/login?error=auth`)
+  return NextResponse.redirect(
+    `${url.origin}${buildLoginErrorRedirect('otp_verify', 'Magic link expired or invalid')}`,
+  )
 }

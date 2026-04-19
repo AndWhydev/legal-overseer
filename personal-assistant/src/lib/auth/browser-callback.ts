@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { extractAuthCallbackPayload } from './callback'
+import { buildLoginErrorRedirect } from './login-redirect'
 
 type BrowserAuthLogger = {
   error: (message: string, ...args: unknown[]) => void
@@ -32,7 +33,10 @@ export async function completeBrowserAuthFromUrl(
 
     if (error || !data.user) {
       logger.error('setSession error:', error)
-      return { kind: 'redirect', destination: '/login?error=auth' }
+      return {
+        kind: 'redirect',
+        destination: buildLoginErrorRedirect('set_session', error?.message),
+      }
     }
 
     userId = data.user.id
@@ -43,7 +47,10 @@ export async function completeBrowserAuthFromUrl(
 
     if (error || !data.user) {
       logger.error('exchangeCodeForSession error:', error)
-      return { kind: 'redirect', destination: '/login?error=auth' }
+      return {
+        kind: 'redirect',
+        destination: buildLoginErrorRedirect('exchange_code', error?.message),
+      }
     }
 
     userId = data.user.id
@@ -57,14 +64,17 @@ export async function completeBrowserAuthFromUrl(
 
     if (error || !data.user) {
       logger.error('verifyOtp error:', error)
-      return { kind: 'redirect', destination: '/login?error=auth' }
+      return {
+        kind: 'redirect',
+        destination: buildLoginErrorRedirect('otp_verify', error?.message),
+      }
     }
 
     userId = data.user.id
   }
 
   if (!userId) {
-    return { kind: 'redirect', destination: '/login?error=auth' }
+    return { kind: 'redirect', destination: buildLoginErrorRedirect('no_user') }
   }
 
   const { data: profile, error: profileErr } = await supabase

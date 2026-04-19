@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { extractAuthCallbackPayload, resolveSafeAuthRedirect } from '@/lib/auth/callback'
+import { resolveLoginErrorMessage, sanitizeLoginErrorReason } from '@/lib/auth/login-redirect'
 import { resolveAuthRedirectOrigin } from '@/lib/auth/redirect-origin'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,12 +22,16 @@ type LoginMethod = 'password' | OAuthProvider | null
 function LoginPageContent() {
   const searchParams = useSearchParams()
   const queryError = searchParams.get('error')
+  const queryReason = searchParams.get('reason')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState<LoginStatus>(queryError ? 'error' : 'idle')
   const [activeMethod, setActiveMethod] = useState<LoginMethod>(null)
   const [errorMessage, setErrorMessage] = useState(
-    queryError ? "Couldn't complete sign-in. Use the email linked to your BitBit invite." : ''
+    resolveLoginErrorMessage(queryError) ?? ''
+  )
+  const [errorDetail, setErrorDetail] = useState(
+    queryError ? sanitizeLoginErrorReason(queryReason) : ''
   )
 
   const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null)
@@ -47,6 +52,7 @@ function LoginPageContent() {
     setActiveMethod(provider)
     setStatus('loading')
     setErrorMessage('')
+    setErrorDetail('')
 
     const supabase = createClient()
     if (!supabase) {
@@ -76,6 +82,7 @@ function LoginPageContent() {
     setActiveMethod('password')
     setStatus('loading')
     setErrorMessage('')
+    setErrorDetail('')
 
     const supabase = createClient()
     if (!supabase) {
@@ -139,9 +146,12 @@ function LoginPageContent() {
                   </div>
 
                   {errorMessage && (
-                    <p className="rounded-md bg-destructive/10 p-3 text-center text-sm text-destructive">
-                      {errorMessage}
-                    </p>
+                    <div className="rounded-md bg-destructive/10 p-3 text-center text-sm text-destructive">
+                      <p>{errorMessage}</p>
+                      {errorDetail && (
+                        <p className="mt-1 text-xs opacity-70">{errorDetail}</p>
+                      )}
+                    </div>
                   )}
 
                   <div className="grid gap-2">

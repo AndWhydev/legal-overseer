@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { logger } from '@/lib/core/logger'
 import { extractAuthCallbackPayload } from '@/lib/auth/callback'
+import { buildLoginErrorRedirect } from '@/lib/auth/login-redirect'
 import { loadOnboardingProfile } from '@/lib/onboarding/profile'
 import { getCanonicalOnboardingRedirect } from '@/lib/onboarding/state'
 import { consumePendingTier } from '@/lib/billing/pending-tier'
@@ -21,9 +22,35 @@ export default function CallbackPage() {
 
     const payload = extractAuthCallbackPayload(window.location.href)
 
+    // Supabase (and the upstream OAuth provider) redirects back here with
+    // ?error=...&error_description=... when the OAuth handshake fails. Catch
+    // those before treating them as a generic "no tokens" case so the user
+    // sees the real reason (e.g. "Unsupported provider: provider is not enabled").
+    function extractOAuthError(href: string): string | null {
+      try {
+        const url = new URL(href)
+        const hash = new URLSearchParams(url.hash.startsWith('#') ? url.hash.slice(1) : url.hash)
+        const qs = url.searchParams
+        const description =
+          hash.get('error_description') ??
+          qs.get('error_description') ??
+          hash.get('error') ??
+          qs.get('error')
+        return description ? description.replace(/\+/g, ' ') : null
+      } catch {
+        return null
+      }
+    }
+
     async function completeAuth() {
       if (payload.kind === 'none') {
-        router.replace('/login?error=auth')
+        const oauthError = extractOAuthError(window.location.href)
+        router.replace(
+          buildLoginErrorRedirect(
+            'callback_missing',
+            oauthError ?? 'No auth tokens in callback URL',
+          ),
+        )
         return
       }
 
@@ -37,7 +64,7 @@ export default function CallbackPage() {
 
         if (error || !data.user) {
           logger.error('setSession error:', error)
-          router.replace('/login?error=auth')
+          router.replace(buildLoginErrorRedirect('set_session', error?.message))
           return
         }
 
@@ -49,7 +76,7 @@ export default function CallbackPage() {
 
         if (error || !data.user) {
           logger.error('exchangeCodeForSession error:', error)
-          router.replace('/login?error=auth')
+          router.replace(buildLoginErrorRedirect('exchange_code', error?.message))
           return
         }
 
@@ -64,7 +91,7 @@ export default function CallbackPage() {
 
         if (error || !data.user) {
           logger.error('verifyOtp error:', error)
-          router.replace('/login?error=auth')
+          router.replace(buildLoginErrorRedirect('otp_verify', error?.message))
           return
         }
 
@@ -72,7 +99,7 @@ export default function CallbackPage() {
       }
 
       if (!userId) {
-        router.replace('/login?error=auth')
+        router.replace(buildLoginErrorRedirect('no_user'))
         return
       }
 
