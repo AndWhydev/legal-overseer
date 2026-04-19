@@ -681,7 +681,7 @@ test.describe('Interactions', () => {
       await page.waitForTimeout(200)
     }
 
-    let searchInput = page.locator('input[placeholder="Search..."]')
+    const searchInput = page.locator('input[placeholder="Search..."]')
     if ((await searchInput.count()) > 0) {
       // Search for something that won't match
       await searchInput.fill('zzz_nonexistent_query_xyz')

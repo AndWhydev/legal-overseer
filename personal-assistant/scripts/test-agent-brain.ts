@@ -21,8 +21,7 @@ const supabase = createClient(
 const ORG = '7abcbfb1-67e5-4a3b-aa08-a17cfd2867e9'
 const USER = '02ce2616-c01b-45a5-a2ad-16ebe936a6b2'
 
-// Dynamic import to work around @/ alias
-const { runAgentChat } = require('../src/lib/agent/engine') as typeof import('../src/lib/agent/engine')
+import { runAgentChat } from '../src/lib/agent/engine'
 
 interface TestResult {
   prompt: string

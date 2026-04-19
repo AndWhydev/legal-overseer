@@ -46,6 +46,9 @@ async function startSession(sessionId: string, orgId: string) {
   const sessionDir = path.join(AUTH_DIR, sessionId);
   fs.mkdirSync(sessionDir, { recursive: true });
 
+  // `useMultiFileAuthState` is a Baileys utility (not a React hook) — the
+  // rules-of-hooks heuristic misfires on the `use` prefix.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
   const { version } = await fetchLatestBaileysVersion();
 

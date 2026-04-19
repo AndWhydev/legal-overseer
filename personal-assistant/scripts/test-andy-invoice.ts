@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '../.env.local') })
 
 import { createClient } from '@supabase/supabase-js'
-const { runAgentChat } = require('../src/lib/agent/engine') as typeof import('../src/lib/agent/engine')
+import { runAgentChat } from '../src/lib/agent/engine'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { autoRefreshToken: false, persistSession: false } })
 

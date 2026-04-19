@@ -16,7 +16,7 @@ const __dir = dirname(fileURLToPath(import.meta.url))
 config({ path: resolve(__dir, '../.env.local') })
 
 import { createClient } from '@supabase/supabase-js'
-const { runAgentChat } = require('../src/lib/agent/engine') as typeof import('../src/lib/agent/engine')
+import { runAgentChat } from '../src/lib/agent/engine'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
