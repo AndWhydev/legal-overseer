@@ -2,7 +2,7 @@
  * Connection Dossier Builder — tests.
  *
  * Mocks:
- *   - `getMCPTools` (returns a fixed tool list)
+ *   - `fetchToolkitActions` (returns a fixed tool list for the requested toolkit)
  *   - `ai` module (`generateText` for the use-case synthesis LLM call)
  */
 
@@ -14,17 +14,17 @@ vi.mock('ai', () => ({
   gateway: vi.fn((modelId: string) => modelId),
 }))
 
-// Mock mcp-session
-vi.mock('../mcp-session', () => ({
-  getMCPTools: vi.fn(),
+// Mock tool-provider (REST toolkit fetcher)
+vi.mock('../tool-provider', () => ({
+  fetchToolkitActions: vi.fn(),
 }))
 
 import { generateText } from 'ai'
-import { getMCPTools } from '../mcp-session'
+import { fetchToolkitActions } from '../tool-provider'
 import { buildConnectionDossier } from '../dossier'
 
 const mockedGenerateText = vi.mocked(generateText)
-const mockedGetMCPTools = vi.mocked(getMCPTools)
+const mockedFetch = vi.mocked(fetchToolkitActions)
 
 function gmailTools() {
   return [
@@ -45,14 +45,6 @@ function gmailTools() {
         properties: { max_results: {}, query: {} },
       },
     },
-    {
-      name: 'NOTION_CREATE_PAGE',
-      description: 'Create a page in Notion',
-      input_schema: {
-        type: 'object',
-        properties: { parent_id: {}, title: {} },
-      },
-    },
   ] as any
 }
 
@@ -62,7 +54,7 @@ describe('buildConnectionDossier', () => {
   })
 
   it('builds a dossier with tool summaries, deduped capabilities, and a synthesized narrative', async () => {
-    mockedGetMCPTools.mockResolvedValueOnce(gmailTools())
+    mockedFetch.mockResolvedValueOnce(gmailTools())
     mockedGenerateText.mockResolvedValueOnce({
       text: 'You can now draft and send Gmail messages and scan recent threads for context.',
     } as any)
@@ -77,11 +69,10 @@ describe('buildConnectionDossier', () => {
     expect(dossier.connectedAccountId).toBe('ca-123')
     expect(typeof dossier.connectedAt).toBe('string')
 
-    // Filtered to GMAIL_ tools only
+    // Toolkit-scoped fetch already returns only GMAIL_ tools
     const toolNames = dossier.tools.map((t) => t.name)
     expect(toolNames).toContain('GMAIL_SEND_EMAIL')
     expect(toolNames).toContain('GMAIL_LIST_THREADS')
-    expect(toolNames).not.toContain('NOTION_CREATE_PAGE')
 
     // Each tool carries top-level input keys only (not the full schema)
     const sendTool = dossier.tools.find((t) => t.name === 'GMAIL_SEND_EMAIL')!
@@ -101,7 +92,7 @@ describe('buildConnectionDossier', () => {
   })
 
   it('falls back to a deterministic use-case summary when the LLM call fails', async () => {
-    mockedGetMCPTools.mockResolvedValueOnce(gmailTools())
+    mockedFetch.mockResolvedValueOnce(gmailTools())
     mockedGenerateText.mockRejectedValueOnce(new Error('gateway timeout'))
 
     const dossier = await buildConnectionDossier({
@@ -116,7 +107,7 @@ describe('buildConnectionDossier', () => {
   })
 
   it('returns an empty-but-valid dossier when no tools are discovered', async () => {
-    mockedGetMCPTools.mockResolvedValueOnce([])
+    mockedFetch.mockResolvedValueOnce([])
     // LLM should not even be called for use cases because the fallback path covers empty
 
     const dossier = await buildConnectionDossier({
@@ -134,7 +125,7 @@ describe('buildConnectionDossier', () => {
 
   it('falls back to full tool list when no tool names match the app prefix', async () => {
     // Unusual tool naming — none prefixed with SLACK_
-    mockedGetMCPTools.mockResolvedValueOnce([
+    mockedFetch.mockResolvedValueOnce([
       {
         name: 'sendDirectMessage',
         description: 'Slack DM',

@@ -136,6 +136,56 @@ describe('processConnectionConnected', () => {
     expect(result.walEntryId).toBeNull()
   })
 
+  it('persists the dossier narrative onto the matching org_connections row', async () => {
+    const dossier = makeDossier()
+    mockedBuild.mockResolvedValueOnce(dossier)
+    mockedEmit.mockResolvedValueOnce({
+      id: 'wal-xyz',
+      org_id: 'org-1',
+      entity_ids: ['capability:gmail:ca-123'],
+      signal_type: 'pattern',
+      content: '',
+      confidence: 0.95,
+      source_memory_id: null,
+      source_thread_id: null,
+      consolidated_at: null,
+      created_at: '2026-04-13T00:00:00Z',
+    })
+
+    // Mock supabase client that captures SELECT + UPDATE against org_connections.
+    const updateCalls: Array<Record<string, unknown>> = []
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table !== 'org_connections') throw new Error(`unexpected table: ${table}`)
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { id: 'row-1', config: { existing: true } },
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+          update: vi.fn((u: Record<string, unknown>) => {
+            updateCalls.push(u)
+            return { eq: vi.fn().mockResolvedValue({ error: null }) }
+          }),
+        }
+      }),
+    } as any
+
+    await processConnectionConnected(supabase, makeJob())
+
+    expect(updateCalls).toHaveLength(1)
+    const updated = updateCalls[0].config as Record<string, unknown>
+    expect(updated.existing).toBe(true) // preserves existing config
+    expect(updated.dossier_narrative).toBe('Draft and send Gmail messages; scan recent threads.')
+    expect(updated.dossier_capabilities).toEqual(['GMAIL_SEND_EMAIL', 'GMAIL_LIST_THREADS'])
+    expect(typeof updated.dossier_synced_at).toBe('string')
+  })
+
   it('passes through the connectedAccountId from the job payload to the dossier builder', async () => {
     mockedBuild.mockResolvedValueOnce(
       makeDossier({ connectedAccountId: 'ca-zzz', appKey: 'notion' }),

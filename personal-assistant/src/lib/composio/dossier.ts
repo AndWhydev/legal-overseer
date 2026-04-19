@@ -15,7 +15,7 @@ import { gateway, generateText } from 'ai'
 
 import { models } from '@/lib/ai'
 import { logger } from '@/lib/core/logger'
-import { getMCPTools } from './mcp-session'
+import { fetchToolkitActions } from './tool-provider'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -148,14 +148,14 @@ export interface BuildDossierParams {
 export async function buildConnectionDossier(
   params: BuildDossierParams,
 ): Promise<ConnectionDossier> {
-  const { orgId, appKey, connectedAccountId } = params
+  const { appKey, connectedAccountId } = params
   const connectedAt = new Date().toISOString()
 
-  // NOTE: getMCPTools returns tools for the org's whole MCP session
-  // (across all connected apps). We filter by appKey prefix; Composio
-  // tool names are conventionally `{APPKEY}_{VERB}_{NOUN}`.
-  const allTools = await getMCPTools(orgId)
-  const appTools = filterToolsForApp(allTools, appKey)
+  // Fetch actions via the Composio REST API (/api/v3/tools?toolkit_slug=...).
+  // fetchToolkitActions is already toolkit-scoped, so no prefix filtering is
+  // needed. If tool names don't carry the appKey prefix (unusual toolkits)
+  // we still fall through to full list via filterToolsForApp for safety.
+  const appTools = filterToolsForApp(await fetchToolkitActions(appKey), appKey)
 
   const toolSummaries: ToolSummary[] = appTools.map((t) => ({
     name: t.name,

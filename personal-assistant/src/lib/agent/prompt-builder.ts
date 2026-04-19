@@ -258,21 +258,45 @@ async function getChannelSummary(): Promise<string> {
     } catch { /* non-critical — view may not exist in older envs */ }
   }
 
-  // Also check org_connections (new connector system — covers iMessage/BlueBubbles, etc.)
+  // Per-connection capability narratives (Composio dossier). Rendered as a
+  // separate "Connected apps" block below the raw channel list so the agent
+  // knows what each connected third-party service actually lets us do.
+  const appCapabilities: string[] = []
+
+  // Also check org_connections (new connector system — covers iMessage/BlueBubbles, Composio, etc.)
   if (_channelSummarySupabase) {
     try {
       const { data: orgConns } = await _channelSummarySupabase
         .from('org_connections')
-        .select('provider, status, updated_at')
+        .select('provider, status, updated_at, transport, config')
         .eq('org_id', _channelSummaryOrgId)
         .eq('status', 'connected')
 
       if (orgConns) {
         for (const conn of orgConns) {
-          if (channelCounts.some(c => c.toLowerCase().startsWith(conn.provider))) continue
-          const name = conn.provider === 'imessage' ? 'iMessage'
-            : conn.provider.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
-          channelCounts.push(`${name}: connected`)
+          const provider = conn.provider as string
+          const transport = (conn.transport as string | null) ?? ''
+          const config = (conn.config as Record<string, unknown> | null) ?? {}
+          const displayName = provider === 'imessage' ? 'iMessage'
+            : provider.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+
+          if (transport === 'composio') {
+            // Composio-transport rows get a capability narrative line. We do
+            // NOT add to channelCounts — these aren't messaging channels.
+            const narrative = typeof config.dossier_narrative === 'string'
+              ? config.dossier_narrative.trim()
+              : ''
+            if (narrative) {
+              appCapabilities.push(`${displayName}: ${narrative}`)
+            } else {
+              appCapabilities.push(`${displayName}: connected (capabilities still syncing).`)
+            }
+            continue
+          }
+
+          // Non-Composio rows (bridges, etc.) — keep existing channelCounts behavior.
+          if (channelCounts.some(c => c.toLowerCase().startsWith(provider))) continue
+          channelCounts.push(`${displayName}: connected`)
         }
         const orgConnProviders = new Set(orgConns.map(c => c.provider))
         if (orgConnProviders.has('imessage')) {
@@ -282,9 +306,14 @@ async function getChannelSummary(): Promise<string> {
     } catch { /* non-critical */ }
   }
 
-  return channelCounts.length > 0
+  const channelLine = channelCounts.length > 0
     ? `Connected channels: ${channelCounts.join(', ')}`
     : 'No channels connected yet.'
+
+  if (appCapabilities.length === 0) return channelLine
+
+  const appBlock = `Connected apps:\n${appCapabilities.map(l => `- ${l}`).join('\n')}`
+  return `${channelLine}\n\n${appBlock}`
 }
 
 // Temporary: pass supabase client to getChannelSummary via module-level vars

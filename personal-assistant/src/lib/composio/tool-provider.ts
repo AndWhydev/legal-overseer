@@ -89,7 +89,7 @@ function composioHeaders(): Record<string, string> {
  * Returns Anthropic-compatible tool definitions.
  * Cached per-toolkit independently of org.
  */
-async function fetchToolkitActions(toolkit: string): Promise<Anthropic.Tool[]> {
+export async function fetchToolkitActions(toolkit: string): Promise<Anthropic.Tool[]> {
   const cached = actionSchemaCache.get(toolkit)
   if (cached && cached.expiresAt > Date.now()) return cached.actions
 

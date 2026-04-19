@@ -63,6 +63,63 @@ function capabilityEntityId(appKey: string, connectedAccountId: string): string 
   return `capability:${appKey}:${connectedAccountId}`
 }
 
+/**
+ * Persist the synthesized narrative onto the matching org_connections row so
+ * the prompt builder can surface it without re-running dossier synthesis.
+ * Best-effort: never throws, swallows errors.
+ */
+async function persistNarrativeOnConnection(
+  supabase: SupabaseClient,
+  orgId: string,
+  connectedAccountId: string,
+  narrative: string,
+  capabilities: string[],
+): Promise<void> {
+  try {
+    const { data: row } = await supabase
+      .from('org_connections')
+      .select('id, config')
+      .eq('org_id', orgId)
+      .eq('connected_account_id', connectedAccountId)
+      .maybeSingle()
+
+    if (!row?.id) {
+      logger.info('[knowledge-librarian] No org_connections row found for dossier persistence', {
+        orgId,
+        connectedAccountId,
+      })
+      return
+    }
+
+    const existingConfig = (row.config ?? {}) as Record<string, unknown>
+    const mergedConfig = {
+      ...existingConfig,
+      dossier_narrative: narrative,
+      dossier_capabilities: capabilities,
+      dossier_synced_at: new Date().toISOString(),
+    }
+
+    const { error } = await supabase
+      .from('org_connections')
+      .update({ config: mergedConfig })
+      .eq('id', row.id)
+
+    if (error) {
+      logger.warn('[knowledge-librarian] Failed to persist dossier narrative', {
+        orgId,
+        connectedAccountId,
+        error: error.message,
+      })
+    }
+  } catch (err) {
+    logger.warn('[knowledge-librarian] Unexpected error persisting dossier narrative', {
+      orgId,
+      connectedAccountId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+}
+
 // ─── Worker processor ──────────────────────────────────────────────────────
 
 /**
@@ -107,6 +164,17 @@ export async function processConnectionConnected(
     content,
     confidence: 0.95,
   })
+
+  // Persist narrative onto the org_connections row so the prompt builder can
+  // read it without re-synthesizing. Independent of WAL success — the prompt
+  // path only needs the connection row.
+  await persistNarrativeOnConnection(
+    supabase,
+    orgId,
+    connectedAccountId,
+    dossier.suggestedUseCases,
+    dossier.capabilities,
+  )
 
   if (!walEntry) {
     logger.warn('[knowledge-librarian] Failed to emit dossier to WAL', {
