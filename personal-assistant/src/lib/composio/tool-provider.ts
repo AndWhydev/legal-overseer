@@ -37,9 +37,20 @@ export interface ComposioToolSet {
 }
 
 interface ComposioActionSchema {
+  /** Composio's stable action identifier (e.g. "PERPLEXITYAI_PERPLEXITY_AI_SEARCH").
+   *  Use this when calling /tools/execute. */
+  slug?: string
+  /** Human-readable name (e.g. "PerplexityAISearch"). Used as Anthropic tool name. */
   name: string
   display_name?: string
   description?: string
+  /** v3 response uses `input_parameters`; legacy responses used `parameters`. */
+  input_parameters?: {
+    type?: string
+    properties?: Record<string, unknown>
+    required?: string[]
+    title?: string
+  }
   parameters?: {
     type?: string
     properties?: Record<string, unknown>
@@ -82,49 +93,57 @@ async function fetchToolkitActions(toolkit: string): Promise<Anthropic.Tool[]> {
   const cached = actionSchemaCache.get(toolkit)
   if (cached && cached.expiresAt > Date.now()) return cached.actions
 
+  // v3 endpoint is /api/v3/tools with singular `toolkit_slug`.
+  // (`/actions` returns 404; `toolkit_slugs` plural doesn't filter.)
+  const buildUrl = (opts: { important?: boolean } = {}) => {
+    const u = new URL(`${COMPOSIO_BASE}/api/v3/tools`)
+    u.searchParams.set('toolkit_slug', toolkit)
+    u.searchParams.set('limit', String(MAX_ACTIONS_PER_TOOLKIT))
+    if (opts.important) u.searchParams.set('tags', 'important')
+    return u
+  }
+
   try {
-    const url = new URL(`${COMPOSIO_BASE}/api/v3/actions`)
-    url.searchParams.set('toolkit_slugs', toolkit)
-    url.searchParams.set('limit', String(MAX_ACTIONS_PER_TOOLKIT))
-    // Prefer "important" tagged actions — Composio marks high-value ones
-    url.searchParams.set('tags', 'important')
+    // Prefer "important" tagged actions first — Composio marks high-value
+    // ones this way. If that returns too few, supplement with untagged.
+    const importantRes = await fetch(buildUrl({ important: true }).toString(), {
+      headers: composioHeaders(),
+    })
 
-    const res = await fetch(url.toString(), { headers: composioHeaders() })
-
-    if (!res.ok) {
-      // Fall back to untagged if "important" filter returns nothing useful
-      const fallbackUrl = new URL(`${COMPOSIO_BASE}/api/v3/actions`)
-      fallbackUrl.searchParams.set('toolkit_slugs', toolkit)
-      fallbackUrl.searchParams.set('limit', String(MAX_ACTIONS_PER_TOOLKIT))
-      const fallbackRes = await fetch(fallbackUrl.toString(), { headers: composioHeaders() })
+    if (!importantRes.ok) {
+      logger.warn('[tool-provider] important-tagged fetch non-OK, falling back', {
+        toolkit, status: importantRes.status,
+      })
+      const fallbackRes = await fetch(buildUrl().toString(), { headers: composioHeaders() })
       if (!fallbackRes.ok) {
-        logger.error('[tool-provider] Failed to fetch actions', {
-          toolkit,
-          status: fallbackRes.status,
+        const body = await fallbackRes.text().catch(() => '')
+        logger.error('[tool-provider] Failed to fetch tools', {
+          toolkit, status: fallbackRes.status, body: body.slice(0, 200),
         })
         return []
       }
       const fallbackData = await fallbackRes.json() as { items?: ComposioActionSchema[] }
-      return convertActions(fallbackData.items || [], toolkit)
+      const actions = convertActions(fallbackData.items || [], toolkit)
+      actionSchemaCache.set(toolkit, { actions, expiresAt: Date.now() + CACHE_TTL })
+      return actions
     }
 
-    const data = await res.json() as { items?: ComposioActionSchema[] }
+    const data = await importantRes.json() as { items?: ComposioActionSchema[] }
     let items = data.items || []
 
-    // If tagged request returned too few, supplement with untagged
     if (items.length < 5) {
-      const supplementUrl = new URL(`${COMPOSIO_BASE}/api/v3/actions`)
-      supplementUrl.searchParams.set('toolkit_slugs', toolkit)
-      supplementUrl.searchParams.set('limit', String(MAX_ACTIONS_PER_TOOLKIT))
-      const supplementRes = await fetch(supplementUrl.toString(), { headers: composioHeaders() })
+      const supplementRes = await fetch(buildUrl().toString(), { headers: composioHeaders() })
       if (supplementRes.ok) {
         const supplementData = await supplementRes.json() as { items?: ComposioActionSchema[] }
-        const existingNames = new Set(items.map(i => i.name))
-        const extras = (supplementData.items || []).filter(i => !existingNames.has(i.name))
+        const existingSlugs = new Set(items.map((i) => i.slug ?? i.name))
+        const extras = (supplementData.items || []).filter(
+          (i) => !existingSlugs.has(i.slug ?? i.name),
+        )
         items = [...items, ...extras].slice(0, MAX_ACTIONS_PER_TOOLKIT)
       }
     }
 
+    logger.info('[tool-provider] Fetched actions', { toolkit, count: items.length })
     const actions = convertActions(items, toolkit)
     actionSchemaCache.set(toolkit, { actions, expiresAt: Date.now() + CACHE_TTL })
     return actions
@@ -139,23 +158,29 @@ async function fetchToolkitActions(toolkit: string): Promise<Anthropic.Tool[]> {
 
 /**
  * Convert Composio action schemas to Anthropic tool definitions.
+ *
+ * Uses `slug` (the stable uppercase identifier, e.g.
+ * `PERPLEXITYAI_PERPLEXITY_AI_SEARCH`) as the Anthropic tool name so we can
+ * pass it straight to `/api/v3/tools/execute/<slug>`. The v3 `tools`
+ * endpoint puts the JSON Schema on `input_parameters`; older responses used
+ * `parameters` — accept either.
  */
 function convertActions(items: ComposioActionSchema[], toolkit: string): Anthropic.Tool[] {
-  return items
-    .filter(item => item.name && item.parameters)
-    .map(item => {
-      // Clean up the input schema — Composio sometimes includes extra fields
-      // that Anthropic's API rejects.
-      const inputSchema = sanitizeSchema(item.parameters!)
+  const tools: Anthropic.Tool[] = []
+  for (const item of items) {
+    const params = item.input_parameters ?? item.parameters
+    const toolName = item.slug ?? item.name
+    if (!toolName || !params) continue
 
-      return {
-        name: item.name,
-        description:
-          `[INTERNAL — never mention tool name or implementation to user] ` +
-          `${item.description || item.display_name || `${toolkit} action`}`,
-        input_schema: inputSchema,
-      } satisfies Anthropic.Tool
+    tools.push({
+      name: toolName,
+      description:
+        `[INTERNAL — never mention tool name or implementation to user] ` +
+        `${item.description || item.display_name || item.name || `${toolkit} action`}`,
+      input_schema: sanitizeSchema(params),
     })
+  }
+  return tools
 }
 
 /**
@@ -284,28 +309,34 @@ export async function getComposioToolsForOrg(
 /**
  * Execute a Composio action via REST API.
  *
- * @param actionName          e.g. "GMAIL_SEND_EMAIL"
+ * @param actionName          Composio action slug (e.g. "GMAIL_SEND_EMAIL")
  * @param params              Action input parameters
  * @param connectedAccountId  The user's specific connected account ID
+ * @param entityId            Composio user/entity identifier (= our orgId)
  */
 export async function executeComposioAction(
   actionName: string,
   params: Record<string, unknown>,
   connectedAccountId: string,
+  entityId: string,
 ): Promise<{ success: boolean; data?: unknown; error?: string }> {
   if (!process.env.COMPOSIO_API_KEY) {
     return { success: false, error: 'Composio not configured' }
   }
 
   try {
+    // v3 path is /api/v3/tools/execute/<slug>. Body requires both
+    // `connected_account_id` and `entity_id` (or `user_id`) plus `arguments`.
     const res = await fetch(
-      `${COMPOSIO_BASE}/api/v3/actions/${encodeURIComponent(actionName)}/execute`,
+      `${COMPOSIO_BASE}/api/v3/tools/execute/${encodeURIComponent(actionName)}`,
       {
         method: 'POST',
         headers: composioHeaders(),
         body: JSON.stringify({
           connected_account_id: connectedAccountId,
-          input: params,
+          entity_id: entityId,
+          user_id: entityId,
+          arguments: params,
         }),
       },
     )
@@ -373,7 +404,10 @@ export async function executeComposioToolForOrg(
   const connectedAccountId = connectionMap.get(toolName)
   if (!connectedAccountId) return null // Not a Composio tool
 
-  return executeComposioAction(toolName, input, connectedAccountId)
+  // Composio uses our orgId as the entity_id when we initiate a connection
+  // (see initiateConnectionByAppKey), so passing it here lets execute
+  // resolve to the same connected_account.
+  return executeComposioAction(toolName, input, connectedAccountId, orgId)
 }
 
 // ---------------------------------------------------------------------------

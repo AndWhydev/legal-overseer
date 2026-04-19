@@ -52,18 +52,22 @@ async function executeAction(
   actionName: string,
   params: Record<string, unknown>,
   connectedAccountId: string,
+  entityId: string,
 ): Promise<ComposioActionResult | null> {
   if (!process.env.COMPOSIO_API_KEY) return null
 
   try {
+    // v3 path is /api/v3/tools/execute/<slug>; body requires entity_id.
     const res = await fetch(
-      `${COMPOSIO_BASE}/api/v3/actions/${encodeURIComponent(actionName)}/execute`,
+      `${COMPOSIO_BASE}/api/v3/tools/execute/${encodeURIComponent(actionName)}`,
       {
         method: 'POST',
         headers: composioHeaders(),
         body: JSON.stringify({
           connected_account_id: connectedAccountId,
-          input: params,
+          entity_id: entityId,
+          user_id: entityId,
+          arguments: params,
         }),
       },
     )
@@ -454,7 +458,7 @@ export function createComposioAdapter(channel: ChannelType): ChannelAdapter | nu
         params.since = since.toISOString()
       }
 
-      const result = await executeAction(pullAction, params, connectedAccountId)
+      const result = await executeAction(pullAction, params, connectedAccountId, orgId)
       if (!result?.data) return []
 
       const items = Array.isArray(result.data)

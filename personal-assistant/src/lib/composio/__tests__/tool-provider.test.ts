@@ -163,12 +163,12 @@ describe('composio/tool-provider', () => {
       // Route fetch by URL — fetchToolkitActions may make multiple calls per toolkit
       // (tagged + supplement when < 5 results)
       mockFetch.mockImplementation((url: string) => {
-        if (typeof url === 'string' && url.includes('toolkit_slugs=gmail')) {
+        if (typeof url === 'string' && url.includes('toolkit_slug=gmail')) {
           return Promise.resolve(composioActionResponse([
             { name: 'GMAIL_SEND_EMAIL', description: 'Send email', parameters: { type: 'object', properties: {}, required: [] } },
           ]))
         }
-        if (typeof url === 'string' && url.includes('toolkit_slugs=slack')) {
+        if (typeof url === 'string' && url.includes('toolkit_slug=slack')) {
           return Promise.resolve(composioActionResponse([
             { name: 'SLACK_SEND_MESSAGE', description: 'Send message', parameters: { type: 'object', properties: {}, required: [] } },
           ]))
@@ -210,18 +210,21 @@ describe('composio/tool-provider', () => {
         json: () => Promise.resolve({ data: { messageId: 'msg-1' }, successfull: true }),
       })
 
-      const result = await executeComposioAction('GMAIL_SEND_EMAIL', { to: 'test@test.com' }, 'acc-123')
+      const result = await executeComposioAction('GMAIL_SEND_EMAIL', { to: 'test@test.com' }, 'acc-123', 'org-1')
 
       expect(result.success).toBe(true)
       expect(result.data).toEqual({ messageId: 'msg-1' })
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v3/actions/GMAIL_SEND_EMAIL/execute'),
+        expect.stringContaining('/api/v3/tools/execute/GMAIL_SEND_EMAIL'),
         expect.objectContaining({
           method: 'POST',
           body: expect.stringContaining('"connected_account_id":"acc-123"'),
         }),
       )
+      // Body must include entity_id so Composio can resolve the account
+      const calledWith = mockFetch.mock.calls.at(-1)?.[1] as { body?: string } | undefined
+      expect(calledWith?.body).toContain('"entity_id":"org-1"')
     })
 
     it('returns error on HTTP failure', async () => {
@@ -231,7 +234,7 @@ describe('composio/tool-provider', () => {
         text: () => Promise.resolve('Bad request'),
       })
 
-      const result = await executeComposioAction('GMAIL_SEND_EMAIL', {}, 'acc-123')
+      const result = await executeComposioAction('GMAIL_SEND_EMAIL', {}, 'acc-123', 'org-1')
       expect(result.success).toBe(false)
       expect(result.error).toContain('400')
     })
@@ -242,14 +245,14 @@ describe('composio/tool-provider', () => {
         json: () => Promise.resolve({ error: 'Rate limited', successfull: false }),
       })
 
-      const result = await executeComposioAction('GMAIL_SEND_EMAIL', {}, 'acc-123')
+      const result = await executeComposioAction('GMAIL_SEND_EMAIL', {}, 'acc-123', 'org-1')
       expect(result.success).toBe(false)
       expect(result.error).toBe('Rate limited')
     })
 
     it('returns error when COMPOSIO_API_KEY not set', async () => {
       vi.stubEnv('COMPOSIO_API_KEY', '')
-      const result = await executeComposioAction('GMAIL_SEND_EMAIL', {}, 'acc-123')
+      const result = await executeComposioAction('GMAIL_SEND_EMAIL', {}, 'acc-123', 'org-1')
       expect(result.success).toBe(false)
       expect(result.error).toContain('not configured')
     })
