@@ -17,6 +17,11 @@ const envSchema = z.object({
 
   // Application
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+  // Comma-separated list of OAuth providers enabled for the login/signup
+  // pages. Must mirror what's actually configured in Supabase Auth — only
+  // 'google' and 'apple' are recognised. Empty / unset hides the OAuth
+  // buttons entirely and users sign up via email + password.
+  NEXT_PUBLIC_ENABLED_OAUTH_PROVIDERS: z.string().optional(),
   DEFAULT_ORG_ID: z.string().uuid().optional(),
   BITBIT_DEPLOYMENT: z.string().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).optional(),

@@ -10,7 +10,11 @@ import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { ClawdLoginFace } from '@/components/ui/clawd-login-face'
 import { ForceFieldBackground } from '@/components/ui/force-field-background'
-import { OAuthProviderButtons, type OAuthProvider } from '@/components/auth/oauth-provider-buttons'
+import {
+  OAuthProviderButtons,
+  hasAnyEnabledOAuthProvider,
+  type OAuthProvider,
+} from '@/components/auth/oauth-provider-buttons'
 import { resolveAuthRedirectOrigin } from '@/lib/auth/redirect-origin'
 import { isPaidTier, TIER_DISPLAY } from '@/lib/billing/checkout'
 import { stashPendingTier } from '@/lib/billing/pending-tier'
@@ -281,17 +285,21 @@ function SignupPageContent() {
                   )}
                 </Button>
 
-                <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                  <span className="relative z-10 bg-card px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
+                {hasAnyEnabledOAuthProvider() && (
+                  <>
+                    <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
+                      <span className="relative z-10 bg-card px-2 text-muted-foreground">
+                        Or continue with
+                      </span>
+                    </div>
 
-                <OAuthProviderButtons
-                  onSelect={handleOAuthSignUp}
-                  disabled={isBusy}
-                  activeMethod={oauthProvider}
-                />
+                    <OAuthProviderButtons
+                      onSelect={handleOAuthSignUp}
+                      disabled={isBusy}
+                      activeMethod={oauthProvider}
+                    />
+                  </>
+                )}
 
                 <p className="text-center text-sm text-muted-foreground">
                   Already have an account?{' '}
