@@ -140,9 +140,11 @@ describe('confidence-router delegation bypass', () => {
         mandate: 'standard',
         entityId: 'entity-9',
       }
-      // Default thresholds apply unchanged
+      // Default thresholds apply unchanged. 0.70 lands at the clarify
+      // threshold (ask + (act-ask)*0.5 = 0.70) so routing returns 'clarify'
+      // — the point of the test is that standard mandate doesn't shift bands.
       const result = routeAgentAction(0.70, undefined, undefined, undefined, undefined, delegation)
-      expect(result.decision).toBe('ask')
+      expect(result.decision).toBe('clarify')
     })
 
     it('behaves identically to no delegation', () => {
@@ -345,8 +347,9 @@ describe('delegation coherence between confidence router and autonomy levels', (
     const routerResult = routeAgentAction(0.7, undefined, undefined, undefined, undefined, delegation)
     const autonomyResult = shouldAutoExecute('send_email', 0.7, null, delegation)
 
-    // Router says 'ask' (0.7 between default ask/act)
-    expect(routerResult.decision).toBe('ask')
+    // Router says 'clarify' (0.7 at the clarify threshold under defaults).
+    // The coherence test just checks autonomy-and-router both decline to auto-execute.
+    expect(routerResult.decision).toBe('clarify')
     // Autonomy says no (L2 doesn't auto-execute under standard mandate)
     expect(autonomyResult.execute).toBe(false)
   })

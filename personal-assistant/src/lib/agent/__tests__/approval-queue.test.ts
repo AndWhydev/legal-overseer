@@ -186,7 +186,7 @@ describe('approval-queue', () => {
         agent_config_id: 'config-1',
         action_type: 'create_task',
         action_summary: 'Create task',
-        confidence_score: 0.7, // Between 0.55 and 0.85
+        confidence_score: 0.6, // Inside ask band (below clarify threshold 0.70)
         agentConfig: { confidence_thresholds: { act: 0.85, ask: 0.55 } },
       }
 

@@ -17,18 +17,18 @@
 
 ### Anomaly Detection (ANOM)
 
-- [ ] **ANOM-01**: Statistical anomaly detector computes z-scores per entity per metric (payment timing, amount, frequency)
-- [ ] **ANOM-02**: Anomalies exceeding z>3 generate proactive alerts routed to user via messaging channel
-- [ ] **ANOM-03**: Alert budget caps at 2-3 per entity per day to prevent fatigue
-- [ ] **ANOM-04**: Pattern break detection across multiple entities ("3 clients with late payments this month")
-- [ ] **ANOM-05**: Anomaly explanations include baseline comparison ("Usually pays day 15, this invoice is day 30")
+- [x] **ANOM-01**: Statistical anomaly detector computes z-scores per entity per metric (payment timing, amount, frequency)
+- [x] **ANOM-02**: Anomalies exceeding z>3 generate proactive alerts routed to user via messaging channel
+- [x] **ANOM-03**: Alert budget caps at 2-3 per entity per day to prevent fatigue
+- [x] **ANOM-04**: Pattern break detection across multiple entities ("3 clients with late payments this month")
+- [x] **ANOM-05**: Anomaly explanations include baseline comparison ("Usually pays day 15, this invoice is day 30")
 
 ### Active Learning (LEARN)
 
-- [ ] **LEARN-01**: When agent confidence is in "ask" band (50-70%), generate targeted clarifying questions
-- [ ] **LEARN-02**: Clarifying questions reference specific ambiguity ("White House project — interior redesign or landscaping?")
-- [ ] **LEARN-03**: User responses to clarifying questions update entity dossiers and confidence scores
-- [ ] **LEARN-04**: Confidence gaps tracked per knowledge domain; recurring low-confidence domains trigger proactive learning
+- [x] **LEARN-01**: When agent confidence is in "ask" band (50-70%), generate targeted clarifying questions
+- [x] **LEARN-02**: Clarifying questions reference specific ambiguity ("White House project — interior redesign or landscaping?")
+- [x] **LEARN-03**: User responses to clarifying questions update entity dossiers and confidence scores
+- [x] **LEARN-04**: Confidence gaps tracked per knowledge domain; recurring low-confidence domains trigger proactive learning
 
 ### Theory of Mind (TOM)
 

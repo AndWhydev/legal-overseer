@@ -17,6 +17,7 @@ export type SignalType =
   | 'pricing'
   | 'fiduciary'
   | 'delegated_action'
+  | 'clarification'
 
 export type DomainType =
   | 'financial'
@@ -96,4 +97,45 @@ export interface SurpriseScore {
     | 'novel_dimension'
     | 'magnitude_shift'
     | 'expected'
+}
+
+// -- Anomaly Detection Types --
+
+export type MetricName = 'payment_timing' | 'payment_amount' | 'message_frequency' | 'response_latency'
+
+export interface AnomalyBaseline {
+  id: string
+  org_id: string
+  entity_id: string
+  metric_name: MetricName
+  mean: number
+  stddev: number
+  sample_count: number
+  last_computed: string
+  created_at: string
+  updated_at: string
+}
+
+export type AlertType = 'anomaly' | 'pattern_break' | 'learning_prompt'
+export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical'
+
+export interface BrainAlert {
+  id: string
+  org_id: string
+  entity_id: string
+  alert_type: AlertType
+  metric_name: MetricName | null
+  z_score: number | null
+  baseline_text: string
+  explanation: string
+  severity: AlertSeverity
+  channel: string | null
+  dismissed_at: string | null
+  created_at: string
+}
+
+export interface MetricExtraction {
+  entity_id: string
+  metric_name: MetricName
+  value: number
 }

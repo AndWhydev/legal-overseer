@@ -5,6 +5,7 @@ import {
   getRecentDelegatedActions,
   type DelegationActionEntry,
 } from '../agent/delegation-mandate'
+import { fetchLearningPromptItems } from '../agent/active-learner'
 import { formatResponse, type BriefingSection } from './response-formatter'
 
 export interface BriefingConfig {
@@ -14,6 +15,7 @@ export interface BriefingConfig {
   includeTasks?: boolean
   includeApprovals?: boolean
   includeDelegatedActions?: boolean
+  includeLearningPrompts?: boolean
 }
 
 /**
@@ -25,7 +27,7 @@ export async function generateMorningBriefing(
   orgId: string,
   config: BriefingConfig = {}
 ): Promise<string> {
-  const includeAll = !config.includeLeads && !config.includeInvoices && !config.includeTasks && !config.includeApprovals && !config.includeDelegatedActions
+  const includeAll = !config.includeLeads && !config.includeInvoices && !config.includeTasks && !config.includeApprovals && !config.includeDelegatedActions && !config.includeLearningPrompts
 
   const sections: BriefingSection[] = []
 
@@ -57,6 +59,12 @@ export async function generateMorningBriefing(
   if (includeAll || config.includeDelegatedActions) {
     const items = await fetchDelegatedActionItems(supabase, orgId)
     sections.push({ emoji: '🤖', title: 'What I Did Autonomously', items, showEmpty: false })
+  }
+
+  // Learning prompts — domains where BitBit lacks understanding (LEARN-04)
+  if (includeAll || config.includeLearningPrompts) {
+    const items = await fetchLearningPromptItems(supabase, orgId)
+    sections.push({ emoji: '🧠', title: 'What I Need to Learn', items, showEmpty: false })
   }
 
   return formatResponse.morningBriefing(sections)

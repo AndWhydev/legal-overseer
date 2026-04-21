@@ -19,6 +19,8 @@ import { extractFactsFromBatch, groupEntriesByEntity } from './intake-clerk'
 import { processDomainJobDirect } from './section-librarian'
 import { synthesizeDomainProfile } from './chief-librarian'
 import { scoreSurprise, shouldUpdateSchema, updateSchemaFromErrors, SURPRISE_THRESHOLD } from './predictive-coding'
+import { detectAndAlertAnomalies, detectCrossEntityPatternBreaks } from './anomaly-detector'
+import { resolveEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -30,6 +32,9 @@ export interface BrainConsolidationReport {
   dossierErrors: number
   domainsUpdated: number
   entriesSkippedBySurprise: number
+  anomaliesDetected: number
+  alertsSent: number
+  crossEntityBreaks: number
   startedAt: string
   completedAt: string
 }
@@ -72,6 +77,9 @@ export async function runBrainConsolidation(
       dossierErrors: 0,
       domainsUpdated: 0,
       entriesSkippedBySurprise: 0,
+      anomaliesDetected: 0,
+      alertsSent: 0,
+      crossEntityBreaks: 0,
       startedAt,
       completedAt: new Date().toISOString(),
     }
@@ -97,6 +105,12 @@ export async function runBrainConsolidation(
   let dossiersCompiled = 0
   let dossierErrors = 0
   const updatedDomains = new Set<DomainType>()
+  let anomaliesDetected = 0
+  let alertsSent = 0
+
+  // Index filteredEntries by id so per-entity anomaly detection can look up
+  // full rows without re-querying knowledge_log (REVIEW LO-01/LO-02).
+  const entryById = new Map(filteredEntries.map((e) => [e.id, e]))
 
   for (const [, group] of grouped) {
     try {
@@ -109,6 +123,31 @@ export async function runBrainConsolidation(
       )
       dossiersCompiled++
       updatedDomains.add(group.domain)
+
+      // Anomaly detection pass for this entity
+      try {
+        const entityNode = await resolveEntityByAlias(supabase, orgId, group.entity_name)
+        if (entityNode) {
+          const walEntries = group.entry_ids
+            .map((id) => entryById.get(id))
+            .filter((e): e is KnowledgeLogEntry => Boolean(e))
+          const anomalyResult = await detectAndAlertAnomalies(
+            supabase,
+            orgId,
+            entityNode.id,
+            walEntries,
+          )
+          anomaliesDetected += anomalyResult.anomaliesDetected
+          alertsSent += anomalyResult.alertsSent
+        }
+      } catch (err) {
+        logger.warn('[brain-consolidation] Anomaly detection failed for entity', {
+          org_id: orgId,
+          entity_name: group.entity_name,
+          error: err instanceof Error ? err.message : String(err),
+        })
+        // Continue — anomaly detection is non-critical
+      }
     } catch (err) {
       dossierErrors++
       logger.error('[brain-consolidation] Dossier compilation failed', {
@@ -138,6 +177,19 @@ export async function runBrainConsolidation(
     }
   }
 
+  // 6b. Cross-entity anomaly aggregation
+  let crossEntityBreaks = 0
+  try {
+    const crossResult = await detectCrossEntityPatternBreaks(supabase, orgId)
+    crossEntityBreaks = crossResult.breaksDetected
+    alertsSent += crossResult.alertsSent
+  } catch (err) {
+    logger.warn('[brain-consolidation] Cross-entity aggregation failed', {
+      org_id: orgId,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
   // 7. Mark ALL WAL entries as consolidated (including surprise-skipped)
   const now = new Date().toISOString()
   await supabase
@@ -153,6 +205,9 @@ export async function runBrainConsolidation(
     dossierErrors,
     domainsUpdated,
     entriesSkippedBySurprise,
+    anomaliesDetected,
+    alertsSent,
+    crossEntityBreaks,
     startedAt,
     completedAt: new Date().toISOString(),
   }

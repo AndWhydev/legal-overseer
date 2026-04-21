@@ -19,10 +19,11 @@ describe('confidence-router', () => {
       expect(result.confidence).toBe(0.9)
     })
 
-    it('routes to "ask" when confidence between ask and act thresholds', () => {
-      const result = routeByConfidence(0.7, { act: 0.85, ask: 0.55 })
+    it('routes to "ask" when confidence in lower ask band (below clarify threshold)', () => {
+      // With act=0.85, ask=0.55 -> clarify threshold = 0.70; 0.6 is in the lower ask band
+      const result = routeByConfidence(0.6, { act: 0.85, ask: 0.55 })
       expect(result.decision).toBe('ask')
-      expect(result.confidence).toBe(0.7)
+      expect(result.confidence).toBe(0.6)
     })
 
     it('routes to "escalate" when confidence < ask threshold', () => {
@@ -41,6 +42,45 @@ describe('confidence-router', () => {
       const result = routeByConfidence(0.9, { act: 0.85, ask: 0.55 })
       expect(result.reasoning).toContain('0.9')
       expect(result.reasoning).toContain('0.85')
+    })
+  })
+
+  describe('clarify band', () => {
+    it('returns clarify when confidence in upper ask band (0.70-0.85)', () => {
+      const result = routeByConfidence(0.75)
+      expect(result.decision).toBe('clarify')
+      expect(result.reasoning).toContain('clarify band')
+    })
+
+    it('returns clarify at exact clarify threshold (0.70)', () => {
+      const result = routeByConfidence(0.70)
+      expect(result.decision).toBe('clarify')
+    })
+
+    it('returns ask when confidence in lower ask band (0.55-0.70)', () => {
+      const result = routeByConfidence(0.60)
+      expect(result.decision).toBe('ask')
+    })
+
+    it('returns ask just below clarify threshold', () => {
+      const result = routeByConfidence(0.69)
+      expect(result.decision).toBe('ask')
+    })
+
+    it('does not affect act routing above act threshold', () => {
+      const result = routeByConfidence(0.90)
+      expect(result.decision).toBe('act')
+    })
+
+    it('does not affect escalate routing below ask threshold', () => {
+      const result = routeByConfidence(0.40)
+      expect(result.decision).toBe('escalate')
+    })
+
+    it('clarify threshold adjusts with custom thresholds', () => {
+      // Custom: act=0.90, ask=0.50 -> clarify threshold = 0.50 + (0.90-0.50)*0.5 = 0.70
+      const result = routeByConfidence(0.75, { act: 0.90, ask: 0.50 })
+      expect(result.decision).toBe('clarify')
     })
   })
 
@@ -110,23 +150,26 @@ describe('confidence-router', () => {
 
   describe('routeAgentAction', () => {
     it('uses agent config thresholds when provided', () => {
+      // act=0.92, ask=0.60 -> clarify threshold = 0.76; 0.65 is in lower ask band
       const result = routeAgentAction(
-        0.88,
+        0.65,
         { confidence_thresholds: { act: 0.92, ask: 0.60 } }
       )
       expect(result.decision).toBe('ask')
-      expect(result.confidence).toBe(0.88)
+      expect(result.confidence).toBe(0.65)
     })
 
     it('falls back to agent type thresholds when no config provided', () => {
-      const result = routeAgentAction(0.88, undefined, undefined, 'invoice-flow')
+      // invoice-flow: act=0.92, ask=0.60 -> clarify threshold = 0.76; 0.65 in lower ask band
+      const result = routeAgentAction(0.65, undefined, undefined, 'invoice-flow')
       expect(result.decision).toBe('ask')
       expect(result.thresholds.act).toBe(AGENT_THRESHOLDS['invoice-flow'].act)
     })
 
     it('uses org settings as fallback', () => {
+      // act=0.80, ask=0.60 -> clarify threshold = 0.70; 0.65 in lower ask band
       const result = routeAgentAction(
-        0.7,
+        0.65,
         undefined,
         { confidence_thresholds: { act: 0.80, ask: 0.60 } }
       )
@@ -150,13 +193,19 @@ describe('confidence-router', () => {
     })
 
     it('routing works correctly across confidence spectrum', () => {
+      // act=0.85, ask=0.55 -> clarify threshold = 0.70
       const thresholds = { act: 0.85, ask: 0.55 }
 
       const lowConfidence = routeAgentAction(0.3, { confidence_thresholds: thresholds })
       expect(lowConfidence.decision).toBe('escalate')
 
-      const mediumConfidence = routeAgentAction(0.7, { confidence_thresholds: thresholds })
+      // 0.6 is in lower ask band (below 0.70 clarify threshold) -> ask
+      const mediumConfidence = routeAgentAction(0.6, { confidence_thresholds: thresholds })
       expect(mediumConfidence.decision).toBe('ask')
+
+      // 0.75 is in upper ask band (above 0.70 clarify threshold) -> clarify
+      const clarifyConfidence = routeAgentAction(0.75, { confidence_thresholds: thresholds })
+      expect(clarifyConfidence.decision).toBe('clarify')
 
       const highConfidence = routeAgentAction(0.9, { confidence_thresholds: thresholds })
       expect(highConfidence.decision).toBe('act')

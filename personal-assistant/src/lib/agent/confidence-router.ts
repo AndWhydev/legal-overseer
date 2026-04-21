@@ -88,6 +88,17 @@ export function getEffectiveThresholds(
 
 /**
  * Route based on confidence score and thresholds.
+ *
+ * Routing bands (with default thresholds act=0.85, ask=0.55):
+ *   >= 0.85         -> act      (auto-execute)
+ *   0.70 to 0.85    -> clarify  (upper ask band — targeted clarifying question)
+ *   0.55 to 0.70    -> ask      (lower ask band — generic approval request)
+ *   < 0.55          -> escalate
+ *
+ * The clarify threshold is computed as ask + (act - ask) * 0.5, giving the
+ * upper half of the ask band. This allows the agent to ask a targeted
+ * clarifying question (instead of a generic approval) when it is reasonably
+ * confident but still uncertain about a specific ambiguity.
  */
 export function routeByConfidence(
   confidence: number,
@@ -105,11 +116,21 @@ export function routeByConfidence(
   }
 
   if (confidence >= effective.ask) {
+    // Clarify band: upper half of ask range
+    const clarifyThreshold = effective.ask + (effective.act - effective.ask) * 0.5
+    if (confidence >= clarifyThreshold) {
+      return {
+        decision: 'clarify',
+        confidence,
+        thresholds: effective,
+        reasoning: `Confidence ${confidence} in clarify band (${clarifyThreshold.toFixed(2)}-${effective.act}) — targeted question needed`,
+      }
+    }
     return {
       decision: 'ask',
       confidence,
       thresholds: effective,
-      reasoning: `Confidence ${confidence} between ask (${effective.ask}) and act (${effective.act}) thresholds`,
+      reasoning: `Confidence ${confidence} between ask (${effective.ask}) and clarify (${clarifyThreshold.toFixed(2)}) thresholds`,
     }
   }
 

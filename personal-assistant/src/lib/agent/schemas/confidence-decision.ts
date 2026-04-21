@@ -15,7 +15,7 @@ import { z } from 'zod'
  */
 export const ConfidenceDecisionSchema = z.object({
   /** The routing decision */
-  route: z.enum(['act', 'ask', 'escalate']),
+  route: z.enum(['act', 'ask', 'escalate', 'clarify']),
   /** Confidence score for the decision (0-1) */
   confidence: z.number().min(0).max(1),
   /** Why this route was chosen */

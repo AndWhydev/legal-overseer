@@ -23,8 +23,14 @@ describe('confidence-router', () => {
       expect(result.decision).toBe('act')
     })
 
-    it('routes 0.70 to ask', () => {
+    it('routes 0.70 to clarify (upper ask band — phase 46 clarify threshold)', () => {
+      // clarifyThreshold = ask + (act - ask) * 0.5 = 0.55 + 0.30*0.5 = 0.70
       const result = routeByConfidence(0.7)
+      expect(result.decision).toBe('clarify')
+    })
+
+    it('routes 0.60 to ask (below clarify threshold)', () => {
+      const result = routeByConfidence(0.6)
       expect(result.decision).toBe('ask')
     })
 
@@ -47,16 +53,25 @@ describe('confidence-router', () => {
       expect(routeByConfidence(0.5499).decision).toBe('escalate')
     })
 
-    it('routes 0.8499 to ask (just below act)', () => {
-      expect(routeByConfidence(0.8499).decision).toBe('ask')
+    it('routes 0.8499 to clarify (just below act, inside clarify band)', () => {
+      expect(routeByConfidence(0.8499).decision).toBe('clarify')
+    })
+
+    it('routes 0.6999 to ask (just below clarify threshold)', () => {
+      expect(routeByConfidence(0.6999).decision).toBe('ask')
     })
   })
 
   describe('routeByConfidence - custom thresholds', () => {
     const custom = { act: 0.95, ask: 0.70 }
 
-    it('routes 0.90 to ask with high act threshold', () => {
-      expect(routeByConfidence(0.9, custom).decision).toBe('ask')
+    it('routes 0.90 to clarify with high act threshold (inside clarify band)', () => {
+      // custom = {act: 0.95, ask: 0.70}; clarifyThreshold = 0.70 + 0.25*0.5 = 0.825
+      expect(routeByConfidence(0.9, custom).decision).toBe('clarify')
+    })
+
+    it('routes 0.80 to ask with high act threshold (below clarify)', () => {
+      expect(routeByConfidence(0.8, custom).decision).toBe('ask')
     })
 
     it('routes 0.60 to escalate with high ask threshold', () => {
@@ -151,7 +166,8 @@ describe('confidence-router', () => {
         { confidence_thresholds: { act: 0.75 } },
       )
       // Agent act=0.90 overrides org act=0.75; agent ask=0.60
-      expect(result.decision).toBe('ask')
+      // clarifyThreshold = 0.60 + (0.90-0.60)*0.5 = 0.75; 0.80 > 0.75 → clarify
+      expect(result.decision).toBe('clarify')
       expect(result.thresholds.act).toBe(0.90)
     })
 
@@ -172,9 +188,11 @@ describe('confidence-router', () => {
       expect(result.decision).toBe('act')
     })
 
-    it('lead reply draft (confidence 0.70) routes to ask', () => {
+    it('lead reply draft (confidence 0.70) routes to clarify', () => {
+      // At default thresholds 0.70 lands on the clarify threshold — upper
+      // ask band — triggering a targeted clarifying question (phase 46).
       const result = routeAgentAction(0.70)
-      expect(result.decision).toBe('ask')
+      expect(result.decision).toBe('clarify')
     })
 
     it('unknown request (confidence 0.30) routes to escalate', () => {
@@ -224,9 +242,10 @@ describe('confidence-router', () => {
       expect(result.decision).toBe('act')
       expect(result.thresholds.act).toBe(0.75)
 
-      // Same confidence with invoice-flow (act=0.92) should be 'ask'
+      // invoice-flow: act=0.92, ask=0.60. clarifyThreshold = 0.60 + (0.92-0.60)*0.5 = 0.76.
+      // 0.78 lands inside the clarify band — agent should ask a targeted question, not auto-act.
       const invoiceResult = routeAgentAction(0.78, undefined, undefined, 'invoice-flow')
-      expect(invoiceResult.decision).toBe('ask')
+      expect(invoiceResult.decision).toBe('clarify')
       expect(invoiceResult.thresholds.act).toBe(0.92)
     })
 

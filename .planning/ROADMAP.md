@@ -454,7 +454,13 @@ Phase 45 (Wire Dead Code) ──┐
   4. When agent confidence is 50-70%, it generates a targeted clarifying question referencing the specific ambiguity
   5. User responses to clarifying questions update the relevant entity dossier and raise confidence
   6. Recurring low-confidence knowledge domains trigger proactive learning prompts
-**Plans**: TBD (estimate: 3-4 plans)
+**Plans**: 4 plans
+
+Plans:
+- [x] 46-01-PLAN.md -- Foundation: migration, types, simple-statistics install (Wave 1)
+- [x] 46-02-PLAN.md -- Anomaly detector module + tests (Wave 2, TDD)
+- [x] 46-03-PLAN.md -- Active learner + confidence router clarify band + morning briefing (Wave 2)
+- [x] 46-04-PLAN.md -- Brain consolidation pipeline integration + schema push (Wave 3)
 
 ### Phase 47: Theory of Mind + Temporal Reasoning
 **Goal**: BitBit tracks what each entity knows vs ground truth and reasons about temporal relationships — deadlines, sequences, conflicts.
@@ -552,10 +558,10 @@ Phase 45 (Wire Dead Code) ──┐
 | 42. Tool Priority Chain | v2.0 | 4/4 | Complete | 2026-04-14 |
 | 43. Infinite Delegation | v2.0 | 5/5 | Complete | 2026-04-14 |
 | 44. Living Brain v2 | v2.0+ | 10/10 | Complete | 2026-04-14 |
-| 45. Wire Living Brain | v3.0 | TBD | **Pending** | — |
-| 46. Anomaly + Active Learning | v3.0 | TBD | Pending | — |
+| 45. Wire Living Brain | v3.0 | 5/5 | Complete | 2026-04-14 |
+| 46. Anomaly + Active Learning | v3.0 | 4/4 | Complete | 2026-04-17 |
 | 47. Theory of Mind + Temporal | v3.0 | TBD | Pending | — |
 | 48. Causal + Metacognition | v3.0 | TBD | Pending | — |
 | 49. Goal Decomposition | v3.0 | TBD | Pending | — |
 
-**Overall:** v1.0-v1.5: 113/113 (100%). v2.0: 36/36 (100%). v2.0+: 10/10 (100%). v3.0: 0/~20 (0%).
+**Overall:** v1.0-v1.5: 113/113 (100%). v2.0: 36/36 (100%). v2.0+: 10/10 (100%). v3.0: 9/~20 (45%).

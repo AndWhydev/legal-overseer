@@ -34,7 +34,7 @@ export interface ConfidenceThresholds {
   // below ask → escalate
 }
 
-export type ConfidenceDecision = 'act' | 'ask' | 'escalate' | 'auto_delegated'
+export type ConfidenceDecision = 'act' | 'ask' | 'escalate' | 'auto_delegated' | 'clarify'
 
 // --- Contacts ---
 
