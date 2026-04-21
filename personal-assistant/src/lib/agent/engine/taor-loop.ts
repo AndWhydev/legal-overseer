@@ -47,6 +47,8 @@ import { resolveEntityOverrides } from '@/lib/agent/entity-overrides'
 import { detectDelegationIntent, resolveEntityCandidates, generateActivationConfirmation, generateRevocationConfirmation, generateAmbiguityClarification } from '@/lib/agent/delegation-intent'
 import { setEntityMandate, revokeEntityMandate, getEntityMandate } from '@/lib/agent/delegation-mandate'
 import { buildTaorExecOptions, mergeEntityOverrides } from './taor-loop-utils'
+import { detectTestUtterance } from './test-utterance-detector'
+import { assess, scoredItemsToSurfaced } from './assess'
 import { buildTierContextBlock } from './tool-resolver'
 import { generateFollowUps } from '@/lib/agent/follow-up-generator'
 import { retrieveRelevantTraces, formatTracesAsContext } from './decision-trace-retriever'
@@ -138,6 +140,23 @@ export async function* runTAORLoop(
   if (preflight.blocked) return
   if (preflight.calibratedThresholds) {
     config.calibratedThresholds = preflight.calibratedThresholds
+  }
+
+  // ── 1a. Test-utterance short-circuit ───────────────────────────────
+  // Echo / mic-check / "can you hear me" inputs get a canned ack and skip
+  // everything else: no model call, no tools, no memory writes, no action
+  // queue. Disqualifiers inside the detector make sure substantive
+  // messages that happen to contain "testing" fall through to the full
+  // loop instead.
+  const testUtterance = detectTestUtterance(message, { voiceMode: config.voiceMode })
+  if (testUtterance.isTestUtterance && testUtterance.suggestedAck) {
+    logger.info('[taor] Test-utterance short-circuit', {
+      matched: testUtterance.matchedLabels,
+      confidence: testUtterance.confidence,
+    })
+    yield { type: 'message', data: testUtterance.suggestedAck }
+    yield { type: 'done', data: { shortCircuit: 'test_utterance', labels: testUtterance.matchedLabels } }
+    return
   }
 
   // ── 1b. Resolve entity overrides + active delegation mandate ──────
@@ -306,6 +325,12 @@ export async function* runTAORLoop(
 
   let systemPrompt: string
   let systemContentBlocks: Array<{ type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }> | undefined
+  // Assess verdict is computed at step 3a but the hedge note is *appended*
+  // after step 5b (the prompt-cache rebuild). Appending earlier is unsafe:
+  // step 5b uses `fullSystemPrompt.slice(systemPrompt.length)` to extract
+  // dynamic additions for the uncached block; mutating systemPrompt earlier
+  // would either clobber the hedge or shift the slice boundary and lose it.
+  let assessHedgeNote: string = ''
   if (config.threadId && config.userId) {
     try {
       const assembler = new ContextAssembler({ userProfile, channel: config.channel, usePromptCache: true, ...assemblerOverrides })
@@ -314,6 +339,31 @@ export async function* runTAORLoop(
       systemContentBlocks = ctx.systemContentBlocks
       config.history = ctx.messageHistory
       previousSurfacedMemoryIds = ctx.metadata.surfacedMemoryIds ?? []
+
+      // ── 3a. Assess stage — freshness + corroboration gate ──────────
+      // Runs on all turns (including System 1) when recall surfaced any
+      // items. System 1 short-status queries like "is Maya still waiting
+      // on creds?" are exactly the targets for the staleness gate — they
+      // DO surface proactive-recall items, they just use a reduced
+      // assembler config.
+      if ((ctx.metadata.surfacedScoredItems?.length ?? 0) > 0) {
+        const assessment = assess({
+          surfacedMemories: scoredItemsToSurfaced(ctx.metadata.surfacedScoredItems),
+          userMessage: message,
+          entityIds: ctx.metadata.entityMentions ?? [],
+        })
+        if (assessment.verdict !== 'ok' && assessment.recommendedHedge) {
+          assessHedgeNote = assessment.recommendedHedge
+          logger.info('[taor] Assess gate fired', {
+            verdict: assessment.verdict,
+            staleCount: assessment.staleMemoryIds.length,
+            corroborationScore: assessment.corroborationScore.toFixed(3),
+            staleFraction: assessment.staleFraction,
+            complexity: queryComplexity,
+          })
+        }
+      }
+
       yield {
         type: 'stage',
         data: {
@@ -623,6 +673,28 @@ export async function* runTAORLoop(
         cachedPrefix,
         { type: 'text' as const, text: dynamicAdditions },
       ]
+    }
+  }
+
+  // ── 5c. Append Assess hedge note (after cache rebuild) ─────────────
+  // The hedge must land in both the string prompt (used by the non-cached
+  // gateway fallback at step 7) and in systemContentBlocks (used by the
+  // cached gateway path). Appending after 5b is the only safe point:
+  // earlier and the slice at 5b either clobbers the note or shifts the
+  // split boundary past it.
+  if (assessHedgeNote) {
+    fullSystemPrompt = `${fullSystemPrompt}\n\n${assessHedgeNote}`
+    if (systemContentBlocks && systemContentBlocks.length > 0) {
+      const last = systemContentBlocks[systemContentBlocks.length - 1]
+      if (last.cache_control) {
+        // Last block is cached — append a fresh uncached block so the note
+        // reaches the model without invalidating cached prefix state.
+        systemContentBlocks.push({ type: 'text' as const, text: assessHedgeNote })
+      } else {
+        // Last block is the dynamic suffix — mutating its text is safe,
+        // we own the array (it was rebuilt at 5b).
+        last.text = `${last.text}\n\n${assessHedgeNote}`
+      }
     }
   }
 

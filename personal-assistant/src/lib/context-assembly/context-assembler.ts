@@ -25,6 +25,7 @@ import { loadRecentMessages, loadThreadSummaries } from '@/lib/conversation/thre
 import { scanForEntityMentions } from '@/lib/context/entity-mention-scanner'
 import { TokenBudgetManager, type TierInput, type BudgetPreset, BUDGET_PRESETS } from './token-budget-manager'
 import { proactiveRecall as recallForContext, formatProactiveRecall } from '@/lib/memory-palace'
+import type { ScoredItem } from '@/lib/memory-palace/proactive-recall'
 import { getEntityByAlias } from '@/lib/knowledge-graph/graph-queries'
 import { matchProcedure } from '@/lib/knowledge-graph/procedural-memory'
 import { logger } from '@/lib/core/logger'
@@ -89,6 +90,13 @@ export interface AssembledContext {
     entityMentions: string[]
     pendingActionCount: number
     surfacedMemoryIds: string[]
+    /**
+     * Flattened scored items surfaced by proactive recall. Exposed so the
+     * TAOR loop's Assess stage can evaluate freshness/corroboration without
+     * re-running retrieval. Empty when nothing was surfaced or when the
+     * legacy recall path (which has no scored items) produced the results.
+     */
+    surfacedScoredItems: ScoredItem[]
   }
 }
 
@@ -690,6 +698,7 @@ export class ContextAssembler {
     const systemPromptTokens = this.budgetManager.estimateTokens(finalSystemPrompt)
     // Append Memory Palace proactive recall (institutional knowledge)
     const surfacedMemoryIds: string[] = []
+    const surfacedScoredItems: ScoredItem[] = []
     try {
       // Resolve entity mentions to entity_node IDs via knowledge graph
       const entityNodeIds: string[] = []
@@ -709,6 +718,12 @@ export class ContextAssembler {
         for (const result of recallResults) {
           for (const mem of result.memories) {
             if (mem.id) surfacedMemoryIds.push(mem.id)
+          }
+          // Forward scored items (graph-aware path) to TAOR for Assess.
+          // Legacy path leaves scoredItems undefined — that branch is
+          // silently skipped, which is fine since Assess tolerates empty.
+          if (result.scoredItems) {
+            surfacedScoredItems.push(...result.scoredItems)
           }
         }
 
@@ -950,6 +965,7 @@ ${procSection}`
         entityMentions,
         pendingActionCount: approvals.length,
         surfacedMemoryIds,
+        surfacedScoredItems,
       },
     }
   }

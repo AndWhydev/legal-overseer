@@ -60,6 +60,28 @@ export interface ScoredItem {
   confidence: number
   recency: number
   edgeWeight: number
+  /**
+   * Age of the source artefact in days.
+   * - `edge` items: days since `last_fired_at` (falls back to `valid_from`).
+   * - `event` items: days since `occurred_at`.
+   * - `vector` items: null (no timestamp on vector matches).
+   *
+   * Exposed so the Assess stage (TAOR) can apply a staleness gate without
+   * re-fetching the underlying artefact. Scoring already accounts for age
+   * via the recency and decayMultiplier fields — this is purely metadata.
+   */
+  ageDays: number | null
+  /**
+   * Multiplicative decay applied on top of the blended score.
+   * - `edge` items: `exp(-decay_rate * daysSinceLastFired)`, 1.0 when no
+   *   `last_fired_at` is present.
+   * - `event` and `vector` items: 1.0 (no explicit decay multiplier in
+   *   their scoring paths).
+   *
+   * Exposed so the Assess stage can distinguish "scored low because
+   * decayed" from "scored low because confidence was weak".
+   */
+  decayMultiplier: number
 }
 
 export interface GraphAwareRecallResult {
@@ -114,23 +136,32 @@ function scoreEdge(edge: EntityEdge, neighborName: string, rootEntityId: string)
   blendedScore *= (edge.confidence ?? 1)
 
   // Neural decay: time-decay penalty based on decay_rate and last_fired_at
+  let decayMultiplier = 1
+  let itemAgeDays: number | null = null
   if (edge.last_fired_at) {
     const daysSinceLastFired = ageDays(edge.last_fired_at)
-    const decayMultiplier = Math.exp(-(edge.decay_rate ?? 0.01) * daysSinceLastFired)
+    decayMultiplier = Math.exp(-(edge.decay_rate ?? 0.01) * daysSinceLastFired)
     blendedScore *= decayMultiplier
+    itemAgeDays = daysSinceLastFired
+  } else if (edge.valid_from) {
+    // No last_fired_at — fall back to valid_from for age reporting.
+    // Scoring unaffected (multiplier stays 1.0) to preserve existing behaviour.
+    itemAgeDays = ageDays(edge.valid_from)
   }
-  // If last_fired_at is null/undefined, no penalty (multiplier = 1.0)
 
   return {
     type: 'edge',
     description: `${edge.relation_type} ${direction} ${neighborName}`,
     ...scores,
     blendedScore,
+    ageDays: itemAgeDays,
+    decayMultiplier,
   }
 }
 
 function scoreEvent(event: EventTuple): ScoredItem {
-  const recency = Math.exp(-RECENCY_DECAY * ageDays(event.occurred_at))
+  const eventAge = ageDays(event.occurred_at)
+  const recency = Math.exp(-RECENCY_DECAY * eventAge)
   const scores = {
     relevance: 0.8,
     confidence: 0.7,
@@ -143,6 +174,8 @@ function scoreEvent(event: EventTuple): ScoredItem {
     description: `${event.verb}${objectText}`,
     ...scores,
     blendedScore: computeBlendedScore(scores),
+    ageDays: eventAge,
+    decayMultiplier: 1,
   }
 }
 
@@ -158,6 +191,8 @@ function scoreVectorMatch(match: { name: string; similarity: number }): ScoredIt
     description: `Related: ${match.name}`,
     ...scores,
     blendedScore: computeBlendedScore(scores),
+    ageDays: null,
+    decayMultiplier: 1,
   }
 }
 
