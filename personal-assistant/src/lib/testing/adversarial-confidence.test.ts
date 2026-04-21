@@ -90,7 +90,7 @@ describe('Threshold boundary safety', () => {
       const justBelow = thresholds.act - 0.01
       const result = routeByConfidence(justBelow, thresholds)
       expect(result.decision).not.toBe('act')
-      expect(['ask', 'escalate']).toContain(result.decision)
+      expect(['ask', 'clarify', 'escalate']).toContain(result.decision)
     },
   )
 

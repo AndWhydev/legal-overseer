@@ -10,9 +10,10 @@ describe('composio tool group integration', () => {
   it('composio group contains composio_connect_app', () => {
     const tools = TOOL_GROUPS.composio.tools
     expect(tools).toContain('composio_connect_app')
+    expect(tools).toContain('disconnect_connector')
     // Dynamic Composio tools (GMAIL_SEND_EMAIL etc.) are injected at runtime
     // by tool-provider, not registered in TOOL_GROUPS
-    expect(tools.length).toBe(1)
+    expect(tools.length).toBe(2)
   })
 
   it('composio group has descriptive metadata', () => {
