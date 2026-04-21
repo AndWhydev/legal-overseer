@@ -34,14 +34,14 @@ export function SourcesFooter({ sources }: { sources: Citation[] }) {
       <p className="text-xs text-muted-foreground mb-2 font-medium">
         Sources
       </p>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2 max-w-[min(72ch,100%)]">
         {unique.map((source, i) => (
           <a
             key={`${source.url}-${i}`}
             href={source.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm transition-all hover:border-foreground/20 hover:shadow-sm min-w-0 max-w-[260px]"
+            className="group flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm transition-all hover:border-foreground/20 hover:shadow-sm min-w-0"
           >
             <img
               src={faviconUrl(source.url)}

@@ -26,6 +26,7 @@ import {
 import { Streamdown } from "streamdown";
 
 import { Shimmer } from "./shimmer";
+import { ThinkingRose } from "./thinking-rose";
 
 interface ReasoningContextValue {
   isStreaming: boolean;
@@ -156,7 +157,12 @@ export type ReasoningTriggerProps = ComponentProps<
 
 const defaultGetThinkingMessage = (isStreaming: boolean, duration?: number) => {
   if (isStreaming || duration === 0) {
-    return <Shimmer duration={1}>Thinking...</Shimmer>;
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <ThinkingRose size={16} className="text-muted-foreground" />
+        <Shimmer duration={1}>Thinking...</Shimmer>
+      </span>
+    );
   }
   if (duration === undefined) {
     return <p>Thought for a few seconds</p>;
