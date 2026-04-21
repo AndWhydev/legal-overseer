@@ -1,10 +1,5 @@
 'use client'
 
-// TODO(design-system): S.* / C.* design-tokens are deprecated (see
-// CLAUDE.md "Old system deprecated"). This file is scheduled for migration
-// to Shadcn tokens in a follow-up; left in place here to keep this PR
-// focused on the 0→1 funnel changes.
-
 import type { CSSProperties } from 'react'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -13,6 +8,88 @@ import PricingComparisonTable from '@/components/marketing/pricing-comparison-ta
 import Footer from '@/components/marketing/footer'
 import { isPaidTier, TIER_DISPLAY, type PaidTier } from '@/lib/billing/checkout'
 import { startCheckoutRedirect } from '@/lib/billing/start-checkout-browser'
+
+/**
+ * Inline tokens — formerly imported from @/lib/styles/design-tokens (removed).
+ * This page's inline-style approach is a legacy pattern (see
+ * docs/archive/2026-04-STYLE_GUIDE-DEPRECATED.md). Migrate to Tailwind +
+ * shadcn components (see personal-assistant/COMPONENT_CONTRACTS.md) in a
+ * dedicated refactor — not in-scope for the design-tokens.ts removal.
+ */
+const C = {
+  bgPage: 'var(--bg-primary, #0a0f1a)',
+  bgCard: 'var(--card)',
+  bgCardLight: 'var(--secondary)',
+  bgHoverStrong: 'var(--accent)',
+  bgInput: 'var(--input)',
+  textPrimary: 'var(--text-primary, #F1F5F9)',
+  textSecondary: 'var(--text-secondary, #94A3B8)',
+  textDim: 'var(--text-dim, #475569)',
+  borderSubtle: 'var(--border-subtle, rgba(255, 255, 255, 0.03))',
+  borderVisible: 'var(--border)',
+  borderHover: 'var(--border-active, rgba(255, 255, 255, 0.1))',
+  statusError: '#ef4444',
+  statusErrorBg: 'rgba(239, 68, 68, 0.12)',
+  statusSuccess: '#22c55e',
+} as const
+
+const SHADOW = 'var(--card-shadow, 0 2px 8px rgba(0,0,0,0.15))'
+
+const S = {
+  card: {
+    padding: 20,
+    borderRadius: 16,
+    background: C.bgCard,
+    border: `1px solid ${C.borderSubtle}`,
+    boxShadow: SHADOW,
+  } satisfies CSSProperties,
+  cardLight: {
+    padding: 16,
+    borderRadius: 12,
+    background: C.bgCardLight,
+    border: `1px solid ${C.borderSubtle}`,
+    boxShadow: SHADOW,
+  } satisfies CSSProperties,
+  mono: {
+    fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+    fontSize: 16,
+    fontWeight: 500,
+    color: C.textPrimary,
+    letterSpacing: '-0.02em',
+  } satisfies CSSProperties,
+  button: {
+    height: 40,
+    padding: '0 20px',
+    borderRadius: 8,
+    border: 'none',
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+    display: 'inline-flex' as const,
+    alignItems: 'center' as const,
+    gap: 8,
+  } satisfies CSSProperties,
+  buttonPrimary: {
+    background: 'var(--btn-primary-bg, #F1F5F9)',
+    color: 'var(--btn-primary-fg, #0a0f1a)',
+  } satisfies CSSProperties,
+  buttonGhost: {
+    background: 'transparent',
+    border: `1px solid ${C.borderVisible}`,
+    color: C.textPrimary,
+  } satisfies CSSProperties,
+  badge: {
+    display: 'inline-flex' as const,
+    alignItems: 'center' as const,
+    padding: '4px 12px',
+    borderRadius: 8,
+    fontSize: 14,
+    fontWeight: 500,
+    background: C.bgHoverStrong,
+    color: C.textSecondary,
+  } satisfies CSSProperties,
+} as const
 
 /**
  * Inline tokens — formerly imported from @/lib/styles/design-tokens (removed).
