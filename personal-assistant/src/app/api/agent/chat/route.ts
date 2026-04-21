@@ -23,7 +23,7 @@ import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
 import { bridgeTAORToUIStream } from '@/lib/agent/ai-sdk-bridge'
 import { logger } from '@/lib/core/logger'
 
-const MAX_MESSAGE_LENGTH = 10_000
+const MAX_MESSAGE_LENGTH = 50_000
 const MAX_THREAD_ID_LENGTH = 128
 const MAX_ATTACHMENT_IDS = 10
 

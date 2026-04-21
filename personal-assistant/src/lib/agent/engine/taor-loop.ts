@@ -710,10 +710,16 @@ export async function* runTAORLoop(
   if (config.threadId) {
     const historyMessages = [...(config.history || [])]
     if (config.contentBlocks?.length && historyMessages.length > 0) {
-      const lastIdx = historyMessages.length - 1
-      if (historyMessages[lastIdx].role === 'user') {
-        historyMessages[lastIdx] = { role: 'user', content: userMessageContent }
+      const lastUserIdx = historyMessages.findLastIndex(m => m.role === 'user')
+      if (lastUserIdx !== -1) {
+        historyMessages[lastUserIdx] = { role: 'user', content: userMessageContent }
+      } else {
+        historyMessages.push({ role: 'user', content: userMessageContent })
       }
+    }
+    const lastMsg = historyMessages[historyMessages.length - 1]
+    if (!lastMsg || lastMsg.role !== 'user') {
+      historyMessages.push({ role: 'user', content: userMessageContent })
     }
     messages = historyMessages
   } else {

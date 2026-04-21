@@ -115,7 +115,8 @@ async function buildSingleBlock(
   if (
     mime_type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
     mime_type === 'text/plain' ||
-    mime_type === 'text/csv'
+    mime_type === 'text/csv' ||
+    mime_type === 'text/markdown'
   ) {
     let text = extracted_text
 

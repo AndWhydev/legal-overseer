@@ -12,6 +12,7 @@ export const ALLOWED_MIME_TYPES = new Set([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/plain',
   'text/csv',
+  'text/markdown',
 ])
 
 /** Maximum file size in bytes (10MB) */
@@ -36,7 +37,7 @@ export const STORAGE_BUCKET = 'chat-attachments'
 
 /** Human-readable MIME type labels for error messages */
 const ALLOWED_EXTENSIONS_DISPLAY = [
-  '.jpg/.jpeg', '.png', '.gif', '.webp', '.pdf', '.docx', '.txt', '.csv',
+  '.jpg/.jpeg', '.png', '.gif', '.webp', '.pdf', '.docx', '.txt', '.csv', '.md',
 ].join(', ')
 
 // ---------------------------------------------------------------------------
