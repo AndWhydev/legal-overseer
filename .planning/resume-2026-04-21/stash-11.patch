@@ -1,0 +1,513 @@
+diff --git a/.gitignore b/.gitignore
+index 683d88d3..e7f23a4e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,3 +63,4 @@ demo-1/
+ .vercel
+ .forge/
+ .env*.local
++.omx/
+diff --git a/.omx/metrics.json b/.omx/metrics.json
+index f76687de..2168b29c 100644
+--- a/.omx/metrics.json
++++ b/.omx/metrics.json
+@@ -1,7 +1,7 @@
+ {
+-  "total_turns": 0,
+-  "session_turns": 0,
+-  "last_activity": "2026-04-07T13:59:37.327Z",
++  "total_turns": 1,
++  "session_turns": 1,
++  "last_activity": "2026-04-16T10:07:53.752Z",
+   "session_input_tokens": 0,
+   "session_output_tokens": 0,
+   "session_total_tokens": 0,
+diff --git a/.omx/state/hud-state.json b/.omx/state/hud-state.json
+index 5610029f..d543c21c 100644
+--- a/.omx/state/hud-state.json
++++ b/.omx/state/hud-state.json
+@@ -1,6 +1,6 @@
+ {
+-  "last_turn_at": "2026-04-07T13:59:37.327Z",
+-  "last_progress_at": "2026-04-07T13:59:37.327Z",
+-  "turn_count": 0,
+-  "last_agent_output": ""
++  "last_turn_at": "2026-04-16T10:07:53.851Z",
++  "last_progress_at": "2026-04-16T10:07:53.851Z",
++  "turn_count": 1,
++  "last_agent_output": "Done.\n\n### Installed/fixed\n- Authenticated Tavily CLI locally\n- Installed Tavily skills globally via"
+ }
+\ No newline at end of file
+diff --git a/.omx/state/notify-fallback-authority-owner.json b/.omx/state/notify-fallback-authority-owner.json
+index e22c0312..ee3c42bd 100644
+--- a/.omx/state/notify-fallback-authority-owner.json
++++ b/.omx/state/notify-fallback-authority-owner.json
+@@ -1,6 +1,6 @@
+ {
+   "owner": "hud",
+-  "pid": 1759587,
++  "pid": 58655,
+   "cwd": "/home/claude/bitbit",
+-  "heartbeat_at": "2026-04-07T14:02:17.730Z"
++  "heartbeat_at": "2026-04-16T10:03:13.659Z"
+ }
+\ No newline at end of file
+diff --git a/.omx/state/notify-fallback-state.json b/.omx/state/notify-fallback-state.json
+index 6fde8b1a..3e23899b 100644
+--- a/.omx/state/notify-fallback-state.json
++++ b/.omx/state/notify-fallback-state.json
+@@ -1,23 +1,23 @@
+ {
+-  "pid": 1759562,
+-  "parent_pid": 1759538,
+-  "started_at": "2026-04-07T13:59:37.394Z",
++  "pid": 180179,
++  "parent_pid": 58655,
++  "started_at": "2026-04-16T10:03:13.210Z",
+   "cwd": "/home/claude/bitbit",
+-  "notify_script": "/home/claude/.npm-global/lib/node_modules/oh-my-codex/dist/scripts/notify-hook.js",
+-  "authority_only": false,
+-  "poll_ms": 250,
+-  "effective_poll_ms": 1000,
++  "notify_script": "/mnt/nvme/claude-caches/.npm-global/lib/node_modules/oh-my-codex/dist/scripts/notify-hook.js",
++  "authority_only": true,
++  "poll_ms": 75,
++  "effective_poll_ms": 75,
+   "idle_max_poll_ms": 1000,
+-  "pid_file": "/home/claude/bitbit/.omx/state/notify-fallback.pid",
+-  "max_lifetime_ms": 21600000,
++  "pid_file": null,
++  "max_lifetime_ms": 0,
+   "tracked_files": 0,
+   "seen_turns": 0,
+   "dispatch_drain": {
+     "enabled": true,
+     "max_per_tick": 5,
+-    "run_count": 153,
++    "run_count": 1,
+     "leader_only": true,
+-    "last_tick_at": "2026-04-07T14:02:17.989Z",
++    "last_tick_at": "2026-04-16T10:03:13.214Z",
+     "last_result": {
+       "processed": 0,
+       "skipped": 0,
+@@ -29,10 +29,10 @@
+     "enabled": true,
+     "leader_only": true,
+     "stale_threshold_ms": 180000,
+-    "precomputed_leader_stale": false,
+-    "last_tick_at": "2026-04-07T14:02:17.989Z",
++    "precomputed_leader_stale": true,
++    "last_tick_at": "2026-04-16T10:03:13.216Z",
+     "last_error": null,
+-    "run_count": 153
++    "run_count": 1
+   },
+   "ralph_continue_steer": {
+     "enabled": true,
+@@ -57,7 +57,7 @@
+   "fallback_auto_nudge": {
+     "enabled": true,
+     "stall_ms": 5000,
+-    "last_tick_at": "2026-04-07T14:02:18.008Z",
++    "last_tick_at": "2026-04-16T10:03:13.246Z",
+     "last_turn_at": "2026-04-07T13:59:37.327Z",
+     "last_turn_count": 0,
+     "last_message": "",
+@@ -68,7 +68,7 @@
+   },
+   "authority_backoff": {
+     "active": false,
+-    "reason": "",
++    "reason": "pid_missing",
+     "primary_pid": null,
+     "primary_last_tick_at": "",
+     "freshness_ms": null,
+@@ -76,15 +76,13 @@
+   },
+   "adaptive_poll": {
+     "enabled": true,
+-    "base_ms": 250,
++    "base_ms": 75,
+     "max_ms": 1000,
+-    "current_ms": 1000,
+-    "idle_streak": 153,
+-    "last_tick_at": "2026-04-07T14:02:18.010Z",
+-    "last_activity_at": null,
+-    "last_activity_reason": "hud_state_incomplete"
++    "current_ms": 75,
++    "idle_streak": 0,
++    "last_tick_at": "2026-04-16T10:03:13.246Z",
++    "last_activity_at": "2026-04-16T10:03:13.246Z",
++    "last_activity_reason": "leader_nudge"
+   },
+-  "stop_reason": "signal",
+-  "stop_signal": "SIGTERM",
+-  "stopping": true
++  "last_cycle_activity": "leader_nudge"
+ }
+\ No newline at end of file
+diff --git a/personal-assistant/.env.local.example b/personal-assistant/.env.local.example
+index 235942e6..9dde55b4 100644
+--- a/personal-assistant/.env.local.example
++++ b/personal-assistant/.env.local.example
+@@ -54,6 +54,17 @@ ANTHROPIC_API_KEY=sk-ant-api03-...
+ OPENAI_API_KEY=sk-proj-...
+ 
+ 
++# =====================================================
++# WEB RESEARCH (Optional but recommended for BitBit web tools)
++# =====================================================
++# Obtain from: https://app.tavily.com/home
++TAVILY_API_KEY=tvly-...
++
++# Optional fallback providers for web search
++# SERPER_API_KEY=
++# EXA_API_KEY=
++
++
+ # =====================================================
+ # ELEVENLABS — Text-to-Speech (Voice Mode)
+ # =====================================================
+@@ -379,4 +390,4 @@ ENABLE_EXPERIMENTAL_AGENTS=false
+ # No need to set them locally.
+ 
+ # VERCEL_GIT_COMMIT_SHA=...
+-# VERCEL_ENV=development
+\ No newline at end of file
++# VERCEL_ENV=development
+diff --git a/personal-assistant/src/app/api/agent/inbox/[id]/reply/route.ts b/personal-assistant/src/app/api/agent/inbox/[id]/reply/route.ts
+index fc5b2379..fa9ac118 100644
+--- a/personal-assistant/src/app/api/agent/inbox/[id]/reply/route.ts
++++ b/personal-assistant/src/app/api/agent/inbox/[id]/reply/route.ts
+@@ -1,6 +1,7 @@
+ import { NextRequest, NextResponse } from 'next/server'
+ import { createClient } from '@/lib/supabase/server'
+ import { logger } from '@/lib/core/logger'
++import { normaliseIMessageHandle } from '@/lib/agent/tools/channel-tools'
+ import type { SupabaseClient } from '@supabase/supabase-js'
+ import type { ChannelType } from '@/lib/channels/types'
+ 
+@@ -110,13 +111,17 @@ async function sendViaChannel(
+         .single()
+ 
+       if (imConn?.config?.bb_server_url) {
++        const handle = normaliseIMessageHandle(to)
++        if (!handle) {
++          return { success: false, error: `Invalid iMessage recipient "${to}"` }
++        }
+         const cfg = imConn.config as { bb_server_url: string; bb_password: string }
+         const bbUrl = cfg.bb_server_url.replace(/\/$/, '')
+-        const chatGuid = `iMessage;-;${to}`
++        const chatGuid = `iMessage;-;${handle}`
+         const tempGuid = `bitbit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+ 
+         const bbRes = await fetch(
+-          `${bbUrl}/api/v1/message/text?password=${cfg.bb_password}`,
++          `${bbUrl}/api/v1/message/text?password=${encodeURIComponent(cfg.bb_password)}`,
+           {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+diff --git a/personal-assistant/src/lib/agent/send-limits.ts b/personal-assistant/src/lib/agent/send-limits.ts
+index f1bd6ce5..c4e45b70 100644
+--- a/personal-assistant/src/lib/agent/send-limits.ts
++++ b/personal-assistant/src/lib/agent/send-limits.ts
+@@ -4,6 +4,7 @@ import { logger } from '@/lib/core/logger'
+ const DAILY_LIMITS = {
+   email: 50,
+   sms: 20,
++  whatsapp: 30,
+ } as const
+ 
+ type SendChannel = keyof typeof DAILY_LIMITS
+diff --git a/personal-assistant/src/lib/agent/tools/__tests__/web-tools.test.ts b/personal-assistant/src/lib/agent/tools/__tests__/web-tools.test.ts
+index 4083c2d0..568a2c7f 100644
+--- a/personal-assistant/src/lib/agent/tools/__tests__/web-tools.test.ts
++++ b/personal-assistant/src/lib/agent/tools/__tests__/web-tools.test.ts
+@@ -72,8 +72,8 @@ describe('web tools', () => {
+   })
+ 
+   describe('tool definitions', () => {
+-    it('exports 4 tool definitions', () => {
+-      expect(webToolDefinitions).toHaveLength(4)
++    it('exports 5 tool definitions', () => {
++      expect(webToolDefinitions).toHaveLength(5)
+     })
+ 
+     it('defines web_search', () => {
+diff --git a/personal-assistant/src/lib/agent/tools/channel-tools.ts b/personal-assistant/src/lib/agent/tools/channel-tools.ts
+index 866aeba3..d101737d 100644
+--- a/personal-assistant/src/lib/agent/tools/channel-tools.ts
++++ b/personal-assistant/src/lib/agent/tools/channel-tools.ts
+@@ -6,6 +6,38 @@ import { resolveAccessToken } from '@/lib/channels/outlook'
+ import { logger } from '@/lib/core/logger'
+ import type { SupabaseClient } from '@supabase/supabase-js'
+ 
++/**
++ * Normalise an iMessage recipient into a BlueBubbles-compatible handle.
++ * Accepts:
++ *  - Apple ID email (returned as-is, lowercased)
++ *  - Phone number with country code (normalised to +E.164 form)
++ *  - AU local number starting with 04 (auto-expanded to +614...)
++ * Returns null for anything else.
++ */
++export function normaliseIMessageHandle(recipient: string): string | null {
++  if (!recipient || typeof recipient !== 'string') return null
++  const trimmed = recipient.trim()
++  if (!trimmed) return null
++
++  // Email (Apple ID)
++  if (trimmed.includes('@')) {
++    const email = trimmed.toLowerCase()
++    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null
++  }
++
++  // Phone: strip spaces, dashes, parens, leading +
++  let digits = trimmed.replace(/^\+/, '').replace(/[\s\-()]/g, '')
++  if (!/^\d+$/.test(digits)) return null
++
++  // Convert AU local 04xxxxxxxx → 614xxxxxxxx
++  if (digits.startsWith('04') && digits.length === 10) {
++    digits = '61' + digits.slice(1)
++  }
++
++  if (digits.length < 7 || digits.length > 15) return null
++  return '+' + digits
++}
++
+ export const channelToolDefinitions: Anthropic.Tool[] = [
+   {
+     name: 'find_messages',
+@@ -1371,6 +1403,16 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
+     const message = input.message as string
+     const recipientName = input.recipient_name as string | undefined
+ 
++    // Normalise recipient: iMessage handles are either Apple ID emails or
++    // phone numbers with a leading '+'. Accept both; reject everything else.
++    const handle = normaliseIMessageHandle(recipient)
++    if (!handle) {
++      return {
++        success: false,
++        error: `Invalid iMessage recipient "${recipient}". Provide an Apple ID email or phone number with country code (e.g. +61400123456).`,
++      }
++    }
++
+     try {
+       const { data: imConn } = await supabase
+         .from('org_connections')
+@@ -1387,11 +1429,11 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
+ 
+       const cfg = imConn.config as { bb_server_url: string; bb_password: string }
+       const bbUrl = cfg.bb_server_url.replace(/\/$/, '')
+-      const chatGuid = `iMessage;-;${recipient}`
++      const chatGuid = `iMessage;-;${handle}`
+       const tempGuid = `bitbit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+ 
+       const res = await fetch(
+-        `${bbUrl}/api/v1/message/text?password=${cfg.bb_password}`,
++        `${bbUrl}/api/v1/message/text?password=${encodeURIComponent(cfg.bb_password)}`,
+         {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+@@ -1406,12 +1448,33 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
+       }
+ 
+       const displayRecipient = recipientName
+-        ? `${recipientName} (${recipient})`
+-        : recipient
++        ? `${recipientName} (${handle})`
++        : handle
++
++      const sentAt = new Date().toISOString()
++
++      // Record the outgoing message so it shows up in inbox threads.
++      // Non-critical: log but don't fail the send if this insert errors.
++      try {
++        await supabase.from('channel_messages').insert({
++          org_id: orgId,
++          channel: 'imessage',
++          external_id: tempGuid,
++          sender: 'BitBit',
++          sender_email: '',
++          subject: undefined,
++          body: message.slice(0, 2000),
++          received_at: sentAt,
++          processed: true,
++          metadata: { type: 'outgoing', recipient: handle, connection_id: imConn.id },
++        })
++      } catch (err) {
++        logger.warn('[send_imessage] Failed to record outgoing message', { err: String(err) })
++      }
+ 
+       logger.info('[send_imessage] Message sent via BlueBubbles', {
+         org: orgId,
+-        recipient,
++        recipient: handle,
+         connectionId: imConn.id,
+       })
+ 
+@@ -1420,7 +1483,7 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
+         data: {
+           recipient: displayRecipient,
+           message_preview: message.slice(0, 100) + (message.length > 100 ? '...' : ''),
+-          sent_at: new Date().toISOString(),
++          sent_at: sentAt,
+           sent_via: 'bluebubbles',
+         },
+       }
+diff --git a/personal-assistant/src/lib/channels/gateway-handler.ts b/personal-assistant/src/lib/channels/gateway-handler.ts
+index c8ef7912..8c367c17 100644
+--- a/personal-assistant/src/lib/channels/gateway-handler.ts
++++ b/personal-assistant/src/lib/channels/gateway-handler.ts
+@@ -4,7 +4,7 @@ import { UnifiedConversationPipeline } from "@/lib/conversation/unified-pipeline
+ import { sendSendblueMessage, sendTypingIndicator } from "./sendblue";
+ import { sendVoiceMemoBubble } from "./sendblue-voice-memo";
+ import { sendTelegramMessage } from "./telegram";
+-import { sendMessage as sendWhatsAppMessage } from "./whatsapp";
++import { sendTelnyxWhatsApp } from "./telnyx-whatsapp";
+ import { logger } from "@/lib/core/logger";
+ import type { Channel, ChannelMetadata } from "@/lib/conversation/types";
+ 
+@@ -92,6 +92,8 @@ export async function handleGatewayMessage(params: GatewayMessageParams): Promis
+   }
+ 
+   const isSendblue = channel === "sendblue" || channel === "sms";
++  const isWhatsApp = channel === "whatsapp";
++  const isMessaging = isSendblue || isWhatsApp;
+   const wordCount = responseText.split(/\s+/).length;
+ 
+   if (isSendblue && channelMetadata?.isVoiceNote && wordCount <= VOICE_REPLY_MAX_WORDS) {
+@@ -113,11 +115,13 @@ export async function handleGatewayMessage(params: GatewayMessageParams): Promis
+     if (isSendblue) {
+       await sendTypingIndicator(replyTo);
+       await sleep(typingDelayMs(bubble, isFirst));
++    } else if (isWhatsApp && !isFirst) {
++      await sleep(typingDelayMs(bubble, isFirst));
+     }
+ 
+     await sendChannelReply(channel, replyTo, bubble);
+ 
+-    if (isSendblue && i < bubbles.length - 1) {
++    if (isMessaging && i < bubbles.length - 1) {
+       await sleep(300 + Math.random() * 400);
+     }
+   }
+@@ -133,9 +137,11 @@ async function sendChannelReply(channel: Channel, replyTo: string, text: string)
+       case "telegram":
+         await sendTelegramMessage(replyTo, text);
+         break;
+-      case "whatsapp":
+-        await sendWhatsAppMessage(replyTo, text);
++      case "whatsapp": {
++        const result = await sendTelnyxWhatsApp(replyTo, text);
++        if (!result.success) throw new Error(result.error || "Send failed");
+         break;
++      }
+       default:
+         logger.warn("[gateway-handler] No send function for channel", { channel });
+     }
+diff --git a/personal-assistant/src/lib/web/__tests__/providers.test.ts b/personal-assistant/src/lib/web/__tests__/providers.test.ts
+index 61cf6a28..91ceac08 100644
+--- a/personal-assistant/src/lib/web/__tests__/providers.test.ts
++++ b/personal-assistant/src/lib/web/__tests__/providers.test.ts
+@@ -1,3 +1,6 @@
++import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
++import { tmpdir } from 'node:os'
++import { join } from 'node:path'
+ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+ import { tavilyProvider } from '../providers/tavily'
+ import { serperProvider } from '../providers/serper'
+@@ -17,8 +20,13 @@ describe('search providers', () => {
+   })
+ 
+   describe('tavily', () => {
+-    it('reports not configured when env var missing', () => {
++    it('reports not configured when env var and CLI config are missing', () => {
++      const homeDir = mkdtempSync(join(tmpdir(), 'tavily-empty-home-'))
++      vi.stubEnv('HOME', homeDir)
++
+       expect(tavilyProvider.isConfigured()).toBe(false)
++
++      rmSync(homeDir, { recursive: true, force: true })
+     })
+ 
+     it('reports configured when env var set', () => {
+@@ -26,6 +34,31 @@ describe('search providers', () => {
+       expect(tavilyProvider.isConfigured()).toBe(true)
+     })
+ 
++    it('falls back to the Tavily CLI config when env var is missing', async () => {
++      const homeDir = mkdtempSync(join(tmpdir(), 'tavily-home-'))
++      mkdirSync(join(homeDir, '.tavily'), { recursive: true })
++      writeFileSync(
++        join(homeDir, '.tavily', 'config.json'),
++        JSON.stringify({ api_key: 'fallback-key' }),
++      )
++      vi.stubEnv('HOME', homeDir)
++
++      const mockFetch = vi.fn().mockResolvedValue({
++        ok: true,
++        json: () => Promise.resolve({ results: [], answer: 'Fallback works' }),
++      })
++      vi.stubGlobal('fetch', mockFetch)
++
++      expect(tavilyProvider.isConfigured()).toBe(true)
++      await tavilyProvider.search('fallback query', 3)
++
++      const [, options] = mockFetch.mock.calls[0] as [string, RequestInit]
++      const body = JSON.parse(String(options.body))
++      expect(body.api_key).toBe('fallback-key')
++
++      rmSync(homeDir, { recursive: true, force: true })
++    })
++
+     it('has correct name', () => {
+       expect(tavilyProvider.name).toBe('tavily')
+     })
+diff --git a/personal-assistant/src/lib/web/providers/tavily.ts b/personal-assistant/src/lib/web/providers/tavily.ts
+index efc4ffc3..17c1b1c6 100644
+--- a/personal-assistant/src/lib/web/providers/tavily.ts
++++ b/personal-assistant/src/lib/web/providers/tavily.ts
+@@ -1,18 +1,40 @@
++import { existsSync, readFileSync } from 'node:fs'
++import { homedir } from 'node:os'
++import { join } from 'node:path'
+ import type { WebSearchProvider, SearchResponse } from '../provider-types'
+ 
++function resolveTavilyApiKey(): string | null {
++  const envKey = process.env.TAVILY_API_KEY?.trim()
++  if (envKey) return envKey
++
++  try {
++    const configPath = join(homedir(), '.tavily', 'config.json')
++    if (!existsSync(configPath)) return null
++
++    const config = JSON.parse(readFileSync(configPath, 'utf-8')) as { api_key?: unknown }
++    const configKey = typeof config.api_key === 'string' ? config.api_key.trim() : ''
++    return configKey || null
++  } catch {
++    return null
++  }
++}
++
+ export const tavilyProvider: WebSearchProvider = {
+   name: 'tavily',
+ 
+   isConfigured(): boolean {
+-    return !!process.env.TAVILY_API_KEY
++    return resolveTavilyApiKey() !== null
+   },
+ 
+   async search(query: string, maxResults: number, options?: Record<string, unknown>): Promise<SearchResponse> {
++    const apiKey = resolveTavilyApiKey()
++    if (!apiKey) throw new Error('Tavily API key is not configured')
++
+     const res = await fetch('https://api.tavily.com/search', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({
+-        api_key: process.env.TAVILY_API_KEY,
++        api_key: apiKey,
+         query,
+         max_results: maxResults,
+         search_depth: (options?.search_depth as string) || 'basic',

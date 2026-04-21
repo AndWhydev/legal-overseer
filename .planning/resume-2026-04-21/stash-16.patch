@@ -1,0 +1,448 @@
+diff --git a/personal-assistant/src/components/dashboard/tab-transition.tsx b/personal-assistant/src/components/dashboard/tab-transition.tsx
+index 39496c45..870db0bf 100644
+--- a/personal-assistant/src/components/dashboard/tab-transition.tsx
++++ b/personal-assistant/src/components/dashboard/tab-transition.tsx
+@@ -7,8 +7,10 @@ import { motion, useAnimationControls } from 'motion/react';
+  * KeepAliveTabPanel — renders all visited tabs simultaneously.
+  *
+  * Active tab: visible + plays a spring enter animation on switch.
+- * Inactive tabs: display:none — zero layout/paint cost, full React
+- * state + scroll position + fetched data preserved in the DOM.
++ * Inactive tabs: visibility:hidden + absolute — near-zero paint cost,
++ * full React state + scroll position + fetched data preserved. Uses
++ * visibility instead of display:none so Recharts containers stay
++ * measurable (avoids 0-dimension warnings).
+  *
+  * The splash screen ensures all code is loaded before the user sees
+  * anything. Tabs are never unmounted once visited.
+@@ -68,7 +70,17 @@ function TabPane({
+       aria-labelledby={`tab-${id}`}
+       aria-hidden={!isActive}
+       tabIndex={isActive ? 0 : -1}
+-      style={{ display: isActive ? 'contents' : 'none' }}
++      style={
++        isActive
++          ? { display: 'contents' }
++          : {
++              visibility: 'hidden',
++              position: 'absolute',
++              inset: 0,
++              pointerEvents: 'none',
++              overflow: 'hidden',
++            }
++      }
+     >
+       <motion.div
+         animate={controls}
+diff --git a/personal-assistant/src/lib/agent/engine/hooks.ts b/personal-assistant/src/lib/agent/engine/hooks.ts
+index e48ac557..780a2f1f 100644
+--- a/personal-assistant/src/lib/agent/engine/hooks.ts
++++ b/personal-assistant/src/lib/agent/engine/hooks.ts
+@@ -189,7 +189,7 @@ export const budgetGuardHook: PreToolUseHook = async (input) => {
+   const role = TOOL_ROLE_MAP[input.toolName]
+   if (!role || input.config.skipCostGuard) return {}
+ 
+-  const budget = await checkRoleBudget(input.config.supabase, input.config.orgId, role)
++  const budget = await checkRoleBudget(input.config.supabase, input.config.orgId, role, input.config.ltvMultiplier)
+   if (!budget.allowed) {
+     return { deny: budget.reason || `Daily budget for ${role} exhausted` }
+   }
+diff --git a/personal-assistant/src/lib/agent/engine/taor-loop-utils.ts b/personal-assistant/src/lib/agent/engine/taor-loop-utils.ts
+index 6f39f6be..496fc15d 100644
+--- a/personal-assistant/src/lib/agent/engine/taor-loop-utils.ts
++++ b/personal-assistant/src/lib/agent/engine/taor-loop-utils.ts
+@@ -59,7 +59,6 @@ export function mergeEntityOverrides(
+       delegationMandate?: EngineConfig['delegationMandate']
+       ltvMultiplier?: number
+       iterationCap?: number
+-      budgetPreset?: EngineConfig['budgetPreset']
+     }
+   },
+ ): EngineConfig {
+@@ -73,6 +72,5 @@ export function mergeEntityOverrides(
+       ?? overrides.delegationMandate,
+     ltvMultiplier: config.ltvMultiplier ?? overrides.ltvMultiplier,
+     iterationCap: config.iterationCap ?? overrides.iterationCap,
+-    budgetPreset: config.budgetPreset ?? overrides.budgetPreset,
+   }
+ }
+diff --git a/personal-assistant/src/lib/agent/engine/taor-loop.ts b/personal-assistant/src/lib/agent/engine/taor-loop.ts
+index 5992a7f9..9d24ce04 100644
+--- a/personal-assistant/src/lib/agent/engine/taor-loop.ts
++++ b/personal-assistant/src/lib/agent/engine/taor-loop.ts
+@@ -302,7 +302,9 @@ export async function* runTAORLoop(
+   let systemPrompt: string
+   if (config.threadId && config.userId) {
+     try {
+-      const assembler = new ContextAssembler({ userProfile, channel: config.channel, ...assemblerOverrides })
++      const usePromptCache = config.usePromptCache ?? process.env.ENABLE_PROMPT_CACHE !== 'false'
++      const useGlobalWorkspace = config.useGlobalWorkspace ?? process.env.ENABLE_GLOBAL_WORKSPACE !== 'false'
++      const assembler = new ContextAssembler({ userProfile, channel: config.channel, usePromptCache, useGlobalWorkspace, ...assemblerOverrides })
+       const ctx = await assembler.assemble(config.supabase, config.userId, config.orgId, config.threadId, message)
+       systemPrompt = ctx.systemPrompt
+       config.history = ctx.messageHistory
+diff --git a/personal-assistant/src/lib/agent/engine/tool-executor.ts b/personal-assistant/src/lib/agent/engine/tool-executor.ts
+index 0242b93e..3681d36e 100644
+--- a/personal-assistant/src/lib/agent/engine/tool-executor.ts
++++ b/personal-assistant/src/lib/agent/engine/tool-executor.ts
+@@ -102,7 +102,7 @@ export async function executeToolBatch(
+     // Track the active role for execution cap enforcement
+     if (!currentActiveRole) currentActiveRole = role
+ 
+-    const budget = await checkRoleBudget(config.supabase, config.orgId, role)
++    const budget = await checkRoleBudget(config.supabase, config.orgId, role, config.ltvMultiplier)
+     if (!budget.allowed) {
+       toolBudgetOverrides.set(tool.id, { blocked: true, warning: false, role, result: budget })
+       events.push({
+@@ -125,7 +125,7 @@ export async function executeToolBatch(
+ 
+   // ── Per-execution token cap ──────────────────────────────────────────
+   if (currentActiveRole && !config.skipCostGuard) {
+-    const cap = getExecutionTokenCap(currentActiveRole)
++    const cap = getExecutionTokenCap(currentActiveRole, config.ltvMultiplier)
+     if (cap && executionTokens > cap) {
+       events.push({
+         type: 'execution_cap_hit',
+@@ -365,7 +365,7 @@ export async function* executeToolBatchStreaming(
+     if (!role || config.skipCostGuard) continue
+     if (!currentActiveRole) currentActiveRole = role
+ 
+-    const budget = await checkRoleBudget(config.supabase, config.orgId, role)
++    const budget = await checkRoleBudget(config.supabase, config.orgId, role, config.ltvMultiplier)
+     if (!budget.allowed) {
+       toolBudgetOverrides.set(tool.id, { blocked: true, warning: false, role, result: budget })
+       yield {
+@@ -383,7 +383,7 @@ export async function* executeToolBatchStreaming(
+ 
+   // ── Per-execution token cap ──────────────────────────────────────────
+   if (currentActiveRole && !config.skipCostGuard) {
+-    const cap = getExecutionTokenCap(currentActiveRole)
++    const cap = getExecutionTokenCap(currentActiveRole, config.ltvMultiplier)
+     if (cap && executionTokens > cap) {
+       yield {
+         type: 'execution_cap_hit',
+diff --git a/personal-assistant/src/lib/agent/engine/types.ts b/personal-assistant/src/lib/agent/engine/types.ts
+index 65d3211d..dcf2b5c4 100644
+--- a/personal-assistant/src/lib/agent/engine/types.ts
++++ b/personal-assistant/src/lib/agent/engine/types.ts
+@@ -54,8 +54,6 @@ export interface EngineConfig {
+   delegationMandate?: 'infinite_autopilot' | 'supervised' | 'standard'
+   /** LTV multiplier for cost budget scaling (default 1.0, max 10.0). */
+   ltvMultiplier?: number
+-  /** Token budget preset — 'dynamic_workspace' for 200K+ context. */
+-  budgetPreset?: 'standard' | 'dynamic_workspace'
+   /** Explicit iteration cap override from entity_overrides (overrides SAFETY_CEILING). */
+   iterationCap?: number
+   /** Abort signal for cancelling an in-flight TAOR run (e.g. voice barge-in).
+@@ -66,6 +64,10 @@ export interface EngineConfig {
+    *  is biased toward short spoken responses and voice-unfriendly formatting
+    *  (tables, code fences, long bullet lists) is discouraged. */
+   voiceMode?: boolean
++  /** Enable L1 prompt caching with brain state prefix. Default: true in production. */
++  usePromptCache?: boolean
++  /** Enable Global Workspace competitive context allocation. Default: true in production. */
++  useGlobalWorkspace?: boolean
+ }
+ 
+ // ---------------------------------------------------------------------------
+diff --git a/personal-assistant/src/lib/agent/entity-overrides.ts b/personal-assistant/src/lib/agent/entity-overrides.ts
+index f71e3a2d..d5742979 100644
+--- a/personal-assistant/src/lib/agent/entity-overrides.ts
++++ b/personal-assistant/src/lib/agent/entity-overrides.ts
+@@ -11,7 +11,6 @@ export interface EntityOverride {
+   delegation_mandate: 'standard' | 'supervised' | 'infinite_autopilot'
+   ltv_multiplier: number
+   iteration_cap: number | null
+-  budget_preset: 'standard' | 'dynamic_workspace'
+   notes: string | null
+ }
+ 
+@@ -23,7 +22,6 @@ export interface ResolvedEntityOverrides {
+   delegationMandate: 'standard' | 'supervised' | 'infinite_autopilot'
+   ltvMultiplier: number
+   iterationCap: number | undefined
+-  budgetPreset: 'standard' | 'dynamic_workspace'
+ }
+ 
+ /** Default overrides — equivalent to "no override exists" */
+@@ -31,7 +29,6 @@ export const DEFAULT_ENTITY_OVERRIDES: ResolvedEntityOverrides = {
+   delegationMandate: 'standard',
+   ltvMultiplier: 1.0,
+   iterationCap: undefined,
+-  budgetPreset: 'standard',
+ }
+ 
+ /**
+@@ -49,7 +46,7 @@ export async function resolveEntityOverrides(
+   try {
+     const { data, error } = await supabase
+       .from('entity_overrides')
+-      .select('delegation_mandate, ltv_multiplier, iteration_cap, budget_preset')
++      .select('delegation_mandate, ltv_multiplier, iteration_cap')
+       .eq('entity_id', entityId)
+       .eq('org_id', orgId)
+       .maybeSingle()
+@@ -65,7 +62,6 @@ export async function resolveEntityOverrides(
+       delegationMandate: data.delegation_mandate as ResolvedEntityOverrides['delegationMandate'],
+       ltvMultiplier: Number(data.ltv_multiplier) || 1.0,
+       iterationCap: data.iteration_cap != null ? Number(data.iteration_cap) : undefined,
+-      budgetPreset: (data.budget_preset as ResolvedEntityOverrides['budgetPreset']) || 'standard',
+     }
+   } catch (err) {
+     logger.warn('[entity-overrides] Unexpected error, using defaults', { error: String(err), entityId, orgId })
+diff --git a/personal-assistant/src/lib/brain/__tests__/intake-clerk.test.ts b/personal-assistant/src/lib/brain/__tests__/intake-clerk.test.ts
+index ede4fddd..abd611e6 100644
+--- a/personal-assistant/src/lib/brain/__tests__/intake-clerk.test.ts
++++ b/personal-assistant/src/lib/brain/__tests__/intake-clerk.test.ts
+@@ -25,6 +25,7 @@ import { readWALTail } from '../wal-emitter'
+ import {
+   signalToDomain,
+   extractFactsFromBatch,
++  groupEntriesByEntity,
+   processWALBatch,
+   type ExtractedFact,
+ } from '../intake-clerk'
+@@ -310,4 +311,95 @@ describe('processWALBatch', () => {
+     // Entries still marked consolidated — they were processed, just yielded nothing
+     expect(supabase._updateMock.in).toHaveBeenCalledWith('id', ['e1'])
+   })
++
++  it('routes jobs with WAL entry UUIDs not fact text in fact_ids', async () => {
++    const entries = [
++      makeEntry({ id: 'uuid-abc', content: 'Steve invoiced $1000' }),
++    ]
++    mockedReadWALTail.mockResolvedValueOnce(entries)
++
++    mockedGenerateText.mockResolvedValueOnce({
++      text: '{"entity_name": "Steve", "fact": "Invoiced $1000", "domain": "financial"}\n',
++    } as any)
++
++    const supabase = makeSupabase()
++    const queues = {
++      financial: makeQueue(),
++      relational: makeQueue(),
++      operational: makeQueue(),
++      behavioral: makeQueue(),
++    }
++
++    await processWALBatch(supabase as any, 'org-1', queues as any)
++
++    const job = queues.financial.add.mock.calls[0][1]
++    expect(job.fact_ids).toEqual(['uuid-abc'])
++    expect(job.fact_ids).not.toContain('Invoiced $1000')
++  })
++})
++
++// ─── groupEntriesByEntity ─────────────────────────────────────────────────
++
++describe('groupEntriesByEntity', () => {
++  it('maps facts to entries that mention the entity name', () => {
++    const entries = [
++      makeEntry({ id: 'e1', content: 'Alice paid $500 for consulting' }),
++      makeEntry({ id: 'e2', content: 'Meeting with Bob at 3pm' }),
++    ]
++    const facts: ExtractedFact[] = [
++      { entity_name: 'Alice', fact: 'Paid $500', domain: 'financial' },
++      { entity_name: 'Bob', fact: 'Meeting at 3pm', domain: 'operational' },
++    ]
++
++    const grouped = groupEntriesByEntity(entries, facts)
++
++    expect(grouped.size).toBe(2)
++    expect(grouped.get('financial:Alice')!.entry_ids).toEqual(['e1'])
++    expect(grouped.get('operational:Bob')!.entry_ids).toEqual(['e2'])
++  })
++
++  it('falls back to all entry IDs when entity name not found in content', () => {
++    const entries = [
++      makeEntry({ id: 'e1', content: 'Invoice #123 was paid' }),
++      makeEntry({ id: 'e2', content: 'Payment received today' }),
++    ]
++    const facts: ExtractedFact[] = [
++      { entity_name: 'Unknown Corp', fact: 'Paid invoice', domain: 'financial' },
++    ]
++
++    const grouped = groupEntriesByEntity(entries, facts)
++
++    expect(grouped.get('financial:Unknown Corp')!.entry_ids).toEqual(['e1', 'e2'])
++  })
++
++  it('groups multiple facts for same entity into one group with merged entry IDs', () => {
++    const entries = [
++      makeEntry({ id: 'e1', content: 'Alice paid $500' }),
++      makeEntry({ id: 'e2', content: 'Alice scheduled a call' }),
++    ]
++    const facts: ExtractedFact[] = [
++      { entity_name: 'Alice', fact: 'Paid $500', domain: 'financial' },
++      { entity_name: 'Alice', fact: 'Scheduled a call', domain: 'financial' },
++    ]
++
++    const grouped = groupEntriesByEntity(entries, facts)
++
++    expect(grouped.size).toBe(1)
++    const group = grouped.get('financial:Alice')!
++    expect(group.entry_ids).toContain('e1')
++    expect(group.entry_ids).toContain('e2')
++  })
++
++  it('is case-insensitive when matching entity names', () => {
++    const entries = [
++      makeEntry({ id: 'e1', content: 'alice sent an email' }),
++    ]
++    const facts: ExtractedFact[] = [
++      { entity_name: 'Alice', fact: 'Sent email', domain: 'operational' },
++    ]
++
++    const grouped = groupEntriesByEntity(entries, facts)
++
++    expect(grouped.get('operational:Alice')!.entry_ids).toEqual(['e1'])
++  })
+ })
+diff --git a/personal-assistant/src/lib/brain/intake-clerk.ts b/personal-assistant/src/lib/brain/intake-clerk.ts
+index d87a80f7..9a50718c 100644
+--- a/personal-assistant/src/lib/brain/intake-clerk.ts
++++ b/personal-assistant/src/lib/brain/intake-clerk.ts
+@@ -116,6 +116,57 @@ export async function extractFactsFromBatch(
+   }
+ }
+ 
++// ─── Entity → WAL Entry Grouping ──────────────────────────────────────────
++
++export interface EntityEntryGroup {
++  domain: DomainType
++  entity_name: string
++  entry_ids: string[]
++}
++
++/**
++ * Map extracted facts back to their source WAL entry IDs by entity name.
++ *
++ * For each unique (domain, entity_name) pair from the extracted facts,
++ * find which WAL entries mention that entity (case-insensitive content match).
++ * Falls back to all entry IDs if no match is found (conservative).
++ */
++export function groupEntriesByEntity(
++  entries: KnowledgeLogEntry[],
++  facts: ExtractedFact[],
++): Map<string, EntityEntryGroup> {
++  const grouped = new Map<string, EntityEntryGroup>()
++
++  for (const fact of facts) {
++    const key = `${fact.domain}:${fact.entity_name}`
++    if (!grouped.has(key)) {
++      const nameLower = fact.entity_name.toLowerCase()
++      const matchingIds = entries
++        .filter((e) => e.content.toLowerCase().includes(nameLower))
++        .map((e) => e.id)
++
++      grouped.set(key, {
++        domain: fact.domain,
++        entity_name: fact.entity_name,
++        entry_ids: matchingIds.length > 0 ? matchingIds : entries.map((e) => e.id),
++      })
++    } else {
++      const group = grouped.get(key)!
++      const nameLower = fact.entity_name.toLowerCase()
++      for (const entry of entries) {
++        if (
++          entry.content.toLowerCase().includes(nameLower) &&
++          !group.entry_ids.includes(entry.id)
++        ) {
++          group.entry_ids.push(entry.id)
++        }
++      }
++    }
++  }
++
++  return grouped
++}
++
+ // ─── WAL Batch Processing ──────────────────────────────────────────────────
+ 
+ interface DomainQueues {
+@@ -162,20 +213,8 @@ export async function processWALBatch(
+   // Extract structured facts
+   const facts = await extractFactsFromBatch(entries)
+ 
+-  // Group facts by domain -> entity
+-  const grouped = new Map<string, { domain: DomainType; entity_id: string; fact_ids: string[] }>()
+-
+-  for (const fact of facts) {
+-    const key = `${fact.domain}:${fact.entity_name}`
+-    if (!grouped.has(key)) {
+-      grouped.set(key, {
+-        domain: fact.domain,
+-        entity_id: fact.entity_name,
+-        fact_ids: [],
+-      })
+-    }
+-    grouped.get(key)!.fact_ids.push(fact.fact)
+-  }
++  // Group facts by domain + entity, mapping to WAL entry IDs (not fact text)
++  const grouped = groupEntriesByEntity(entries, facts)
+ 
+   // Route to domain queues
+   let routed = 0
+@@ -185,12 +224,12 @@ export async function processWALBatch(
+ 
+     const job: LibrarianJob = {
+       org_id: orgId,
+-      entity_id: group.entity_id,
+-      fact_ids: group.fact_ids,
++      entity_id: group.entity_name,
++      fact_ids: group.entry_ids,
+       domain: group.domain,
+     }
+ 
+-    await queue.add(`librarian:${group.entity_id}`, job)
++    await queue.add(`librarian:${group.entity_name}`, job)
+     routed++
+   }
+ 
+diff --git a/personal-assistant/src/lib/brain/section-librarian.ts b/personal-assistant/src/lib/brain/section-librarian.ts
+index 393968b3..e79d433b 100644
+--- a/personal-assistant/src/lib/brain/section-librarian.ts
++++ b/personal-assistant/src/lib/brain/section-librarian.ts
+@@ -181,6 +181,29 @@ export async function processDomainJob(
+   }
+ }
+ 
++// ─── Direct-call entry point (no BullMQ) ───────────────────────────────────
++
++/**
++ * Process a domain dossier compilation directly — no BullMQ queue required.
++ * Used by the brain-consolidation cron route.
++ */
++export async function processDomainJobDirect(
++  supabase: SupabaseClient,
++  orgId: string,
++  entityName: string,
++  walEntryIds: string[],
++  domain: DomainType,
++): Promise<void> {
++  return processDomainJob(supabase, {
++    org_id: orgId,
++    entity_name: entityName,
++    entity_id: entityName,
++    fact_ids: walEntryIds,
++    domain,
++    facts: [],
++  })
++}
++
+ // ─── startSectionLibrarians ─────────────────────────────────────────────────
+ 
+ const DOMAIN_QUEUES: DomainType[] = [
+diff --git a/personal-assistant/vercel.json b/personal-assistant/vercel.json
+index 16555947..9fc32d84 100644
+--- a/personal-assistant/vercel.json
++++ b/personal-assistant/vercel.json
+@@ -29,6 +29,7 @@
+     { "path": "/api/cron/bridge-health", "schedule": "*/5 * * * *" },
+     { "path": "/api/cron/bridge-lifecycle", "schedule": "0 3 * * *" },
+     { "path": "/api/cron/bridge-pool", "schedule": "*/15 * * * *" },
+-    { "path": "/api/cron/task-heartbeat", "schedule": "* * * * *" }
++    { "path": "/api/cron/task-heartbeat", "schedule": "* * * * *" },
++    { "path": "/api/cron/brain-consolidation", "schedule": "*/30 * * * *" }
+   ]
+ }

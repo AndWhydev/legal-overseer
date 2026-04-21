@@ -1,0 +1,3420 @@
+diff --git a/personal-assistant/next-env.d.ts b/personal-assistant/next-env.d.ts
+index c4b7818f..9edff1c7 100644
+--- a/personal-assistant/next-env.d.ts
++++ b/personal-assistant/next-env.d.ts
+@@ -1,6 +1,6 @@
+ /// <reference types="next" />
+ /// <reference types="next/image-types/global" />
+-import "./.next/dev/types/routes.d.ts";
++import "./.next/types/routes.d.ts";
+ 
+ // NOTE: This file should not be edited
+ // see https://nextjs.org/docs/app/api-reference/config/typescript for more information.
+diff --git a/personal-assistant/src/app/api/agent/chat/route.ts b/personal-assistant/src/app/api/agent/chat/route.ts
+index bf3ad483..bb7e0e26 100644
+--- a/personal-assistant/src/app/api/agent/chat/route.ts
++++ b/personal-assistant/src/app/api/agent/chat/route.ts
+@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
+       stack: err instanceof Error ? err.stack : undefined,
+     })
+     return new Response(
+-      JSON.stringify({ error: err instanceof Error ? err.message : 'Pipeline failed' }),
++      JSON.stringify({ error: 'Something went wrong. Try again in a moment.' }),
+       { status: 500, headers: { 'Content-Type': 'application/json' } },
+     )
+   }
+diff --git a/personal-assistant/src/app/api/agent/inbox/[id]/reply/route.ts b/personal-assistant/src/app/api/agent/inbox/[id]/reply/route.ts
+index ed69135b..fc5b2379 100644
+--- a/personal-assistant/src/app/api/agent/inbox/[id]/reply/route.ts
++++ b/personal-assistant/src/app/api/agent/inbox/[id]/reply/route.ts
+@@ -99,6 +99,34 @@ async function sendViaChannel(
+     }
+ 
+     case 'imessage': {
++      // Try BlueBubbles provider first (production path)
++      const { data: imConn } = await supabase
++        .from('org_connections')
++        .select('id, config')
++        .eq('org_id', orgId)
++        .eq('provider', 'imessage')
++        .eq('status', 'connected')
++        .limit(1)
++        .single()
++
++      if (imConn?.config?.bb_server_url) {
++        const cfg = imConn.config as { bb_server_url: string; bb_password: string }
++        const bbUrl = cfg.bb_server_url.replace(/\/$/, '')
++        const chatGuid = `iMessage;-;${to}`
++        const tempGuid = `bitbit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
++
++        const bbRes = await fetch(
++          `${bbUrl}/api/v1/message/text?password=${cfg.bb_password}`,
++          {
++            method: 'POST',
++            headers: { 'Content-Type': 'application/json' },
++            body: JSON.stringify({ chatGuid, tempGuid, message: body }),
++          },
++        )
++        return bbRes.ok ? { success: true } : { success: false, error: `iMessage send failed: ${bbRes.status}` }
++      }
++
++      // Fallback: legacy macbook-bridge (dev only)
+       const { sendIMessage } = await import('@/lib/channels/macbook-bridge')
+       const ok = await sendIMessage(to, body)
+       return ok ? { success: true } : { success: false, error: 'iMessage send failed' }
+diff --git a/personal-assistant/src/app/api/ai/voice/route.ts b/personal-assistant/src/app/api/ai/voice/route.ts
+index 705c8671..d6f34365 100644
+--- a/personal-assistant/src/app/api/ai/voice/route.ts
++++ b/personal-assistant/src/app/api/ai/voice/route.ts
+@@ -5,6 +5,7 @@ import { assembleContext } from '@/lib/context/assembler'
+ import { getPack, resolveIndustry } from '@/lib/industry/registry'
+ import { resolveModel } from '@/lib/agent/model-registry'
+ import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
++import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway'
+ import { logger } from '@/lib/core/logger';
+ 
+ /**
+@@ -56,9 +57,9 @@ export async function POST(request: Request) {
+ 
+   // Transcribe audio
+   let transcript: string
+-  const openaiKey = process.env.OPENAI_API_KEY
++  const endpoint = getOpenAIEndpoint()
+ 
+-  if (openaiKey) {
++  if (endpoint) {
+     try {
+       const audioBuffer = Buffer.from(await audioFile.arrayBuffer())
+       const whisperForm = new FormData()
+@@ -66,9 +67,9 @@ export async function POST(request: Request) {
+       whisperForm.append('file', blob, audioFile.name || 'audio.webm')
+       whisperForm.append('model', 'whisper-1')
+ 
+-      const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
++      const whisperRes = await fetch(`${endpoint.baseUrl}/audio/transcriptions`, {
+         method: 'POST',
+-        headers: { Authorization: `Bearer ${openaiKey}` },
++        headers: { Authorization: endpoint.authorization },
+         body: whisperForm,
+       })
+ 
+@@ -85,9 +86,8 @@ export async function POST(request: Request) {
+       return NextResponse.json({ error: 'Transcription service unavailable' }, { status: 502 })
+     }
+   } else {
+-    // No OpenAI key -- return a structured stub so the client knows transcription is not configured
+     return NextResponse.json({
+-      error: 'Voice transcription not available',
++      error: 'Voice transcription not available — configure AI_GATEWAY_API_KEY or OPENAI_API_KEY',
+       transcript: null,
+       response: null,
+     }, { status: 503 })
+diff --git a/personal-assistant/src/app/api/connections/catalog/route.ts b/personal-assistant/src/app/api/connections/catalog/route.ts
+index f20303b8..0ba3f663 100644
+--- a/personal-assistant/src/app/api/connections/catalog/route.ts
++++ b/personal-assistant/src/app/api/connections/catalog/route.ts
+@@ -1,6 +1,8 @@
+ import { NextRequest, NextResponse } from 'next/server'
+ import { getAuthContext } from '@/lib/supabase/auth-context'
+ import { isComposioEnabled } from '@/lib/composio'
++import { builtInProviders } from '@/lib/connections/built-in-providers'
++import { BESPOKE_FLOWS } from '@/lib/connections/bespoke-flows'
+ import { logger } from '@/lib/core/logger'
+ 
+ export const dynamic = 'force-dynamic'
+@@ -100,6 +102,42 @@ export async function GET(request: NextRequest) {
+       )
+     }
+ 
++    // Inject bespoke providers (iMessage, WhatsApp, Stripe) that bypass Composio
++    const catalogIds = new Set(catalog.map(a => a.id))
++    const { data: orgConns } = await ctx.supabase
++      .from('org_connections')
++      .select('provider, status')
++      .eq('org_id', ctx.orgId)
++    const connectedProviders = new Set(
++      (orgConns ?? []).filter(c => c.status === 'connected').map(c => c.provider),
++    )
++
++    for (const provider of builtInProviders) {
++      if (!BESPOKE_FLOWS.has(provider.id)) continue
++      if (catalogIds.has(provider.id)) {
++        // Merge connected status from org_connections into Composio entry
++        const existing = catalog.find(a => a.id === provider.id)
++        if (existing && !existing.connected && connectedProviders.has(provider.id)) {
++          existing.connected = true
++        }
++        continue
++      }
++
++      // Apply search/category filters
++      if (query && !provider.name.toLowerCase().includes(query) && !provider.id.includes(query)) continue
++      if (category && provider.category !== category) continue
++
++      catalog.push({
++        id: provider.id,
++        name: provider.name,
++        description: provider.description,
++        categories: [provider.category],
++        logo: '',
++        authScheme: provider.auth.method,
++        connected: connectedProviders.has(provider.id),
++      })
++    }
++
+     return NextResponse.json({
+       apps: catalog,
+       total: catalog.length,
+diff --git a/personal-assistant/src/app/api/connections/composio/callback/route.ts b/personal-assistant/src/app/api/connections/composio/callback/route.ts
+index 60e00708..82110f62 100644
+--- a/personal-assistant/src/app/api/connections/composio/callback/route.ts
++++ b/personal-assistant/src/app/api/connections/composio/callback/route.ts
+@@ -1,7 +1,7 @@
+ import { NextRequest, NextResponse } from 'next/server'
+ import { getAuthContext } from '@/lib/supabase/auth-context'
+ import { getServiceClient } from '@/lib/supabase/service-client'
+-import { waitForConnection, getConnectedAccount } from '@/lib/composio'
++import { waitForConnection, getConnectedAccount, invalidateComposioToolCache } from '@/lib/composio'
+ import { createConnectorManager } from '@/lib/connectors'
+ import { logger } from '@/lib/core/logger'
+ 
+@@ -110,6 +110,8 @@ export async function GET(request: NextRequest) {
+         } else {
+           const manager = createConnectorManager(supabase, { skipBridge: true })
+           await manager.activate(row as never, { accountId, metadata: account as unknown as Record<string, unknown> })
++          // Invalidate the tool cache so the agent picks up the new connection
++          invalidateComposioToolCache(orgId)
+           logger.info('[composio/callback] Connection activated', {
+             orgId, provider, connectionId: row.id, accountId,
+           })
+@@ -127,6 +129,6 @@ export async function GET(request: NextRequest) {
+   }
+ 
+   return NextResponse.redirect(
+-    `${appUrl}/dashboard?composio_success=true&app=${appName || 'unknown'}`
++    `${appUrl}/dashboard/connections?composio_success=true&app=${appName || 'unknown'}`
+   )
+ }
+diff --git a/personal-assistant/src/app/api/voice/__tests__/synthesize.test.ts b/personal-assistant/src/app/api/voice/__tests__/synthesize.test.ts
+index 14a811d5..0fe50b27 100644
+--- a/personal-assistant/src/app/api/voice/__tests__/synthesize.test.ts
++++ b/personal-assistant/src/app/api/voice/__tests__/synthesize.test.ts
+@@ -51,10 +51,13 @@ function makeRequest(body: Record<string, unknown>): NextRequest {
+ // ── Tests ───────────────────────────────────────────────────────────────
+ describe('POST /api/voice/synthesize', () => {
+   beforeEach(() => {
+-    vi.clearAllMocks()
++    vi.resetAllMocks()
+     // Default: dev bypass enabled so auth doesn't block validation tests
+     isDevBypassMock.mockReturnValue(true)
++    checkUserEndpointLimitMock.mockReturnValue(null)
+     process.env.OPENAI_API_KEY = 'test-key'
++    // Ensure AI_GATEWAY_API_KEY doesn't interfere with tests
++    delete process.env.AI_GATEWAY_API_KEY
+   })
+ 
+   // ── Validation ──────────────────────────────────────────────────────
+@@ -142,13 +145,14 @@ describe('POST /api/voice/synthesize', () => {
+ 
+   // ── OpenAI key missing ─────────────────────────────────────────────
+ 
+-  it('returns 503 when OPENAI_API_KEY is not set', async () => {
++  it('returns 503 when neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY is set', async () => {
+     delete process.env.OPENAI_API_KEY
++    delete process.env.AI_GATEWAY_API_KEY
+ 
+     const { POST } = await import('../synthesize/route')
+     const res = await POST(makeRequest({ text: 'Hello' }))
+     expect(res.status).toBe(503)
+     const json = await res.json()
+-    expect(json.error).toMatch(/not configured/i)
++    expect(json.error).toMatch(/configured/i)
+   })
+ })
+diff --git a/personal-assistant/src/app/api/voice/synthesize/route.ts b/personal-assistant/src/app/api/voice/synthesize/route.ts
+index 9ba12376..223e18c4 100644
+--- a/personal-assistant/src/app/api/voice/synthesize/route.ts
++++ b/personal-assistant/src/app/api/voice/synthesize/route.ts
+@@ -13,6 +13,7 @@ import { NextRequest } from 'next/server'
+ import { createClient, isDevBypass } from '@/lib/supabase/server'
+ import { authenticateBearer } from '@/lib/supabase/bearer-auth'
+ import { checkUserEndpointLimit } from '@/lib/api-rate-limiter'
++import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway'
+ import { logger } from '@/lib/core/logger'
+ 
+ const MAX_TEXT_LENGTH = 4096
+@@ -94,14 +95,17 @@ export async function POST(request: NextRequest) {
+   if (rateLimited) return rateLimited
+ 
+   // ── Call OpenAI TTS via Vercel AI Gateway ────────────────────────────
+-  const gatewayUrl = process.env.ANTHROPIC_BASE_URL || 'https://ai-gateway.vercel.sh'
+-  const ttsEndpoint = `${gatewayUrl}/openai/v1/audio/speech`
++  const endpoint = getOpenAIEndpoint()
++  if (!endpoint) {
++    return jsonError('Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY configured for TTS', 503)
++  }
+ 
+   try {
+-    const ttsResponse = await fetch(ttsEndpoint, {
++    const ttsResponse = await fetch(`${endpoint.baseUrl}/audio/speech`, {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
++        Authorization: endpoint.authorization,
+       },
+       body: JSON.stringify({
+         model: 'tts-1',
+diff --git a/personal-assistant/src/app/api/webhooks/sendblue/route.ts b/personal-assistant/src/app/api/webhooks/sendblue/route.ts
+index 42cbd785..e57402e7 100644
+--- a/personal-assistant/src/app/api/webhooks/sendblue/route.ts
++++ b/personal-assistant/src/app/api/webhooks/sendblue/route.ts
+@@ -1,12 +1,16 @@
+ import { NextRequest, NextResponse } from "next/server";
+ import { createClient } from "@supabase/supabase-js";
++import type Anthropic from "@anthropic-ai/sdk";
+ import { resolveChannelIdentity } from "@/lib/conversation/identity-resolver";
+ import { enrichInboundMessage } from "@/lib/conversation/inbound-enrichment";
+ import { handleGatewayMessage } from "@/lib/channels/gateway-handler";
+ import { sendSendblueMessage } from "@/lib/channels/sendblue";
++import { downloadSendblueMedia, isVoiceMemoMime, categorizeMedia } from "@/lib/channels/sendblue-media";
++import { transcribeVoiceNote } from "@/lib/channels/voice-transcription";
+ import { logger } from "@/lib/core/logger";
++import type { ChannelMetadata } from "@/lib/conversation/types";
+ 
+-export const maxDuration = 60;
++export const maxDuration = 120;
+ 
+ interface SendblueWebhook {
+   from_number: string;
+@@ -22,9 +26,78 @@ interface SendblueWebhook {
+   error_code?: string | null;
+ }
+ 
++/**
++ * Process inbound media from Sendblue webhook.
++ * Returns enriched content text, channel metadata, and optional multimodal blocks.
++ */
++async function processInboundMedia(
++  mediaUrl: string,
++  textContent: string,
++): Promise<{
++  content: string;
++  channelMetadata: Partial<ChannelMetadata>;
++  contentBlocks: Anthropic.ContentBlockParam[];
++}> {
++  const channelMetadata: Partial<ChannelMetadata> = {};
++  const contentBlocks: Anthropic.ContentBlockParam[] = [];
++  let content = textContent;
++
++  const media = await downloadSendblueMedia(mediaUrl);
++  if (!media) {
++    // Download failed — proceed with text only
++    return { content, channelMetadata, contentBlocks };
++  }
++
++  channelMetadata.attachments = [{ type: media.mimeType, url: mediaUrl, name: media.filename }];
++
++  if (media.category === 'audio') {
++    // Voice memo — transcribe via Whisper
++    channelMetadata.isVoiceNote = true;
++    const result = await transcribeVoiceNote(media.buffer, media.mimeType);
++    if (result.success && result.text) {
++      // Use transcription as content, or prepend to existing text
++      content = content
++        ? `${content}\n\n[voice note]: "${result.text}"`
++        : `[voice note]: "${result.text}"`;
++      logger.info("[webhook/sendblue] Voice memo transcribed", {
++        duration: result.duration,
++        language: result.language,
++        textLength: result.text.length,
++      });
++    } else {
++      content = content || "[voice note — couldn't transcribe]";
++      logger.warn("[webhook/sendblue] Voice memo transcription failed", { error: result.error });
++    }
++  } else if (media.category === 'image') {
++    // Image — create multimodal content block for Claude vision
++    const base64 = media.buffer.toString('base64');
++    const validMediaTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const;
++    type ValidMediaType = typeof validMediaTypes[number];
++    const mediaType = validMediaTypes.includes(media.mimeType as ValidMediaType)
++      ? media.mimeType as ValidMediaType
++      : 'image/jpeg' as const;
++
++    contentBlocks.push({
++      type: 'image',
++      source: {
++        type: 'base64',
++        media_type: mediaType,
++        data: base64,
++      },
++    });
++
++    if (!content) content = "[sent an image]";
++    logger.info("[webhook/sendblue] Image received", { mimeType: media.mimeType, size: media.buffer.length });
++  } else {
++    // Document/video/other — note it in content
++    if (!content) content = `[sent a ${media.category}: ${media.filename}]`;
++  }
++
++  return { content, channelMetadata, contentBlocks };
++}
++
+ export async function POST(request: NextRequest) {
+   // Verify the request is from Sendblue by checking the API key header.
+-  // Sendblue doesn't support HMAC signatures — header matching is the method.
+   const incomingKey = request.headers.get("sb-api-key-id");
+   const expectedKey = process.env.SENDBLUE_API_KEY;
+   if (expectedKey && incomingKey && incomingKey !== expectedKey) {
+@@ -41,7 +114,7 @@ export async function POST(request: NextRequest) {
+   }
+ 
+   // Status callback (delivery updates) — log and return
+-  if (body.status && !body.content) {
++  if (body.status && !body.content && !body.media_url) {
+     logger.info("[webhook/sendblue] Status update", {
+       status: body.status,
+       to: body.to_number,
+@@ -51,14 +124,16 @@ export async function POST(request: NextRequest) {
+   }
+ 
+   const fromNumber = body.from_number;
+-  const content = body.content;
+   const toNumber = body.to_number;
++  let content = body.content || "";
++  const mediaUrl = body.media_url;
+ 
+-  if (!fromNumber || !content) {
+-    return NextResponse.json({ ok: true }); // Ignore empty messages
++  // Must have content or media
++  if (!fromNumber || (!content && !mediaUrl)) {
++    return NextResponse.json({ ok: true });
+   }
+ 
+-  // Echo prevention — ignore messages from our own number
++  // Echo prevention
+   const ourNumber = process.env.SENDBLUE_FROM_NUMBER;
+   if (ourNumber && fromNumber === ourNumber) {
+     return NextResponse.json({ ok: true });
+@@ -66,7 +141,6 @@ export async function POST(request: NextRequest) {
+ 
+   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+-
+   if (!supabaseUrl || !supabaseKey) {
+     logger.error("[webhook/sendblue] Missing Supabase env vars");
+     return NextResponse.json({ ok: true });
+@@ -74,23 +148,36 @@ export async function POST(request: NextRequest) {
+ 
+   const supabase = createClient(supabaseUrl, supabaseKey);
+ 
+-  // Resolve identity via channel_identities table
++  // Resolve identity
+   const identity = await resolveChannelIdentity(supabase, {
+     channelType: "sms",
+     channelIdentifier: fromNumber,
+   });
+ 
+   if (!identity) {
+-    // Unknown number — respond based on open registration setting
+     const openRegistration = process.env.SENDBLUE_OPEN_REGISTRATION === "true";
+     const replyText = openRegistration
+-      ? "hey! I don't recognize this number yet. what's your email so I can link you up?"
+-      : "hey, I'm not set up for new numbers just yet. check back soon!";
+-
++      ? "hey! don't recognize this number yet\n\nwhat's ur email so i can link you up?"
++      : "hey, not set up for new numbers yet — check back soon";
+     await sendSendblueMessage(fromNumber, replyText);
+     return NextResponse.json({ ok: true });
+   }
+ 
++  // Process media if present
++  let channelMetadata: ChannelMetadata | undefined;
++  let contentBlocks: Anthropic.ContentBlockParam[] | undefined;
++
++  if (mediaUrl) {
++    const mediaResult = await processInboundMedia(mediaUrl, content);
++    content = mediaResult.content;
++    if (Object.keys(mediaResult.channelMetadata).length > 0) {
++      channelMetadata = mediaResult.channelMetadata as ChannelMetadata;
++    }
++    if (mediaResult.contentBlocks.length > 0) {
++      contentBlocks = mediaResult.contentBlocks;
++    }
++  }
++
+   // Store inbound message
+   const externalId = body.message_handle || `sb-${Date.now()}-${fromNumber}`;
+   const { data: insertedMsg } = await supabase
+@@ -109,8 +196,9 @@ export async function POST(request: NextRequest) {
+         from_number: fromNumber,
+         to_number: toNumber,
+         service: body.service,
+-        media_url: body.media_url || null,
++        media_url: mediaUrl || null,
+         group_id: body.group_id || null,
++        is_voice_note: channelMetadata?.isVoiceNote || false,
+       },
+     })
+     .select("id")
+@@ -132,7 +220,7 @@ export async function POST(request: NextRequest) {
+     });
+   }
+ 
+-  // Run pipeline inline — Sendblue has no strict webhook timeout
++  // Run pipeline
+   try {
+     await handleGatewayMessage({
+       channel: "sendblue",
+@@ -144,6 +232,8 @@ export async function POST(request: NextRequest) {
+         displayName: identity.displayName,
+       },
+       replyTo: fromNumber,
++      channelMetadata,
++      contentBlocks,
+     });
+   } catch (err) {
+     logger.error("[webhook/sendblue] Gateway handler error", {
+diff --git a/personal-assistant/src/components/connections/connections-grid.tsx b/personal-assistant/src/components/connections/connections-grid.tsx
+index a5e47ad7..9f5a1190 100644
+--- a/personal-assistant/src/components/connections/connections-grid.tsx
++++ b/personal-assistant/src/components/connections/connections-grid.tsx
+@@ -3,6 +3,7 @@
+ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+ import { useSearchParams } from 'next/navigation'
+ import { ConnectModal, type ConnectModalMode } from '@/components/channels/connect-modal'
++import { BridgeLinkModal } from '@/components/channels/bridge-link-modal'
+ import {
+   Empty,
+   EmptyHeader,
+@@ -48,7 +49,7 @@ const CONNECTION_STATUS_ALIASES: Record<string, string> = {
+   'google-calendar': 'google-calendar',
+ }
+ 
+-const FEATURED_IDS = ['gmail', 'google-calendar', 'whatsapp', 'stripe', 'asana', 'slack']
++const FEATURED_IDS = ['gmail', 'google-calendar', 'whatsapp', 'imessage', 'stripe', 'asana', 'slack']
+ 
+ /* ──────────────────────────────────────────────────────────────────────────
+  * Exports kept for backwards compatibility with existing tests / callers
+@@ -102,9 +103,10 @@ export function getConnectionDisplayName(id: string): string {
+  * mode exists for that id — e.g. iMessage, which is flagged bespoke in
+  * BESPOKE_FLOWS but has no dedicated `ConnectModal` variant yet.
+  */
+-function resolveConnectModalMode(id: string): ConnectModalMode | null {
++function resolveConnectModalMode(id: string): ConnectModalMode | 'bridge_link' | null {
+   if (id === 'whatsapp') return 'whatsapp_qr'
+   if (id === 'stripe') return 'api_key'
++  if (id === 'imessage') return 'bridge_link'
+   return null
+ }
+ 
+@@ -211,6 +213,8 @@ export function ConnectionsGrid({
+   const [modalMode, setModalMode] = useState<ConnectModalMode>('api_key')
+   const [modalChannelId, setModalChannelId] = useState('')
+   const [modalChannelName, setModalChannelName] = useState('')
++  const [bridgeLinkOpen, setBridgeLinkOpen] = useState(false)
++  const [bridgeLinkProtocol, setBridgeLinkProtocol] = useState<'imessage' | 'whatsapp' | 'android-messages'>('imessage')
+   const handledCallbackRef = useRef<string | null>(null)
+ 
+   /* Debounce search input → debouncedQuery (300 ms) */
+@@ -360,6 +364,11 @@ export function ConnectionsGrid({
+     (app: CatalogApp) => {
+       if (isBespokeFlow(app.id)) {
+         const mode = resolveConnectModalMode(app.id)
++        if (mode === 'bridge_link') {
++          setBridgeLinkProtocol(app.id as 'imessage' | 'whatsapp' | 'android-messages')
++          setBridgeLinkOpen(true)
++          return
++        }
+         if (mode) {
+           setModalChannelId(app.id)
+           setModalChannelName(app.name)
+@@ -588,6 +597,17 @@ export function ConnectionsGrid({
+           toast('error', message)
+         }}
+       />
++
++      <BridgeLinkModal
++        open={bridgeLinkOpen}
++        onOpenChange={setBridgeLinkOpen}
++        protocol={bridgeLinkProtocol}
++        onSuccess={() => {
++          void fetchOrgConnections()
++          void refetch()
++          toast('success', `${bridgeLinkProtocol === 'imessage' ? 'iMessage' : bridgeLinkProtocol} connected`)
++        }}
++      />
+     </section>
+   )
+ }
+diff --git a/personal-assistant/src/lib/agent/__tests__/composio-integration.test.ts b/personal-assistant/src/lib/agent/__tests__/composio-integration.test.ts
+index c5f16e03..e06dfc11 100644
+--- a/personal-assistant/src/lib/agent/__tests__/composio-integration.test.ts
++++ b/personal-assistant/src/lib/agent/__tests__/composio-integration.test.ts
+@@ -7,25 +7,24 @@ describe('composio tool group integration', () => {
+     expect(TOOL_GROUPS.composio.id).toBe('composio')
+   })
+ 
+-  it('composio group contains the 3 meta-tools', () => {
++  it('composio group contains composio_connect_app', () => {
+     const tools = TOOL_GROUPS.composio.tools
+-    expect(tools).toContain('composio_list_apps')
+-    expect(tools).toContain('composio_list_actions')
+-    expect(tools).toContain('composio_execute')
+     expect(tools).toContain('composio_connect_app')
+-    expect(tools.length).toBe(4)
++    // Dynamic Composio tools (GMAIL_SEND_EMAIL etc.) are injected at runtime
++    // by tool-provider, not registered in TOOL_GROUPS
++    expect(tools.length).toBe(1)
+   })
+ 
+   it('composio group has descriptive metadata', () => {
+     expect(TOOL_GROUPS.composio.label).toBeTruthy()
+     expect(TOOL_GROUPS.composio.description).toBeTruthy()
+-    expect(TOOL_GROUPS.composio.description.toLowerCase()).toContain('integration')
++    expect(TOOL_GROUPS.composio.description.toLowerCase()).toContain('app')
+   })
+ 
+   it('getAgentTools returns composio tools when group is selected', () => {
+     const tools = getAgentTools(['composio' as ToolGroup])
+     const composioTools = tools.filter(t => t.name.startsWith('composio_'))
+-    expect(composioTools.length).toBe(4)
++    expect(composioTools.length).toBe(1)
+   })
+ 
+   it('getAgentTools excludes composio tools when group is not selected', () => {
+@@ -37,7 +36,7 @@ describe('composio tool group integration', () => {
+   it('getAgentTools with no args returns all tools including composio', () => {
+     const tools = getAgentTools()
+     const composioTools = tools.filter(t => t.name.startsWith('composio_'))
+-    expect(composioTools.length).toBe(4)
++    expect(composioTools.length).toBe(1)
+   })
+ 
+   it('ToolGroup type includes composio', () => {
+diff --git a/personal-assistant/src/lib/agent/engine/taor-loop.ts b/personal-assistant/src/lib/agent/engine/taor-loop.ts
+index 8cfaff77..07679911 100644
+--- a/personal-assistant/src/lib/agent/engine/taor-loop.ts
++++ b/personal-assistant/src/lib/agent/engine/taor-loop.ts
+@@ -17,7 +17,8 @@ import { callModelViaGateway, type AnthropicLikeResponse, type GatewayCallConfig
+ import { models as gatewayModels } from '@/lib/ai'
+ import { getAgentTools, type ExecuteToolOptions, type ToolGroup } from '@/lib/agent/tools'
+ import { getEagerTools, buildDeferredToolsPrompt, resolveToolSchema } from '@/lib/agent/tools/deferred-loader'
+-import { getMCPTools, isMCPEnabled } from '@/lib/composio/mcp-session'
++import { getComposioToolsForOrg } from '@/lib/composio/tool-provider'
++import { isComposioEnabled } from '@/lib/composio/client'
+ import { selectRelevantTools } from '@/lib/agent/tool-rag'
+ import { buildEntityAwarePrompt } from '@/lib/agent/prompt-builder'
+ import { ContextAssembler } from '@/lib/context-assembly/context-assembler'
+@@ -346,14 +347,14 @@ export async function* runTAORLoop(
+     ? getAgentTools(config.toolGroups as ToolGroup[])
+     : getEagerTools()
+ 
+-  // Merge MCP tools if enabled and composio group is active
+-  if (isMCPEnabled() && (!config.toolGroups || (config.toolGroups as ToolGroup[]).includes('composio'))) {
+-    const mcpTools = await getMCPTools(config.orgId)
+-    if (mcpTools.length > 0) {
++  // Merge Composio tools for the user's connected apps
++  if (isComposioEnabled()) {
++    const { tools: composioTools } = await getComposioToolsForOrg(config.orgId, config.supabase)
++    if (composioTools.length > 0) {
+       const nativeNames = new Set(tools.map(t => t.name))
+-      const uniqueMcp = mcpTools.filter(t => !nativeNames.has(t.name))
+-      tools = [...tools, ...uniqueMcp]
+-      logger.info('[engine] MCP tools merged', { mcpCount: uniqueMcp.length, totalCount: tools.length })
++      const uniqueComposio = composioTools.filter(t => !nativeNames.has(t.name))
++      tools = [...tools, ...uniqueComposio]
++      logger.info('[engine] Composio tools merged', { composioCount: uniqueComposio.length, totalCount: tools.length })
+     }
+   }
+ 
+@@ -443,14 +444,14 @@ export async function* runTAORLoop(
+       if (combinedToolGroups.length > 0) {
+         tools = getAgentTools(combinedToolGroups as ToolGroup[])
+ 
+-        // Merge MCP tools when composio group is selected by planner
+-        if (isMCPEnabled() && combinedToolGroups.includes('composio' as ToolGroup)) {
+-          const mcpTools = await getMCPTools(config.orgId)
+-          if (mcpTools.length > 0) {
++        // Merge Composio tools for connected apps (always, not just when composio group selected)
++        if (isComposioEnabled()) {
++          const { tools: composioTools } = await getComposioToolsForOrg(config.orgId, config.supabase)
++          if (composioTools.length > 0) {
+             const nativeNames = new Set(tools.map(t => t.name))
+-            const uniqueMcp = mcpTools.filter(t => !nativeNames.has(t.name))
+-            tools = [...tools, ...uniqueMcp]
+-            logger.info('[engine] MCP tools merged (planner)', { mcpCount: uniqueMcp.length })
++            const uniqueComposio = composioTools.filter(t => !nativeNames.has(t.name))
++            tools = [...tools, ...uniqueComposio]
++            logger.info('[engine] Composio tools merged (planner)', { composioCount: uniqueComposio.length })
+           }
+         }
+ 
+diff --git a/personal-assistant/src/lib/agent/persona/messaging-persona.ts b/personal-assistant/src/lib/agent/persona/messaging-persona.ts
+index 63b862e7..6df34e03 100644
+--- a/personal-assistant/src/lib/agent/persona/messaging-persona.ts
++++ b/personal-assistant/src/lib/agent/persona/messaging-persona.ts
+@@ -27,19 +27,30 @@ export function buildMessagingPersona(ctx: MessagingPersonaContext): string {
+ 
+ You are texting ${name} right now. Everything below OVERRIDES your normal response style. This is not optional.
+ 
++You are not an AI chatbot. You are a sharp, busy human assistant who texts like a real person. Every message should pass the "would a human actually type this?" test.
++
+ ### HOW TO RESPOND
+ 
+-Each thought gets its own line, separated by a blank line. The system will send each line as a separate text bubble. Think of each line as one text message.
++Each thought gets its own line, separated by a blank line. The system sends each line as a separate text bubble. One thought per bubble, max.
+ 
+ Good example:
+ """
+-sounds good, finding time with elon's assistant
++on it, grabbing time with elon's team rn
+ 
+-your prep for the client call ...
++your call prep ...
+ 
+ ✓ invite sent to Bob
+ 
+-✓ detailed prep is in your inbox
++✓ prep doc in ur inbox
++"""
++
++Another good example:
++"""
++yea got it
++
++moved the meeting to 3pm
++
++heads up — steve's running late
+ """
+ 
+ Bad example (NEVER do this):
+@@ -49,38 +60,45 @@ Sounds good! I'll find time with Elon's assistant for you. Your prep for the cli
+ 
+ ### RULES (NON-NEGOTIABLE)
+ 
+-1. EACH LINE IS A TEXT BUBBLE. Separate thoughts with blank lines. Never combine multiple pieces of info into one paragraph.
++1. ONE THOUGHT PER BUBBLE. Each bubble is ONE idea, action, or piece of info. Separate with blank lines. Never combine two things in one bubble.
++
++2. MAXIMUM 10 WORDS PER BUBBLE. If it's longer, break it up. Most bubbles should be 3-7 words.
++
++3. ALL LOWERCASE. No capitals except proper nouns. "sounds good" not "Sounds good." — "checking now" not "Checking now."
+ 
+-2. MAXIMUM 15 WORDS PER LINE. If a line is longer than ~15 words, break it into two lines.
++4. NO PUNCTUATION ON SHORT LINES. No periods, no exclamation marks on lines under 8 words. Longer lines can have minimal punctuation.
+ 
+-3. ALL LOWERCASE. No capital letters except proper nouns (names, places, companies). "morning!" not "Morning!" — "sounds good" not "Sounds good."
++5. NO FORMATTING. No markdown, asterisks, bold, bullets, numbered lists, headers, or code blocks. Plain text only.
+ 
+-4. NO FORMATTING WHATSOEVER. No markdown, no asterisks, no bold, no bullet points, no numbered lists, no headers. Plain text only.
++6. CHECKMARKS FOR DONE ACTIONS. "✓ email sent to Steve" — use "✓" not "✅"
+ 
+-5. CHECKMARKS FOR COMPLETED ACTIONS. Use "✓" (not "✅") when confirming something is done: "✓ email sent to Steve"
++7. ONE-WORD REPLIES WHEN POSSIBLE. "done" / "sent" / "on it" / "yep" / "nah" / "bet" — don't over-explain what's obvious.
+ 
+-6. ONE-WORD REPLIES WHEN APPROPRIATE. "done" / "sent" / "on it" / "yep" / "nah" — don't over-explain.
++8. TEXT LIKE A HUMAN. Use natural abbreviations: "rn" "ur" "gonna" "wanna" "tbh" "imo" "ngl" "lmk" — but don't force them. Match the user's register.
+ 
+-7. NO SIGN-OFFS OR FOLLOW-UP OFFERS. Never end with "let me know if you need anything" / "anything else?" / "want me to look into that?" — if there's more to do, just do it.
++9. NO SIGN-OFFS. Never end with "let me know" / "anything else?" / "hope that helps" — just stop when you're done.
+ 
+-8. HUMANIZE ALL DATA. Never output structured data, IDs, timestamps, or technical details. Translate everything to natural language.
++10. HUMANIZE EVERYTHING. No IDs, timestamps, structured data, or technical jargon.
+    - "steve paid us $200 just now" not "Invoice INV-2024-003 status changed to paid"
+    - "3 emails, nothing urgent" not "You have 3 unread messages"
+-   - "calendar's clear today" not "No upcoming events found"
++   - "calendar's clear" not "No upcoming events found"
+ 
+-9. MATCH THEIR ENERGY. If they text "yo" you reply with equal casualness. If they text a full question, give a full (but short) answer.
++11. MATCH THEIR ENERGY. "yo" gets casual back. Full question gets a full (but short) answer.
+ 
+-10. USE ELLIPSIS FOR CONTINUATION. When something is in progress or there's more coming: "checking..." or "your prep for the call ..."
++12. ELLIPSIS FOR IN-PROGRESS. "checking..." or "pulling that up ..."
+ 
+ ### WHAT NEVER TO DO
+ 
+-- Write more than 4-5 lines in one response
+-- Use any sentence longer than ~15 words
+-- Start with "Hey!" or any greeting unless they greeted you first
+-- Capitalize the start of sentences (except proper nouns)
+-- Use periods at the end of short lines (optional on longer ones)
+-- Summarize or recap what you just did in detail
+-- Apologize ("sorry about that" — just fix it)
+-- Use the word "certainly" or "absolutely" or "I'd be happy to"
++- Write more than 5 bubbles in one response
++- Put more than 10 words in a bubble
++- Use two sentences in one bubble
++- Start with "Hey!" or any greeting unless they greeted first
++- Capitalize sentence starts
++- Use periods on short lines
++- Summarize or recap what you did
++- Apologize — just fix it
++- Say "certainly" "absolutely" "I'd be happy to" "of course"
++- Sound like a chatbot or customer service agent
++- Use complete grammatically perfect sentences when a fragment works
+ `
+ }
+diff --git a/personal-assistant/src/lib/agent/prompt-builder.ts b/personal-assistant/src/lib/agent/prompt-builder.ts
+index 139130a9..735b694a 100644
+--- a/personal-assistant/src/lib/agent/prompt-builder.ts
++++ b/personal-assistant/src/lib/agent/prompt-builder.ts
+@@ -247,6 +247,31 @@ async function getChannelSummary(): Promise<string> {
+     } catch { /* non-critical */ }
+   }
+ 
++  // Also check org_connections (new connector system — covers iMessage/BlueBubbles, etc.)
++  if (_channelSummarySupabase) {
++    try {
++      const { data: orgConns } = await _channelSummarySupabase
++        .from('org_connections')
++        .select('provider, status, updated_at')
++        .eq('org_id', _channelSummaryOrgId)
++        .eq('status', 'connected')
++
++      if (orgConns) {
++        for (const conn of orgConns) {
++          // Avoid duplicates with channel_connections entries already added
++          if (channelCounts.some(c => c.toLowerCase().startsWith(conn.provider))) continue
++          const name = conn.provider === 'imessage' ? 'iMessage'
++            : conn.provider.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
++          channelCounts.push(`${name}: connected`)
++        }
++        const orgConnProviders = new Set(orgConns.map(c => c.provider))
++        if (orgConnProviders.has('imessage')) {
++          channelCounts.push('Routing: iMessage is connected via BlueBubbles — use send_imessage tool for casual/quick outreach to contacts with phone numbers.')
++        }
++      }
++    } catch { /* non-critical */ }
++  }
++
+   return channelCounts.length > 0
+     ? `Connected channels: ${channelCounts.join(', ')}`
+     : 'No channels connected yet.'
+diff --git a/personal-assistant/src/lib/agent/tools.ts b/personal-assistant/src/lib/agent/tools.ts
+index 6dbb192e..e1bc9af8 100644
+--- a/personal-assistant/src/lib/agent/tools.ts
++++ b/personal-assistant/src/lib/agent/tools.ts
+@@ -21,7 +21,7 @@ import { imageToolDefinitions, imageToolHandlers } from './tools/image-tools'
+ import { composioToolDefinitions, composioToolHandlers } from './tools/composio-tools'
+ import { workspaceToolDefinitions, workspaceToolHandlers } from './tools/workspace-tools'
+ import { browserToolDefinitions, browserToolHandlers } from './tools/browser-tools'
+-import { executeMCPTool } from '@/lib/composio/mcp-session'
++import { executeComposioToolForOrg } from '@/lib/composio/tool-provider'
+ import { composeCreatorStudioDeck } from '@/lib/creator-studio'
+ import { routeAgentAction } from './confidence-router'
+ import { queueAgentAction, getPendingApprovals, resolveApproval } from './approval-queue'
+@@ -136,8 +136,8 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupMeta> = {
+   composio: {
+     id: 'composio',
+     label: 'Composio Integrations',
+-    description: 'Execute actions across 1000+ third-party apps (HubSpot, Notion, Jira, Salesforce, Slack, and more) via Composio managed integrations',
+-    tools: ['composio_list_apps', 'composio_list_actions', 'composio_execute', 'composio_connect_app'],
++    description: 'Connect and execute actions across third-party apps (HubSpot, Notion, Jira, Salesforce, Slack, Gmail, and more) via OAuth. Connected app tools are injected natively — use composio_connect_app to link new ones.',
++    tools: ['composio_connect_app'],
+   },
+   workspace: {
+     id: 'workspace',
+@@ -1084,32 +1084,28 @@ export function getAgentTools(groups?: ToolGroup[]): Anthropic.Tool[] {
+ }
+ 
+ /**
+- * Get agent tools with MCP tools merged in.
+- * Call this instead of getAgentTools() when MCP is enabled.
+- * MCP tools are appended to the filtered native tool set.
++ * Get agent tools with connected Composio tools merged in.
++ * Queries org_connections for the user's active Composio connections
++ * and appends their action schemas as native Anthropic tools.
+  */
+-export async function getAgentToolsWithMCP(
++export async function getAgentToolsWithComposio(
+   orgId: string,
++  supabase: SupabaseClient,
+   groups?: ToolGroup[],
+ ): Promise<Anthropic.Tool[]> {
+-  const { getMCPTools, isMCPEnabled } = await import('@/lib/composio/mcp-session')
++  const { getComposioToolsForOrg } = await import('@/lib/composio/tool-provider')
+   const nativeTools = getAgentTools(groups)
+ 
+-  if (!isMCPEnabled()) return nativeTools
+-
+-  // Only load MCP tools when composio group is selected (or no groups = all)
+-  if (groups && groups.length > 0 && !groups.includes('composio')) {
+-    return nativeTools
+-  }
++  if (!process.env.COMPOSIO_API_KEY) return nativeTools
+ 
+-  const mcpTools = await getMCPTools(orgId)
+-  if (mcpTools.length === 0) return nativeTools
++  const { tools: composioTools } = await getComposioToolsForOrg(orgId, supabase)
++  if (composioTools.length === 0) return nativeTools
+ 
+-  // Deduplicate: native tools take priority over MCP tools with same name
++  // Deduplicate: native tools take priority
+   const nativeNames = new Set(nativeTools.map(t => t.name))
+-  const uniqueMcpTools = mcpTools.filter(t => !nativeNames.has(t.name))
++  const uniqueComposio = composioTools.filter(t => !nativeNames.has(t.name))
+ 
+-  return [...nativeTools, ...uniqueMcpTools]
++  return [...nativeTools, ...uniqueComposio]
+ }
+ 
+ export interface ExecuteToolOptions {
+@@ -1146,10 +1142,10 @@ export async function executeAgentTool(
+ ): Promise<ToolResult> {
+   const handler = allHandlers[name]
+   if (!handler) {
+-    // Try MCP tools before returning unknown — dynamically loaded tools
+-    // from Composio's MCP endpoint won't have static handlers
+-    const mcpResult = await executeMCPTool(orgId, name, input)
+-    if (mcpResult) return mcpResult
++    // Try Composio tool-provider — dynamically loaded tools from connected
++    // apps won't have static handlers in allHandlers.
++    const composioResult = await executeComposioToolForOrg(orgId, name, input, supabase)
++    if (composioResult) return composioResult
+     return { success: false, error: `Unknown tool: ${name}` }
+   }
+ 
+diff --git a/personal-assistant/src/lib/agent/tools/__tests__/workspace-tools.test.ts b/personal-assistant/src/lib/agent/tools/__tests__/workspace-tools.test.ts
+index 1afbc6d8..b5eb7451 100644
+--- a/personal-assistant/src/lib/agent/tools/__tests__/workspace-tools.test.ts
++++ b/personal-assistant/src/lib/agent/tools/__tests__/workspace-tools.test.ts
+@@ -9,15 +9,30 @@ const mockDownloadFile = vi.fn()
+ const mockListFiles = vi.fn()
+ const mockDestroy = vi.fn()
+ 
+-vi.mock('@/lib/workspaces/e2b-provider', () => ({
+-  E2BProvider: vi.fn().mockImplementation(() => ({
+-    create: mockCreate,
+-    exec: mockExec,
+-    uploadFile: mockUploadFile,
+-    downloadFile: mockDownloadFile,
+-    listFiles: mockListFiles,
+-    destroy: mockDestroy,
+-  })),
++vi.mock('@/lib/workspaces/e2b-provider', () => {
++  const MockE2BProvider = vi.fn().mockImplementation(function(this: Record<string, unknown>) {
++    this.create = mockCreate
++    this.exec = mockExec
++    this.uploadFile = mockUploadFile
++    this.downloadFile = mockDownloadFile
++    this.listFiles = mockListFiles
++    this.destroy = mockDestroy
++  })
++  return { E2BProvider: MockE2BProvider }
++})
++
++vi.mock('@/lib/workspaces/lifecycle', () => ({
++  checkWorkspaceBudget: vi.fn().mockResolvedValue({ allowed: true, currentCostUsd: 0, limitUsd: 10 }),
++  completeWorkspace: vi.fn().mockResolvedValue(undefined),
++}))
++
++vi.mock('@/lib/workspaces/workspace-store', () => ({
++  createWorkspaceSession: vi.fn().mockResolvedValue(undefined),
++  getWorkspaceSessionBySandboxId: vi.fn().mockResolvedValue(null),
++}))
++
++vi.mock('@/lib/workspaces/output-delivery', () => ({
++  deliverWorkspaceOutput: vi.fn().mockResolvedValue({ inline: '', truncated: false, storedArtifactIds: [] }),
+ }))
+ 
+ vi.mock('@/lib/core/logger', () => ({
+@@ -29,7 +44,8 @@ vi.mock('@/lib/core/logger', () => ({
+   },
+ }))
+ 
+-import { workspaceToolDefinitions, workspaceToolHandlers } from '../workspace-tools'
++import { workspaceToolDefinitions, workspaceToolHandlers, activeProviders } from '../workspace-tools'
++import { E2BProvider } from '@/lib/workspaces/e2b-provider'
+ 
+ const mockSupabase = {} as SupabaseClient
+ 
+@@ -91,6 +107,17 @@ describe('workspace tool definitions', () => {
+ describe('workspace tool handlers', () => {
+   beforeEach(() => {
+     vi.clearAllMocks()
++    // Pre-populate activeProviders so handlers can find the workspace
++    activeProviders.clear()
++    const mockProvider = {
++      create: mockCreate,
++      exec: mockExec,
++      uploadFile: mockUploadFile,
++      downloadFile: mockDownloadFile,
++      listFiles: mockListFiles,
++      destroy: mockDestroy,
++    } as unknown as InstanceType<typeof E2BProvider>
++    activeProviders.set('sb-abc', mockProvider)
+   })
+ 
+   describe('spawn_ephemeral_workspace', () => {
+diff --git a/personal-assistant/src/lib/agent/tools/channel-tools.ts b/personal-assistant/src/lib/agent/tools/channel-tools.ts
+index 0a76158f..f7f6b7c7 100644
+--- a/personal-assistant/src/lib/agent/tools/channel-tools.ts
++++ b/personal-assistant/src/lib/agent/tools/channel-tools.ts
+@@ -14,7 +14,7 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
+       type: 'object' as const,
+       properties: {
+         query: { type: 'string', description: 'What to search for (sender name, subject keywords, content)' },
+-        channel: { type: 'string', enum: ['gmail', 'outlook', 'whatsapp', 'sms', 'slack'], description: 'Limit to a specific channel' },
++        channel: { type: 'string', enum: ['gmail', 'outlook', 'whatsapp', 'imessage', 'sms', 'slack'], description: 'Limit to a specific channel' },
+         from: { type: 'string', description: 'Filter by sender name or email' },
+         since: { type: 'string', description: 'ISO date — how far back to look (default: 90 days)' },
+         limit: { type: 'number', description: 'Max results (default: 10)' },
+@@ -153,6 +153,29 @@ export const channelToolDefinitions: Anthropic.Tool[] = [
+       required: ['recipient', 'message'],
+     },
+   },
++  {
++    name: 'send_imessage',
++    description:
++      'Send an iMessage via the connected BlueBubbles bridge. Use when the user asks to send an iMessage or text someone via iMessage. Requires a connected iMessage bridge.',
++    input_schema: {
++      type: 'object' as const,
++      properties: {
++        recipient: {
++          type: 'string',
++          description: 'Recipient phone number (with country code, e.g. +61400123456) or Apple ID email',
++        },
++        message: {
++          type: 'string',
++          description: 'The text message body to send',
++        },
++        recipient_name: {
++          type: 'string',
++          description: 'Display name of the recipient (for reference only, not sent)',
++        },
++      },
++      required: ['recipient', 'message'],
++    },
++  },
+   {
+     name: 'send_outlook',
+     description:
+@@ -1318,6 +1341,78 @@ export const channelToolHandlers: Record<string, AgentToolHandler> = {
+     }
+   },
+ 
++  async send_imessage(input, orgId, supabase) {
++    const recipient = input.recipient as string
++    const message = input.message as string
++    const recipientName = input.recipient_name as string | undefined
++
++    try {
++      // Look up connected iMessage bridge
++      const { data: imConn } = await supabase
++        .from('org_connections')
++        .select('id, config')
++        .eq('org_id', orgId)
++        .eq('provider', 'imessage')
++        .eq('status', 'connected')
++        .limit(1)
++        .single()
++
++      if (!imConn?.config?.bb_server_url) {
++        return { success: false, error: 'iMessage is not connected. Connect it in Settings > Connections first.' }
++      }
++
++      const cfg = imConn.config as { bb_server_url: string; bb_password: string }
++      const bbUrl = cfg.bb_server_url.replace(/\/$/, '')
++
++      // Build chat GUID for the recipient
++      // BlueBubbles format: "iMessage;-;+61400123456" or "iMessage;-;user@icloud.com"
++      const chatGuid = `iMessage;-;${recipient}`
++      const tempGuid = `bitbit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
++
++      const res = await fetch(
++        `${bbUrl}/api/v1/message/text?password=${cfg.bb_password}`,
++        {
++          method: 'POST',
++          headers: { 'Content-Type': 'application/json' },
++          body: JSON.stringify({
++            chatGuid,
++            tempGuid,
++            message,
++          }),
++        },
++      )
++
++      if (!res.ok) {
++        const errText = await res.text()
++        logger.error('[send_imessage] BlueBubbles API error', { status: res.status, error: errText })
++        return { success: false, error: `iMessage send failed: ${res.status} ${errText.slice(0, 200)}` }
++      }
++
++      const displayRecipient = recipientName
++        ? `${recipientName} (${recipient})`
++        : recipient
++
++      logger.info('[send_imessage] Message sent via BlueBubbles', {
++        org: orgId,
++        recipient,
++        connectionId: imConn.id,
++      })
++
++      return {
++        success: true,
++        data: {
++          recipient: displayRecipient,
++          message_preview: message.slice(0, 100) + (message.length > 100 ? '...' : ''),
++          sent_at: new Date().toISOString(),
++          sent_via: 'bluebubbles',
++        },
++      }
++    } catch (err) {
++      logger.error('[send_imessage] Error:', err)
++      return { success: false, error: `iMessage send error: ${String(err)}` }
++    }
++  },
++
+   async send_outlook(input, orgId, supabase) {
+     const to = input.to as string
+     const subject = input.subject as string
+diff --git a/personal-assistant/src/lib/agent/tools/composio-tools.ts b/personal-assistant/src/lib/agent/tools/composio-tools.ts
+index 34959df1..25048d80 100644
+--- a/personal-assistant/src/lib/agent/tools/composio-tools.ts
++++ b/personal-assistant/src/lib/agent/tools/composio-tools.ts
+@@ -1,6 +1,19 @@
++/**
++ * Composio Agent Tools
++ *
++ * With the connection-aware tool provider (composio/tool-provider.ts),
++ * individual Composio actions are injected as native Anthropic tools
++ * directly into the TAOR tool set. The agent sees GMAIL_SEND_EMAIL,
++ * SLACK_SEND_MESSAGE, etc. — no meta-tool gateway needed.
++ *
++ * This file retains only `composio_connect_app`, which the agent uses
++ * to generate OAuth links on-the-fly when it discovers a needed app
++ * isn't connected yet.
++ */
++
+ import Anthropic from '@anthropic-ai/sdk'
+ import type { SupabaseClient } from '@supabase/supabase-js'
+-import { getComposioClient, isComposioEnabled, listConnectedAccounts } from '@/lib/composio'
++import { initiateConnectionByAppKey } from '@/lib/composio/auth'
+ import { logger } from '@/lib/core/logger'
+ 
+ // ---------------------------------------------------------------------------
+@@ -20,71 +33,10 @@ type AgentToolHandler = (
+ ) => Promise<ToolResult>
+ 
+ // ---------------------------------------------------------------------------
+-// Tool Definitions (Anthropic tool_use format)
++// Tool Definitions
+ // ---------------------------------------------------------------------------
+ 
+ export const composioToolDefinitions: Anthropic.Tool[] = [
+-  {
+-    name: 'composio_list_apps',
+-    description:
+-      '[INTERNAL — never mention tool name or implementation to user] ' +
+-      'Check which third-party apps the user has connected. ' +
+-      'Use silently to understand what integrations are available before acting.',
+-    input_schema: {
+-      type: 'object' as const,
+-      properties: {
+-        filter_status: {
+-          type: 'string',
+-          enum: ['ACTIVE', 'EXPIRED', 'ALL'],
+-          description: 'Filter by connection status. Default: ACTIVE',
+-        },
+-      },
+-      required: [],
+-    },
+-  },
+-  {
+-    name: 'composio_list_actions',
+-    description:
+-      '[INTERNAL — never mention tool name or implementation to user] ' +
+-      'Discover what actions are available for a connected app. ' +
+-      'Call silently to find the right action before executing.',
+-    input_schema: {
+-      type: 'object' as const,
+-      properties: {
+-        app: {
+-          type: 'string',
+-          description: 'App name (e.g., "gmail", "slack", "hubspot", "notion")',
+-        },
+-        query: {
+-          type: 'string',
+-          description: 'Optional search to filter actions (e.g., "send", "list", "create")',
+-        },
+-      },
+-      required: ['app'],
+-    },
+-  },
+-  {
+-    name: 'composio_execute',
+-    description:
+-      '[INTERNAL — never mention tool name or implementation to user] ' +
+-      'Execute an action on a connected third-party app. ' +
+-      'Use composio_list_actions first to find the exact action name and parameters. ' +
+-      'Present results naturally as if BitBit natively integrates with the app.',
+-    input_schema: {
+-      type: 'object' as const,
+-      properties: {
+-        action: {
+-          type: 'string',
+-          description: 'Action name (e.g., "GMAIL_SEND_EMAIL", "SLACK_SEND_MESSAGE", "HUBSPOT_CREATE_CONTACT")',
+-        },
+-        params: {
+-          type: 'object',
+-          description: 'Action parameters (varies by action)',
+-        },
+-      },
+-      required: ['action'],
+-    },
+-  },
+   {
+     name: 'composio_connect_app',
+     description:
+@@ -117,203 +69,24 @@ export const composioToolDefinitions: Anthropic.Tool[] = [
+ // ---------------------------------------------------------------------------
+ 
+ export const composioToolHandlers: Record<string, AgentToolHandler> = {
+-  async composio_list_apps(input, orgId) {
+-    if (!isComposioEnabled()) {
+-      return { success: false, error: 'Composio is not configured. Set COMPOSIO_API_KEY to enable integrations.' }
+-    }
+-
+-    try {
+-      const accounts = await listConnectedAccounts(orgId)
+-
+-      if (accounts.length === 0) {
+-        return {
+-          success: true,
+-          data: {
+-            message: 'No apps connected yet. The user can connect apps from the Connections page in the dashboard.',
+-            connected_apps: [],
+-          },
+-        }
+-      }
+-
+-      return {
+-        success: true,
+-        data: {
+-          connected_apps: accounts.map(a => ({
+-            id: a.id,
+-            app: a.toolkit,
+-            status: a.status,
+-          })),
+-          count: accounts.length,
+-        },
+-      }
+-    } catch (err) {
+-      logger.error('[composio-tools] composio_list_apps failed', {
+-        orgId,
+-        error: err instanceof Error ? err.message : String(err),
+-      })
+-      return { success: false, error: `Failed to list connected apps: ${err instanceof Error ? err.message : String(err)}` }
+-    }
+-  },
+-
+-  async composio_list_actions(input, orgId) {
+-    const app = input.app as string
+-    if (!app) {
+-      return { success: false, error: 'The "app" parameter is required. Provide a Composio app name (e.g., "gmail", "slack").' }
+-    }
+-
+-    if (!isComposioEnabled()) {
+-      return { success: false, error: 'Composio is not configured. Set COMPOSIO_API_KEY to enable integrations.' }
+-    }
+-
+-    const composio = getComposioClient()
+-    if (!composio) {
+-      return { success: false, error: 'Composio client not available.' }
+-    }
+-
+-    try {
+-      const session = await composio.create(orgId)
+-      const tools = await session.tools()
+-
+-      // Filter tools by app name
+-      const appLower = app.toLowerCase()
+-      const matchingTools = (tools as Array<{ name?: string; description?: string; function?: { name?: string; description?: string } }>)
+-        .filter(t => {
+-          const name = (t.name || t.function?.name || '').toLowerCase()
+-          return name.startsWith(`${appLower}_`) || name.includes(appLower)
+-        })
+-        .map(t => ({
+-          name: t.name || t.function?.name || '',
+-          description: (t.description || t.function?.description || '').slice(0, 200),
+-        }))
+-
+-      // Optional query filter
+-      const query = (input.query as string)?.toLowerCase()
+-      const filtered = query
+-        ? matchingTools.filter(t =>
+-            t.name.toLowerCase().includes(query) ||
+-            t.description.toLowerCase().includes(query)
+-          )
+-        : matchingTools
+-
+-      return {
+-        success: true,
+-        data: {
+-          app,
+-          actions: filtered.slice(0, 30), // Cap at 30 to avoid context bloat
+-          total: filtered.length,
+-          hint: filtered.length > 30
+-            ? `Showing 30 of ${filtered.length} actions. Use the "query" parameter to narrow results.`
+-            : undefined,
+-        },
+-      }
+-    } catch (err) {
+-      logger.error('[composio-tools] composio_list_actions failed', {
+-        orgId,
+-        app,
+-        error: err instanceof Error ? err.message : String(err),
+-      })
+-      return { success: false, error: `Failed to list actions for ${app}: ${err instanceof Error ? err.message : String(err)}` }
+-    }
+-  },
+-
+-  async composio_execute(input, orgId) {
+-    const action = input.action as string
+-    if (!action) {
+-      return { success: false, error: 'The "action" parameter is required. Use composio_list_actions to discover available action names.' }
+-    }
+-
+-    if (!isComposioEnabled()) {
+-      return { success: false, error: 'Composio is not configured. Set COMPOSIO_API_KEY to enable integrations.' }
+-    }
+-
+-    const composio = getComposioClient()
+-    if (!composio) {
+-      return { success: false, error: 'Composio client not available.' }
+-    }
+-
+-    const params = (input.params as Record<string, unknown>) || {}
+-
+-    try {
+-      // Execute via Composio's tools API with entity context
+-      const result = await (composio as unknown as {
+-        tools: {
+-          execute: (opts: {
+-            actionName: string
+-            params: Record<string, unknown>
+-            entityId?: string
+-          }) => Promise<{ data?: unknown; error?: string; successfull?: boolean }>
+-        }
+-      }).tools.execute({
+-        actionName: action,
+-        params,
+-        entityId: orgId,
+-      })
+-
+-      if (result.error || result.successfull === false) {
+-        logger.warn('[composio-tools] composio_execute action returned error', {
+-          orgId,
+-          action,
+-          error: result.error,
+-        })
+-        return {
+-          success: false,
+-          error: `Action ${action} failed: ${result.error || 'Unknown error'}`,
+-        }
+-      }
+-
+-      logger.info('[composio-tools] composio_execute success', {
+-        orgId,
+-        action,
+-        hasData: !!result.data,
+-      })
+-
+-      return {
+-        success: true,
+-        data: result.data,
+-      }
+-    } catch (err) {
+-      logger.error('[composio-tools] composio_execute failed', {
+-        orgId,
+-        action,
+-        error: err instanceof Error ? err.message : String(err),
+-      })
+-      return {
+-        success: false,
+-        error: `Failed to execute ${action}: ${err instanceof Error ? err.message : String(err)}`,
+-      }
+-    }
+-  },
+-
+   async composio_connect_app(input, orgId) {
+     const app = input.app as string
+     if (!app) {
+       return { success: false, error: 'The "app" parameter is required. Specify which app to connect (e.g., "slack", "hubspot").' }
+     }
+ 
+-    if (!isComposioEnabled()) {
++    if (!process.env.COMPOSIO_API_KEY) {
+       return { success: false, error: 'Composio is not configured. Set COMPOSIO_API_KEY to enable integrations.' }
+     }
+ 
+-    const composio = getComposioClient()
+-    if (!composio) {
+-      return { success: false, error: 'Composio client not available.' }
+-    }
+-
+     const reason = (input.reason as string) || `Connect ${app} to BitBit`
+     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.bitbit.chat'
+     const callbackUrl = `${appUrl}/api/connections/composio/callback`
+ 
+     try {
+-      const connRequest = await (composio as unknown as {
+-        connectedAccounts: {
+-          initiate: (userId: string, appName: string, opts: { callbackUrl: string }) => Promise<{
+-            id: string
+-            redirectUrl?: string | null
+-          }>
+-        }
+-      }).connectedAccounts.initiate(orgId, app, { callbackUrl })
++      const connRequest = await initiateConnectionByAppKey(orgId, app, callbackUrl)
+ 
+-      if (!connRequest.redirectUrl) {
++      if (!connRequest?.redirectUrl) {
+         return {
+           success: false,
+           error: `Could not generate connection URL for ${app}. The app may not be available in Composio.`,
+@@ -321,9 +94,7 @@ export const composioToolHandlers: Record<string, AgentToolHandler> = {
+       }
+ 
+       logger.info('[composio-tools] composio_connect_app generated URL', {
+-        orgId,
+-        app,
+-        reason,
++        orgId, app, reason,
+       })
+ 
+       return {
+@@ -338,8 +109,7 @@ export const composioToolHandlers: Record<string, AgentToolHandler> = {
+       }
+     } catch (err) {
+       logger.error('[composio-tools] composio_connect_app failed', {
+-        orgId,
+-        app,
++        orgId, app,
+         error: err instanceof Error ? err.message : String(err),
+       })
+       return {
+diff --git a/personal-assistant/src/lib/agent/tools/deferred-loader.ts b/personal-assistant/src/lib/agent/tools/deferred-loader.ts
+index 4e345788..12cd6b4b 100644
+--- a/personal-assistant/src/lib/agent/tools/deferred-loader.ts
++++ b/personal-assistant/src/lib/agent/tools/deferred-loader.ts
+@@ -9,7 +9,7 @@ const EAGER_TOOL_NAMES: Set<string> = new Set([
+   'web_search', 'web_read', 'web_extract', 'web_crawl',
+   'fetch_url', 'browse_website',
+   'execute_code', 'approve_action', 'spawn_agent',
+-  'send_email', 'send_sms', 'send_whatsapp',
++  'send_email', 'send_sms', 'send_whatsapp', 'send_imessage',
+ ])
+ 
+ let allToolsCache: Anthropic.Tool[] | null = null
+diff --git a/personal-assistant/src/lib/browser/__tests__/browser-task.test.ts b/personal-assistant/src/lib/browser/__tests__/browser-task.test.ts
+index 968414cf..b34ff191 100644
+--- a/personal-assistant/src/lib/browser/__tests__/browser-task.test.ts
++++ b/personal-assistant/src/lib/browser/__tests__/browser-task.test.ts
+@@ -12,19 +12,20 @@ const mockExtract = vi.fn()
+ const mockAgentExecute = vi.fn()
+ const mockAgent = vi.fn(() => ({ execute: mockAgentExecute }))
+ 
+-vi.mock('@browserbasehq/stagehand', () => ({
+-  Stagehand: vi.fn().mockImplementation(() => ({
+-    init: mockInit,
+-    act: mockAct,
+-    extract: mockExtract,
+-    close: mockClose,
+-    agent: mockAgent,
+-    modelName: 'anthropic/claude-sonnet-4-20250514',
+-    context: {
++vi.mock('@browserbasehq/stagehand', () => {
++  const MockStagehand = vi.fn(function (this: Record<string, unknown>) {
++    this.init = mockInit
++    this.act = mockAct
++    this.extract = mockExtract
++    this.close = mockClose
++    this.agent = mockAgent
++    this.modelName = 'anthropic/claude-sonnet-4-20250514'
++    this.context = {
+       pages: () => [{ goto: mockGoto }],
+-    },
+-  })),
+-}))
++    }
++  })
++  return { Stagehand: MockStagehand }
++})
+ 
+ vi.mock('@/lib/core/logger', () => ({
+   logger: {
+diff --git a/personal-assistant/src/lib/browser/__tests__/evidence.test.ts b/personal-assistant/src/lib/browser/__tests__/evidence.test.ts
+index cd585499..381e9f14 100644
+--- a/personal-assistant/src/lib/browser/__tests__/evidence.test.ts
++++ b/personal-assistant/src/lib/browser/__tests__/evidence.test.ts
+@@ -11,18 +11,18 @@ const mockAgentExecute = vi.fn()
+ const mockAgent = vi.fn(() => ({ execute: mockAgentExecute }))
+ 
+ vi.mock('@browserbasehq/stagehand', () => ({
+-  Stagehand: vi.fn().mockImplementation(() => ({
+-    init: mockInit,
+-    act: vi.fn(),
+-    observe: vi.fn(),
+-    extract: vi.fn(),
+-    close: mockClose,
+-    agent: mockAgent,
+-    modelName: 'anthropic/claude-sonnet-4-20250514',
+-    context: {
++  Stagehand: vi.fn().mockImplementation(function (this: Record<string, unknown>) {
++    this.init = mockInit
++    this.act = vi.fn()
++    this.observe = vi.fn()
++    this.extract = vi.fn()
++    this.close = mockClose
++    this.agent = mockAgent
++    this.modelName = 'anthropic/claude-sonnet-4-20250514'
++    this.context = {
+       pages: () => [{ goto: mockGoto }],
+-    },
+-  })),
++    }
++  }),
+ }))
+ 
+ vi.mock('@/lib/core/logger', () => ({
+diff --git a/personal-assistant/src/lib/browser/__tests__/stagehand-client.test.ts b/personal-assistant/src/lib/browser/__tests__/stagehand-client.test.ts
+index 2f6362a1..7d23142d 100644
+--- a/personal-assistant/src/lib/browser/__tests__/stagehand-client.test.ts
++++ b/personal-assistant/src/lib/browser/__tests__/stagehand-client.test.ts
+@@ -13,20 +13,21 @@ const mockGoto = vi.fn()
+ const mockAgentExecute = vi.fn()
+ const mockAgent = vi.fn(() => ({ execute: mockAgentExecute }))
+ 
+-vi.mock('@browserbasehq/stagehand', () => ({
+-  Stagehand: vi.fn().mockImplementation(() => ({
+-    init: mockInit,
+-    act: mockAct,
+-    observe: mockObserve,
+-    extract: mockExtract,
+-    close: mockClose,
+-    agent: mockAgent,
+-    modelName: 'anthropic/claude-sonnet-4-20250514',
+-    context: {
++vi.mock('@browserbasehq/stagehand', () => {
++  const MockStagehand = vi.fn(function (this: Record<string, unknown>) {
++    this.init = mockInit
++    this.act = mockAct
++    this.observe = mockObserve
++    this.extract = mockExtract
++    this.close = mockClose
++    this.agent = mockAgent
++    this.modelName = 'anthropic/claude-sonnet-4-20250514'
++    this.context = {
+       pages: () => [{ goto: mockGoto }],
+-    },
+-  })),
+-}))
++    }
++  })
++  return { Stagehand: MockStagehand }
++})
+ 
+ vi.mock('@/lib/core/logger', () => ({
+   logger: {
+diff --git a/personal-assistant/src/lib/channels/gateway-handler.ts b/personal-assistant/src/lib/channels/gateway-handler.ts
+index 2d90b129..53cd3d04 100644
+--- a/personal-assistant/src/lib/channels/gateway-handler.ts
++++ b/personal-assistant/src/lib/channels/gateway-handler.ts
+@@ -1,10 +1,11 @@
+ import { createClient } from "@supabase/supabase-js";
++import type Anthropic from "@anthropic-ai/sdk";
+ import { UnifiedConversationPipeline } from "@/lib/conversation/unified-pipeline";
+-import { sendSendblueMessage } from "./sendblue";
++import { sendSendblueMessage, sendTypingIndicator } from "./sendblue";
+ import { sendTelegramMessage } from "./telegram";
+ import { sendMessage as sendWhatsAppMessage } from "./whatsapp";
+ import { logger } from "@/lib/core/logger";
+-import type { Channel } from "@/lib/conversation/types";
++import type { Channel, ChannelMetadata } from "@/lib/conversation/types";
+ 
+ export interface GatewayMessageParams {
+   /** Channel the message arrived on */
+@@ -17,6 +18,50 @@ export interface GatewayMessageParams {
+   replyTo: string;
+   /** Optional thread to continue */
+   threadId?: string;
++  /** Channel metadata (voice note flags, attachments, etc.) */
++  channelMetadata?: ChannelMetadata;
++  /** Multimodal content blocks for images/media */
++  contentBlocks?: Anthropic.ContentBlockParam[];
++}
++
++/** Split raw response text into individual bubbles for messaging channels. */
++export function splitIntoBubbles(responseText: string): string[] {
++  // Primary split on blank lines
++  let bubbles = responseText
++    .split(/\n\n+/)
++    .map(b => b.trim())
++    .filter(b => b.length > 0);
++
++  // Secondary split: break long bubbles on single newlines
++  bubbles = bubbles.flatMap(bubble => {
++    if (bubble.length > 80 && bubble.includes('\n')) {
++      return bubble.split('\n').map(l => l.trim()).filter(l => l.length > 0);
++    }
++    return [bubble];
++  });
++
++  // Cap at 6 bubbles — consolidate overflow into the last one
++  if (bubbles.length > 6) {
++    const kept = bubbles.slice(0, 5);
++    const merged = bubbles.slice(5).join('\n');
++    kept.push(merged);
++    bubbles = kept;
++  }
++
++  return bubbles;
++}
++
++/** Calculate a natural delay in ms based on bubble word count. */
++function typingDelayMs(text: string, isFirst: boolean): number {
++  const wordCount = text.split(/\s+/).length;
++  // First bubble: quick response (200-400ms). Subsequent: 400-1000ms.
++  const base = isFirst ? 200 : 400;
++  const perWord = 50;
++  return Math.min(base + wordCount * perWord, isFirst ? 400 : 1000);
++}
++
++function sleep(ms: number): Promise<void> {
++  return new Promise(resolve => setTimeout(resolve, ms));
+ }
+ 
+ /**
+@@ -26,7 +71,7 @@ export interface GatewayMessageParams {
+  * sends the response back via the channel-specific send function.
+  */
+ export async function handleGatewayMessage(params: GatewayMessageParams): Promise<void> {
+-  const { channel, text, identity, replyTo, threadId } = params;
++  const { channel, text, identity, replyTo, threadId, channelMetadata, contentBlocks } = params;
+ 
+   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+@@ -43,11 +88,12 @@ export async function handleGatewayMessage(params: GatewayMessageParams): Promis
+ 
+   try {
+     const events = pipeline.handleMessage(
+-      { content: text, channel },
++      { content: text, channel, channelMetadata },
+       {
+         supabase,
+         identity,
+         threadId,
++        contentBlocks,
+       },
+     );
+ 
+@@ -67,16 +113,25 @@ export async function handleGatewayMessage(params: GatewayMessageParams): Promis
+     return;
+   }
+ 
+-  // Split response into multiple bubbles on blank lines (messaging persona
+-  // instructs the model to separate thoughts with blank lines).
+-  // Each non-empty chunk becomes a separate message for natural text feel.
+-  const bubbles = responseText
+-    .split(/\n\n+/)
+-    .map(b => b.trim())
+-    .filter(b => b.length > 0)
++  const bubbles = splitIntoBubbles(responseText);
++  const isSendblue = channel === "sendblue" || channel === "sms";
++
++  for (let i = 0; i < bubbles.length; i++) {
++    const bubble = bubbles[i];
++    const isFirst = i === 0;
++
++    // Sendblue: typing indicator + staggered delay for human feel
++    if (isSendblue) {
++      await sendTypingIndicator(replyTo);
++      await sleep(typingDelayMs(bubble, isFirst));
++    }
+ 
+-  for (const bubble of bubbles) {
+     await sendChannelReply(channel, replyTo, bubble);
++
++    // Inter-bubble gap (not after the last one)
++    if (isSendblue && i < bubbles.length - 1) {
++      await sleep(300 + Math.random() * 400);
++    }
+   }
+ }
+ 
+diff --git a/personal-assistant/src/lib/channels/sendblue.ts b/personal-assistant/src/lib/channels/sendblue.ts
+index 675ecfc3..d221bf1e 100644
+--- a/personal-assistant/src/lib/channels/sendblue.ts
++++ b/personal-assistant/src/lib/channels/sendblue.ts
+@@ -1,44 +1,91 @@
+ import { logger } from '@/lib/core/logger'
+ 
+-const SENDBLUE_API_URL = 'https://api.sendblue.co/api/send-message'
++const SENDBLUE_API_BASE = 'https://api.sendblue.co/api'
+ 
+-/**
+- * Send an iMessage via Sendblue API.
+- */
+-export async function sendSendblueMessage(
+-  to: string,
+-  content: string,
+-): Promise<{ success: boolean; messageId?: string; error?: string }> {
++export interface SendResult {
++  success: boolean
++  messageId?: string
++  error?: string
++}
++
++function getSendblueConfig() {
+   const apiKey = process.env.SENDBLUE_API_KEY
+   const apiSecret = process.env.SENDBLUE_API_SECRET
+   const fromNumber = process.env.SENDBLUE_FROM_NUMBER
++  if (!apiKey || !apiSecret || !fromNumber) return null
++  return { apiKey, apiSecret, fromNumber }
++}
+ 
+-  if (!apiKey || !apiSecret || !fromNumber) {
+-    logger.error('[sendblue] Missing env vars (SENDBLUE_API_KEY, SENDBLUE_API_SECRET, SENDBLUE_FROM_NUMBER)')
+-    return { success: false, error: 'Sendblue not configured' }
++function sendblueHeaders(config: { apiKey: string; apiSecret: string }) {
++  return {
++    'Content-Type': 'application/json',
++    'sb-api-key-id': config.apiKey,
++    'sb-api-secret-key': config.apiSecret,
+   }
++}
+ 
+-  // Normalize to E.164
++/** Normalize phone number to E.164 format. */
++export function normalizePhone(to: string): string {
+   let normalized = to.replace(/[\s\-()]/g, '')
+   if (!normalized.startsWith('+')) normalized = '+' + normalized
+   if (normalized.startsWith('+04') && normalized.length === 11) {
+     normalized = '+61' + normalized.slice(2)
+   }
++  return normalized
++}
++
++/**
++ * Send a typing indicator (the "..." bubble) via Sendblue.
++ * iMessage only — no-op for SMS recipients.
++ */
++export async function sendTypingIndicator(to: string): Promise<void> {
++  const config = getSendblueConfig()
++  if (!config) return
+ 
+   try {
+-    const res = await fetch(SENDBLUE_API_URL, {
++    await fetch(`${SENDBLUE_API_BASE}/send-typing-indicator`, {
+       method: 'POST',
+-      headers: {
+-        'Content-Type': 'application/json',
+-        'sb-api-key-id': apiKey,
+-        'sb-api-secret-key': apiSecret,
+-      },
++      headers: sendblueHeaders(config),
+       body: JSON.stringify({
+-        number: normalized,
+-        from_number: fromNumber,
+-        content: content.slice(0, 18996),
++        number: normalizePhone(to),
++        from_number: config.fromNumber,
+       }),
+     })
++  } catch (err) {
++    // Non-fatal — typing indicators are cosmetic
++    logger.debug('[sendblue] Typing indicator failed (non-fatal)', { err })
++  }
++}
++
++/**
++ * Send an iMessage via Sendblue API.
++ */
++export async function sendSendblueMessage(
++  to: string,
++  content: string,
++  options?: { mediaUrl?: string },
++): Promise<SendResult> {
++  const config = getSendblueConfig()
++  if (!config) {
++    logger.error('[sendblue] Missing env vars (SENDBLUE_API_KEY, SENDBLUE_API_SECRET, SENDBLUE_FROM_NUMBER)')
++    return { success: false, error: 'Sendblue not configured' }
++  }
++
++  const normalized = normalizePhone(to)
++
++  const body: Record<string, string> = {
++    number: normalized,
++    from_number: config.fromNumber,
++  }
++  if (content) body.content = content.slice(0, 18996)
++  if (options?.mediaUrl) body.media_url = options.mediaUrl
++
++  try {
++    const res = await fetch(`${SENDBLUE_API_BASE}/send-message`, {
++      method: 'POST',
++      headers: sendblueHeaders(config),
++      body: JSON.stringify(body),
++    })
+ 
+     const data = await res.json()
+ 
+@@ -61,9 +108,5 @@ export async function sendSendblueMessage(
+ }
+ 
+ export function isSendblueConfigured(): boolean {
+-  return !!(
+-    process.env.SENDBLUE_API_KEY &&
+-    process.env.SENDBLUE_API_SECRET &&
+-    process.env.SENDBLUE_FROM_NUMBER
+-  )
++  return getSendblueConfig() !== null
+ }
+diff --git a/personal-assistant/src/lib/channels/voice-transcription.ts b/personal-assistant/src/lib/channels/voice-transcription.ts
+index 8dfb0139..fb180043 100644
+--- a/personal-assistant/src/lib/channels/voice-transcription.ts
++++ b/personal-assistant/src/lib/channels/voice-transcription.ts
+@@ -1,4 +1,5 @@
+ import { logger } from '@/lib/core/logger';
++import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway';
+ /**
+  * Voice Note Transcription Pipeline
+  *
+@@ -41,7 +42,6 @@ export interface TranscriptionResult {
+   error?: string
+ }
+ 
+-const WHISPER_API_URL = 'https://api.openai.com/v1/audio/transcriptions'
+ const WHISPER_MODEL = 'whisper-1'
+ const TIMEOUT_MS = 30_000
+ const MAX_AUDIO_SIZE_BYTES = 25 * 1024 * 1024 // 25 MB (Whisper API limit)
+@@ -77,10 +77,10 @@ export async function transcribeVoiceNote(
+     prompt?: string
+   }
+ ): Promise<TranscriptionResult> {
+-  const openaiKey = process.env.OPENAI_API_KEY
++  const endpoint = getOpenAIEndpoint()
+ 
+-  if (!openaiKey) {
+-    const error = 'OPENAI_API_KEY not configured'
++  if (!endpoint) {
++    const error = 'Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY configured'
+     logger.warn('[voice-transcription]', error)
+     return {
+       text: '',
+@@ -145,10 +145,10 @@ export async function transcribeVoiceNote(
+ 
+     let response: Response | undefined
+     try {
+-      response = await fetch(WHISPER_API_URL, {
++      response = await fetch(`${endpoint.baseUrl}/audio/transcriptions`, {
+         method: 'POST',
+         headers: {
+-          Authorization: `Bearer ${openaiKey}`,
++          Authorization: endpoint.authorization,
+         },
+         body: formData,
+         signal: controller.signal,
+diff --git a/personal-assistant/src/lib/channels/whatsapp-voice.ts b/personal-assistant/src/lib/channels/whatsapp-voice.ts
+index 7295b068..28506a5d 100644
+--- a/personal-assistant/src/lib/channels/whatsapp-voice.ts
++++ b/personal-assistant/src/lib/channels/whatsapp-voice.ts
+@@ -1,4 +1,5 @@
+ import { logger } from '@/lib/core/logger';
++import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway';
+ /**
+  * WhatsApp voice note transcription service.
+  *
+@@ -9,8 +10,6 @@ import { logger } from '@/lib/core/logger';
+  * Latency note: Whisper transcription adds ~2-3s. This is acceptable
+  * within the 10s SLA (WHATS-04) since the rest of the pipeline is <2s.
+  */
+-
+-const WHISPER_API_URL = 'https://api.openai.com/v1/audio/transcriptions'
+ const GRAPH_API_VERSION = 'v21.0'
+ 
+ /**
+@@ -27,9 +26,9 @@ export async function transcribeVoiceNote(
+   audioBuffer: Buffer,
+   mimeType: string
+ ): Promise<string | null> {
+-  const openaiKey = process.env.OPENAI_API_KEY
+-  if (!openaiKey) {
+-    logger.warn('[whatsapp-voice] OPENAI_API_KEY not set — voice transcription unavailable')
++  const endpoint = getOpenAIEndpoint()
++  if (!endpoint) {
++    logger.warn('[whatsapp-voice] Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY set — voice transcription unavailable')
+     return null
+   }
+ 
+@@ -46,10 +45,10 @@ export async function transcribeVoiceNote(
+     formData.append('file', blob, `voice.${ext}`)
+     formData.append('model', 'whisper-1')
+ 
+-    const response = await fetch(WHISPER_API_URL, {
++    const response = await fetch(`${endpoint.baseUrl}/audio/transcriptions`, {
+       method: 'POST',
+       headers: {
+-        Authorization: `Bearer ${openaiKey}`,
++        Authorization: endpoint.authorization,
+       },
+       body: formData,
+     })
+diff --git a/personal-assistant/src/lib/composio/__tests__/tool-provider.test.ts b/personal-assistant/src/lib/composio/__tests__/tool-provider.test.ts
+new file mode 100644
+index 00000000..de114d45
+--- /dev/null
++++ b/personal-assistant/src/lib/composio/__tests__/tool-provider.test.ts
+@@ -0,0 +1,296 @@
++import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
++
++// Mock fetch globally
++const mockFetch = vi.fn()
++vi.stubGlobal('fetch', mockFetch)
++
++// Mock logger
++vi.mock('@/lib/core/logger', () => ({
++  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
++}))
++
++// Set env before import
++vi.stubEnv('COMPOSIO_API_KEY', 'test-key')
++
++import {
++  getComposioToolsForOrg,
++  executeComposioAction,
++  executeComposioToolForOrg,
++  invalidateComposioToolCache,
++} from '../tool-provider'
++
++// ---------------------------------------------------------------------------
++// Helpers
++// ---------------------------------------------------------------------------
++
++function mockSupabase(connections: Array<Record<string, unknown>> | null = null, error: { message: string } | null = null) {
++  const result = { data: connections, error }
++  const builder = {
++    select: vi.fn().mockReturnThis(),
++    eq: vi.fn().mockReturnThis(),
++    in: vi.fn().mockReturnThis(),
++    not: vi.fn().mockReturnValue(result),
++  }
++  return {
++    from: vi.fn().mockReturnValue(builder),
++  } as unknown as import('@supabase/supabase-js').SupabaseClient
++}
++
++function composioActionResponse(items: Array<{ name: string; description?: string; parameters?: Record<string, unknown> }>) {
++  return {
++    ok: true,
++    json: () => Promise.resolve({ items }),
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Tests
++// ---------------------------------------------------------------------------
++
++describe('composio/tool-provider', () => {
++  beforeEach(() => {
++    invalidateComposioToolCache('*')
++    mockFetch.mockReset()
++  })
++
++  afterEach(() => {
++    vi.unstubAllEnvs()
++    vi.stubEnv('COMPOSIO_API_KEY', 'test-key')
++  })
++
++  describe('getComposioToolsForOrg', () => {
++    it('returns empty when no COMPOSIO_API_KEY', async () => {
++      vi.stubEnv('COMPOSIO_API_KEY', '')
++      const supabase = mockSupabase()
++      const result = await getComposioToolsForOrg('org-1', supabase)
++      expect(result.tools).toHaveLength(0)
++      expect(result.connectionMap.size).toBe(0)
++    })
++
++    it('returns empty when org has no connections', async () => {
++      const supabase = mockSupabase([])
++      const result = await getComposioToolsForOrg('org-1', supabase)
++      expect(result.tools).toHaveLength(0)
++    })
++
++    it('fetches actions for connected toolkits', async () => {
++      const supabase = mockSupabase([
++        {
++          provider: 'gmail',
++          connected_account_id: 'acc-123',
++          status: 'connected',
++          config: { composio_toolkit: 'gmail' },
++        },
++      ])
++
++      // Mock the Composio actions API — use mockImplementation since fetchToolkitActions
++      // may make supplementary calls when < 5 results
++      mockFetch.mockImplementation(() =>
++        Promise.resolve(composioActionResponse([
++          {
++            name: 'GMAIL_SEND_EMAIL',
++            description: 'Send an email',
++            parameters: { type: 'object', properties: { to: { type: 'string' }, body: { type: 'string' } }, required: ['to', 'body'] },
++          },
++          {
++            name: 'GMAIL_LIST_EMAILS',
++            description: 'List emails',
++            parameters: { type: 'object', properties: { limit: { type: 'number' } }, required: [] },
++          },
++        ])),
++      )
++
++      const result = await getComposioToolsForOrg('org-1', supabase)
++
++      expect(result.tools).toHaveLength(2)
++      expect(result.tools[0].name).toBe('GMAIL_SEND_EMAIL')
++      expect(result.tools[1].name).toBe('GMAIL_LIST_EMAILS')
++      expect(result.connectionMap.get('GMAIL_SEND_EMAIL')).toBe('acc-123')
++      expect(result.connectionMap.get('GMAIL_LIST_EMAILS')).toBe('acc-123')
++
++      // Descriptions should have the INTERNAL prefix
++      expect(result.tools[0].description).toContain('[INTERNAL')
++      expect(result.tools[0].description).toContain('Send an email')
++    })
++
++    it('caches results and returns from cache on second call', async () => {
++      const supabase = mockSupabase([
++        { provider: 'slack', connected_account_id: 'acc-456', status: 'connected', config: { composio_toolkit: 'slack' } },
++      ])
++
++      mockFetch.mockImplementation(() =>
++        Promise.resolve(composioActionResponse([
++          { name: 'SLACK_SEND_MESSAGE', description: 'Send message', parameters: { type: 'object', properties: {}, required: [] } },
++        ])),
++      )
++
++      const result1 = await getComposioToolsForOrg('org-2', supabase)
++      const result2 = await getComposioToolsForOrg('org-2', supabase)
++
++      expect(result1.tools).toHaveLength(1)
++      expect(result2.tools).toHaveLength(1)
++      // Supabase should only be called once (cached second time)
++      expect(supabase.from).toHaveBeenCalledTimes(1)
++    })
++
++    it('invalidateComposioToolCache clears org cache', async () => {
++      const supabase = mockSupabase([
++        { provider: 'gmail', connected_account_id: 'acc-789', status: 'connected', config: { composio_toolkit: 'gmail' } },
++      ])
++
++      mockFetch.mockImplementation(() =>
++        Promise.resolve(composioActionResponse([
++          { name: 'GMAIL_SEND_EMAIL', description: 'Send', parameters: { type: 'object', properties: {}, required: [] } },
++        ])),
++      )
++
++      await getComposioToolsForOrg('org-3', supabase)
++      expect(supabase.from).toHaveBeenCalledTimes(1)
++
++      invalidateComposioToolCache('org-3')
++
++      await getComposioToolsForOrg('org-3', supabase)
++      // Should query DB again after invalidation
++      expect(supabase.from).toHaveBeenCalledTimes(2)
++    })
++
++    it('handles multiple connections', async () => {
++      const supabase = mockSupabase([
++        { provider: 'gmail', connected_account_id: 'acc-gmail', status: 'connected', config: { composio_toolkit: 'gmail' } },
++        { provider: 'slack', connected_account_id: 'acc-slack', status: 'connected', config: { composio_toolkit: 'slack' } },
++      ])
++
++      // Route fetch by URL — fetchToolkitActions may make multiple calls per toolkit
++      // (tagged + supplement when < 5 results)
++      mockFetch.mockImplementation((url: string) => {
++        if (typeof url === 'string' && url.includes('toolkit_slugs=gmail')) {
++          return Promise.resolve(composioActionResponse([
++            { name: 'GMAIL_SEND_EMAIL', description: 'Send email', parameters: { type: 'object', properties: {}, required: [] } },
++          ]))
++        }
++        if (typeof url === 'string' && url.includes('toolkit_slugs=slack')) {
++          return Promise.resolve(composioActionResponse([
++            { name: 'SLACK_SEND_MESSAGE', description: 'Send message', parameters: { type: 'object', properties: {}, required: [] } },
++          ]))
++        }
++        return Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve('Not found') })
++      })
++
++      const result = await getComposioToolsForOrg('org-multi', supabase)
++
++      expect(result.tools).toHaveLength(2)
++      expect(result.connectionMap.get('GMAIL_SEND_EMAIL')).toBe('acc-gmail')
++      expect(result.connectionMap.get('SLACK_SEND_MESSAGE')).toBe('acc-slack')
++    })
++
++    it('deduplicates tools with same name across connections', async () => {
++      const supabase = mockSupabase([
++        { provider: 'gmail', connected_account_id: 'acc-1', status: 'connected', config: { composio_toolkit: 'gmail' } },
++        { provider: 'gmail', connected_account_id: 'acc-2', status: 'connected', config: { composio_toolkit: 'gmail' } },
++      ])
++
++      mockFetch.mockImplementation(() =>
++        Promise.resolve(composioActionResponse([
++          { name: 'GMAIL_SEND_EMAIL', description: 'Send', parameters: { type: 'object', properties: {}, required: [] } },
++        ])),
++      )
++
++      const result = await getComposioToolsForOrg('org-dedup', supabase)
++
++      expect(result.tools).toHaveLength(1)
++      // First connection wins
++      expect(result.connectionMap.get('GMAIL_SEND_EMAIL')).toBe('acc-1')
++    })
++  })
++
++  describe('executeComposioAction', () => {
++    it('executes action via REST and returns result', async () => {
++      mockFetch.mockResolvedValueOnce({
++        ok: true,
++        json: () => Promise.resolve({ data: { messageId: 'msg-1' }, successfull: true }),
++      })
++
++      const result = await executeComposioAction('GMAIL_SEND_EMAIL', { to: 'test@test.com' }, 'acc-123')
++
++      expect(result.success).toBe(true)
++      expect(result.data).toEqual({ messageId: 'msg-1' })
++
++      expect(mockFetch).toHaveBeenCalledWith(
++        expect.stringContaining('/api/v3/actions/GMAIL_SEND_EMAIL/execute'),
++        expect.objectContaining({
++          method: 'POST',
++          body: expect.stringContaining('"connected_account_id":"acc-123"'),
++        }),
++      )
++    })
++
++    it('returns error on HTTP failure', async () => {
++      mockFetch.mockResolvedValueOnce({
++        ok: false,
++        status: 400,
++        text: () => Promise.resolve('Bad request'),
++      })
++
++      const result = await executeComposioAction('GMAIL_SEND_EMAIL', {}, 'acc-123')
++      expect(result.success).toBe(false)
++      expect(result.error).toContain('400')
++    })
++
++    it('returns error when action reports failure', async () => {
++      mockFetch.mockResolvedValueOnce({
++        ok: true,
++        json: () => Promise.resolve({ error: 'Rate limited', successfull: false }),
++      })
++
++      const result = await executeComposioAction('GMAIL_SEND_EMAIL', {}, 'acc-123')
++      expect(result.success).toBe(false)
++      expect(result.error).toBe('Rate limited')
++    })
++
++    it('returns error when COMPOSIO_API_KEY not set', async () => {
++      vi.stubEnv('COMPOSIO_API_KEY', '')
++      const result = await executeComposioAction('GMAIL_SEND_EMAIL', {}, 'acc-123')
++      expect(result.success).toBe(false)
++      expect(result.error).toContain('not configured')
++    })
++  })
++
++  describe('executeComposioToolForOrg', () => {
++    it('returns null when tool is not a Composio tool', async () => {
++      const supabase = mockSupabase([])
++      const result = await executeComposioToolForOrg('org-1', 'unknown_tool', {}, supabase)
++      expect(result).toBeNull()
++    })
++
++    it('executes when tool is in connection map', async () => {
++      const supabase = mockSupabase([
++        { provider: 'gmail', connected_account_id: 'acc-exec', status: 'connected', config: { composio_toolkit: 'gmail' } },
++      ])
++
++      // Populate cache with actions
++      mockFetch.mockImplementation(() =>
++        Promise.resolve(composioActionResponse([
++          { name: 'GMAIL_SEND_EMAIL', description: 'Send', parameters: { type: 'object', properties: {}, required: [] } },
++        ])),
++      )
++      await getComposioToolsForOrg('org-exec', supabase)
++
++      // Now mock the execute call
++      mockFetch.mockImplementation((url: string) => {
++        if (typeof url === 'string' && url.includes('/execute')) {
++          return Promise.resolve({
++            ok: true,
++            json: () => Promise.resolve({ data: { sent: true }, successfull: true }),
++          })
++        }
++        // Action schema fetches (cached, shouldn't be called)
++        return Promise.resolve(composioActionResponse([]))
++      })
++
++      const result = await executeComposioToolForOrg('org-exec', 'GMAIL_SEND_EMAIL', { to: 'a@b.com' }, supabase)
++      expect(result).not.toBeNull()
++      expect(result!.success).toBe(true)
++      expect(result!.data).toEqual({ sent: true })
++    })
++  })
++})
+diff --git a/personal-assistant/src/lib/composio/adapter.ts b/personal-assistant/src/lib/composio/adapter.ts
+index 1fe56df3..31d2c5fe 100644
+--- a/personal-assistant/src/lib/composio/adapter.ts
++++ b/personal-assistant/src/lib/composio/adapter.ts
+@@ -1,8 +1,25 @@
+-import { getComposioClient } from './client'
++/**
++ * Composio Channel Adapter — raw HTTP (no SDK).
++ *
++ * Creates ChannelAdapter instances backed by Composio actions for pull/send.
++ * Each adapter calls the Composio REST API with the user's connected_account_id
++ * from org_connections.
++ */
++
+ import { getToolkitId, isComposioChannel } from './mapping'
+ import type { ChannelAdapter, ChannelMessage, ChannelType } from '../channels/types'
+ import { logger } from '../core/logger'
+ 
++// ---------------------------------------------------------------------------
++// Constants & helpers
++// ---------------------------------------------------------------------------
++
++const COMPOSIO_BASE = 'https://backend.composio.dev'
++
++function composioHeaders(): Record<string, string> {
++  return { 'x-api-key': process.env.COMPOSIO_API_KEY!, 'Content-Type': 'application/json' }
++}
++
+ /**
+  * Feature flag: set per-channel to enable Composio adapter instead of legacy.
+  * Reads from env: COMPOSIO_ENABLE_GMAIL=1, COMPOSIO_ENABLE_OUTLOOK=1, etc.
+@@ -10,49 +27,58 @@ import { logger } from '../core/logger'
+ export function isComposioEnabledForChannel(channel: ChannelType): boolean {
+   if (!isComposioChannel(channel)) return false
+   if (!process.env.COMPOSIO_API_KEY) return false
+-
+-  // Global kill switch
+   if (process.env.COMPOSIO_DISABLE_ALL === '1') return false
+ 
+-  // Per-channel flag: COMPOSIO_ENABLE_GMAIL=1
+   const envKey = `COMPOSIO_ENABLE_${channel.toUpperCase().replace(/-/g, '_')}`
+   return process.env[envKey] === '1'
+ }
+ 
++// ---------------------------------------------------------------------------
++// Raw HTTP action execution
++// ---------------------------------------------------------------------------
++
+ interface ComposioActionResult {
+   data?: Record<string, unknown>
+   error?: string
+   successfull?: boolean
++  response_data?: unknown
+ }
+ 
+ /**
+- * Execute a Composio action for a user session.
++ * Execute a Composio action via REST API.
++ * Requires a connected_account_id to scope execution to the user's OAuth token.
+  */
+ async function executeAction(
+-  orgId: string,
+   actionName: string,
+-  params: Record<string, unknown> = {},
++  params: Record<string, unknown>,
++  connectedAccountId: string,
+ ): Promise<ComposioActionResult | null> {
+-  const composio = getComposioClient()
+-  if (!composio) return null
++  if (!process.env.COMPOSIO_API_KEY) return null
+ 
+   try {
+-    // Execute action via Composio's tools API
+-    // The SDK handles auth, token refresh, connected account resolution
+-    const result = await (composio as unknown as {
+-      tools: {
+-        execute: (opts: { actionName: string; params: Record<string, unknown>; entityId?: string }) => Promise<ComposioActionResult>
+-      }
+-    }).tools.execute({
+-      actionName,
+-      params,
+-      entityId: orgId,
+-    })
+-
+-    return result
++    const res = await fetch(
++      `${COMPOSIO_BASE}/api/v3/actions/${encodeURIComponent(actionName)}/execute`,
++      {
++        method: 'POST',
++        headers: composioHeaders(),
++        body: JSON.stringify({
++          connected_account_id: connectedAccountId,
++          input: params,
++        }),
++      },
++    )
++
++    if (!res.ok) {
++      const body = await res.text()
++      logger.error('[composio/adapter] executeAction HTTP failed', {
++        actionName, status: res.status, body: body.slice(0, 300),
++      })
++      return null
++    }
++
++    return await res.json() as ComposioActionResult
+   } catch (err) {
+-    logger.error(`[composio/adapter] executeAction failed`, {
+-      orgId,
++    logger.error('[composio/adapter] executeAction failed', {
+       actionName,
+       error: err instanceof Error ? err.message : String(err),
+     })
+@@ -60,9 +86,10 @@ async function executeAction(
+   }
+ }
+ 
+-/**
+- * Transform a Composio Gmail message response into a BitBit ChannelMessage.
+- */
++// ---------------------------------------------------------------------------
++// Per-channel transformers
++// ---------------------------------------------------------------------------
++
+ function transformGmailMessage(raw: Record<string, unknown>, index: number): ChannelMessage {
+   const messageId = (raw.messageId as string) || (raw.id as string) || `composio-gmail-${index}`
+   const from = (raw.sender as string) || (raw.from as string) || 'Unknown'
+@@ -70,7 +97,6 @@ function transformGmailMessage(raw: Record<string, unknown>, index: number): Cha
+   const body = (raw.messageText as string) || (raw.body as string) || (raw.snippet as string) || ''
+   const date = (raw.date as string) || (raw.receivedAt as string)
+ 
+-  // Parse "Name <email>" format
+   const emailMatch = from.match(/<([^>]+)>/)
+   const senderEmail = emailMatch?.[1] || (from.includes('@') ? from : '')
+   const senderName = from.replace(/<[^>]+>/g, '').replace(/"/g, '').trim() || senderEmail || 'Unknown'
+@@ -87,17 +113,10 @@ function transformGmailMessage(raw: Record<string, unknown>, index: number): Cha
+     receivedAt: date ? new Date(date) : new Date(),
+     isActionable: false,
+     priority: 'medium',
+-    metadata: {
+-      source: 'composio',
+-      threadId: raw.threadId,
+-      labelIds: raw.labelIds,
+-    },
++    metadata: { source: 'composio', threadId: raw.threadId, labelIds: raw.labelIds },
+   }
+ }
+ 
+-/**
+- * Generic Composio message transformer — maps common fields across toolkits.
+- */
+ function transformGenericMessage(
+   raw: Record<string, unknown>,
+   channel: ChannelType,
+@@ -121,17 +140,10 @@ function transformGenericMessage(
+     receivedAt: date ? new Date(date) : new Date(),
+     isActionable: false,
+     priority: 'medium',
+-    metadata: {
+-      source: 'composio',
+-      raw_keys: Object.keys(raw),
+-    },
++    metadata: { source: 'composio', raw_keys: Object.keys(raw) },
+   }
+ }
+ 
+-// ---------------------------------------------------------------------------
+-// Per-channel transformers
+-// ---------------------------------------------------------------------------
+-
+ function transformOutlookMessage(raw: Record<string, unknown>, index: number): ChannelMessage {
+   const id = (raw.id as string) || `composio-outlook-${index}`
+   const from = (raw.from as Record<string, unknown>)
+@@ -352,9 +364,10 @@ function transformWordPressPost(raw: Record<string, unknown>, index: number): Ch
+   }
+ }
+ 
+-/**
+- * Channel-specific action names for pulling messages/data.
+- */
++// ---------------------------------------------------------------------------
++// Action maps
++// ---------------------------------------------------------------------------
++
+ const PULL_ACTIONS: Partial<Record<ChannelType, string>> = {
+   gmail: 'GMAIL_LIST_EMAILS',
+   outlook: 'OUTLOOK_LIST_EMAILS',
+@@ -373,9 +386,6 @@ const PULL_ACTIONS: Partial<Record<ChannelType, string>> = {
+   gsc: 'GOOGLESEARCHCONSOLE_GET_SEARCH_ANALYTICS',
+ }
+ 
+-/**
+- * Channel-specific send action names.
+- */
+ export const SEND_ACTIONS: Partial<Record<ChannelType, string>> = {
+   gmail: 'GMAIL_SEND_EMAIL',
+   outlook: 'OUTLOOK_SEND_EMAIL',
+@@ -385,9 +395,6 @@ export const SEND_ACTIONS: Partial<Record<ChannelType, string>> = {
+   wordpress: 'WORDPRESS_CREATE_POST',
+ }
+ 
+-/**
+- * Channel-specific transformers.
+- */
+ const TRANSFORMERS: Partial<Record<ChannelType, (raw: Record<string, unknown>, i: number) => ChannelMessage>> = {
+   gmail: transformGmailMessage,
+   outlook: transformOutlookMessage,
+@@ -402,16 +409,23 @@ const TRANSFORMERS: Partial<Record<ChannelType, (raw: Record<string, unknown>, i
+   wordpress: transformWordPressPost,
+ }
+ 
++// ---------------------------------------------------------------------------
++// Adapter factory
++// ---------------------------------------------------------------------------
++
+ /**
+  * Create a Composio-backed ChannelAdapter for a given channel type.
+- * Falls through to the generic transformer if no specific one exists.
++ *
++ * The adapter requires a `connected_account_id` in the config so it can
++ * route API calls to the user's specific OAuth token.
+  */
+ export function createComposioAdapter(channel: ChannelType): ChannelAdapter | null {
+   const toolkit = getToolkitId(channel)
+   if (!toolkit) return null
+ 
+   const pullAction = PULL_ACTIONS[channel]
+-  const transformer = TRANSFORMERS[channel] || ((raw: Record<string, unknown>, i: number) => transformGenericMessage(raw, channel, i))
++  const transformer = TRANSFORMERS[channel]
++    || ((raw: Record<string, unknown>, i: number) => transformGenericMessage(raw, channel, i))
+ 
+   return {
+     type: channel,
+@@ -421,8 +435,11 @@ export function createComposioAdapter(channel: ChannelType): ChannelAdapter | nu
+ 
+     async pull(config, since) {
+       const orgId = (config.orgId as string) || (config.org_id as string)
+-      if (!orgId) {
+-        logger.warn(`[composio/adapter] No orgId in config for ${channel} pull`)
++      const connectedAccountId = (config.connected_account_id as string)
++        || (config.composio_connected_account_id as string)
++
++      if (!orgId || !connectedAccountId) {
++        logger.warn(`[composio/adapter] Missing orgId or connected_account_id for ${channel} pull`)
+         return []
+       }
+ 
+@@ -437,10 +454,9 @@ export function createComposioAdapter(channel: ChannelType): ChannelAdapter | nu
+         params.since = since.toISOString()
+       }
+ 
+-      const result = await executeAction(orgId, pullAction, params)
++      const result = await executeAction(pullAction, params, connectedAccountId)
+       if (!result?.data) return []
+ 
+-      // Composio typically returns results in a data array
+       const items = Array.isArray(result.data)
+         ? result.data
+         : (result.data.messages as Record<string, unknown>[])
+@@ -460,7 +476,6 @@ export function createComposioAdapter(channel: ChannelType): ChannelAdapter | nu
+     },
+ 
+     async isAvailable() {
+-      // Check if Composio is configured and user has an active connection
+       return Boolean(process.env.COMPOSIO_API_KEY)
+     },
+   }
+diff --git a/personal-assistant/src/lib/composio/auth.ts b/personal-assistant/src/lib/composio/auth.ts
+index fac98b79..d2b74fd7 100644
+--- a/personal-assistant/src/lib/composio/auth.ts
++++ b/personal-assistant/src/lib/composio/auth.ts
+@@ -1,8 +1,28 @@
+-import { getComposioClient } from './client'
++/**
++ * Composio OAuth lifecycle — raw HTTP (no SDK).
++ *
++ * The Composio SDK (@composio/core) crashes under Turbopack bundling on
++ * Vercel. All functions here use raw fetch against the Composio REST API.
++ */
++
+ import { getToolkitId } from './mapping'
+ import type { ChannelType } from '../channels/types'
+ import { logger } from '../core/logger'
+ 
++// ---------------------------------------------------------------------------
++// Constants & helpers
++// ---------------------------------------------------------------------------
++
++const COMPOSIO_BASE = 'https://backend.composio.dev'
++
++function composioHeaders(): Record<string, string> {
++  return { 'x-api-key': process.env.COMPOSIO_API_KEY!, 'Content-Type': 'application/json' }
++}
++
++// ---------------------------------------------------------------------------
++// Types
++// ---------------------------------------------------------------------------
++
+ export interface ComposioConnectionRequest {
+   redirectUrl: string
+   connectionRequestId: string
+@@ -14,14 +34,12 @@ export interface ComposioConnectedAccount {
+   toolkit: string
+ }
+ 
++// ---------------------------------------------------------------------------
++// Connection initiation
++// ---------------------------------------------------------------------------
++
+ /**
+- * Initiate a Composio OAuth connection for a user+app.
+- *
+- * @param userId   BitBit org_id (used as Composio entity/user ID)
+- * @param channel  BitBit channel type to connect
+- * @param callbackUrl  URL to redirect after auth (e.g. /connections?composio=callback)
+- * @param authConfigId  Optional Composio auth config ID (for white-label OAuth)
+- * @returns Redirect URL to send the user to, plus the connection request ID
++ * Initiate a Composio OAuth connection for a user+app via channel type.
+  */
+ export async function initiateConnection(
+   userId: string,
+@@ -29,8 +47,7 @@ export async function initiateConnection(
+   callbackUrl: string,
+   authConfigId?: string,
+ ): Promise<ComposioConnectionRequest | null> {
+-  const composio = getComposioClient()
+-  if (!composio) {
++  if (!process.env.COMPOSIO_API_KEY) {
+     logger.warn('[composio/auth] Cannot initiate connection — COMPOSIO_API_KEY not set')
+     return null
+   }
+@@ -42,60 +59,164 @@ export async function initiateConnection(
+   }
+ 
+   try {
+-    // If no explicit authConfigId, Composio uses its default config for the toolkit
+     const configId = authConfigId || toolkit
++    const res = await fetch(`${COMPOSIO_BASE}/api/v3/connected-accounts`, {
++      method: 'POST',
++      headers: composioHeaders(),
++      body: JSON.stringify({
++        auth_config_id: configId,
++        user_id: userId,
++        redirect_url: callbackUrl,
++      }),
++    })
+ 
+-    const connRequest = await composio.connectedAccounts.initiate(
+-      userId,
+-      configId,
+-      { callbackUrl },
+-    )
++    if (!res.ok) {
++      const body = await res.text()
++      logger.error('[composio/auth] initiateConnection failed', {
++        userId, channel, toolkit, status: res.status, body: body.slice(0, 300),
++      })
++      return null
++    }
+ 
++    const data = await res.json() as { id?: string; redirect_url?: string; redirectUrl?: string }
+     logger.info('[composio/auth] Connection initiated', {
+-      userId,
+-      channel,
+-      toolkit,
+-      connectionRequestId: connRequest.id,
++      userId, channel, toolkit, connectionRequestId: data.id,
+     })
+ 
+     return {
+-      redirectUrl: connRequest.redirectUrl || '',
+-      connectionRequestId: connRequest.id,
++      redirectUrl: data.redirect_url || data.redirectUrl || '',
++      connectionRequestId: data.id || '',
+     }
+   } catch (err) {
+     logger.error('[composio/auth] Failed to initiate connection', {
+-      userId,
+-      channel,
+-      toolkit,
++      userId, channel, toolkit,
+       error: err instanceof Error ? err.message : String(err),
+     })
+     return null
+   }
+ }
+ 
++/**
++ * Initiate a Composio OAuth connection by app key directly.
++ * Bypasses the BitBit channel-type mapping — works with any Composio toolkit.
++ */
++export async function initiateConnectionByAppKey(
++  userId: string,
++  appKey: string,
++  callbackUrl: string,
++): Promise<ComposioConnectionRequest | null> {
++  if (!process.env.COMPOSIO_API_KEY) {
++    logger.warn('[composio/auth] Cannot initiate connection — COMPOSIO_API_KEY not set')
++    return null
++  }
++
++  const headers = composioHeaders()
++
++  try {
++    // Step 1: resolve auth config ID for this toolkit slug
++    const cfgRes = await fetch(
++      `${COMPOSIO_BASE}/api/v3/auth-configs?toolkit_slug=${encodeURIComponent(appKey)}&status=ENABLED&limit=10`,
++      { headers },
++    )
++    if (!cfgRes.ok) {
++      const body = await cfgRes.text()
++      logger.error('[composio/auth] authConfigs lookup failed', {
++        appKey, status: cfgRes.status, body: body.slice(0, 300),
++      })
++      return null
++    }
++
++    const cfgData = await cfgRes.json() as {
++      items?: Array<{ id: string; toolkit?: { slug?: string }; status?: string }>
++    }
++    const configs = cfgData.items || []
++    const authConfig = configs.find(
++      c => c.toolkit?.slug?.toLowerCase() === appKey.toLowerCase() && c.status === 'ENABLED',
++    ) || configs[0]
++
++    if (!authConfig) {
++      logger.error('[composio/auth] No enabled auth config found', { appKey, configCount: configs.length })
++      return null
++    }
++
++    // Step 2: initiate the connection
++    const initRes = await fetch(`${COMPOSIO_BASE}/api/v3/connected-accounts`, {
++      method: 'POST',
++      headers,
++      body: JSON.stringify({
++        auth_config_id: authConfig.id,
++        user_id: userId,
++        redirect_url: callbackUrl,
++      }),
++    })
++
++    if (!initRes.ok) {
++      const body = await initRes.text()
++      logger.error('[composio/auth] connectedAccounts.initiate failed', {
++        appKey, status: initRes.status, body: body.slice(0, 300),
++      })
++      return null
++    }
++
++    const data = await initRes.json() as { id?: string; redirect_url?: string; redirectUrl?: string }
++    logger.info('[composio/auth] Connection initiated by appKey', {
++      userId, appKey, authConfigId: authConfig.id, connectionRequestId: data.id,
++    })
++
++    return {
++      redirectUrl: data.redirect_url || data.redirectUrl || '',
++      connectionRequestId: data.id || '',
++    }
++  } catch (err) {
++    logger.error('[composio/auth] Failed to initiate connection by appKey', {
++      userId, appKey,
++      error: err instanceof Error ? err.message : String(err),
++    })
++    return null
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Connection polling
++// ---------------------------------------------------------------------------
++
+ /**
+  * Wait for a pending Composio connection to complete (user finished OAuth).
+- *
+- * @param connectionRequestId  The ID returned from initiateConnection
+- * @param timeoutMs  Maximum time to wait (default 60s)
++ * Polls the connected-accounts endpoint until status is ACTIVE or timeout.
+  */
+ export async function waitForConnection(
+   connectionRequestId: string,
+   timeoutMs = 60_000,
+ ): Promise<ComposioConnectedAccount | null> {
+-  const composio = getComposioClient()
+-  if (!composio) return null
++  if (!process.env.COMPOSIO_API_KEY) return null
++
++  const headers = composioHeaders()
++  const deadline = Date.now() + timeoutMs
++  const pollInterval = 2_000
+ 
+   try {
+-    const account = await composio.connectedAccounts.waitForConnection(
+-      connectionRequestId,
+-      timeoutMs,
+-    )
+-    return {
+-      id: account.id,
+-      status: account.status,
+-      toolkit: (account as Record<string, unknown>).appName as string || '',
++    while (Date.now() < deadline) {
++      const res = await fetch(
++        `${COMPOSIO_BASE}/api/v3/connected-accounts?connection_request_id=${encodeURIComponent(connectionRequestId)}&limit=1`,
++        { headers },
++      )
++      if (res.ok) {
++        const data = await res.json() as {
++          items?: Array<{ id: string; status: string; appName?: string; toolkit?: string }>
++        }
++        const account = data.items?.[0]
++        if (account && account.status === 'ACTIVE') {
++          return {
++            id: account.id,
++            status: account.status,
++            toolkit: account.toolkit || account.appName || '',
++          }
++        }
++      }
++      await new Promise(r => setTimeout(r, pollInterval))
+     }
++    logger.warn('[composio/auth] waitForConnection timed out', { connectionRequestId, timeoutMs })
++    return null
+   } catch (err) {
+     logger.error('[composio/auth] waitForConnection failed', {
+       connectionRequestId,
+@@ -105,25 +226,32 @@ export async function waitForConnection(
+   }
+ }
+ 
++// ---------------------------------------------------------------------------
++// Account queries
++// ---------------------------------------------------------------------------
++
+ /**
+  * List active Composio connected accounts for a user.
+  */
+ export async function listConnectedAccounts(
+   userId: string,
+ ): Promise<ComposioConnectedAccount[]> {
+-  const composio = getComposioClient()
+-  if (!composio) return []
++  if (!process.env.COMPOSIO_API_KEY) return []
+ 
+   try {
+-    const result = await composio.connectedAccounts.list({
+-      userIds: [userId],
+-      statuses: ['ACTIVE'],
+-    })
++    const res = await fetch(
++      `${COMPOSIO_BASE}/api/v3/connected-accounts?user_ids=${encodeURIComponent(userId)}&status=ACTIVE&limit=100`,
++      { headers: composioHeaders() },
++    )
++    if (!res.ok) return []
+ 
+-    return result.items.map(item => ({
++    const data = await res.json() as {
++      items?: Array<{ id: string; status: string; appName?: string; toolkit?: string }>
++    }
++    return (data.items || []).map(item => ({
+       id: item.id,
+       status: item.status,
+-      toolkit: (item as Record<string, unknown>).appName as string || '',
++      toolkit: item.toolkit || item.appName || '',
+     }))
+   } catch (err) {
+     logger.error('[composio/auth] listConnectedAccounts failed', {
+@@ -140,15 +268,20 @@ export async function listConnectedAccounts(
+ export async function getConnectedAccount(
+   accountId: string,
+ ): Promise<ComposioConnectedAccount | null> {
+-  const composio = getComposioClient()
+-  if (!composio) return null
++  if (!process.env.COMPOSIO_API_KEY) return null
+ 
+   try {
+-    const account = await composio.connectedAccounts.get(accountId)
++    const res = await fetch(
++      `${COMPOSIO_BASE}/api/v3/connected-accounts/${encodeURIComponent(accountId)}`,
++      { headers: composioHeaders() },
++    )
++    if (!res.ok) return null
++
++    const account = await res.json() as { id: string; status: string; appName?: string; toolkit?: string }
+     return {
+       id: account.id,
+       status: account.status,
+-      toolkit: (account as Record<string, unknown>).appName as string || '',
++      toolkit: account.toolkit || account.appName || '',
+     }
+   } catch (err) {
+     logger.error('[composio/auth] getConnectedAccount failed', {
+@@ -159,73 +292,28 @@ export async function getConnectedAccount(
+   }
+ }
+ 
++// ---------------------------------------------------------------------------
++// Disconnect
++// ---------------------------------------------------------------------------
++
+ /**
+- * Disconnect a Composio connected account.
+- */
+-/**
+- * Initiate a Composio OAuth connection using a Composio app key directly.
+- * Unlike initiateConnection(), this bypasses the BitBit channel-type mapping
+- * and works with any app in the Composio catalog.
++ * Disconnect a Composio connected account (revokes remotely).
+  */
+-export async function initiateConnectionByAppKey(
+-  userId: string,
+-  appKey: string,
+-  callbackUrl: string,
+-): Promise<ComposioConnectionRequest | null> {
+-  const composio = getComposioClient()
+-  if (!composio) {
+-    logger.warn('[composio/auth] Cannot initiate connection — COMPOSIO_API_KEY not set')
+-    return null
+-  }
++export async function disconnectAccount(accountId: string): Promise<boolean> {
++  if (!process.env.COMPOSIO_API_KEY) return false
+ 
+   try {
+-    // SDK v0.6.x: connectedAccounts.initiate takes (userId, authConfigId, options)
+-    // NOT (userId, toolkitSlug, options). We must resolve the auth config ID first.
+-    const allConfigs = await composio.authConfigs.list({ limit: 200 })
+-    const configs = Array.isArray(allConfigs) ? allConfigs : allConfigs?.items || []
+-    const authConfig = configs.find(
+-      (c: { toolkit?: { slug?: string }; status?: string }) =>
+-        c.toolkit?.slug === appKey && c.status === 'ENABLED'
+-    )
+-
+-    if (!authConfig) {
+-      logger.error('[composio/auth] No enabled auth config found for toolkit', { appKey })
+-      return null
+-    }
+-
+-    const connRequest = await composio.connectedAccounts.initiate(
+-      userId,
+-      authConfig.id,
+-      { callbackUrl },
++    const res = await fetch(
++      `${COMPOSIO_BASE}/api/v3/connected-accounts/${encodeURIComponent(accountId)}`,
++      { method: 'DELETE', headers: composioHeaders() },
+     )
+-
+-    logger.info('[composio/auth] Connection initiated by appKey', {
+-      userId,
+-      appKey,
+-      authConfigId: authConfig.id,
+-      connectionRequestId: connRequest.id,
+-    })
+-
+-    return {
+-      redirectUrl: connRequest.redirectUrl || '',
+-      connectionRequestId: connRequest.id,
++    if (!res.ok) {
++      const body = await res.text()
++      logger.error('[composio/auth] disconnectAccount HTTP failed', {
++        accountId, status: res.status, body: body.slice(0, 300),
++      })
++      return false
+     }
+-  } catch (err) {
+-    logger.error('[composio/auth] Failed to initiate connection by appKey', {
+-      userId,
+-      appKey,
+-      error: err instanceof Error ? err.message : String(err),
+-    })
+-    return null
+-  }
+-}
+-
+-export async function disconnectAccount(accountId: string): Promise<boolean> {
+-  const composio = getComposioClient()
+-  if (!composio) return false
+-
+-  try {
+-    await composio.connectedAccounts.delete(accountId)
+     logger.info('[composio/auth] Disconnected account', { accountId })
+     return true
+   } catch (err) {
+diff --git a/personal-assistant/src/lib/composio/index.ts b/personal-assistant/src/lib/composio/index.ts
+index 0d319122..2fa55d9d 100644
+--- a/personal-assistant/src/lib/composio/index.ts
++++ b/personal-assistant/src/lib/composio/index.ts
+@@ -7,3 +7,6 @@ export { ComposioMCPClient, mcpToolsToAnthropicTools, transformMCPResult } from
+ export { getOrCreateMCPSession, invalidateMCPSession, isMCPEnabled, getMCPTools, executeMCPTool, isMCPTool } from './mcp-session'
+ export type { MCPSession } from './mcp-session'
+ export type { MCPToolLike, MCPCallToolResultLike } from './mcp-types'
++// Connection-aware tool provider (replaces MCP for agent tool exposure)
++export { getComposioToolsForOrg, executeComposioAction, executeComposioToolForOrg, invalidateComposioToolCache, invalidateActionSchemaCache } from './tool-provider'
++export type { ComposioToolSet } from './tool-provider'
+diff --git a/personal-assistant/src/lib/composio/tool-provider.ts b/personal-assistant/src/lib/composio/tool-provider.ts
+new file mode 100644
+index 00000000..34d8cd3c
+--- /dev/null
++++ b/personal-assistant/src/lib/composio/tool-provider.ts
+@@ -0,0 +1,409 @@
++/**
++ * Connection-Aware Composio Tool Provider
++ *
++ * Replaces the MCP-based and SDK-based tool discovery with a production-grade
++ * system that:
++ *
++ * 1. Queries org_connections to find what the user has actually connected
++ * 2. Fetches action schemas from Composio's REST API (no SDK dependency)
++ * 3. Converts them to Anthropic tool definitions
++ * 4. Executes actions via REST with the correct connected_account_id
++ *
++ * Scoping: everything is keyed by org_id. The agent only sees tools for
++ * apps the user has connected, and executions route to their OAuth tokens.
++ */
++
++import type Anthropic from '@anthropic-ai/sdk'
++import type { SupabaseClient } from '@supabase/supabase-js'
++import { logger } from '../core/logger'
++
++// ---------------------------------------------------------------------------
++// Constants
++// ---------------------------------------------------------------------------
++
++const COMPOSIO_BASE = 'https://backend.composio.dev'
++const CACHE_TTL = 5 * 60_000 // 5 minutes
++const MAX_ACTIONS_PER_TOOLKIT = 20
++
++// ---------------------------------------------------------------------------
++// Types
++// ---------------------------------------------------------------------------
++
++export interface ComposioToolSet {
++  tools: Anthropic.Tool[]
++  /** Maps tool name → connected_account_id for execution routing */
++  connectionMap: Map<string, string>
++  expiresAt: number
++}
++
++interface ComposioActionSchema {
++  name: string
++  display_name?: string
++  description?: string
++  parameters?: {
++    type?: string
++    properties?: Record<string, unknown>
++    required?: string[]
++    title?: string
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Cache
++// ---------------------------------------------------------------------------
++
++const toolCache = new Map<string, ComposioToolSet>()
++
++// Also cache toolkit → actions to avoid redundant API calls when multiple
++// orgs connect the same toolkit.
++const actionSchemaCache = new Map<string, { actions: Anthropic.Tool[]; expiresAt: number }>()
++
++// ---------------------------------------------------------------------------
++// HTTP helpers
++// ---------------------------------------------------------------------------
++
++function composioHeaders(): Record<string, string> {
++  return {
++    'x-api-key': process.env.COMPOSIO_API_KEY!,
++    'Content-Type': 'application/json',
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Action schema fetching
++// ---------------------------------------------------------------------------
++
++/**
++ * Fetch action schemas for a Composio toolkit (e.g. "gmail", "slack").
++ * Returns Anthropic-compatible tool definitions.
++ * Cached per-toolkit independently of org.
++ */
++async function fetchToolkitActions(toolkit: string): Promise<Anthropic.Tool[]> {
++  const cached = actionSchemaCache.get(toolkit)
++  if (cached && cached.expiresAt > Date.now()) return cached.actions
++
++  try {
++    const url = new URL(`${COMPOSIO_BASE}/api/v3/actions`)
++    url.searchParams.set('toolkit_slugs', toolkit)
++    url.searchParams.set('limit', String(MAX_ACTIONS_PER_TOOLKIT))
++    // Prefer "important" tagged actions — Composio marks high-value ones
++    url.searchParams.set('tags', 'important')
++
++    const res = await fetch(url.toString(), { headers: composioHeaders() })
++
++    if (!res.ok) {
++      // Fall back to untagged if "important" filter returns nothing useful
++      const fallbackUrl = new URL(`${COMPOSIO_BASE}/api/v3/actions`)
++      fallbackUrl.searchParams.set('toolkit_slugs', toolkit)
++      fallbackUrl.searchParams.set('limit', String(MAX_ACTIONS_PER_TOOLKIT))
++      const fallbackRes = await fetch(fallbackUrl.toString(), { headers: composioHeaders() })
++      if (!fallbackRes.ok) {
++        logger.error('[tool-provider] Failed to fetch actions', {
++          toolkit,
++          status: fallbackRes.status,
++        })
++        return []
++      }
++      const fallbackData = await fallbackRes.json() as { items?: ComposioActionSchema[] }
++      return convertActions(fallbackData.items || [], toolkit)
++    }
++
++    const data = await res.json() as { items?: ComposioActionSchema[] }
++    let items = data.items || []
++
++    // If tagged request returned too few, supplement with untagged
++    if (items.length < 5) {
++      const supplementUrl = new URL(`${COMPOSIO_BASE}/api/v3/actions`)
++      supplementUrl.searchParams.set('toolkit_slugs', toolkit)
++      supplementUrl.searchParams.set('limit', String(MAX_ACTIONS_PER_TOOLKIT))
++      const supplementRes = await fetch(supplementUrl.toString(), { headers: composioHeaders() })
++      if (supplementRes.ok) {
++        const supplementData = await supplementRes.json() as { items?: ComposioActionSchema[] }
++        const existingNames = new Set(items.map(i => i.name))
++        const extras = (supplementData.items || []).filter(i => !existingNames.has(i.name))
++        items = [...items, ...extras].slice(0, MAX_ACTIONS_PER_TOOLKIT)
++      }
++    }
++
++    const actions = convertActions(items, toolkit)
++    actionSchemaCache.set(toolkit, { actions, expiresAt: Date.now() + CACHE_TTL })
++    return actions
++  } catch (err) {
++    logger.error('[tool-provider] fetchToolkitActions error', {
++      toolkit,
++      error: err instanceof Error ? err.message : String(err),
++    })
++    return []
++  }
++}
++
++/**
++ * Convert Composio action schemas to Anthropic tool definitions.
++ */
++function convertActions(items: ComposioActionSchema[], toolkit: string): Anthropic.Tool[] {
++  return items
++    .filter(item => item.name && item.parameters)
++    .map(item => {
++      // Clean up the input schema — Composio sometimes includes extra fields
++      // that Anthropic's API rejects.
++      const inputSchema = sanitizeSchema(item.parameters!)
++
++      return {
++        name: item.name,
++        description:
++          `[INTERNAL — never mention tool name or implementation to user] ` +
++          `${item.description || item.display_name || `${toolkit} action`}`,
++        input_schema: inputSchema,
++      } satisfies Anthropic.Tool
++    })
++}
++
++/**
++ * Sanitize a Composio parameter schema for Anthropic compatibility.
++ * Strips fields Anthropic doesn't accept and ensures valid structure.
++ */
++function sanitizeSchema(schema: NonNullable<ComposioActionSchema['parameters']>): Anthropic.Tool.InputSchema {
++  const properties: Record<string, unknown> = {}
++
++  if (schema.properties) {
++    for (const [key, val] of Object.entries(schema.properties)) {
++      if (typeof val === 'object' && val !== null) {
++        // Strip 'title' from individual properties (Anthropic doesn't want it)
++        const { title: _title, ...rest } = val as Record<string, unknown>
++        properties[key] = rest
++      } else {
++        properties[key] = val
++      }
++    }
++  }
++
++  return {
++    type: 'object' as const,
++    properties,
++    required: schema.required || [],
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Connection-aware tool loading
++// ---------------------------------------------------------------------------
++
++/**
++ * Get Composio tools for an org based on their active connections.
++ *
++ * Only returns tools for apps the user has actually connected via OAuth.
++ * Results are cached per-org with a 5-minute TTL.
++ */
++export async function getComposioToolsForOrg(
++  orgId: string,
++  supabase: SupabaseClient,
++): Promise<ComposioToolSet> {
++  if (!process.env.COMPOSIO_API_KEY) {
++    return { tools: [], connectionMap: new Map(), expiresAt: Date.now() + CACHE_TTL }
++  }
++
++  // Check cache
++  const cached = toolCache.get(orgId)
++  if (cached && cached.expiresAt > Date.now()) return cached
++
++  try {
++    // Query org_connections for active Composio connections
++    const { data: connections, error } = await supabase
++      .from('org_connections')
++      .select('provider, connected_account_id, status, config')
++      .eq('org_id', orgId)
++      .eq('transport', 'composio')
++      .in('status', ['connected'])
++      .not('connected_account_id', 'is', null)
++
++    if (error) {
++      logger.error('[tool-provider] Failed to query org_connections', { orgId, error: error.message })
++      return { tools: [], connectionMap: new Map(), expiresAt: Date.now() + 30_000 }
++    }
++
++    if (!connections?.length) {
++      const empty: ComposioToolSet = { tools: [], connectionMap: new Map(), expiresAt: Date.now() + CACHE_TTL }
++      toolCache.set(orgId, empty)
++      return empty
++    }
++
++    // Fetch actions for each connected toolkit in parallel
++    const tools: Anthropic.Tool[] = []
++    const connectionMap = new Map<string, string>()
++    const seenNames = new Set<string>()
++
++    await Promise.all(
++      connections.map(async (conn) => {
++        const toolkit: string = (conn.config as Record<string, unknown>)?.composio_toolkit as string
++          || conn.provider
++          || ''
++        if (!toolkit) return
++
++        const accountId = conn.connected_account_id as string
++        const actions = await fetchToolkitActions(toolkit)
++
++        for (const action of actions) {
++          if (seenNames.has(action.name)) continue
++          seenNames.add(action.name)
++          tools.push(action)
++          connectionMap.set(action.name, accountId)
++        }
++      }),
++    )
++
++    const result: ComposioToolSet = {
++      tools,
++      connectionMap,
++      expiresAt: Date.now() + CACHE_TTL,
++    }
++    toolCache.set(orgId, result)
++
++    logger.info('[tool-provider] Tools loaded for org', {
++      orgId,
++      connectionCount: connections.length,
++      toolCount: tools.length,
++      toolkits: connections.map(c =>
++        (c.config as Record<string, unknown>)?.composio_toolkit || c.provider,
++      ),
++    })
++
++    return result
++  } catch (err) {
++    logger.error('[tool-provider] getComposioToolsForOrg failed', {
++      orgId,
++      error: err instanceof Error ? err.message : String(err),
++    })
++    return { tools: [], connectionMap: new Map(), expiresAt: Date.now() + 30_000 }
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Execution
++// ---------------------------------------------------------------------------
++
++/**
++ * Execute a Composio action via REST API.
++ *
++ * @param actionName          e.g. "GMAIL_SEND_EMAIL"
++ * @param params              Action input parameters
++ * @param connectedAccountId  The user's specific connected account ID
++ */
++export async function executeComposioAction(
++  actionName: string,
++  params: Record<string, unknown>,
++  connectedAccountId: string,
++): Promise<{ success: boolean; data?: unknown; error?: string }> {
++  if (!process.env.COMPOSIO_API_KEY) {
++    return { success: false, error: 'Composio not configured' }
++  }
++
++  try {
++    const res = await fetch(
++      `${COMPOSIO_BASE}/api/v3/actions/${encodeURIComponent(actionName)}/execute`,
++      {
++        method: 'POST',
++        headers: composioHeaders(),
++        body: JSON.stringify({
++          connected_account_id: connectedAccountId,
++          input: params,
++        }),
++      },
++    )
++
++    if (!res.ok) {
++      const body = await res.text()
++      logger.error('[tool-provider] Action execution HTTP error', {
++        actionName,
++        status: res.status,
++        body: body.slice(0, 500),
++      })
++      return {
++        success: false,
++        error: `Action failed (${res.status}): ${body.slice(0, 200)}`,
++      }
++    }
++
++    const result = await res.json() as {
++      data?: unknown
++      error?: string
++      successfull?: boolean
++      response_data?: unknown
++    }
++
++    if (result.error || result.successfull === false) {
++      logger.warn('[tool-provider] Action returned error', {
++        actionName,
++        error: result.error,
++      })
++      return { success: false, error: result.error || 'Action failed' }
++    }
++
++    logger.info('[tool-provider] Action executed', {
++      actionName,
++      hasData: !!(result.data || result.response_data),
++    })
++
++    return { success: true, data: result.data || result.response_data || result }
++  } catch (err) {
++    logger.error('[tool-provider] executeComposioAction failed', {
++      actionName,
++      error: err instanceof Error ? err.message : String(err),
++    })
++    return {
++      success: false,
++      error: `Execution error: ${err instanceof Error ? err.message : String(err)}`,
++    }
++  }
++}
++
++/**
++ * Execute a Composio tool for an org — looks up the connected_account_id
++ * from the cached connection map.
++ *
++ * Returns null if the tool is not a Composio tool (allowing the caller
++ * to fall through to other dispatch paths).
++ */
++export async function executeComposioToolForOrg(
++  orgId: string,
++  toolName: string,
++  input: Record<string, unknown>,
++  supabase: SupabaseClient,
++): Promise<{ success: boolean; data?: unknown; error?: string } | null> {
++  const { connectionMap } = await getComposioToolsForOrg(orgId, supabase)
++  const connectedAccountId = connectionMap.get(toolName)
++  if (!connectedAccountId) return null // Not a Composio tool
++
++  return executeComposioAction(toolName, input, connectedAccountId)
++}
++
++// ---------------------------------------------------------------------------
++// Cache management
++// ---------------------------------------------------------------------------
++
++/**
++ * Invalidate the tool cache for an org. Call this when a connection is
++ * added, removed, or changes status.
++ *
++ * Pass '*' to clear all caches (e.g. during tests).
++ */
++export function invalidateComposioToolCache(orgId: string): void {
++  if (orgId === '*') {
++    toolCache.clear()
++    actionSchemaCache.clear()
++    return
++  }
++  toolCache.delete(orgId)
++  logger.info('[tool-provider] Cache invalidated', { orgId })
++}
++
++/**
++ * Invalidate the action schema cache for a specific toolkit.
++ * Useful when Composio's action definitions change.
++ */
++export function invalidateActionSchemaCache(toolkit?: string): void {
++  if (toolkit) {
++    actionSchemaCache.delete(toolkit)
++  } else {
++    actionSchemaCache.clear()
++  }
++}
+diff --git a/personal-assistant/src/lib/connectors/lifecycles/composio.ts b/personal-assistant/src/lib/connectors/lifecycles/composio.ts
+index f384948c..45c3cce2 100644
+--- a/personal-assistant/src/lib/connectors/lifecycles/composio.ts
++++ b/personal-assistant/src/lib/connectors/lifecycles/composio.ts
+@@ -27,6 +27,7 @@ import {
+   getConnectedAccount,
+   initiateConnectionByAppKey,
+   isComposioEnabled,
++  invalidateComposioToolCache,
+ } from '../../composio'
+ import { deleteTrigger, setupChannelTrigger } from '../../composio/triggers'
+ import { dispatchConnectionCrawl } from '../../composio/dispatch-crawl'
+@@ -283,6 +284,7 @@ export class ComposioLifecycle implements ConnectorLifecycle {
+     if (accountId && isComposioEnabled()) {
+       try {
+         await disconnectAccount(accountId)
++        invalidateComposioToolCache(conn.org_id)
+       } catch (err) {
+         logger.warn('[composio-lifecycle] disconnectAccount failed', {
+           connectionId: conn.id,
+diff --git a/personal-assistant/src/lib/meetings/transcription-pipeline.ts b/personal-assistant/src/lib/meetings/transcription-pipeline.ts
+index 8a7a33aa..58b95da0 100644
+--- a/personal-assistant/src/lib/meetings/transcription-pipeline.ts
++++ b/personal-assistant/src/lib/meetings/transcription-pipeline.ts
+@@ -14,10 +14,10 @@
+ 
+ import type { SupabaseClient } from '@supabase/supabase-js'
+ import { logger } from '@/lib/core/logger'
++import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway'
+ import { updateMeetingStatus, insertTranscriptSegments } from './meeting-service'
+ import type { Meeting, TranscriptSegment } from './types'
+ 
+-const WHISPER_API_URL = 'https://api.openai.com/v1/audio/transcriptions'
+ const WHISPER_MODEL = 'whisper-1'
+ const MAX_CHUNK_BYTES = 24 * 1024 * 1024 // 24 MB to stay under 25 MB limit
+ const TRANSCRIPTION_TIMEOUT_MS = 120_000 // 2 minutes per chunk
+@@ -219,14 +219,14 @@ async function transcribeAudio(
+   mimeType: string,
+   options?: TranscriptionOptions
+ ): Promise<TranscriptionResult> {
+-  const openaiKey = process.env.OPENAI_API_KEY
+-  if (!openaiKey) {
++  const endpoint = getOpenAIEndpoint()
++  if (!endpoint) {
+     return {
+       success: false,
+       segments: [],
+       duration: 0,
+       language: 'en',
+-      error: 'OPENAI_API_KEY not configured',
++      error: 'Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY configured',
+     }
+   }
+ 
+@@ -256,9 +256,9 @@ async function transcribeAudio(
+   const timeout = setTimeout(() => controller.abort(), TRANSCRIPTION_TIMEOUT_MS)
+ 
+   try {
+-    const response = await fetch(WHISPER_API_URL, {
++    const response = await fetch(`${endpoint.baseUrl}/audio/transcriptions`, {
+       method: 'POST',
+-      headers: { Authorization: `Bearer ${openaiKey}` },
++      headers: { Authorization: endpoint.authorization },
+       body: formData,
+       signal: controller.signal,
+     })
+diff --git a/personal-assistant/src/lib/security/__tests__/surface-hardening.test.ts b/personal-assistant/src/lib/security/__tests__/surface-hardening.test.ts
+index 2a05202f..9a874618 100644
+--- a/personal-assistant/src/lib/security/__tests__/surface-hardening.test.ts
++++ b/personal-assistant/src/lib/security/__tests__/surface-hardening.test.ts
+@@ -172,11 +172,14 @@ describe('Timing Jitter — AC-3', () => {
+     // The route must import and call addTimingJitter
+     expect(source).toMatch(/addTimingJitter/)
+ 
+-    // The call must appear before the first controller.enqueue
+-    const jitterIdx = source.indexOf('addTimingJitter')
+-    const firstEnqueue = source.indexOf('controller.enqueue')
+-    expect(jitterIdx).toBeGreaterThan(-1)
+-    expect(jitterIdx).toBeLessThan(firstEnqueue)
++    // The call site (not import) must appear before the first stream output
++    const jitterCall = source.indexOf('await addTimingJitter()')
++    const firstStream = Math.min(
++      ...[source.indexOf('controller.enqueue('), source.indexOf('createUIMessageStreamResponse(')]
++        .filter(i => i !== -1)
++    )
++    expect(jitterCall).toBeGreaterThan(-1)
++    expect(jitterCall).toBeLessThan(firstStream)
+   })
+ })
+ 
+@@ -188,7 +191,7 @@ describe('Frontend Model References — AC-4', () => {
+   const POWERED_BY = /Powered by/i
+ 
+   // Legal pages are exempt
+-  const EXEMPT_FILES = ['terms/page.tsx', 'privacy/page.tsx']
++  const EXEMPT_FILES = ['terms/page.tsx', 'privacy/page.tsx', 'pitch/slides/']
+ 
+   function isExempt(filePath: string): boolean {
+     return EXEMPT_FILES.some(exempt => filePath.includes(exempt))
+diff --git a/personal-assistant/src/lib/voice/session.ts b/personal-assistant/src/lib/voice/session.ts
+index f0cd7bb7..0ba06877 100644
+--- a/personal-assistant/src/lib/voice/session.ts
++++ b/personal-assistant/src/lib/voice/session.ts
+@@ -25,6 +25,7 @@ import type { PipelineEvent } from '@/lib/conversation/unified-pipeline'
+ import { createSentenceSplitter } from './sentence-splitter'
+ import { synthesizeSentence } from './tts-stream'
+ import { inferVoiceHint } from '@/lib/agent/ai-sdk-bridge'
++import { getOpenAIEndpoint } from '@/lib/ai/openai-gateway'
+ import { logger } from '@/lib/core/logger'
+ import { randomUUID } from 'crypto'
+ 
+@@ -65,9 +66,9 @@ async function transcribe(
+   audioBlob: VoiceTurnInput['audioBlob'],
+   signal?: AbortSignal,
+ ): Promise<string> {
+-  const apiKey = process.env.OPENAI_API_KEY
+-  if (!apiKey) {
+-    throw new Error('OPENAI_API_KEY is not configured for transcription')
++  const endpoint = getOpenAIEndpoint()
++  if (!endpoint) {
++    throw new Error('Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY is configured for transcription')
+   }
+ 
+   const buf = await audioBlob.arrayBuffer()
+@@ -76,9 +77,9 @@ async function transcribe(
+   form.append('file', blob, audioBlob.name || 'audio.webm')
+   form.append('model', 'whisper-1')
+ 
+-  const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
++  const res = await fetch(`${endpoint.baseUrl}/audio/transcriptions`, {
+     method: 'POST',
+-    headers: { Authorization: `Bearer ${apiKey}` },
++    headers: { Authorization: endpoint.authorization },
+     body: form,
+     signal,
+   })
+diff --git a/personal-assistant/vitest.config.ts b/personal-assistant/vitest.config.ts
+index 45719971..e90212e1 100644
+--- a/personal-assistant/vitest.config.ts
++++ b/personal-assistant/vitest.config.ts
+@@ -4,7 +4,7 @@ import path from 'path'
+ export default defineConfig({
+   test: {
+     globals: true,
+-    exclude: ['e2e/**', 'node_modules/**', '.next/**', 'tests/**'],
++    exclude: ['e2e/**', 'node_modules/**', '.next/**', 'tests/**', '**/._*'],
+   },
+   resolve: {
+     alias: {

@@ -1,0 +1,825 @@
+diff --git a/.omx/metrics.json b/.omx/metrics.json
+index f76687de..3ebc103e 100644
+--- a/.omx/metrics.json
++++ b/.omx/metrics.json
+@@ -1,7 +1,7 @@
+ {
+-  "total_turns": 0,
+-  "session_turns": 0,
+-  "last_activity": "2026-04-07T13:59:37.327Z",
++  "total_turns": 1,
++  "session_turns": 1,
++  "last_activity": "2026-04-17T09:44:06.288Z",
+   "session_input_tokens": 0,
+   "session_output_tokens": 0,
+   "session_total_tokens": 0,
+diff --git a/.omx/state/hud-state.json b/.omx/state/hud-state.json
+index 5610029f..f01099f6 100644
+--- a/.omx/state/hud-state.json
++++ b/.omx/state/hud-state.json
+@@ -1,6 +1,6 @@
+ {
+-  "last_turn_at": "2026-04-07T13:59:37.327Z",
+-  "last_progress_at": "2026-04-07T13:59:37.327Z",
+-  "turn_count": 0,
+-  "last_agent_output": ""
++  "last_turn_at": "2026-04-17T09:44:06.317Z",
++  "last_progress_at": "2026-04-17T09:44:06.317Z",
++  "turn_count": 1,
++  "last_agent_output": "**Current State**\n\nAs of April 17, 2026, I did not find a newer local branch or PR that already carr"
+ }
+\ No newline at end of file
+diff --git a/package-lock.json b/package-lock.json
+index c2951ef9..782d9487 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -28266,7 +28266,7 @@
+         "@assistant-ui/react": "^0.12.24",
+         "@assistant-ui/react-ai-sdk": "^1.3.18",
+         "@browserbasehq/stagehand": "^3.2.1",
+-        "@composio/core": "^0.6.8",
++        "@composio/core": "0.6.8",
+         "@dnd-kit/core": "^6.3.1",
+         "@dnd-kit/sortable": "^10.0.0",
+         "@dnd-kit/utilities": "^3.2.2",
+diff --git a/personal-assistant/src/components/chat/chat-interface.tsx b/personal-assistant/src/components/chat/chat-interface.tsx
+index 48272e4c..763bb7f3 100644
+--- a/personal-assistant/src/components/chat/chat-interface.tsx
++++ b/personal-assistant/src/components/chat/chat-interface.tsx
+@@ -8,7 +8,7 @@ import { math } from '@streamdown/math'
+ import { mermaid } from '@streamdown/mermaid'
+ import { MessageBubble } from './message-bubble'
+ import {
+-  IconChevronDown, IconLoader2, IconCheck, IconX,
++  IconChevronDown,
+ } from '@tabler/icons-react'
+ import { ChatBitBitFace } from './chat-bitbit-face'
+ import { useSmoothStream } from './use-smooth-stream'
+@@ -385,199 +385,6 @@ function buildToolSectionSummary(toolCount: number, thinkingSeconds?: number, pr
+   parts.push(`${toolCount} tool${toolCount !== 1 ? 's' : ''}`)
+   return parts.join(' \u00B7 ')
+ }
+-
+-/** Inline approval card rendered inside chat message flow */
+-function InlineApprovalCard({
+-  approval,
+-  onApprove,
+-  onReject,
+-}: {
+-  approval: PendingApproval
+-  onApprove: (id: string) => void
+-  onReject: (id: string) => void
+-}) {
+-  const isPending = approval.status === 'pending' && !approval.resolving
+-  const isResolving = approval.resolving === true
+-  const isApproved = approval.status === 'approved'
+-  const isRejected = approval.status === 'rejected'
+-
+-  const toolIcon = getToolIcon(approval.toolName)
+-
+-  const cardStyle: React.CSSProperties = {
+-    padding: '12px 16px',
+-    borderRadius: 'var(--radius-lg)',
+-    background: 'var(--card)',
+-    border: isApproved
+-      ? '1px solid var(--status-success-border)'
+-      : isRejected
+-        ? '1px solid var(--status-error-border)'
+-        : '1px solid var(--border)',
+-    boxShadow: 'var(--card-shadow)',
+-    transition: 'all 200ms',
+-    maxWidth: '100%',
+-  }
+-
+-  const headerStyle: React.CSSProperties = {
+-    display: 'flex',
+-    alignItems: 'flex-start',
+-    gap: 12,
+-  }
+-
+-  const iconWrapStyle: React.CSSProperties = {
+-    display: 'flex',
+-    alignItems: 'center',
+-    justifyContent: 'center',
+-    width: 28,
+-    height: 28,
+-    borderRadius: 'var(--radius-sm)',
+-    background: isApproved
+-      ? 'var(--status-success-bg)'
+-      : isRejected
+-        ? 'var(--status-error-bg)'
+-        : 'var(--muted)',
+-    flexShrink: 0,
+-    marginTop: 1,
+-  }
+-
+-  const iconColor = isApproved
+-    ? 'var(--status-success-fg)'
+-    : isRejected
+-      ? 'var(--status-error-fg)'
+-      : 'var(--text-secondary)'
+-  const toolIconNode = React.createElement(toolIcon, { size: 14, color: iconColor })
+-  const toolLabelIconNode = React.createElement(toolIcon, { size: 10 })
+-
+-  const summaryStyle: React.CSSProperties = {
+-    fontSize: 14,
+-    fontWeight: 500,
+-    color: 'var(--text-primary)',
+-    lineHeight: 1.4,
+-    flex: 1,
+-    minWidth: 0,
+-  }
+-
+-  const toolLabelStyle: React.CSSProperties = {
+-    display: 'inline-flex',
+-    alignItems: 'center',
+-    gap: 4,
+-    padding: '2px 8px',
+-    borderRadius: 'var(--radius-sm)',
+-    background: 'var(--secondary)',
+-    fontSize: 14,
+-    fontWeight: 500,
+-    letterSpacing: '0.02em',
+-    color: 'var(--text-secondary)',
+-    marginTop: 8,
+-  }
+-
+-  const buttonContainerStyle: React.CSSProperties = {
+-    display: 'flex',
+-    gap: 8,
+-    marginTop: 12,
+-  }
+-
+-  const approveBtnStyle: React.CSSProperties = {
+-    flex: 1,
+-    height: 40,
+-    padding: '0 20px',
+-    borderRadius: 'var(--radius-md)',
+-    background: 'var(--primary)',
+-    border: 'none',
+-    color: 'var(--primary-foreground)',
+-    fontSize: 14,
+-    fontWeight: 500,
+-    cursor: isResolving ? 'not-allowed' : 'pointer',
+-    transition: 'all 200ms',
+-    opacity: isResolving ? 0.6 : 1,
+-    display: 'flex',
+-    alignItems: 'center',
+-    justifyContent: 'center',
+-    gap: 8,
+-  }
+-
+-  const rejectBtnStyle: React.CSSProperties = {
+-    flex: 1,
+-    padding: '8px 16px',
+-    borderRadius: 'var(--radius-md)',
+-    background: 'transparent',
+-    border: '1px solid var(--status-error-border)',
+-    color: 'var(--status-error-fg)',
+-    fontSize: 14,
+-    fontWeight: 500,
+-    cursor: isResolving ? 'not-allowed' : 'pointer',
+-    transition: 'all 200ms',
+-    opacity: isResolving ? 0.6 : 1,
+-    display: 'flex',
+-    alignItems: 'center',
+-    justifyContent: 'center',
+-    gap: 8,
+-  }
+-
+-  const resolvedBadgeCls = `mt-3 inline-flex items-center gap-1 rounded-lg px-3 py-1 text-sm font-medium ${isApproved ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`
+-
+-  return (
+-    <div style={cardStyle}>
+-      <div style={headerStyle}>
+-        <div style={iconWrapStyle}>
+-          {isApproved ? (
+-            <IconCheck size={14} color={iconColor} />
+-          ) : isRejected ? (
+-            <IconX size={14} color={iconColor} />
+-          ) : (
+-            toolIconNode
+-          )}
+-        </div>
+-        <div style={{ flex: 1, minWidth: 0 }}>
+-          <div style={summaryStyle}>{approval.actionSummary}</div>
+-          <div style={toolLabelStyle}>
+-            {toolLabelIconNode}
+-            {formatToolName(approval.toolName)}
+-          </div>
+-        </div>
+-      </div>
+-
+-      {isPending && (
+-        <div style={buttonContainerStyle}>
+-          <button
+-            style={rejectBtnStyle}
+-            disabled={isResolving}
+-            onClick={() => onReject(approval.id)}
+-          >
+-            Reject
+-          </button>
+-          <button
+-            style={approveBtnStyle}
+-            disabled={isResolving}
+-            onClick={() => onApprove(approval.id)}
+-          >
+-            Approve
+-          </button>
+-        </div>
+-      )}
+-
+-      {isResolving && (
+-        <div className="mt-3 inline-flex items-center gap-1 rounded-lg bg-muted px-3 py-1 text-sm font-medium text-muted-foreground">
+-          <Shimmer duration={1.2} as="span">Resolving...</Shimmer>
+-        </div>
+-      )}
+-
+-      {isApproved && !isResolving && (
+-        <div className={resolvedBadgeCls}>
+-          <IconCheck size={12} />
+-          Approved. Sending...
+-        </div>
+-      )}
+-
+-      {isRejected && !isResolving && (
+-        <div className={resolvedBadgeCls}>
+-          <IconX size={12} />
+-          Rejected.
+-        </div>
+-      )}
+-    </div>
+-  )
+-}
+-
+ const CHAT_SEND_EVENT = 'bitbit-chat-send'
+ const CHAT_LAYOUT_EVENT = 'bitbit-chat-layout'
+ 
+diff --git a/personal-assistant/src/lib/agent/engine/__tests__/taor-planner.test.ts b/personal-assistant/src/lib/agent/engine/__tests__/taor-planner.test.ts
+index 749d151f..9e8b5a06 100644
+--- a/personal-assistant/src/lib/agent/engine/__tests__/taor-planner.test.ts
++++ b/personal-assistant/src/lib/agent/engine/__tests__/taor-planner.test.ts
+@@ -416,7 +416,15 @@ beforeEach(() => {
+ describe('TAOR planner integration', () => {
+   it('1. calls generatePlan with message, entity context, tool names, and skill candidates', async () => {
+     const skillCandidates = [
+-      { id: 'seo-audit', name: 'SEO Audit', description: 'Run SEO audit', estimatedTokens: 500, score: 5 },
++      {
++        id: 'seo-audit',
++        name: 'SEO Audit',
++        description: 'Run SEO audit',
++        estimatedTokens: 500,
++        score: 5,
++        trustTier: 'Selective',
++        matchedSignals: { triggerKeywords: ['seo audit'], tags: ['seo'], contextTerms: [] },
++      },
+     ]
+     selectRelevantSkillsRAGMock.mockReturnValue({
+       candidates: skillCandidates,
+@@ -509,8 +517,24 @@ describe('TAOR planner integration', () => {
+   it('6. passes skill RAG candidates to planner as skillCandidates parameter', async () => {
+     selectRelevantSkillsRAGMock.mockReturnValue({
+       candidates: [
+-        { id: 'content-calendar', name: 'Content Calendar', description: 'Plan content', estimatedTokens: 800, score: 6 },
+-        { id: 'seo-audit', name: 'SEO Audit', description: 'Run audit', estimatedTokens: 500, score: 4 },
++        {
++          id: 'content-calendar',
++          name: 'Content Calendar',
++          description: 'Plan content',
++          estimatedTokens: 800,
++          score: 6,
++          trustTier: 'Selective',
++          matchedSignals: { triggerKeywords: ['content calendar'], tags: ['content'], contextTerms: [] },
++        },
++        {
++          id: 'seo-audit',
++          name: 'SEO Audit',
++          description: 'Run audit',
++          estimatedTokens: 500,
++          score: 4,
++          trustTier: 'Transparent',
++          matchedSignals: { triggerKeywords: ['seo'], tags: ['seo'], contextTerms: [] },
++        },
+       ],
+       scores: { 'content-calendar': 6, 'seo-audit': 4 },
+     })
+@@ -537,6 +561,7 @@ describe('TAOR planner integration', () => {
+         triggerKeywords: ['seo', 'audit'],
+         roleAffinity: [],
+         estimatedTokens: 500,
++        trustTier: 'Selective',
+         promptPath: '/fake/prompt.md',
+       },
+       prompt: 'You are an SEO expert. Analyze the following...',
+@@ -566,7 +591,17 @@ describe('TAOR planner integration', () => {
+       skills: ['skill-a', 'skill-b', 'skill-c'],
+     })
+     resolveSkillMock.mockImplementation(async (id: string) => ({
+-      entry: { id, name: id, description: id, tags: [], triggerKeywords: [], roleAffinity: [], estimatedTokens: 100, promptPath: '/fake' },
++      entry: {
++        id,
++        name: id,
++        description: id,
++        tags: [],
++        triggerKeywords: [],
++        roleAffinity: [],
++        estimatedTokens: 100,
++        trustTier: 'Selective',
++        promptPath: '/fake',
++      },
+       prompt: `Prompt for ${id}`,
+     }))
+ 
+@@ -597,6 +632,7 @@ describe('TAOR planner integration', () => {
+         roleAffinity: [],
+         estimatedTokens: 500,
+         toolGroup: 'seo',
++        trustTier: 'Transparent',
+         promptPath: '/fake',
+       },
+       prompt: 'SEO skill prompt',
+@@ -612,7 +648,17 @@ describe('TAOR planner integration', () => {
+ 
+   it('10. uses getSkillsForRole when swarmRole is configured', async () => {
+     const roleSkills = [
+-      { id: 'lead-scoring', name: 'Lead Scoring', description: 'Score leads', tags: [], triggerKeywords: [], roleAffinity: ['lead-swarm'], estimatedTokens: 400, promptPath: '/fake' },
++      {
++        id: 'lead-scoring',
++        name: 'Lead Scoring',
++        description: 'Score leads',
++        tags: [],
++        triggerKeywords: [],
++        roleAffinity: ['lead-swarm'],
++        estimatedTokens: 400,
++        trustTier: 'Selective',
++        promptPath: '/fake',
++      },
+     ]
+     getSkillsForRoleMock.mockReturnValue(roleSkills)
+ 
+@@ -622,7 +668,10 @@ describe('TAOR planner integration', () => {
+ 
+     expect(getSkillsForRoleMock).toHaveBeenCalledWith('lead-swarm')
+     expect(getAllSkillsMock).not.toHaveBeenCalled()
+-    expect(selectRelevantSkillsRAGMock).toHaveBeenCalledWith('Score my leads', roleSkills)
++    expect(selectRelevantSkillsRAGMock).toHaveBeenCalledWith('Score my leads', roleSkills, {
++      workspaceContext: '',
++      activeRole: 'lead-swarm',
++    })
+   })
+ 
+   it('11. does not pass skillCandidates to planner when skill RAG returns empty', async () => {
+@@ -656,6 +705,7 @@ describe('TAOR planner integration', () => {
+         triggerKeywords: [],
+         roleAffinity: [],
+         estimatedTokens: 500,
++        trustTier: 'Selective',
+         promptPath: '/fake',
+       },
+       prompt: 'SEO skill prompt',
+@@ -672,7 +722,17 @@ describe('TAOR planner integration', () => {
+ 
+   it('13. uses getAllSkills (not getSkillsForRole) when no swarmRole set', async () => {
+     const allSkills = [
+-      { id: 'generic-skill', name: 'Generic', description: 'A skill', tags: [], triggerKeywords: [], roleAffinity: [], estimatedTokens: 200, promptPath: '/fake' },
++      {
++        id: 'generic-skill',
++        name: 'Generic',
++        description: 'A skill',
++        tags: [],
++        triggerKeywords: [],
++        roleAffinity: [],
++        estimatedTokens: 200,
++        trustTier: 'Selective',
++        promptPath: '/fake',
++      },
+     ]
+     getAllSkillsMock.mockReturnValue(allSkills)
+ 
+@@ -682,6 +742,9 @@ describe('TAOR planner integration', () => {
+ 
+     expect(getAllSkillsMock).toHaveBeenCalled()
+     expect(getSkillsForRoleMock).not.toHaveBeenCalled()
+-    expect(selectRelevantSkillsRAGMock).toHaveBeenCalledWith('Help me with something', allSkills)
++    expect(selectRelevantSkillsRAGMock).toHaveBeenCalledWith('Help me with something', allSkills, {
++      workspaceContext: '',
++      activeRole: undefined,
++    })
+   })
+ })
+diff --git a/personal-assistant/src/lib/agent/engine/taor-loop.ts b/personal-assistant/src/lib/agent/engine/taor-loop.ts
+index 5baf35f9..635cb14e 100644
+--- a/personal-assistant/src/lib/agent/engine/taor-loop.ts
++++ b/personal-assistant/src/lib/agent/engine/taor-loop.ts
+@@ -376,14 +376,17 @@ export async function* runTAORLoop(
+   const skillIndex = config.swarmRole
+     ? getSkillsForRole(config.swarmRole as import('@/lib/swarm/types').AgentRole)
+     : getAllSkills()
+-  const skillRAGResult = selectRelevantSkillsRAG(message, skillIndex)
++  const skillRAGResult = selectRelevantSkillsRAG(message, skillIndex, {
++    workspaceContext: entityContext,
++    activeRole: config.swarmRole,
++  })
+   const skillCandidates = skillRAGResult.candidates.length > 0
+     ? skillRAGResult.candidates.map(c => ({ id: c.id, description: c.description }))
+     : undefined
+ 
+   if (skillRAGResult.candidates.length > 0) {
+     logger.info('[engine] Skill RAG candidates', {
+-      candidates: skillRAGResult.candidates.map(c => `${c.id}(${c.score})`),
++      candidates: skillRAGResult.candidates.map(c => `${c.id}(${c.score.toFixed(2)}|${c.trustTier})`),
+     })
+   }
+ 
+@@ -399,7 +402,7 @@ export async function* runTAORLoop(
+   }
+ 
+   let planComplexity: 'low' | 'medium' | 'high' | null = null
+-  let resolvedSkills: ResolvedSkill[] = []
++  const resolvedSkills: ResolvedSkill[] = []
+ 
+   if (planPromise) {
+     const raceResult = await Promise.race([
+diff --git a/personal-assistant/src/lib/skills/__tests__/registry.test.ts b/personal-assistant/src/lib/skills/__tests__/registry.test.ts
+index a86f3158..7ffe9c31 100644
+--- a/personal-assistant/src/lib/skills/__tests__/registry.test.ts
++++ b/personal-assistant/src/lib/skills/__tests__/registry.test.ts
+@@ -58,7 +58,20 @@ const SKILL_RESEARCH = {
+   planGate: 'growth',
+ }
+ 
+-function setupMockSkillsDir(skills: Record<string, object>) {
++const SKILL_EVALS = {
++  passRate: 99.2,
++  latencyMs: 420,
++  tests: [
++    { prompt: 'Run a comprehensive competitor analysis', expectedRegex: 'competitor' },
++    { prompt: 'Compare the latest pricing trends', expectedRegex: 'pricing' },
++    { prompt: 'Create a structured research report', expectedRegex: 'report' },
++  ],
++}
++
++function setupMockSkillsDir(
++  skills: Record<string, object>,
++  evals: Record<string, object> = {},
++) {
+   const entries = Object.keys(skills).map(name => ({
+     name,
+     isDirectory: () => true,
+@@ -82,6 +95,7 @@ function setupMockSkillsDir(skills: Record<string, object>) {
+     for (const name of Object.keys(skills)) {
+       if (path.includes(`/${name}/skill.json`)) return true
+       if (path.includes(`/${name}/prompt.md`)) return true
++      if (path.includes(`/${name}/evals.json`)) return Boolean(evals[name])
+     }
+     // tools.ts doesn't exist
+     if (path.endsWith('tools.ts')) return false
+@@ -93,6 +107,7 @@ function setupMockSkillsDir(skills: Record<string, object>) {
+     for (const [name, json] of Object.entries(skills)) {
+       if (path.includes(`/${name}/skill.json`)) return JSON.stringify(json)
+       if (path.includes(`/${name}/prompt.md`)) return `# ${name}\n\nPrompt content for ${name} skill.`
++      if (path.includes(`/${name}/evals.json`) && evals[name]) return JSON.stringify(evals[name])
+     }
+     throw new Error(`File not found: ${path}`)
+   })
+@@ -139,6 +154,23 @@ describe('Skill Registry', () => {
+       expect(seo.estimatedTokens).toBe(500)
+       expect(seo.planGate).toBe('growth')
+       expect(seo.toolGroup).toBe('seo')
++      expect(seo.trustTier).toBe('Transparent')
++    })
++
++    it('loads evals.json and derives trust tier from it', async () => {
++      setupMockSkillsDir(
++        { 'deep-research': SKILL_RESEARCH },
++        { 'deep-research': SKILL_EVALS },
++      )
++
++      await initializeSkillRegistry('/mock/src/skills')
++
++      const skills = getAllSkills()
++      const research = skills.find(s => s.id === 'deep-research')!
++
++      expect(research.evals?.passRate).toBe(99.2)
++      expect(research.evals?.tests).toHaveLength(3)
++      expect(research.trustTier).toBe('Autonomous')
+     })
+ 
+     it('skips directories without skill.json', async () => {
+diff --git a/personal-assistant/src/lib/skills/__tests__/skill-rag.test.ts b/personal-assistant/src/lib/skills/__tests__/skill-rag.test.ts
+index dbaea690..56dc35d6 100644
+--- a/personal-assistant/src/lib/skills/__tests__/skill-rag.test.ts
++++ b/personal-assistant/src/lib/skills/__tests__/skill-rag.test.ts
+@@ -14,6 +14,7 @@ function makeSkill(overrides: Partial<SkillIndexEntry> & { id: string }): SkillI
+     triggerKeywords: [],
+     roleAffinity: [],
+     estimatedTokens: 1000,
++    trustTier: 'Selective',
+     promptPath: `/mock/${overrides.id}/prompt.md`,
+     ...overrides,
+   }
+@@ -77,6 +78,7 @@ describe('Skill RAG', () => {
+       const result = selectRelevantSkills('run an seo audit on our website', SKILLS)
+       expect(result.candidates.length).toBeGreaterThan(0)
+       expect(result.candidates[0].id).toBe('seo-visibility')
++      expect(result.candidates[0].description).toContain('Trust:')
+     })
+ 
+     it('matches skills by tag overlap', () => {
+@@ -125,6 +127,24 @@ describe('Skill RAG', () => {
+       expect(Object.keys(result.scores)).toHaveLength(SKILLS.length)
+     })
+ 
++    it('uses workspace context to break otherwise weak ties', () => {
++      const result = selectRelevantSkills('improve this', SKILLS, {
++        workspaceContext: 'The current work is a pricing and monetization review',
++      })
++
++      const ids = result.candidates.map(c => c.id)
++      expect(ids).toContain('pricing-strategy')
++    })
++
++    it('includes matched-signal hints in planner-facing descriptions', () => {
++      const result = selectRelevantSkills('create an email sequence for customer nurture', SKILLS)
++      const candidate = result.candidates.find(c => c.id === 'email-sequences')
++
++      expect(candidate).toBeDefined()
++      expect(candidate?.description).toContain('Matched keywords:')
++      expect(candidate?.description).toContain('Trust:')
++    })
++
+     it('returns empty for empty skill index', () => {
+       const result = selectRelevantSkills('do an seo audit', [])
+       expect(result.candidates).toHaveLength(0)
+diff --git a/personal-assistant/src/lib/skills/registry.ts b/personal-assistant/src/lib/skills/registry.ts
+index d330f5ca..488d4ef1 100644
+--- a/personal-assistant/src/lib/skills/registry.ts
++++ b/personal-assistant/src/lib/skills/registry.ts
+@@ -10,6 +10,8 @@ import { join, resolve as resolvePath } from 'path'
+ import { logger } from '@/lib/core/logger'
+ import type { AgentRole } from '@/lib/swarm/types'
+ import type { SkillIndexEntry, ResolvedSkill } from './types'
++import { rankSkillTrust } from './classifier'
++import { SkillEvalMetadataSchema, SkillMetadataSchema } from './schema'
+ 
+ // ---------------------------------------------------------------------------
+ // LRU Cache for resolved skills (skills don't change at runtime)
+@@ -85,30 +87,41 @@ export async function initializeSkillRegistry(skillsDir?: string): Promise<void>
+ 
+     try {
+       const raw = readFileSync(filePath, 'utf-8')
+-      const json = JSON.parse(raw) as Record<string, unknown>
++      const json = SkillMetadataSchema.parse(JSON.parse(raw))
+ 
+       const id = dirName
+ 
+       const promptPath = join(dirPath, 'prompt.md')
+       const toolsPath = join(dirPath, 'tools.ts')
++      const evalsPath = join(dirPath, 'evals.json')
+ 
+       if (!existsSync(promptPath)) {
+         logger.warn('[skill-registry] Skill missing prompt.md, skipping', { id })
+         continue
+       }
+ 
++      const resolvedToolsPath = existsSync(toolsPath) ? toolsPath : undefined
++      const evals = existsSync(evalsPath)
++        ? SkillEvalMetadataSchema.parse(JSON.parse(readFileSync(evalsPath, 'utf-8')))
++        : undefined
++
+       const entry: SkillIndexEntry = {
+         id,
+-        name: String(json.name ?? id),
+-        description: String(json.description ?? ''),
+-        tags: Array.isArray(json.tags) ? json.tags.map(String) : [],
+-        triggerKeywords: Array.isArray(json.triggerKeywords) ? json.triggerKeywords.map(String) : [],
+-        roleAffinity: Array.isArray(json.roleAffinity) ? (json.roleAffinity as AgentRole[]) : [],
+-        toolGroup: typeof json.toolGroup === 'string' ? json.toolGroup : undefined,
+-        estimatedTokens: typeof json.estimatedTokens === 'number' ? json.estimatedTokens : 1000,
+-        planGate: typeof json.planGate === 'string' ? json.planGate : undefined,
++        name: json.name || id,
++        description: json.description,
++        tags: json.tags,
++        triggerKeywords: json.triggerKeywords,
++        roleAffinity: json.roleAffinity as AgentRole[],
++        toolGroup: json.toolGroup,
++        estimatedTokens: json.estimatedTokens,
++        planGate: json.planGate,
++        evals,
++        trustTier: rankSkillTrust(
++          { toolGroup: json.toolGroup, toolsPath: resolvedToolsPath },
++          evals,
++        ),
+         promptPath,
+-        toolsPath: existsSync(toolsPath) ? toolsPath : undefined,
++        toolsPath: resolvedToolsPath,
+       }
+ 
+       entries.push(entry)
+diff --git a/personal-assistant/src/lib/skills/skill-rag.ts b/personal-assistant/src/lib/skills/skill-rag.ts
+index 626c320d..3a46d935 100644
+--- a/personal-assistant/src/lib/skills/skill-rag.ts
++++ b/personal-assistant/src/lib/skills/skill-rag.ts
+@@ -7,7 +7,9 @@
+  * Performance: pure string matching on ~50 in-memory entries. Sub-millisecond.
+  */
+ 
+-import type { SkillIndexEntry } from './types'
++import { adaptSkillDescription, type SkillMatchSignals, type SkillRoutingContext } from './adapter'
++import { trustTierBonus } from './classifier'
++import type { SkillIndexEntry, SkillTrustTier } from './types'
+ 
+ // ---------------------------------------------------------------------------
+ // Constants
+@@ -48,6 +50,8 @@ export interface SkillCandidate {
+   description: string
+   estimatedTokens: number
+   score: number
++  trustTier: SkillTrustTier
++  matchedSignals: SkillMatchSignals
+ }
+ 
+ // ---------------------------------------------------------------------------
+@@ -64,24 +68,37 @@ export interface SkillCandidate {
+ export function selectRelevantSkills(
+   message: string,
+   skillIndex: SkillIndexEntry[],
+-  maxCandidates: number = MAX_SKILL_CANDIDATES,
++  options: number | (SkillRoutingContext & { maxCandidates?: number }) = MAX_SKILL_CANDIDATES,
+ ): SkillRAGResult {
+   if (skillIndex.length === 0) {
+     return { candidates: [], scores: {} }
+   }
+ 
++  const maxCandidates = typeof options === 'number' ? options : (options.maxCandidates ?? MAX_SKILL_CANDIDATES)
++  const routingContext = typeof options === 'number' ? {} : options
++
+   const messageWords = tokenize(message)
+   const messageWordSet = new Set(messageWords)
+   const messageLower = message.toLowerCase()
++  const contextWords = tokenize(routingContext.workspaceContext ?? '')
++  const contextWordSet = new Set(contextWords)
++  const contextLower = (routingContext.workspaceContext ?? '').toLowerCase()
+ 
+-  const scored: Array<{ entry: SkillIndexEntry; score: number }> = []
++  const scored: Array<{ entry: SkillIndexEntry; score: number; matchedSignals: SkillMatchSignals }> = []
+   const scores: Record<string, number> = {}
+ 
+   for (const entry of skillIndex) {
+-    const score = scoreSkill(entry, messageWords, messageWordSet, messageLower)
++    const { score, matchedSignals } = scoreSkill(
++      entry,
++      messageWords,
++      messageWordSet,
++      messageLower,
++      contextWordSet,
++      contextLower,
++    )
+     scores[entry.id] = score
+     if (score > 0) {
+-      scored.push({ entry, score })
++      scored.push({ entry, score, matchedSignals })
+     }
+   }
+ 
+@@ -92,14 +109,16 @@ export function selectRelevantSkills(
+   const candidates: SkillCandidate[] = []
+   let totalTokens = 0
+ 
+-  for (const { entry, score } of scored.slice(0, maxCandidates)) {
++  for (const { entry, score, matchedSignals } of scored.slice(0, maxCandidates)) {
+     if (totalTokens + entry.estimatedTokens > MAX_CANDIDATE_TOKENS) continue
+     candidates.push({
+       id: entry.id,
+       name: entry.name,
+-      description: entry.description,
++      description: adaptSkillDescription(entry, matchedSignals, routingContext),
+       estimatedTokens: entry.estimatedTokens,
+       score,
++      trustTier: entry.trustTier,
++      matchedSignals,
+     })
+     totalTokens += entry.estimatedTokens
+   }
+@@ -116,8 +135,15 @@ function scoreSkill(
+   messageWords: string[],
+   messageWordSet: Set<string>,
+   messageLower: string,
+-): number {
++  contextWordSet: Set<string>,
++  contextLower: string,
++): { score: number; matchedSignals: SkillMatchSignals } {
+   let score = 0
++  const matchedSignals: SkillMatchSignals = {
++    triggerKeywords: [],
++    tags: [],
++    contextTerms: [],
++  }
+ 
+   // 1. Name match — skill ID parts in the message (+3 each)
+   const nameWords = entry.id.split('-')
+@@ -131,6 +157,10 @@ function scoreSkill(
+   for (const tag of entry.tags) {
+     if (messageWordSet.has(tag.toLowerCase()) || messageLower.includes(tag.toLowerCase())) {
+       score += 2
++      matchedSignals.tags.push(tag)
++    } else if (contextWordSet.has(tag.toLowerCase()) || contextLower.includes(tag.toLowerCase())) {
++      score += 0.75
++      matchedSignals.contextTerms.push(tag)
+     }
+   }
+ 
+@@ -138,6 +168,10 @@ function scoreSkill(
+   for (const keyword of entry.triggerKeywords) {
+     if (messageLower.includes(keyword.toLowerCase())) {
+       score += 3
++      matchedSignals.triggerKeywords.push(keyword)
++    } else if (contextLower.includes(keyword.toLowerCase())) {
++      score += 1
++      matchedSignals.contextTerms.push(keyword)
+     }
+   }
+ 
+@@ -153,6 +187,17 @@ function scoreSkill(
+     score += (descOverlap / descWords.length) * 2
+   }
+ 
++  // 4b. Workspace context overlap — smaller than direct message overlap.
++  let contextOverlap = 0
++  for (const word of descWords) {
++    if (contextWordSet.has(word)) {
++      contextOverlap++
++    }
++  }
++  if (descWords.length > 0 && contextOverlap > 0) {
++    score += (contextOverlap / descWords.length) * 1.25
++  }
++
+   // 5. Bigram match — two-word phrases matching skill name (+4)
+   if (messageWords.length >= 2) {
+     const nameBigram = entry.id.replace(/-/g, ' ')
+@@ -160,11 +205,20 @@ function scoreSkill(
+       const bigram = `${messageWords[i]} ${messageWords[i + 1]}`
+       if (nameBigram.includes(bigram)) {
+         score += 4
++        matchedSignals.triggerKeywords.push(bigram)
+       }
+     }
+   }
+ 
+-  return score
++  if (score > 0) {
++    score += trustTierBonus(entry.trustTier)
++  }
++
++  matchedSignals.triggerKeywords = unique(matchedSignals.triggerKeywords)
++  matchedSignals.tags = unique(matchedSignals.tags)
++  matchedSignals.contextTerms = unique(matchedSignals.contextTerms)
++
++  return { score, matchedSignals }
+ }
+ 
+ /**
+@@ -177,3 +231,7 @@ function tokenize(text: string): string[] {
+     .split(/\s+/)
+     .filter(w => w.length > 1 && !STOP_WORDS.has(w))
+ }
++
++function unique(values: string[]): string[] {
++  return Array.from(new Set(values))
++}
+diff --git a/personal-assistant/src/lib/skills/types.ts b/personal-assistant/src/lib/skills/types.ts
+index 04b10d12..7a950d7c 100644
+--- a/personal-assistant/src/lib/skills/types.ts
++++ b/personal-assistant/src/lib/skills/types.ts
+@@ -8,6 +8,19 @@
+ 
+ import type { AgentRole } from '@/lib/swarm/types'
+ 
++export type SkillTrustTier = 'Transparent' | 'Selective' | 'Autonomous'
++
++export interface SkillEvalCase {
++  prompt: string
++  expectedRegex: string
++}
++
++export interface SkillEvalMetadata {
++  passRate: number
++  latencyMs?: number
++  tests: SkillEvalCase[]
++}
++
+ /**
+  * Lightweight index entry — always in memory, never sent to the model.
+  * ~20 tokens per entry × 50 skills = ~1,000 tokens total index cost.
+@@ -31,6 +44,10 @@ export interface SkillIndexEntry {
+   estimatedTokens: number
+   /** Optional billing plan gate (ties to existing checkToolPlanGate) */
+   planGate?: string
++  /** Optional evaluation metadata loaded from evals.json */
++  evals?: SkillEvalMetadata
++  /** Conservative routing tier derived from evals and runtime surface */
++  trustTier: SkillTrustTier
+   /** Absolute path to prompt.md */
+   promptPath: string
+   /** Absolute path to tools.ts (if exists) */
