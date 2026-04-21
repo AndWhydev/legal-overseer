@@ -127,7 +127,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
 
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [connState, setConnState] = useState<ConnectionState>(
-    hasConnection ? 'crawling' : 'pick-chat-surface',
+    hasConnection ? 'crawling' : 'pick-email',
   )
   const [connectingId, setConnectingId] = useState<string | null>(null)
   const [connectedProvider, setConnectedProvider] = useState<string | null>(null)
@@ -144,8 +144,13 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
 
   const handlePickChatSurface = useCallback((id: ChatSurfaceId) => {
     setChatSurface(id)
-    setConnState('pick-email')
     trackOnboardingEvent('chat_surface_selected', { surface: id })
+
+    // Surface pick is the LAST step now — email and crawl ran before this.
+    // Fire onComplete so the parent routes to /onboard/connect/<surface> (or
+    // /dashboard for web). threadId is non-null here because this state is
+    // only reachable after phase === 'complete'.
+    if (threadId) onComplete(threadId, id)
 
     // Fire-and-forget — a failed preference save must not strand the user on
     // the surface picker. One retry with backoff covers transient 5xx / flaky
@@ -173,7 +178,7 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
       console.warn('[onboarding] surface PATCH failed after retry')
     }
     void save()
-  }, [])
+  }, [threadId, onComplete])
 
   /** Verify a channel is actually connected in the DB */
   const verifyConnection = useCallback(async (channelId: string): Promise<boolean> => {
@@ -291,13 +296,14 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
     }
   }, [connState, streamStarted, startStream])
 
-  // Notify parent on completion
+  // Stream finished — advance to the chat-surface picker. The parent's
+  // onComplete fires from handlePickChatSurface once the user picks.
   useEffect(() => {
-    if (phase === 'complete' && threadId) {
-      const timer = setTimeout(() => onComplete(threadId, chatSurface), 500)
+    if (phase === 'complete' && threadId && connState !== 'pick-chat-surface') {
+      const timer = setTimeout(() => setConnState('pick-chat-surface'), 500)
       return () => clearTimeout(timer)
     }
-  }, [phase, threadId, onComplete])
+  }, [phase, threadId, connState])
 
   const isInputEnabled = phase === 'crawling' || phase === 'synthesizing' || phase === 'reveal'
   const isActive = phase === 'crawling' || phase === 'synthesizing' || phase === 'ingesting'
@@ -309,8 +315,8 @@ export function OnboardingChat({ hasConnection, onComplete }: OnboardingChatProp
     : connState === 'crawling'
       ? null // No static greeting once crawling, stream messages take over
       : connState === 'pick-chat-surface'
-        ? "Hey, I'm BitBit. Where would you like to chat with me?"
-        : "Great. Now connect an email and I'll learn our world."
+        ? "All set. Where would you like to chat with me?"
+        : "Hey, I'm BitBit. Let's start by connecting an email so I can learn your world."
 
   return (
     <div className="bb-chat flex flex-col h-full">
