@@ -1,8 +1,8 @@
-import { withCronGuard, cronMaxDuration, cronDynamic } from '@/lib/cron/cron-guard'
+import { withCronGuard } from '@/lib/cron/cron-guard'
 import { VpsPool, createImessageProvisioner, isImessageVpsConfigured } from '@/lib/bridges'
 
-export const maxDuration = cronMaxDuration
-export const dynamic = cronDynamic
+export const maxDuration = 300
+export const dynamic = 'force-dynamic'
 
 /**
  * /api/cron/bridge-pool — runs every 15 minutes (vercel.json).
