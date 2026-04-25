@@ -1,0 +1,33 @@
+/* ============================================================================
+   BitBit DS — Icon Sizing
+   Canonical icon scale. Replaces ad-hoc Tailwind size-* utilities and the
+   off-scale `size-3.5` drift (64 usages found across the app).
+   ============================================================================ */
+
+:root {
+  /* ── Icon sizes ────────────────────────────────────────────────────────── */
+  --icon-xs:  12px;   /* tight inline meta — list-row trailing icons */
+  --icon-sm:  16px;   /* default — buttons, list-row leading, inline */
+  --icon-md:  20px;   /* topbar, primary CTAs, larger buttons */
+  --icon-lg:  24px;   /* section headers, prominent action icons */
+  --icon-xl:  32px;   /* feature icons, empty-state media */
+}
+
+/* ── Icon size primitives ──────────────────────────────────────────────────
+   Apply directly to <svg> / Tabler icons / any icon component. CSS overrides
+   the SVG width/height attributes the icon libraries set by default.
+   --------------------------------------------------------------------------- */
+.icon-xs { width: var(--icon-xs); height: var(--icon-xs); }
+.icon-sm { width: var(--icon-sm); height: var(--icon-sm); }
+.icon-md { width: var(--icon-md); height: var(--icon-md); }
+.icon-lg { width: var(--icon-lg); height: var(--icon-lg); }
+.icon-xl { width: var(--icon-xl); height: var(--icon-xl); }
+
+/* Sweep policy (subsequent commits):
+     size-3      → icon-xs    (12px, 33 usages)
+     size-3.5    → icon-sm    (round up — 14px is off-scale, 64 usages)
+     size-4      → icon-sm    (16px, 164 usages — default)
+     size-5      → icon-md    (20px, 21 usages)
+     size-6      → icon-lg    (24px, 10 usages)
+     size-8      → icon-xl    (32px, 22 usages)
+*/

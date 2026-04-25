@@ -18,6 +18,27 @@ import { CommandPalette, DEFAULT_CHAT_COMMANDS, type ChatCommand } from '../chat
 // prompt-kit PromptInput available but using native textarea for docked mode
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useModeStoreOptional } from '@/lib/dashboard/mode-store';
+import { isDashboardModesEnabled } from '@/lib/dashboard/feature-flag';
+import type { Mode } from '@/lib/dashboard/mode-store';
+
+const MODES_ENABLED = isDashboardModesEnabled();
+
+/** Mode-aware placeholder text for the docked (multiline) textarea */
+const DOCKED_PLACEHOLDERS: Record<Mode, string> = {
+  chat:  'Ask BitBit anything…',
+  inbox: 'Ask about your messages…',
+  work:  'Ask about your work…',
+  money: 'Ask about your money…',
+};
+
+/** Mode-aware placeholder text for the floating (single-line) input */
+const FLOATING_PLACEHOLDERS: Record<Mode, string> = {
+  chat:  'Ask BitBit…',
+  inbox: 'Ask about your messages…',
+  work:  'Ask about your work…',
+  money: 'Ask about your money…',
+};
 
 export type PillMode = 'hidden' | 'voice' | 'text' | 'processing' | 'response';
 export type PillMorphPhase = 'to-floating' | 'to-docked';
@@ -72,6 +93,12 @@ export function VoicePill({
   onVoiceModeToggle,
   isSpeaking = false,
 }: VoicePillProps) {
+  // Mode-aware placeholders — null-safe when ModeProvider not mounted (flag off)
+  const modeStore = useModeStoreOptional();
+  const activeMode = MODES_ENABLED ? modeStore?.state.active : undefined;
+  const dockedPlaceholder = activeMode ? DOCKED_PLACEHOLDERS[activeMode] : 'Message BitBit…';
+  const floatingPlaceholder = activeMode ? FLOATING_PLACEHOLDERS[activeMode] : 'Ask BitBit…';
+
   const [textValue, setTextValue] = useState('');
   const [displayMode, setDisplayMode] = useState<PillMode>('hidden');
   const [isExiting, setIsExiting] = useState(false);
@@ -548,7 +575,7 @@ export function VoicePill({
                     'max-h-[188px] pt-3 pl-4',
                     'min-h-[44px]',
                   )}
-                  placeholder="Message BitBit..."
+                  placeholder={dockedPlaceholder}
                   value={textValue}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -706,7 +733,7 @@ export function VoicePill({
                   'placeholder:text-muted-foreground',
                 )}
                 type="text"
-                placeholder="Ask BitBit\u2026"
+                placeholder={floatingPlaceholder}
                 value={textValue}
                 onChange={(e) => {
                   const val = e.target.value;

@@ -68,6 +68,14 @@ export interface EngineConfig {
    *  is biased toward short spoken responses and voice-unfriendly formatting
    *  (tables, code fences, long bullet lists) is discouraged. */
   voiceMode?: boolean
+  /**
+   * Current dashboard mode (chat | inbox | work | money).
+   * When present, the matching ModePersona fragment is appended to the system
+   * prompt and retrievalBias is passed to the RAG layer.
+   * Mode is a prior, not a wall — cross-mode retrieval is not blocked.
+   * Undefined/invalid values fall back to DEFAULT_PERSONA (no-op).
+   */
+  currentMode?: string
 }
 
 // ---------------------------------------------------------------------------

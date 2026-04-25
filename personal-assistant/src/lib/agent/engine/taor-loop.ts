@@ -21,6 +21,7 @@ import { getComposioToolsForOrg } from '@/lib/composio/tool-provider'
 import { isComposioEnabled } from '@/lib/composio/client'
 import { selectRelevantTools } from '@/lib/agent/tool-rag'
 import { buildEntityAwarePrompt } from '@/lib/agent/prompt-builder'
+import { applyModePersona, getRetrievalBias } from '@/lib/dashboard/mode-personas'
 import { ContextAssembler } from '@/lib/context-assembly/context-assembler'
 import { selectModel } from '@/lib/agent/model-router'
 import { resolveModel, resolveTokenLimit } from '@/lib/agent/model-registry'
@@ -392,6 +393,22 @@ export async function* runTAORLoop(
   } else {
     systemPrompt = await buildEntityAwarePrompt(config.supabase, config.orgId, message, userProfile)
     yield { type: 'stage', data: { stage: 'context_assembly', status: 'done', meta: { promptLength: systemPrompt.length } } }
+  }
+
+  // ── 3b. Mode persona injection ────────────────────────────────────────
+  // Mode is a *prior*, not a wall. Cross-mode retrieval is preserved.
+  // applyModePersona() is a pure string append — no extra I/O, no latency.
+  // DEFAULT_PERSONA (flag-off / no mode) is a no-op (returns basePrompt unchanged).
+  if (config.currentMode) {
+    systemPrompt = applyModePersona(systemPrompt, config.currentMode)
+    const bias = getRetrievalBias(config.currentMode)
+    if (bias.namespaces.length > 0) {
+      logger.debug('[engine] Mode persona applied', {
+        mode: config.currentMode,
+        biasNamespaces: bias.namespaces,
+        biasWeight: bias.weight,
+      })
+    }
   }
 
   if (autoRouted && selection) {

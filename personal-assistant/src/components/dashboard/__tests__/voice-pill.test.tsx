@@ -305,7 +305,7 @@ describe('<VoicePill> voice integration', () => {
     })
 
     // User starts typing during the 600 ms debounce window
-    const textarea = screen.getByPlaceholderText('Message BitBit...')
+    const textarea = screen.getByPlaceholderText('Message BitBit…')
     await act(async () => {
       fireEvent.change(textarea, { target: { value: 'hello from voice extra' } })
     })

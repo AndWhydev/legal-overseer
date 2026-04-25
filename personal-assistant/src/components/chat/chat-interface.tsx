@@ -61,6 +61,10 @@ import {
 import { Streamdown } from 'streamdown'
 import { useTaskProgress } from '@/hooks/useTaskProgress'
 import { TaskProgressBubble } from './task-progress-bubble'
+import { useModeStoreOptional } from '@/lib/dashboard/mode-store'
+import { isDashboardModesEnabled } from '@/lib/dashboard/feature-flag'
+
+const MODES_ENABLED = isDashboardModesEnabled()
 
 interface ToolCall {
   id?: string
@@ -584,6 +588,12 @@ const CHAT_LAYOUT_EVENT = 'bitbit-chat-layout'
 export function ChatInterface() {
   const { firstName } = useUserProfile()
   const greeting = getPersonalisedGreeting({ firstName: firstName || undefined })
+  // Mode-aware context: send currentMode with every chat request so the agent
+  // can apply the matching persona. Only active when the feature flag is on.
+  // Hook is always called (React rules); result only used when flag is on.
+  // useModeStoreOptional returns null when ModeProvider is not mounted (flag off).
+  const modeStore = useModeStoreOptional()
+  const activeMode = MODES_ENABLED ? (modeStore?.state.active ?? undefined) : undefined
   const {
     activeThreadId: threadId,
     newConversationRequest,
@@ -807,6 +817,7 @@ export function ChatInterface() {
           message: trimmed,
           threadId,
           attachmentIds: attachmentIds.length > 0 ? attachmentIds : undefined,
+          currentMode: activeMode,
         }),
         signal: controller.signal,
       })

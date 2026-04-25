@@ -21,7 +21,13 @@ const MAX_ATTACHMENT_IDS = 10
 let registryInitialized = false
 
 export async function POST(request: NextRequest) {
-  const { message, threadId, attachmentIds } = await request.json()
+  const body = await request.json()
+  const { message, threadId, attachmentIds } = body
+  const VALID_MODES = new Set(['chat', 'inbox', 'work', 'money'])
+  const currentMode: string | undefined =
+    typeof body.currentMode === 'string' && VALID_MODES.has(body.currentMode)
+      ? body.currentMode
+      : undefined
   if (!message) {
     return new Response('Message required', { status: 400 })
   }
@@ -183,6 +189,7 @@ export async function POST(request: NextRequest) {
             contentBlocks: attachmentContentBlocks.length > 0
               ? attachmentContentBlocks
               : undefined,
+            engineOverrides: currentMode ? { currentMode } : undefined,
           }
         )
         for await (const event of events) {

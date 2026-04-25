@@ -53,8 +53,12 @@ import {
   IconMessagePlus,
 } from '@tabler/icons-react';
 import type { TabDef } from './spa-shell';
-import type { SidebarCategory } from '@/lib/modules/registry';
+import type { SidebarCategory, SidebarVariant } from '@/lib/modules/registry';
 import { getCategoryForTab, SIDEBAR_CATEGORIES } from '@/lib/modules/registry';
+import { ChatHistorySidebar } from './sidebar-variants/chat-history';
+import { InboxListSidebar } from './sidebar-variants/inbox-list';
+import { WorkViewsSidebar } from './sidebar-variants/work-views';
+import { MoneyFiltersSidebar } from './sidebar-variants/money-filters';
 import { useEnabledModules } from '@/lib/modules/use-enabled-modules';
 import { useBadgeCounts } from '@/hooks/use-badge-counts';
 import type { BadgeCounts } from '@/hooks/use-badge-counts';
@@ -352,6 +356,8 @@ interface SidebarNavProps {
   activeTabId?: string;
   onTabChange?: (tabId: string) => void;
   tabs?: TabDef[];
+  /** When set (and MODES_ENABLED), renders the mode-specific sidebar variant instead of DefaultSidebar */
+  variant?: SidebarVariant;
 }
 
 // ---- Component ----
@@ -365,6 +371,7 @@ export function SidebarNav({
   activeTabId = 'dashboard',
   onTabChange,
   tabs = [],
+  variant,
 }: SidebarNavProps) {
   const { modules: enabledModules, composition } = useEnabledModules();
   const badgeCounts = useBadgeCounts('sidebar-badge-counts');
@@ -560,110 +567,133 @@ export function SidebarNav({
       </SidebarHeader>
 
       <SidebarContent ref={sidebarContentRef} className="overflow-hidden">
-        <div className="min-h-0 flex-1 overflow-hidden">
-          <SidebarGroup className="h-full min-h-0 pb-1">
-            <div className="h-full overflow-y-auto pr-1">
-              <SidebarMenu>
-                {NAV_ITEMS.filter(item => enabledModules.includes(item.id)).map(item => {
-                  const Icon = ICON_MAP[item.id];
-                  const isActive = item.id === activeTabId;
-                  const label = tabLabels[item.id] ?? item.label;
-                  const badgeDef = BADGE_CONFIG[item.id];
-                  const badgeCount = badgeDef ? (badgeCounts[badgeDef.key] ?? 0) : 0;
+        {/* Mode variant dispatch — only when variant is set (flag on).
+            Flag-off path: variant is undefined → DefaultSidebar renders (legacy, pixel-identical). */}
+        {variant && variant !== 'default' ? (
+          // ── Mode-specific sidebar content (BITBIT_DASHBOARD_MODES=1) ──────
+          <div className="flex h-full min-h-0 flex-col overflow-hidden">
+            {variant === 'chat-history' && (
+              <ChatHistorySidebar onTabChange={onTabChange} />
+            )}
+            {variant === 'inbox-list' && (
+              <InboxListSidebar />
+            )}
+            {variant === 'work-views' && (
+              <WorkViewsSidebar onTabChange={onTabChange} />
+            )}
+            {variant === 'money-filters' && (
+              <MoneyFiltersSidebar onTabChange={onTabChange} />
+            )}
+          </div>
+        ) : (
+          // ── DefaultSidebar (legacy nav — flag off or variant='default') ───
+          <>
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <SidebarGroup className="h-full min-h-0 pb-1">
+                <div className="h-full overflow-y-auto pr-1">
+                  <SidebarMenu>
+                    {NAV_ITEMS.filter(item => enabledModules.includes(item.id)).map(item => {
+                      const Icon = ICON_MAP[item.id];
+                      const isActive = item.id === activeTabId;
+                      const label = tabLabels[item.id] ?? item.label;
+                      const badgeDef = BADGE_CONFIG[item.id];
+                      const badgeCount = badgeDef ? (badgeCounts[badgeDef.key] ?? 0) : 0;
 
-                  return (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        onClick={() => handleItemClick(item.id)}
-                        tooltip={label}
-                      >
-                        {Icon && <Icon data-icon />}
-                        <span>{label}</span>
-                      </SidebarMenuButton>
-                      {badgeCount > 0 && (
-                        <SidebarMenuBadge>
-                          <Badge variant="destructive" className="text-[12px] px-1.5 py-0">
-                            {badgeCount}
-                          </Badge>
-                        </SidebarMenuBadge>
-                      )}
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </div>
-          </SidebarGroup>
-        </div>
-
-        {/* Contextual panel — isolated scroll region independent from page navigation */}
-        {(() => {
-          const ctx = getContextConfig(activeTabId);
-          if (!ctx) return null;
-          return (
-            <div className="min-h-[20rem] max-h-[48%] shrink-0 overflow-hidden px-2 pb-2">
-              <Separator className="mx-0 mb-3" />
-              <div className="h-full min-h-0 overflow-y-auto">
-                {activeTabId === 'chat' ? (
-                  <ChatSidebarPanel />
-                ) : (
-                  <div className="flex h-full min-h-0 flex-col gap-2.5 pt-1">
-                    {ctx.cta && (
-                      <Button variant="default" size="default" className="h-8 w-full justify-start rounded-xl bg-foreground px-3 text-sm font-medium text-background shadow-sm hover:bg-foreground/90 gap-2" onClick={() => window.dispatchEvent(new CustomEvent(activeTabId === "leads" ? "discover-leads" : "sidebar-cta-" + activeTabId))}>
-                        <ctx.cta.icon className="size-4" />
-                        {ctx.cta.label}
-                      </Button>
-                    )}
-
-                    <SidebarMenu>
-                      {ctx.items.map((item, idx) => (
-                        <SidebarMenuItem key={item.label}>
+                      return (
+                        <SidebarMenuItem key={item.id}>
                           <SidebarMenuButton
-                            onClick={() => {}}
-                            isActive={idx === 0}
-                            className="h-8"
+                            isActive={isActive}
+                            onClick={() => handleItemClick(item.id)}
+                            tooltip={label}
                           >
-                            {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
-                            {item.icon && <item.icon className="size-4 shrink-0" />}
-                            <span>{item.label}</span>
-                            {item.count !== undefined && (
-                              <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-[12px] text-muted-foreground">
-                                {item.count}
-                              </SidebarMenuBadge>
-                            )}
+                            {Icon && <Icon data-icon />}
+                            <span>{label}</span>
                           </SidebarMenuButton>
+                          {badgeCount > 0 && (
+                            <SidebarMenuBadge>
+                              <Badge variant="destructive" className="text-[12px] px-1.5 py-0">
+                                {badgeCount}
+                              </Badge>
+                            </SidebarMenuBadge>
+                          )}
                         </SidebarMenuItem>
-                      ))}
-                    </SidebarMenu>
+                      );
+                    })}
+                  </SidebarMenu>
+                </div>
+              </SidebarGroup>
+            </div>
 
-                    {ctx.sections?.map(section => (
-                      <React.Fragment key={section.label}>
-                        <div className="relative mt-1 mb-0.5">
-                          <div aria-hidden className="pointer-events-none absolute inset-x-1 top-0 z-10 h-px bg-sidebar-border/55" />
-                          <SidebarGroupLabel className="pt-2">{section.label}</SidebarGroupLabel>
-                        </div>
+            {/* Contextual panel — isolated scroll region independent from page navigation */}
+            {(() => {
+              const ctx = getContextConfig(activeTabId);
+              if (!ctx) return null;
+              return (
+                <div className="min-h-[20rem] max-h-[48%] shrink-0 overflow-hidden px-2 pb-2">
+                  <Separator className="mx-0 mb-3" />
+                  <div className="h-full min-h-0 overflow-y-auto">
+                    {activeTabId === 'chat' ? (
+                      <ChatSidebarPanel />
+                    ) : (
+                      <div className="flex h-full min-h-0 flex-col gap-2.5 pt-1">
+                        {ctx.cta && (
+                          <Button variant="default" size="default" className="h-8 w-full justify-start rounded-xl bg-foreground px-3 text-sm font-medium text-background shadow-sm hover:bg-foreground/90 gap-2" onClick={() => window.dispatchEvent(new CustomEvent(activeTabId === "leads" ? "discover-leads" : "sidebar-cta-" + activeTabId))}>
+                            <ctx.cta.icon className="size-4" />
+                            {ctx.cta.label}
+                          </Button>
+                        )}
+
                         <SidebarMenu>
-                          {section.items.map(item => (
+                          {ctx.items.map((item, idx) => (
                             <SidebarMenuItem key={item.label}>
                               <SidebarMenuButton
                                 onClick={() => {}}
+                                isActive={idx === 0}
                                 className="h-8"
                               >
                                 {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
                                 {item.icon && <item.icon className="size-4 shrink-0" />}
                                 <span>{item.label}</span>
+                                {item.count !== undefined && (
+                                  <SidebarMenuBadge className="right-2 h-5 min-w-5 rounded-full bg-background px-1.5 py-0.5 text-[12px] text-muted-foreground">
+                                    {item.count}
+                                  </SidebarMenuBadge>
+                                )}
                               </SidebarMenuButton>
                             </SidebarMenuItem>
                           ))}
                         </SidebarMenu>
-                      </React.Fragment>
-                    ))}
+
+                        {ctx.sections?.map(section => (
+                          <React.Fragment key={section.label}>
+                            <div className="relative mt-1 mb-0.5">
+                              <div aria-hidden className="pointer-events-none absolute inset-x-1 top-0 z-10 h-px bg-sidebar-border/55" />
+                              <SidebarGroupLabel className="pt-2">{section.label}</SidebarGroupLabel>
+                            </div>
+                            <SidebarMenu>
+                              {section.items.map(item => (
+                                <SidebarMenuItem key={item.label}>
+                                  <SidebarMenuButton
+                                    onClick={() => {}}
+                                    className="h-8"
+                                  >
+                                    {item.dot && <span className={cn('size-2 rounded-full shrink-0', item.dot)} />}
+                                    {item.icon && <item.icon className="size-4 shrink-0" />}
+                                    <span>{item.label}</span>
+                                  </SidebarMenuButton>
+                                </SidebarMenuItem>
+                              ))}
+                            </SidebarMenu>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          );
-        })()}
+                </div>
+              );
+            })()}
+          </>
+        )}
       </SidebarContent>
 
       {/* Footer: user profile dropdown */}

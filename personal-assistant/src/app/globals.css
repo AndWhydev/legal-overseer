@@ -4,6 +4,8 @@
 @import "../styles/bitbit-design-system.css";
 @import "../styles/theme-midnight.css";
 @import "../styles/theme-light.css";
+@import "../styles/ds/typography.css";
+@import "../styles/ds/icons.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -102,6 +104,73 @@
   --font-brand: var(--font-geist-pixel-square);
   --radius-3xl: var(--radius);
   --radius-4xl: var(--radius);
+
+  /* ── Dashboard mode tokens ───────────────────────────────────────────────
+     Width + sidebar tokens for the 4-mode workspace switcher.
+     Activated via [data-mode="…"] selectors below.
+     Monochrome commitment: NO color tokens here. Only layout geometry.
+     Phase 02 will consume --active-maxw and --active-sidebar for animations.
+  ──────────────────────────────────────────────────────────────────────── */
+
+  /* Main canvas max-widths per mode */
+  --mode-maxw-chat:  720px;
+  --mode-maxw-inbox: 1040px;
+  --mode-maxw-work:  1800px;
+  --mode-maxw-money: 1600px;
+
+  /* Sidebar widths per mode (Inbox gets wider list sidebar) */
+  --mode-sidebar-chat:  288px;
+  --mode-sidebar-inbox: 360px;
+  --mode-sidebar-work:  288px;
+  --mode-sidebar-money: 288px;
+
+  /* Transition timing for mode switches (Phase 02 consumers) */
+  --mode-transition: 300ms cubic-bezier(0.2, 0, 0, 1);
+
+  /* Active layout vars — set to mode defaults; overridden by [data-mode] */
+  --active-maxw:    var(--mode-maxw-work);
+  --active-sidebar: var(--mode-sidebar-work);
+}
+
+/* ── Dashboard mode layout selectors ─────────────────────────────────────────
+   Set --active-maxw and --active-sidebar per [data-mode] attribute on the
+   SidebarProvider root. Phase 02 will use these vars to animate max-width.
+   Placed on the root shell element, not :root, so they only apply inside
+   the dashboard SPA (no bleed to landing/marketing pages).
+──────────────────────────────────────────────────────────────────────────── */
+[data-mode="chat"] {
+  --active-maxw:    var(--mode-maxw-chat);
+  --active-sidebar: var(--mode-sidebar-chat);
+}
+[data-mode="inbox"] {
+  --active-maxw:    var(--mode-maxw-inbox);
+  --active-sidebar: var(--mode-sidebar-inbox);
+}
+[data-mode="work"] {
+  --active-maxw:    var(--mode-maxw-work);
+  --active-sidebar: var(--mode-sidebar-work);
+}
+[data-mode="money"] {
+  --active-maxw:    var(--mode-maxw-money);
+  --active-sidebar: var(--mode-sidebar-money);
+}
+
+/* ── Reduced-motion: disable mode transition animation ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --mode-transition: 0ms;
+  }
+}
+
+/* ── Utility: hide scrollbar while keeping scroll functionality ─────────────
+   Used by InboxListSidebar filter chip row (horizontal overflow scroll).
+──────────────────────────────────────────────────────────────────────────── */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
 }
 
 html,

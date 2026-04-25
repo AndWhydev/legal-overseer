@@ -38,6 +38,15 @@ export async function POST(request: NextRequest) {
   let attachmentIds: string[] | undefined
   let pendingFileParts: Array<{ type: string; [key: string]: unknown }> | undefined
 
+  // currentMode: optional dashboard mode signal (chat | inbox | work | money).
+  // Read from body top-level regardless of AI SDK vs legacy format.
+  // Invalid/missing values fall back to DEFAULT_PERSONA (no-op) in the engine.
+  const VALID_MODES = new Set(['chat', 'inbox', 'work', 'money'])
+  const currentMode: string | undefined =
+    typeof body.currentMode === 'string' && VALID_MODES.has(body.currentMode)
+      ? body.currentMode
+      : undefined
+
   if (body.messages && Array.isArray(body.messages)) {
     // AI SDK DefaultChatTransport format
     const lastUserMsg = [...body.messages].reverse().find(
@@ -256,6 +265,7 @@ export async function POST(request: NextRequest) {
         contentBlocks: attachmentContentBlocks.length > 0
           ? attachmentContentBlocks
           : undefined,
+        engineOverrides: currentMode ? { currentMode } : undefined,
       }
     )
 

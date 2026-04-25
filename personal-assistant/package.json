@@ -54,6 +54,7 @@
     "@supabase/ssr": "0.8.0",
     "@supabase/supabase-js": "2.95.3",
     "@tabler/icons-react": "^3.41.1",
+    "@tanstack/react-virtual": "^3.13.24",
     "@types/ssh2": "^1.15.5",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",

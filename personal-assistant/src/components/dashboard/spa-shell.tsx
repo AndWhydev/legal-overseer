@@ -40,6 +40,25 @@ import { UserProfileProvider } from '@/lib/user/user-profile-context';
 import { DrawerProvider } from './drawer-context';
 import { DrawerSlot } from './drawer-slot';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ModeSwitcher } from './mode-switcher';
+import { ModeProvider, useModeStore } from '@/lib/dashboard/mode-store';
+import type { Mode } from '@/lib/dashboard/mode-store';
+import { isDashboardModesEnabled } from '@/lib/dashboard/feature-flag';
+import { getModuleConfig } from '@/lib/modules/registry';
+import type { SidebarVariant } from '@/lib/modules/registry';
+
+// Mode → sidebar variant binding. Mode is the user's lens, so the sidebar
+// must follow the mode (not the underlying tab). Pressing ⌘1–⌘4 swaps the
+// sidebar variant in lockstep with the data-mode attribute and max-width.
+const MODE_TO_VARIANT: Record<Mode, SidebarVariant> = {
+  chat:  'chat-history',
+  inbox: 'inbox-list',
+  work:  'work-views',
+  money: 'money-filters',
+};
+
+// Feature flag — evaluated once at module load (constant per deployment)
+const MODES_ENABLED = isDashboardModesEnabled();
 
 // ---- Tab definitions ----
 
@@ -334,6 +353,45 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     navigateToId(tabId);
   }, [navigateToId]);
 
+  // ── Mode state (only active when MODES_ENABLED) ──────────────────────────
+  // We manage mode at this level so it can be passed to ModeProvider as
+  // initialState and also used by the keydown handler below.
+  const [activeMode, setActiveMode] = useState<Mode>('chat');
+
+  // ⌘1–⌘4 mode keyboard shortcuts (gated by feature flag)
+  useEffect(() => {
+    if (!MODES_ENABLED) return;
+    const MODE_KEYS: Record<string, Mode> = { '1': 'chat', '2': 'inbox', '3': 'work', '4': 'money' };
+    const handler = (e: KeyboardEvent) => {
+      // Only ⌘+digit (Meta on Mac, Ctrl elsewhere)
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const mode = MODE_KEYS[e.key];
+      if (!mode) return;
+      // Skip when an input/textarea/contenteditable is focused
+      const el = document.activeElement as HTMLElement | null;
+      if (el) {
+        const tag = el.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (el.isContentEditable) return;
+      }
+      // Skip during IME composition
+      if (e.isComposing) return;
+      e.preventDefault();
+      setActiveMode(mode);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []); // MODES_ENABLED is a module-level constant, safe to omit
+
+  // Auto-derive mode from active tab (when flag is on)
+  useEffect(() => {
+    if (!MODES_ENABLED) return;
+    const tabId = TABS[activeNavIndex]?.id;
+    if (!tabId) return;
+    const { mode } = getModuleConfig(tabId);
+    setActiveMode(mode);
+  }, [activeNavIndex]);
+
   // Power-user hotkeys
   const [focusMode, setFocusMode] = useState(false);
   const [devToolsOpen, setDevToolsOpen] = useState(false);
@@ -392,6 +450,8 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
     <ToastProvider>
     <FirstRunGuideProvider>
     <EnabledModulesContext.Provider value={enabledModulesState}>
+    {/* ModeProvider: only meaningful when MODES_ENABLED; harmless wrapper when off */}
+    <ModeProvider>
     <SplashScreen codeReady={tabsReady} dataReady={dataReady && !enabledModulesState.loading} minDisplayMs={600}>
       <AppDataProvider onReady={() => setDataReady(true)}>
       <BitBitOverlay currentPage={currentPage} activeTabId={TABS[activeNavIndex].id}>
@@ -406,6 +466,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
           <SidebarProvider
             defaultOpen={true}
             data-focus-mode={focusMode || undefined}
+            data-mode={MODES_ENABLED ? activeMode : undefined}
             className="!h-svh !max-h-svh !min-h-0 overflow-hidden"
             style={{
               '--sidebar-width': 'calc(var(--spacing) * 72)',
@@ -420,6 +481,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
               activeTabId={TABS[activeNavIndex].id}
               onTabChange={handleTabChange}
               tabs={visibleTabs}
+              variant={MODES_ENABLED ? MODE_TO_VARIANT[activeMode] : undefined}
             />
 
             {/* DrawerProvider wraps both SidebarInset and DrawerSlot */}
@@ -443,7 +505,18 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                   <header className="relative flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) px-4 lg:px-6">
                     <SidebarTrigger className="-ml-1" />
                     <div className="mx-2 h-4 w-px shrink-0 bg-border" />
-                    <Topbar config={topbarConfig} />
+                    {/* Mode switcher — only mounted when flag is on */}
+                    {MODES_ENABLED && (
+                      <>
+                        <ModeSwitcher
+                          active={activeMode}
+                          onSwitch={setActiveMode}
+                          className="hidden sm:flex"
+                        />
+                        <div className="mx-2 h-4 w-px shrink-0 bg-border hidden sm:block" />
+                      </>
+                    )}
+                    <Topbar config={topbarConfig} activeMode={MODES_ENABLED ? activeMode : undefined} />
                     <NotificationCenter onTabChange={handleTabChange} />
                   </header>
                 );
@@ -455,6 +528,15 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                 className="relative flex-1 overflow-y-auto overscroll-contain bg-background"
                 tabIndex={-1}
               >
+                {/* Max-width container — animates per mode when MODES_ENABLED.
+                    Flag off: full-width (no wrapper effect, max-width falls back to 100%). */}
+                <div
+                  className={MODES_ENABLED ? 'mx-auto w-full' : undefined}
+                  style={MODES_ENABLED ? {
+                    maxWidth: 'var(--active-maxw, 100%)',
+                    transition: 'max-width var(--mode-transition, 300ms ease-out)',
+                  } : undefined}
+                >
                 <KeepAliveTabPanel
                   activeTabId={TABS[activeNavIndex]?.id ?? 'dashboard'}
                   direction={transitionDir}
@@ -474,6 +556,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                       };
                     })}
                 />
+                </div>
               </main>
 
               {/* Mobile bottom nav */}
@@ -533,6 +616,7 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
       </BitBitOverlay>
       </AppDataProvider>
     </SplashScreen>
+    </ModeProvider>
     </EnabledModulesContext.Provider>
     </FirstRunGuideProvider>
     </ToastProvider>

@@ -4,6 +4,229 @@
  */
 
 import { getPack } from '@/lib/industry/registry'
+import type { Mode } from '@/lib/dashboard/mode-store'
+
+// ─── ModuleConfig — per-module metadata (mode + layout) ──────────────────────
+
+export type SidebarVariant =
+  | 'chat-history'
+  | 'inbox-list'
+  | 'work-views'
+  | 'money-filters'
+  | 'default';
+
+export interface ModuleConfig {
+  /** Which dashboard mode this module belongs to (default: 'work') */
+  mode?: Mode;
+  /** Preferred max-width for the main canvas (default: '1400px') */
+  maxWidth?: string;
+  /** Which sidebar variant to render when this module is active */
+  sidebarVariant?: SidebarVariant;
+}
+
+/**
+ * Per-module mode metadata for all 34 tabs.
+ * Keys match tab IDs in spa-shell.tsx TABS array.
+ *
+ * Mapping rationale (from .planning/dashboard-mode-refactor.md §4):
+ * - chat mode:  chat page
+ * - inbox mode: inbox, approvals, channels (messaging surfaces)
+ * - work mode:  tasks, leads, contacts, companies, meetings, tenders, workflows,
+ *               jobs, quotes, swarm, sentry, ai-search, ad-scripts, creator-studio,
+ *               knowledge, analytics, activity, monitoring, admin, beta-admin,
+ *               dashboard, command-center (operational pages)
+ * - money mode: invoices, costs, reports, billing settings
+ * - settings:   neutral (keep legacy default sidebar, mode-neutral)
+ */
+export const MODULE_CONFIG: Record<string, ModuleConfig> = {
+  // ── Chat mode ──────────────────────────────────────────────────────────────
+  chat: {
+    mode: 'chat',
+    maxWidth: '720px',
+    sidebarVariant: 'chat-history',
+  },
+
+  // ── Inbox mode ─────────────────────────────────────────────────────────────
+  inbox: {
+    mode: 'inbox',
+    maxWidth: '1040px',
+    sidebarVariant: 'inbox-list',
+  },
+  approvals: {
+    mode: 'inbox',
+    maxWidth: '1040px',
+    sidebarVariant: 'inbox-list',
+  },
+  channels: {
+    mode: 'inbox',
+    maxWidth: '1040px',
+    sidebarVariant: 'inbox-list',
+  },
+
+  // ── Work mode ──────────────────────────────────────────────────────────────
+  dashboard: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  'command-center': {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  tasks: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  leads: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  contacts: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  companies: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  meetings: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  tenders: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  workflows: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  jobs: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  quotes: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  'creator-studio': {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  'ad-scripts': {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  'ai-search': {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  knowledge: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  swarm: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  sentry: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  analytics: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  activity: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  admin: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  monitoring: {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+  'beta-admin': {
+    mode: 'work',
+    maxWidth: '1800px',
+    sidebarVariant: 'work-views',
+  },
+
+  // ── Money mode ─────────────────────────────────────────────────────────────
+  invoices: {
+    mode: 'money',
+    maxWidth: '1600px',
+    sidebarVariant: 'money-filters',
+  },
+  costs: {
+    mode: 'money',
+    maxWidth: '1600px',
+    sidebarVariant: 'money-filters',
+  },
+  reports: {
+    mode: 'money',
+    maxWidth: '1600px',
+    sidebarVariant: 'money-filters',
+  },
+  'settings-billing': {
+    mode: 'money',
+    maxWidth: '1600px',
+    sidebarVariant: 'money-filters',
+  },
+
+  // ── Settings (mode-neutral) ────────────────────────────────────────────────
+  'settings-connections': {
+    mode: 'work',
+    maxWidth: '1400px',
+    sidebarVariant: 'default',
+  },
+  'settings-automations': {
+    mode: 'work',
+    maxWidth: '1400px',
+    sidebarVariant: 'default',
+  },
+  'settings-appearance': {
+    mode: 'work',
+    maxWidth: '1400px',
+    sidebarVariant: 'default',
+  },
+};
+
+/**
+ * Get the mode metadata for a given tab ID.
+ * Falls back to sensible defaults for any tab not explicitly mapped.
+ */
+export function getModuleConfig(tabId: string): Required<ModuleConfig> {
+  const config = MODULE_CONFIG[tabId] ?? {};
+  return {
+    mode: config.mode ?? 'work',
+    maxWidth: config.maxWidth ?? '1400px',
+    sidebarVariant: config.sidebarVariant ?? 'default',
+  };
+}
 
 // Every org gets these regardless of plan
 const CORE_MODULES = [
