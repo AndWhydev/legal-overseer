@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { PERSONAS, DEFAULT_PERSONA, applyModePersona, getRetrievalBias, type ModePersona } from '../mode-personas'
+import { PERSONAS, DEFAULT_PERSONA, applyModePersona, getRetrievalBias, getModePurpose, type ModePersona } from '../mode-personas'
 import type { Mode } from '../mode-store'
 
 describe('mode-personas — PERSONAS object', () => {
@@ -139,5 +139,45 @@ describe('mode-personas — DEFAULT_PERSONA fallback', () => {
     const result = applyModePersona(basePrompt, 'invalid-mode')
     expect(result).toContain(basePrompt)
     // Should not crash, should return safe fallback
+  })
+})
+
+describe('mode-personas — modelPurpose (per-mode model routing)', () => {
+  it('inbox prefers classification (cheap/fast triage)', () => {
+    expect(PERSONAS['inbox'].modelPurpose).toBe('classification')
+    expect(getModePurpose('inbox')).toBe('classification')
+  })
+
+  it('money prefers synthesis (high-stakes numeric reasoning)', () => {
+    expect(PERSONAS['money'].modelPurpose).toBe('synthesis')
+    expect(getModePurpose('money')).toBe('synthesis')
+  })
+
+  it('work prefers conversation (balanced planning)', () => {
+    expect(PERSONAS['work'].modelPurpose).toBe('conversation')
+    expect(getModePurpose('work')).toBe('conversation')
+  })
+
+  it('chat prefers conversation (default balanced)', () => {
+    expect(PERSONAS['chat'].modelPurpose).toBe('conversation')
+    expect(getModePurpose('chat')).toBe('conversation')
+  })
+
+  it('every mode declares a modelPurpose', () => {
+    const modes: Mode[] = ['chat', 'inbox', 'work', 'money']
+    const validPurposes = ['classification', 'conversation', 'synthesis']
+    for (const m of modes) {
+      expect(validPurposes).toContain(PERSONAS[m].modelPurpose)
+    }
+  })
+
+  it('getModePurpose falls back to DEFAULT_PERSONA purpose for undefined/invalid mode', () => {
+    expect(getModePurpose(undefined)).toBe(DEFAULT_PERSONA.modelPurpose)
+    expect(getModePurpose(null)).toBe(DEFAULT_PERSONA.modelPurpose)
+    expect(getModePurpose('not-a-mode')).toBe(DEFAULT_PERSONA.modelPurpose)
+  })
+
+  it('DEFAULT_PERSONA modelPurpose is a no-op safe choice (conversation)', () => {
+    expect(DEFAULT_PERSONA.modelPurpose).toBe('conversation')
   })
 })

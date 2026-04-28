@@ -1,9 +1,38 @@
-import { resolveModel, classifyPurpose, type ModelPurpose } from './model-registry'
+import { resolveModel, type ModelPurpose } from './model-registry'
 
 export interface ModelSelection {
   model: string
   reasoning: string
   purpose: ModelPurpose
+}
+
+/**
+ * Apply a mode-driven prior on top of a heuristic selection.
+ *
+ * Mode is a *prior*, not a wall: when the heuristic returns its default
+ * 'conversation' purpose (no strong synthesis or classification signal in
+ * the prompt), we adopt the mode's preferred purpose. When the heuristic
+ * detected synthesis or classification triggers, those win — a complex
+ * planning question in inbox mode still routes to synthesis.
+ *
+ * Returns the original selection unchanged when:
+ *   - selection is null (no auto-routing)
+ *   - mode purpose is 'conversation' (matches default — no change needed)
+ *   - heuristic detected synthesis/classification (already non-default)
+ */
+export function applyModePrior(
+  selection: ModelSelection | null,
+  mode: string | undefined | null,
+  modePurpose: ModelPurpose,
+): ModelSelection | null {
+  if (!selection) return selection
+  if (selection.purpose !== 'conversation') return selection
+  if (modePurpose === 'conversation') return selection
+  return {
+    model: resolveModel(modePurpose),
+    purpose: modePurpose,
+    reasoning: `Mode prior (${mode}) → ${modePurpose}`,
+  }
 }
 
 const synthesisTriggers = [

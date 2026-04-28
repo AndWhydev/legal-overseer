@@ -15,6 +15,7 @@
  */
 
 import type { Mode } from './mode-store'
+import type { ModelPurpose } from '../agent/model-registry'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,13 @@ export interface ModePersona {
   retrievalBias: RetrievalBias
   /** Tools to surface first in suggestion UI (not enforced at engine level). */
   suggestedTools: string[]
+  /**
+   * Preferred model purpose for this mode. Acts as a *prior* — the heuristic
+   * router (selectModel) can still escalate when the prompt signals demand it.
+   * Mode is a prior, not a wall: a synthesis-flavoured prompt in inbox mode
+   * still routes to synthesis.
+   */
+  modelPurpose: ModelPurpose
 }
 
 // ─── Per-mode personas ────────────────────────────────────────────────────────
@@ -62,6 +70,7 @@ export const PERSONAS: Record<Mode, ModePersona> = {
       weight: 0.6,
     },
     suggestedTools: ['search_memory', 'find_messages', 'search_contacts', 'web_search'],
+    modelPurpose: 'conversation',
   },
 
   inbox: {
@@ -74,6 +83,7 @@ export const PERSONAS: Record<Mode, ModePersona> = {
       weight: 0.85,
     },
     suggestedTools: ['find_messages', 'read_message', 'send_email', 'send_imessage', 'search_contacts'],
+    modelPurpose: 'classification',
   },
 
   work: {
@@ -86,6 +96,7 @@ export const PERSONAS: Record<Mode, ModePersona> = {
       weight: 0.8,
     },
     suggestedTools: ['get_tasks', 'create_task', 'update_task', 'search_contacts', 'find_messages'],
+    modelPurpose: 'conversation',
   },
 
   money: {
@@ -98,6 +109,7 @@ export const PERSONAS: Record<Mode, ModePersona> = {
       weight: 0.85,
     },
     suggestedTools: ['generate_invoice', 'list_invoices', 'search_contacts', 'execute_code'],
+    modelPurpose: 'synthesis',
   },
 }
 
@@ -114,6 +126,7 @@ export const DEFAULT_PERSONA: ModePersona = {
     weight: 0.5,
   },
   suggestedTools: [],
+  modelPurpose: 'conversation',
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -165,4 +178,15 @@ export function applyModePersona(basePrompt: string, mode: Mode | string | undef
  */
 export function getRetrievalBias(mode: Mode | string | undefined | null): RetrievalBias {
   return resolvePersona(mode).retrievalBias
+}
+
+/**
+ * Preferred model purpose for a given mode.
+ * Returns DEFAULT_PERSONA.modelPurpose ('conversation') when mode is missing/invalid.
+ *
+ * Mode is a *prior*, not a wall: callers should still let strong heuristic
+ * signals (e.g. selectModel detecting synthesis triggers) override this prior.
+ */
+export function getModePurpose(mode: Mode | string | undefined | null): ModelPurpose {
+  return resolvePersona(mode).modelPurpose
 }

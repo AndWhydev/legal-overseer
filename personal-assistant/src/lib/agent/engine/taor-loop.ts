@@ -21,10 +21,10 @@ import { getComposioToolsForOrg } from '@/lib/composio/tool-provider'
 import { isComposioEnabled } from '@/lib/composio/client'
 import { selectRelevantTools } from '@/lib/agent/tool-rag'
 import { buildEntityAwarePrompt } from '@/lib/agent/prompt-builder'
-import { applyModePersona, getRetrievalBias } from '@/lib/dashboard/mode-personas'
+import { applyModePersona, getRetrievalBias, getModePurpose } from '@/lib/dashboard/mode-personas'
 import { ContextAssembler } from '@/lib/context-assembly/context-assembler'
-import { selectModel } from '@/lib/agent/model-router'
-import { resolveModel, resolveTokenLimit } from '@/lib/agent/model-registry'
+import { selectModel, applyModePrior } from '@/lib/agent/model-router'
+import { resolveTokenLimit } from '@/lib/agent/model-registry'
 import type { ModelPurpose } from '@/lib/agent/model-registry'
 import { logAgentRun, estimateRunCost } from '@/lib/agent/run-logger'
 import { generatePlan, stageFromToolName, isTrivialMessage, type PlanStage, type PlanOutput } from '@/lib/agent/planner'
@@ -275,7 +275,15 @@ export async function* runTAORLoop(
   // ── 2. Model routing (via AI Gateway) ──────────────────────────────
   yield { type: 'stage', data: { stage: 'model_routing', status: 'start' } }
   const autoRouted = !config.model
-  const selection = autoRouted ? selectModel(message) : null
+  const baseSelection = autoRouted ? selectModel(message) : null
+  // Mode-as-prior: when heuristic returned default 'conversation' and the user is
+  // in a mode that prefers a different purpose (inbox→classification, money→synthesis),
+  // adopt the mode's preferred purpose. Strong heuristic signals (synthesis or
+  // classification detected from the prompt itself) still win.
+  const selection =
+    autoRouted && config.currentMode
+      ? applyModePrior(baseSelection, config.currentMode, getModePurpose(config.currentMode))
+      : baseSelection
   const purpose: ModelPurpose = selection?.purpose || 'conversation'
   // Resolve to gateway model IDs (provider/model format)
   const gatewayModelMap: Record<ModelPurpose, string> = {
@@ -285,6 +293,19 @@ export async function* runTAORLoop(
   }
   const model = config.model || gatewayModelMap[purpose] || gatewayModels.balanced
   const maxTokens = selection ? resolveTokenLimit(selection.purpose) : resolveTokenLimit('conversation')
+  if (autoRouted) {
+    const modePriorApplied =
+      !!config.currentMode &&
+      !!baseSelection &&
+      baseSelection.purpose === 'conversation' &&
+      selection?.purpose !== 'conversation'
+    logger.info('[taor] Model routed', {
+      mode: config.currentMode ?? null,
+      purpose,
+      modePriorApplied,
+      reasoning: selection?.reasoning,
+    })
+  }
   yield { type: 'stage', data: { stage: 'model_routing', status: 'done' } }
 
   yield { type: 'thinking_start', data: {} }

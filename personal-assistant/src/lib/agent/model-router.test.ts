@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { selectModel } from './model-router'
+import { selectModel, applyModePrior } from './model-router'
 
 describe('selectModel', () => {
   describe('synthesis selection', () => {
@@ -138,5 +138,62 @@ describe('selectModel', () => {
       expect(typeof cls.model).toBe('string')
       expect(typeof conv.model).toBe('string')
     })
+  })
+})
+
+describe('applyModePrior — per-mode model routing', () => {
+  it('returns null when selection is null (manual model override)', () => {
+    expect(applyModePrior(null, 'inbox', 'classification')).toBeNull()
+  })
+
+  it('upgrades default conversation → classification when mode is inbox', () => {
+    const base = selectModel('Hello there')
+    expect(base.purpose).toBe('conversation')
+
+    const result = applyModePrior(base, 'inbox', 'classification')
+    expect(result?.purpose).toBe('classification')
+    expect(result?.reasoning).toContain('Mode prior')
+    expect(result?.reasoning).toContain('inbox')
+  })
+
+  it('upgrades default conversation → synthesis when mode is money', () => {
+    const base = selectModel('What is my balance?')
+    expect(base.purpose).toBe('conversation')
+
+    const result = applyModePrior(base, 'money', 'synthesis')
+    expect(result?.purpose).toBe('synthesis')
+    expect(result?.reasoning).toContain('money')
+  })
+
+  it('preserves heuristic synthesis even when mode prefers classification (mode is a prior, not a wall)', () => {
+    const base = selectModel('Help me plan and design the next quarter')
+    expect(base.purpose).toBe('synthesis')
+
+    // Inbox mode prefers classification but the prompt itself signals synthesis
+    const result = applyModePrior(base, 'inbox', 'classification')
+    expect(result?.purpose).toBe('synthesis')
+    expect(result).toBe(base) // unchanged reference
+  })
+
+  it('preserves heuristic classification even when mode prefers synthesis', () => {
+    const base = selectModel('Triage and filter these tickets')
+    expect(base.purpose).toBe('classification')
+
+    const result = applyModePrior(base, 'money', 'synthesis')
+    expect(result?.purpose).toBe('classification')
+  })
+
+  it('is a no-op when mode purpose is conversation (matches default)', () => {
+    const base = selectModel('Hello there')
+    expect(base.purpose).toBe('conversation')
+
+    const result = applyModePrior(base, 'work', 'conversation')
+    expect(result).toBe(base)
+  })
+
+  it('is a no-op when mode purpose is conversation and chat mode default', () => {
+    const base = selectModel('Hello')
+    const result = applyModePrior(base, 'chat', 'conversation')
+    expect(result?.purpose).toBe('conversation')
   })
 })
