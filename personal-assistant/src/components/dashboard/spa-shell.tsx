@@ -44,6 +44,7 @@ import { ModeSwitcher } from './mode-switcher';
 import { ModeProvider, useModeStore } from '@/lib/dashboard/mode-store';
 import type { Mode } from '@/lib/dashboard/mode-store';
 import { isDashboardModesEnabled } from '@/lib/dashboard/feature-flag';
+import { useModeTabBadge } from '@/hooks/use-mode-tab-badge';
 import { getModuleConfig } from '@/lib/modules/registry';
 import type { SidebarVariant } from '@/lib/modules/registry';
 
@@ -357,6 +358,9 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
   // We manage mode at this level so it can be passed to ModeProvider as
   // initialState and also used by the keydown handler below.
   const [activeMode, setActiveMode] = useState<Mode>('chat');
+
+  // Tab title + favicon reflect the active mode (no-op when flag off).
+  useModeTabBadge(MODES_ENABLED ? activeMode : undefined);
 
   // ⌘1–⌘4 mode keyboard shortcuts (gated by feature flag)
   useEffect(() => {
