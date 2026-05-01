@@ -44,6 +44,7 @@ data/*.db*
 # Agent/skill caches (plugin-generated)
 .agent/skills/
 .agents/skills/
+.claude/skills/generated/
 
 # OS
 .DS_Store
