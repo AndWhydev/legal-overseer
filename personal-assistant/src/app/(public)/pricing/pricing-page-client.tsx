@@ -128,6 +128,7 @@ const TIERS: Tier[] = [
   paidTierRow('starter', {
     description: 'For solo operators getting started with AI ops.',
     features: [
+      'Modes: Chat + Inbox',
       '1 user',
       '3 channel integrations',
       'Sentry (monitoring agent)',
@@ -141,6 +142,7 @@ const TIERS: Tier[] = [
   paidTierRow('growth', {
     description: 'For growing agencies automating client ops.',
     features: [
+      'All four modes: Chat · Inbox · Work · Money',
       '5 users',
       'All channel integrations',
       'All Starter agents',
@@ -156,6 +158,7 @@ const TIERS: Tier[] = [
   paidTierRow('scale', {
     description: 'For agencies running full AI-powered operations.',
     features: [
+      'All four modes: Chat · Inbox · Work · Money',
       '15 users',
       'All channel integrations',
       'All Growth agents',
@@ -173,6 +176,7 @@ const TIERS: Tier[] = [
     period: '',
     description: 'For agencies needing bespoke configuration.',
     features: [
+      'All four modes: Chat · Inbox · Work · Money',
       'Unlimited users',
       'Dedicated infrastructure',
       'Custom agent development',
