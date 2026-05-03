@@ -19,10 +19,12 @@ import {
   IconInbox,
   IconBriefcase,
   IconCoin,
+  IconLock,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Mode } from '@/lib/dashboard/mode-store';
+import type { PlanName } from '@/lib/billing/plan-gates';
 
 // ─── Mode definitions ─────────────────────────────────────────────────────────
 
@@ -47,6 +49,14 @@ interface ModeSwitcherProps {
   onSwitch: (mode: Mode) => void;
   /** Optional live count badge per mode (placeholder 0 for Phase 1) */
   counts?: Partial<Record<Mode, number>>;
+  /**
+   * Per-mode lock map. If a mode appears here, its tab renders as locked
+   * (lock icon + muted style). Clicking a locked tab fires `onLockedModeClick`
+   * (or no-ops) instead of `onSwitch`. Source: `useModeEntitlements()`.
+   */
+  lockedModes?: Partial<Record<Mode, { requiredPlan: PlanName }>>;
+  /** Called when a locked tab is clicked, e.g. to open an upsell modal. */
+  onLockedModeClick?: (mode: Mode, requiredPlan: PlanName) => void;
   className?: string;
 }
 
@@ -56,6 +66,8 @@ export function ModeSwitcher({
   active,
   onSwitch,
   counts = {},
+  lockedModes = {},
+  onLockedModeClick,
   className,
 }: ModeSwitcherProps) {
   const id = useId();
@@ -100,19 +112,33 @@ export function ModeSwitcher({
       const modes = MODES.map(m => m.id);
       const currentIdx = modes.indexOf(active);
 
+      // Skip locked modes when arrow-stepping. Loops at most 4× (one cycle)
+      // before bailing out — guards against an all-locked state.
+      function nextEnabled(direction: 1 | -1): Mode | null {
+        for (let i = 1; i <= modes.length; i++) {
+          const candidate = modes[(currentIdx + direction * i + modes.length * i) % modes.length];
+          if (!lockedModes[candidate]) return candidate;
+        }
+        return null;
+      }
+
       if (e.key === 'ArrowRight') {
         e.preventDefault();
-        const next = modes[(currentIdx + 1) % modes.length];
-        onSwitch(next);
-        tabRefs.current[next]?.focus();
+        const next = nextEnabled(1);
+        if (next) {
+          onSwitch(next);
+          tabRefs.current[next]?.focus();
+        }
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        const prev = modes[(currentIdx - 1 + modes.length) % modes.length];
-        onSwitch(prev);
-        tabRefs.current[prev]?.focus();
+        const prev = nextEnabled(-1);
+        if (prev) {
+          onSwitch(prev);
+          tabRefs.current[prev]?.focus();
+        }
       }
     },
-    [active, onSwitch],
+    [active, onSwitch, lockedModes],
   );
 
   return (
@@ -126,6 +152,8 @@ export function ModeSwitcher({
       {MODES.map((mode) => {
         const isActive = mode.id === active;
         const count = counts[mode.id] ?? 0;
+        const lock = lockedModes[mode.id];
+        const isLocked = Boolean(lock);
 
         return (
           <Tooltip key={mode.id}>
@@ -134,23 +162,35 @@ export function ModeSwitcher({
                 ref={(el) => { tabRefs.current[mode.id] = el; }}
                 role="tab"
                 id={`${id}-tab-${mode.id}`}
-                aria-selected={isActive}
+                aria-selected={isActive && !isLocked}
+                aria-disabled={isLocked}
                 aria-controls={`${id}-panel-${mode.id}`}
-                tabIndex={isActive ? 0 : -1}
-                onClick={() => onSwitch(mode.id)}
+                tabIndex={isActive && !isLocked ? 0 : -1}
+                onClick={() => {
+                  if (isLocked) {
+                    onLockedModeClick?.(mode.id, lock!.requiredPlan);
+                    return;
+                  }
+                  onSwitch(mode.id);
+                }}
                 className={cn(
                   // Base: tight pill, DM Sans 500 14/20
                   'relative flex items-center gap-1.5 rounded-md px-3 py-1.5',
                   'text-sm font-medium leading-5 select-none',
                   'transition-colors duration-150',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-                  // Active: subtle background tint + primary text
-                  isActive
-                    ? 'text-foreground bg-accent'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/60',
+                  // Locked: muted, lower opacity, default cursor stays clickable for upsell
+                  isLocked && 'text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/30',
+                  // Active (only when NOT locked): subtle background tint + primary text
+                  !isLocked && isActive && 'text-foreground bg-accent',
+                  !isLocked && !isActive && 'text-muted-foreground hover:text-foreground hover:bg-accent/60',
                 )}
               >
-                <mode.Icon size={15} className="shrink-0" />
+                {isLocked ? (
+                  <IconLock size={13} className="shrink-0" />
+                ) : (
+                  <mode.Icon size={15} className="shrink-0" />
+                )}
                 <span>{mode.label}</span>
                 {count > 0 && (
                   <span
@@ -168,7 +208,13 @@ export function ModeSwitcher({
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={8}>
               <span>{mode.label}</span>
-              <span className="ml-1.5 text-muted-foreground">{mode.shortcut}</span>
+              {isLocked ? (
+                <span className="ml-1.5 text-muted-foreground capitalize">
+                  {lock!.requiredPlan} plan
+                </span>
+              ) : (
+                <span className="ml-1.5 text-muted-foreground">{mode.shortcut}</span>
+              )}
             </TooltipContent>
           </Tooltip>
         );
