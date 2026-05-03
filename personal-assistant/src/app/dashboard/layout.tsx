@@ -12,6 +12,7 @@ export default async function DashboardLayout({
   let displayName = 'Dev User'
   let initials = 'DU'
   let isNewUser = false
+  let userId = ''
 
   const devBypass = process.env.DEV_BYPASS_AUTH === 'true' && process.env.NODE_ENV !== 'production'
 
@@ -24,6 +25,8 @@ export default async function DashboardLayout({
     if (!user) {
       redirect('/login')
     }
+
+    userId = user.id
 
     displayName =
       user.user_metadata?.display_name ||
@@ -56,5 +59,5 @@ export default async function DashboardLayout({
     isNewUser = !preferences.onboarding_completed
   }
 
-  return <SPAShell displayName={displayName} initials={initials} isNewUser={isNewUser} />
+  return <SPAShell displayName={displayName} initials={initials} isNewUser={isNewUser} userId={userId} />
 }

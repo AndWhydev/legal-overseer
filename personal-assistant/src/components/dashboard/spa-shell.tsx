@@ -42,6 +42,7 @@ import { DrawerSlot } from './drawer-slot';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ModeSwitcher } from './mode-switcher';
 import { LockedModeUpsell } from './locked-mode-upsell';
+import { ModeOnboardingCard } from './mode-onboarding-card';
 import { ModeProvider, useModeStore } from '@/lib/dashboard/mode-store';
 import type { Mode } from '@/lib/dashboard/mode-store';
 import type { PlanName } from '@/lib/billing/plan-gates';
@@ -241,9 +242,16 @@ interface SPAShellProps {
   displayName: string;
   initials: string;
   isNewUser?: boolean;
+  /**
+   * Auth user id, threaded from layout.tsx supabase resolution. Used by
+   * mode-scoped surfaces (onboarding card, future per-user state). Empty
+   * string when devBypass is on or no auth — consumers should treat empty
+   * as "no user yet" and render their own no-op fallback.
+   */
+  userId?: string;
 }
 
-export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellProps) {
+export function SPAShell({ displayName, initials, isNewUser = false, userId = '' }: SPAShellProps) {
   const router = useRouter();
 
   const handleSignOut = useCallback(async () => {
@@ -577,6 +585,15 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                     transition: 'max-width var(--mode-transition, 300ms ease-out)',
                   } : undefined}
                 >
+                {/* Per-mode onboarding nudge. Renders null when:
+                    - userId is empty (devBypass / pre-auth)
+                    - the active mode is fully onboarded
+                    Uses localStorage so completion persists across sessions. */}
+                {MODES_ENABLED && userId && (
+                  <div className="px-4 pt-4 lg:px-6">
+                    <ModeOnboardingCard userId={userId} mode={activeMode} />
+                  </div>
+                )}
                 <KeepAliveTabPanel
                   activeTabId={TABS[activeNavIndex]?.id ?? 'dashboard'}
                   direction={transitionDir}
