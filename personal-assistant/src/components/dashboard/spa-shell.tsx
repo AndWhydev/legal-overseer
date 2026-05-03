@@ -45,6 +45,7 @@ import { ModeProvider, useModeStore } from '@/lib/dashboard/mode-store';
 import type { Mode } from '@/lib/dashboard/mode-store';
 import { isDashboardModesEnabled } from '@/lib/dashboard/feature-flag';
 import { useModeTabBadge } from '@/hooks/use-mode-tab-badge';
+import { useModeEntitlements } from '@/hooks/use-mode-entitlements';
 import { getModuleConfig } from '@/lib/modules/registry';
 import type { SidebarVariant } from '@/lib/modules/registry';
 
@@ -199,6 +200,33 @@ const TAB_SKELETON_VARIANTS: Record<string, import('./tabs/tab-skeleton').TabSke
   reports: 'chart',
   knowledge: 'cards-grid',
 };
+
+// ---- Mode-aware switcher wrapper ----
+//
+// Calls useModeEntitlements() once and feeds the result into ModeSwitcher.
+// Extracted as its own component so the entitlements fetch only runs when
+// MODES_ENABLED is true (the parent only mounts this under the flag check).
+// Locked-tab clicks deep-link to /pricing — the upsell modal is a follow-up.
+
+interface DashboardModeNavProps {
+  active: Mode;
+  onSwitch: (mode: Mode) => void;
+  className?: string;
+}
+
+function DashboardModeNav({ active, onSwitch, className }: DashboardModeNavProps) {
+  const { lockedModes } = useModeEntitlements();
+  const router = useRouter();
+  return (
+    <ModeSwitcher
+      active={active}
+      onSwitch={onSwitch}
+      lockedModes={lockedModes}
+      onLockedModeClick={() => router.push('/pricing')}
+      className={className}
+    />
+  );
+}
 
 // ---- SPA Shell ----
 
@@ -509,10 +537,11 @@ export function SPAShell({ displayName, initials, isNewUser = false }: SPAShellP
                   <header className="relative flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) px-4 lg:px-6">
                     <SidebarTrigger className="-ml-1" />
                     <div className="mx-2 h-4 w-px shrink-0 bg-border" />
-                    {/* Mode switcher — only mounted when flag is on */}
+                    {/* Mode switcher — only mounted when flag is on. Wraps the
+                        entitlements fetch so locked tabs surface from the user's plan. */}
                     {MODES_ENABLED && (
                       <>
-                        <ModeSwitcher
+                        <DashboardModeNav
                           active={activeMode}
                           onSwitch={setActiveMode}
                           className="hidden sm:flex"
