@@ -41,8 +41,10 @@ import { DrawerProvider } from './drawer-context';
 import { DrawerSlot } from './drawer-slot';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ModeSwitcher } from './mode-switcher';
+import { LockedModeUpsell } from './locked-mode-upsell';
 import { ModeProvider, useModeStore } from '@/lib/dashboard/mode-store';
 import type { Mode } from '@/lib/dashboard/mode-store';
+import type { PlanName } from '@/lib/billing/plan-gates';
 import { isDashboardModesEnabled } from '@/lib/dashboard/feature-flag';
 import { useModeTabBadge } from '@/hooks/use-mode-tab-badge';
 import { useModeEntitlements } from '@/hooks/use-mode-entitlements';
@@ -206,7 +208,9 @@ const TAB_SKELETON_VARIANTS: Record<string, import('./tabs/tab-skeleton').TabSke
 // Calls useModeEntitlements() once and feeds the result into ModeSwitcher.
 // Extracted as its own component so the entitlements fetch only runs when
 // MODES_ENABLED is true (the parent only mounts this under the flag check).
-// Locked-tab clicks deep-link to /pricing — the upsell modal is a follow-up.
+// Locked-tab clicks open an in-context upsell modal. The "See {plan}" CTA
+// inside the modal still routes to /pricing#tier-{plan} — the actual upgrade
+// flow is out-of-scope.
 
 interface DashboardModeNavProps {
   active: Mode;
@@ -216,15 +220,18 @@ interface DashboardModeNavProps {
 
 function DashboardModeNav({ active, onSwitch, className }: DashboardModeNavProps) {
   const { lockedModes } = useModeEntitlements();
-  const router = useRouter();
+  const [lockedClick, setLockedClick] = useState<{ mode: Mode; requiredPlan: PlanName } | null>(null);
   return (
-    <ModeSwitcher
-      active={active}
-      onSwitch={onSwitch}
-      lockedModes={lockedModes}
-      onLockedModeClick={() => router.push('/pricing')}
-      className={className}
-    />
+    <>
+      <ModeSwitcher
+        active={active}
+        onSwitch={onSwitch}
+        lockedModes={lockedModes}
+        onLockedModeClick={(mode, requiredPlan) => setLockedClick({ mode, requiredPlan })}
+        className={className}
+      />
+      <LockedModeUpsell lockedMode={lockedClick} onClose={() => setLockedClick(null)} />
+    </>
   );
 }
 
