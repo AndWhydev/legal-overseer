@@ -88,3 +88,46 @@ describe('ModeOnboardingCard — open state', () => {
     expect(JSON.parse(stored!)).toContain('money-1-add-contact')
   })
 })
+
+describe('ModeOnboardingCard — onAction', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    window.localStorage.clear()
+  })
+
+  it('fires onAction with the step action before completing', () => {
+    const onAction = vi.fn()
+    render(
+      <ModeOnboardingCard userId={USER} mode="inbox" onAction={onAction} />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /connect/i }))
+    // inbox-1 declares { kind: 'open-modal', modalId: 'connect-channel' }.
+    expect(onAction).toHaveBeenCalledOnce()
+    const [action, step] = onAction.mock.calls[0]
+    expect(action).toEqual({ kind: 'open-modal', modalId: 'connect-channel' })
+    expect(step.id).toBe('inbox-1-connect-channel')
+  })
+
+  it('passes a synthesised noop action when the step has no declared action', () => {
+    // money-1 in the seed registry has no action field — the card should
+    // synthesise { kind: 'noop' } so consumers can always trust the
+    // callback fires with a valid discriminated union.
+    const onAction = vi.fn()
+    render(
+      <ModeOnboardingCard userId={USER} mode="money" onAction={onAction} />
+    )
+    fireEvent.click(screen.getByRole('button', { name: /add contact/i }))
+    expect(onAction).toHaveBeenCalledOnce()
+    const [action] = onAction.mock.calls[0]
+    expect(action).toEqual({ kind: 'noop' })
+  })
+
+  it('completes the step regardless of whether onAction is provided', () => {
+    const { rerender } = render(<ModeOnboardingCard userId={USER} mode="money" />)
+    fireEvent.click(screen.getByRole('button', { name: /add contact/i }))
+    rerender(<ModeOnboardingCard userId={USER} mode="money" />)
+    // Without an onAction, the card still calls completeStep — the next
+    // money step renders.
+    expect(screen.getByText(/Create an invoice draft/i)).toBeTruthy()
+  })
+})

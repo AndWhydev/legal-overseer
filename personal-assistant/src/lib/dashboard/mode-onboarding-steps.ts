@@ -31,6 +31,29 @@ export type OnboardingStepKind =
   | 'add-contact'
   | 'create-invoice'
 
+/**
+ * Discriminated union of side effects a step CTA can request.
+ *
+ * The step registry declares the *intent* (switch to a tab, open a modal,
+ * focus an input). The shell layer in `spa-shell.tsx` interprets the
+ * intent and calls the matching imperative — `setActiveMode`,
+ * `handleTabChange`, etc. — and connect-channel sheets land in a
+ * follow-up PR with their own routing logic.
+ *
+ * Foundation only: kinds are deliberately conservative. Adding new ones
+ * is fine; do NOT smuggle business state into `payload` (e.g. partial
+ * task content). Steps are *intents*, not draft data.
+ */
+export type OnboardingStepAction =
+  /** Switch the active dashboard mode. */
+  | { kind: 'switch-mode'; mode: Mode }
+  /** Switch the active SPA tab inside the current mode. */
+  | { kind: 'switch-tab'; tabId: string }
+  /** Open a named UI modal/sheet. The shell decides which one. */
+  | { kind: 'open-modal'; modalId: string }
+  /** No automatic side effect — completing the step is the only outcome. */
+  | { kind: 'noop' }
+
 export interface OnboardingStep {
   id: string
   mode: Mode
@@ -46,6 +69,13 @@ export interface OnboardingStep {
    */
   required: boolean
   ctaLabel: string
+  /**
+   * Optional side-effect intent fired before `completeStep`. Defaults to
+   * `{ kind: 'noop' }` when omitted, so existing seed steps keep their
+   * original behavior. Wire intents into a step gradually as the destination
+   * UI lands.
+   */
+  action?: OnboardingStepAction
 }
 
 // ─── Steps ────────────────────────────────────────────────────────────────────
@@ -66,6 +96,7 @@ export const MODE_ONBOARDING_STEPS: ReadonlyArray<OnboardingStep> = [
     kind: 'instruction',
     required: false,
     ctaLabel: 'Open chat',
+    action: { kind: 'switch-mode', mode: 'chat' },
   },
 
   // inbox — connect a source so there is anything to triage
@@ -78,6 +109,7 @@ export const MODE_ONBOARDING_STEPS: ReadonlyArray<OnboardingStep> = [
     kind: 'connect-channel',
     required: true,
     ctaLabel: 'Connect',
+    action: { kind: 'open-modal', modalId: 'connect-channel' },
   },
   {
     id: 'inbox-2-send-test-message',
@@ -110,6 +142,7 @@ export const MODE_ONBOARDING_STEPS: ReadonlyArray<OnboardingStep> = [
     kind: 'instruction',
     required: false,
     ctaLabel: 'Open Work',
+    action: { kind: 'switch-mode', mode: 'work' },
   },
 
   // money — three steps because money mode has the steepest setup curve
@@ -142,6 +175,7 @@ export const MODE_ONBOARDING_STEPS: ReadonlyArray<OnboardingStep> = [
     kind: 'instruction',
     required: false,
     ctaLabel: 'Open Money',
+    action: { kind: 'switch-mode', mode: 'money' },
   },
 ]
 

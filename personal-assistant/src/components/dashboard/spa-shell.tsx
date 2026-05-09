@@ -594,7 +594,22 @@ export function SPAShell({ displayName, initials, isNewUser = false, userId = ''
                     Uses localStorage so completion persists across sessions. */}
                 {MODES_ENABLED && userId && (
                   <div className="px-4 pt-4 lg:px-6">
-                    <ModeOnboardingCard userId={userId} mode={activeMode} />
+                    <ModeOnboardingCard
+                      userId={userId}
+                      mode={activeMode}
+                      onAction={(action) => {
+                        // Translate the step's intent into an imperative side
+                        // effect. Unknown kinds and 'noop' are no-ops; the
+                        // step is always completed by the card itself.
+                        if (action.kind === 'switch-mode') {
+                          setActiveMode(action.mode);
+                        } else if (action.kind === 'switch-tab') {
+                          handleTabChange(action.tabId);
+                        }
+                        // 'open-modal' wiring lives in a follow-up — the
+                        // connect-channel sheet is not yet routable from here.
+                      }}
+                    />
                   </div>
                 )}
                 <KeepAliveTabPanel

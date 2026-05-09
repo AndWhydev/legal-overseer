@@ -25,21 +25,43 @@
 import { Button } from '@/components/ui/button';
 import { useModeOnboarding } from '@/hooks/use-mode-onboarding';
 import type { Mode } from '@/lib/dashboard/mode-store';
+import type {
+  OnboardingStep,
+  OnboardingStepAction,
+} from '@/lib/dashboard/mode-onboarding-steps';
 
 export interface ModeOnboardingCardProps {
   userId: string;
   mode: Mode;
+  /**
+   * Called when the CTA is clicked, with the step's declared action intent.
+   * Consumers (typically `SPAShell`) translate this into imperative side
+   * effects: switching modes, switching tabs, opening modals.
+   *
+   * Fired BEFORE `completeStep` so the destination UI can prepare itself
+   * before localStorage updates and the next step renders.
+   *
+   * Steps without an explicit action default to `{ kind: 'noop' }`, so
+   * consumers can always assume the callback fires — no need to null-check.
+   */
+  onAction?: (action: OnboardingStepAction, step: OnboardingStep) => void;
   /** Optional className passthrough for layout positioning. */
   className?: string;
 }
 
-export function ModeOnboardingCard({ userId, mode, className }: ModeOnboardingCardProps) {
+export function ModeOnboardingCard({ userId, mode, onAction, className }: ModeOnboardingCardProps) {
   const { nextStep, isComplete, completeStep } = useModeOnboarding({ userId, mode });
 
   // Render null in any "nothing to nudge" state. The card silently disappears
   // — no "you're all done" celebration, since the foundation doesn't carry
   // a confirmation modal yet.
   if (!userId || isComplete || !nextStep) return null;
+
+  function handleClick(step: OnboardingStep): void {
+    const action: OnboardingStepAction = step.action ?? { kind: 'noop' };
+    onAction?.(action, step);
+    completeStep(step.id);
+  }
 
   return (
     <div
@@ -55,7 +77,7 @@ export function ModeOnboardingCard({ userId, mode, className }: ModeOnboardingCa
       </div>
       <Button
         size="sm"
-        onClick={() => completeStep(nextStep.id)}
+        onClick={() => handleClick(nextStep)}
         className="shrink-0"
       >
         {nextStep.ctaLabel}
