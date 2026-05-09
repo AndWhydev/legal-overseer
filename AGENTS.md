@@ -48,7 +48,7 @@ docs/                  Architecture docs, ADRs, specs
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **BitBit** (39400 symbols, 58532 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **BitBit** (39562 symbols, 58781 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -86,25 +86,5 @@ This project is indexed by GitNexus as **BitBit** (39400 symbols, 58532 relation
 | Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
 | Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
-| Work in the Agent area (640 symbols) | `.claude/skills/generated/agent/SKILL.md` |
-| Work in the Ui area (439 symbols) | `.claude/skills/generated/ui/SKILL.md` |
-| Work in the Channels area (436 symbols) | `.claude/skills/generated/channels/SKILL.md` |
-| Work in the Portal area (164 symbols) | `.claude/skills/generated/portal/SKILL.md` |
-| Work in the Memory-palace area (123 symbols) | `.claude/skills/generated/memory-palace/SKILL.md` |
-| Work in the Dashboard area (120 symbols) | `.claude/skills/generated/dashboard/SKILL.md` |
-| Work in the Hooks area (115 symbols) | `.claude/skills/generated/hooks/SKILL.md` |
-| Work in the Rag area (114 symbols) | `.claude/skills/generated/rag/SKILL.md` |
-| Work in the Tabs area (107 symbols) | `.claude/skills/generated/tabs/SKILL.md` |
-| Work in the Intelligence area (99 symbols) | `.claude/skills/generated/intelligence/SKILL.md` |
-| Work in the Revenue area (96 symbols) | `.claude/skills/generated/revenue/SKILL.md` |
-| Work in the Scripts area (92 symbols) | `.claude/skills/generated/scripts/SKILL.md` |
-| Work in the Onboarding area (75 symbols) | `.claude/skills/generated/onboarding/SKILL.md` |
-| Work in the Components area (72 symbols) | `.claude/skills/generated/components/SKILL.md` |
-| Work in the Chat area (67 symbols) | `.claude/skills/generated/chat/SKILL.md` |
-| Work in the Swarm area (61 symbols) | `.claude/skills/generated/swarm/SKILL.md` |
-| Work in the Bridges area (60 symbols) | `.claude/skills/generated/bridges/SKILL.md` |
-| Work in the Composio area (59 symbols) | `.claude/skills/generated/composio/SKILL.md` |
-| Work in the Lifecycles area (57 symbols) | `.claude/skills/generated/lifecycles/SKILL.md` |
-| Work in the Connections area (55 symbols) | `.claude/skills/generated/connections/SKILL.md` |
 
 <!-- gitnexus:end -->
