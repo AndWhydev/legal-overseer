@@ -43,6 +43,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { ModeSwitcher } from './mode-switcher';
 import { LockedModeUpsell } from './locked-mode-upsell';
 import { ModeOnboardingCard } from './mode-onboarding-card';
+import { ModeRecipesMenu } from './mode-recipes-menu';
 import { ModeProvider, useModeStore } from '@/lib/dashboard/mode-store';
 import type { Mode } from '@/lib/dashboard/mode-store';
 import type { PlanName } from '@/lib/billing/plan-gates';
@@ -231,6 +232,8 @@ function DashboardModeNav({ active, onSwitch, className }: DashboardModeNavProps
         onLockedModeClick={(mode, requiredPlan) => setLockedClick({ mode, requiredPlan })}
         className={className}
       />
+      {/* Recipe launcher — renders null when the active mode has no recipes. */}
+      <ModeRecipesMenu mode={active} className="hidden md:inline-flex" />
       <LockedModeUpsell lockedMode={lockedClick} onClose={() => setLockedClick(null)} />
     </>
   );
