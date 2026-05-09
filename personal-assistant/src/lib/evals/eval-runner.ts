@@ -20,6 +20,7 @@
  */
 
 import type Anthropic from '@anthropic-ai/sdk'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Mode } from '@/lib/dashboard/mode-store'
 import { MODE_RUBRICS, type ModeRubric } from './mode-eval-rubric'
 import { SEED_DATASET, type EvalCase } from './mode-eval-dataset'
@@ -180,4 +181,93 @@ export async function runEvalBatch(
     overallMean,
     byMode,
   }
+}
+
+// ─── Persistence ──────────────────────────────────────────────────────────────
+
+export interface PersistEvalRunOptions {
+  /** Mode filter applied at run time (null when full dataset). */
+  mode?: Mode | null
+  candidateModel?: string | null
+  judgeModel?: string | null
+  /** Free-form bag stored on `eval_runs.metadata`. */
+  metadata?: Record<string, unknown>
+}
+
+export interface PersistEvalRunOutcome {
+  runRowInserted: boolean
+  resultRowsInserted: number
+  /** Errors from the DB call, surfaced rather than thrown so the cron
+   *  route can return 200 with a degraded body instead of crashing. */
+  errors: string[]
+}
+
+/**
+ * Write one EvalRunReport to `eval_runs` + one row per JudgedSubmission to
+ * `eval_results`. Best-effort: a failure on either insert is captured in
+ * `errors` rather than thrown, so the runner's report stays the source of
+ * truth even when the DB hiccups.
+ *
+ * Foundation only:
+ *   - No transaction across both inserts. If `eval_runs` succeeds but
+ *     `eval_results` fails, you get an empty run row pointing at nothing —
+ *     surfaced via `errors` so a follow-up can clean up.
+ *   - No upsert semantics. Re-running the same `runId` will conflict on
+ *     the PK; that's intentional, runs are immutable.
+ */
+export async function persistEvalRun(
+  supabase: SupabaseClient,
+  report: EvalRunReport,
+  options: PersistEvalRunOptions = {},
+): Promise<PersistEvalRunOutcome> {
+  const errors: string[] = []
+  let runRowInserted = false
+  let resultRowsInserted = 0
+
+  const runRow = {
+    run_id: report.runId,
+    started_at: report.startedAt,
+    finished_at: report.finishedAt,
+    mode: options.mode ?? null,
+    candidate_model: options.candidateModel ?? null,
+    judge_model: options.judgeModel ?? null,
+    overall_mean: report.overallMean,
+    by_mode: report.byMode,
+    errors: report.errors,
+    metadata: options.metadata ?? {},
+  }
+
+  const { error: runErr } = await supabase.from('eval_runs').insert(runRow)
+  if (runErr) {
+    errors.push(`eval_runs insert failed: ${runErr.message}`)
+    // Skip result inserts — they'll fail on the FK anyway.
+    return { runRowInserted: false, resultRowsInserted: 0, errors }
+  }
+  runRowInserted = true
+
+  if (report.results.length === 0) {
+    return { runRowInserted, resultRowsInserted, errors }
+  }
+
+  const caseModeIndex = new Map<string, Mode>(SEED_DATASET.map(c => [c.id, c.mode]))
+  const resultRows = report.results.map(r => ({
+    run_id: report.runId,
+    case_id: r.caseId,
+    mode: caseModeIndex.get(r.caseId) ?? 'chat',
+    candidate_model: r.candidateModel ?? options.candidateModel ?? null,
+    scores: r.scores,
+    normalized_score: r.result.normalized,
+    rationale: r.rationale ?? null,
+  }))
+
+  const { error: resErr, count } = await supabase
+    .from('eval_results')
+    .insert(resultRows, { count: 'exact' })
+  if (resErr) {
+    errors.push(`eval_results insert failed: ${resErr.message}`)
+  } else {
+    resultRowsInserted = count ?? resultRows.length
+  }
+
+  return { runRowInserted, resultRowsInserted, errors }
 }

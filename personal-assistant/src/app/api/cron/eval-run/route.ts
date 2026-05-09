@@ -20,7 +20,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import type { Mode } from '@/lib/dashboard/mode-store'
-import { runEvalBatch, type CandidateRunner } from '@/lib/evals/eval-runner'
+import { createClient } from '@/lib/supabase/server'
+import {
+  persistEvalRun,
+  runEvalBatch,
+  type CandidateRunner,
+} from '@/lib/evals/eval-runner'
 
 const VALID_MODES: ReadonlySet<string> = new Set(['chat', 'inbox', 'work', 'money'])
 
@@ -65,7 +70,23 @@ async function handle(req: NextRequest) {
       mode,
       candidateModel: 'stub',
     })
-    return NextResponse.json(report)
+
+    // Persist to Supabase. Best-effort: errors land in the response body
+    // alongside the report, the route still returns 200. The report itself
+    // is the source of truth — DB is a trend-analysis side channel.
+    let persistOutcome: Awaited<ReturnType<typeof persistEvalRun>> | { skipped: true } = {
+      skipped: true,
+    }
+    const supabase = await createClient()
+    if (supabase) {
+      persistOutcome = await persistEvalRun(supabase, report, {
+        mode: mode ?? null,
+        candidateModel: 'stub',
+        metadata: { source: 'cron/eval-run' },
+      })
+    }
+
+    return NextResponse.json({ report, persist: persistOutcome })
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Unknown error' },

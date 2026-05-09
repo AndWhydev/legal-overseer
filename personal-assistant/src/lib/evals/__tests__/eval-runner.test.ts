@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
-import { runEvalBatch } from '../eval-runner'
+import { persistEvalRun, runEvalBatch } from '../eval-runner'
 import { SEED_DATASET } from '../mode-eval-dataset'
+import type { EvalRunReport } from '../eval-runner'
 
 /**
  * The runner calls the real `judgeSubmission` (which calls the SDK), so we
@@ -196,5 +197,151 @@ describe('runEvalBatch — metadata', () => {
     const report = await runEvalBatch(client, candidate, { mode: 'money' })
 
     expect(report.runId).toMatch(/^eval-\d+-[a-z0-9]+$/)
+  })
+})
+
+// ─── persistEvalRun ──────────────────────────────────────────────────────────
+
+function fakeReport(overrides: Partial<EvalRunReport> = {}): EvalRunReport {
+  return {
+    runId: 'eval-test-1',
+    startedAt: '2026-05-09T00:00:00.000Z',
+    finishedAt: '2026-05-09T00:01:00.000Z',
+    overallMean: 80,
+    byMode: { money: { count: 1, mean: 80 } },
+    errors: [],
+    results: [{
+      caseId: 'money-001-invoice-from-thread',
+      candidateModel: 'sonnet-4-7',
+      scores: [
+        { dimension: 'numeric_correctness', score: 4 },
+        { dimension: 'currency_handling', score: 4 },
+      ],
+      result: { total: 8, normalized: 80, missing: [], ignored: [] },
+      rationale: 'good',
+    }],
+    ...overrides,
+  }
+}
+
+interface FromCall {
+  table: string
+  rows: unknown[]
+  options?: { count?: 'exact' | 'planned' | 'estimated' }
+}
+
+function makeMockSupabase(
+  errors: { runs?: { message: string }; results?: { message: string } } = {},
+  resultsCount = 1,
+) {
+  const calls: FromCall[] = []
+  const api = {
+    from(table: string) {
+      return {
+        insert: (rows: unknown, options?: { count?: 'exact' | 'planned' | 'estimated' }) => {
+          calls.push({
+            table,
+            rows: Array.isArray(rows) ? rows : [rows],
+            options,
+          })
+          if (table === 'eval_runs' && errors.runs) {
+            return Promise.resolve({ data: null, error: errors.runs, count: null })
+          }
+          if (table === 'eval_results' && errors.results) {
+            return Promise.resolve({ data: null, error: errors.results, count: null })
+          }
+          if (table === 'eval_results') {
+            return Promise.resolve({ data: null, error: null, count: resultsCount })
+          }
+          return Promise.resolve({ data: null, error: null, count: null })
+        },
+      }
+    },
+    _calls: calls,
+  }
+  return api as unknown as import('@supabase/supabase-js').SupabaseClient & { _calls: FromCall[] }
+}
+
+describe('persistEvalRun', () => {
+  it('inserts one eval_runs row plus one eval_results row per result', async () => {
+    const supabase = makeMockSupabase({}, 1)
+    const outcome = await persistEvalRun(supabase, fakeReport(), {
+      mode: 'money',
+      candidateModel: 'sonnet-4-7',
+      metadata: { source: 'test' },
+    })
+
+    expect(outcome.runRowInserted).toBe(true)
+    expect(outcome.resultRowsInserted).toBe(1)
+    expect(outcome.errors).toEqual([])
+
+    const calls = (supabase as unknown as { _calls: FromCall[] })._calls
+    expect(calls.map(c => c.table)).toEqual(['eval_runs', 'eval_results'])
+
+    const runRow = calls[0].rows[0] as Record<string, unknown>
+    expect(runRow.run_id).toBe('eval-test-1')
+    expect(runRow.mode).toBe('money')
+    expect(runRow.candidate_model).toBe('sonnet-4-7')
+    expect(runRow.overall_mean).toBe(80)
+    expect(runRow.metadata).toEqual({ source: 'test' })
+
+    const resultRow = calls[1].rows[0] as Record<string, unknown>
+    expect(resultRow.run_id).toBe('eval-test-1')
+    expect(resultRow.case_id).toBe('money-001-invoice-from-thread')
+    expect(resultRow.mode).toBe('money')
+    expect(resultRow.normalized_score).toBe(80)
+    expect(resultRow.rationale).toBe('good')
+  })
+
+  it('skips eval_results insert and surfaces error when eval_runs insert fails', async () => {
+    const supabase = makeMockSupabase({ runs: { message: 'duplicate key' } })
+    const outcome = await persistEvalRun(supabase, fakeReport())
+
+    expect(outcome.runRowInserted).toBe(false)
+    expect(outcome.resultRowsInserted).toBe(0)
+    expect(outcome.errors[0]).toContain('eval_runs insert failed')
+    expect(outcome.errors[0]).toContain('duplicate key')
+
+    // eval_results should not have been called.
+    const calls = (supabase as unknown as { _calls: FromCall[] })._calls
+    expect(calls.map(c => c.table)).toEqual(['eval_runs'])
+  })
+
+  it('surfaces eval_results error but keeps run row', async () => {
+    const supabase = makeMockSupabase({ results: { message: 'fk violation' } })
+    const outcome = await persistEvalRun(supabase, fakeReport())
+
+    expect(outcome.runRowInserted).toBe(true)
+    expect(outcome.resultRowsInserted).toBe(0)
+    expect(outcome.errors[0]).toContain('eval_results insert failed')
+  })
+
+  it('returns early when the report has zero results', async () => {
+    const supabase = makeMockSupabase()
+    const outcome = await persistEvalRun(supabase, fakeReport({ results: [] }))
+
+    expect(outcome.runRowInserted).toBe(true)
+    expect(outcome.resultRowsInserted).toBe(0)
+
+    const calls = (supabase as unknown as { _calls: FromCall[] })._calls
+    expect(calls.map(c => c.table)).toEqual(['eval_runs'])
+  })
+
+  it('falls back to options.candidateModel when result has none', async () => {
+    const supabase = makeMockSupabase()
+    const reportNoCandidate = fakeReport({
+      results: [{
+        caseId: 'money-001-invoice-from-thread',
+        scores: [],
+        result: { total: 0, normalized: 0, missing: [], ignored: [] },
+      }],
+    })
+    await persistEvalRun(supabase, reportNoCandidate, {
+      candidateModel: 'fallback-model',
+    })
+
+    const calls = (supabase as unknown as { _calls: FromCall[] })._calls
+    const resultRow = calls[1].rows[0] as Record<string, unknown>
+    expect(resultRow.candidate_model).toBe('fallback-model')
   })
 })
