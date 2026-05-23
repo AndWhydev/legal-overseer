@@ -217,6 +217,8 @@ const OVERSEER_SYSTEM_PROMPT = `You are the Overseer for a fleet of dev projects
 
 For each tick you receive a snapshot of one project: its git status, recent commits, any state/roadmap file, and what the last worker cycle did. Your job is to decide what (if anything) the next headless Claude Code worker cycle should do for this project.
 
+Note: aside from dispatching worker tasks, the platform can also run domain skills (rd_scout for market research, seo_backlinks for off-site SEO link building, ops_officer for invoice triage). You don't dispatch those directly — the processor or other schedulers do — but you can mention in a worker dispatch prompt when one of those skills should be invoked separately.
+
 You must respond with exactly one JSON object and nothing else:
 
 {"action": "dispatch", "prompt": "<concrete task for the worker to do>", "reasoning": "<why this is the right next step>"}

@@ -14,6 +14,11 @@ import {
   runClaudeCodeWorker,
   type ClaudeCodeWorkerInput,
 } from '../skills/claude-code-worker/index.js';
+import {
+  runBacklinkCampaign,
+  type CampaignConfig,
+  type CampaignRunResult,
+} from '../skills/seo-backlinks/index.js';
 
 const logger = createSafeLogger('Coordinator');
 
@@ -51,6 +56,7 @@ Available skills:
 - rd_scout: Market research, Alibaba/1688 product scanning, trend analysis, competitor research, supplier discovery
 - gatekeeper: Content QA, video review, style guide compliance, brand consistency, technical quality checks
 - ops_officer: Invoice processing, supplier verification, payment preparation, expense tracking, anomaly detection
+- seo_backlinks: Off-site SEO — backlink building, guest posts, directory submissions, link reports, anchor-text strategy. Any task that mentions a target domain/page plus keywords ("build backlinks for X", "submit articles to directories for keyword Y", "weekly backlink report") routes here.
 - general: Anything that doesn't fit above categories (general questions, simple lookups, misc tasks)
 
 Task to classify:
@@ -58,7 +64,7 @@ Task to classify:
 
 Respond with JSON only (no markdown, no explanation):
 {
-  "skillType": "claude_code_worker" | "rd_scout" | "gatekeeper" | "ops_officer" | "general",
+  "skillType": "claude_code_worker" | "rd_scout" | "gatekeeper" | "ops_officer" | "seo_backlinks" | "general",
   "complexity": "simple" | "standard" | "complex",
   "requiredTools": ["tool1", "tool2"],
   "reasoning": "brief explanation"
@@ -112,7 +118,7 @@ export async function classifyTask(prompt: string): Promise<TaskClassification> 
     const classification = JSON.parse(jsonMatch[0]) as TaskClassification;
 
     // Validate the skill type
-    const validSkillTypes: SkillType[] = ['rd_scout', 'gatekeeper', 'ops_officer', 'claude_code_worker', 'general'];
+    const validSkillTypes: SkillType[] = ['rd_scout', 'gatekeeper', 'ops_officer', 'claude_code_worker', 'seo_backlinks', 'general'];
     if (!validSkillTypes.includes(classification.skillType)) {
       throw new Error(`Invalid skill type: ${classification.skillType}`);
     }
@@ -166,11 +172,19 @@ export async function executeWithSkill(
   skillType: SkillType,
   mcpServers?: Record<string, McpServerConfig>,
   workerInput?: ClaudeCodeWorkerInput,
+  backlinkInput?: CampaignConfig,
 ): Promise<SkillExecutionResult> {
   // Claude Code Worker is a different execution model: spawn `claude -p` in
   // the project directory, don't go through the SDK query() at all.
   if (skillType === 'claude_code_worker') {
     return await executeClaudeCodeWorker(prompt, workerInput);
+  }
+
+  // SEO Backlinks is also procedural — run the pipeline rather than
+  // round-tripping through the SDK, so a single Opus reasoning call
+  // doesn't have to chain together discovery/generation/submission.
+  if (skillType === 'seo_backlinks') {
+    return await executeBacklinks(prompt, backlinkInput);
   }
 
   const skill = getSkillDefinition(skillType);
@@ -272,6 +286,58 @@ export async function routeAndExecute(
  *   the caller already knows project_id, model_tier, etc.). If absent,
  *   we try to parse the prompt as a JSON ClaudeCodeWorkerInput.
  */
+/**
+ * Execute a backlink campaign pass.
+ *
+ * Caller supplies a structured CampaignConfig OR a JSON-encoded prompt
+ * containing the same fields ({targetDomain, keywords, ...}). Output
+ * is the CampaignRunResult serialised so it can land in tasks.output_json
+ * the same shape as other skill results.
+ */
+async function executeBacklinks(
+  prompt: string,
+  backlinkInput?: CampaignConfig,
+): Promise<SkillExecutionResult> {
+  let config: CampaignConfig;
+  if (backlinkInput) {
+    config = backlinkInput;
+  } else {
+    try {
+      const parsed = JSON.parse(prompt) as Partial<CampaignConfig>;
+      if (!parsed.targetDomain || !Array.isArray(parsed.keywords) || parsed.keywords.length === 0) {
+        throw new Error('seo_backlinks requires targetDomain and at least one keyword');
+      }
+      config = parsed as CampaignConfig;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        success: false,
+        output: '',
+        toolCalls: [],
+        error: `seo_backlinks needs a CampaignConfig or a JSON prompt with targetDomain+keywords: ${msg}`,
+      };
+    }
+  }
+
+  let result: CampaignRunResult;
+  try {
+    result = await runBacklinkCampaign(config);
+  } catch (err) {
+    return {
+      success: false,
+      output: '',
+      toolCalls: ['seo_backlinks.pipeline'],
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+
+  return {
+    success: result.errors.length === 0 || result.placements.length > 0,
+    output: JSON.stringify(result),
+    toolCalls: ['seo_backlinks.pipeline'],
+  };
+}
+
 async function executeClaudeCodeWorker(
   prompt: string,
   workerInput?: ClaudeCodeWorkerInput,

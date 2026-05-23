@@ -20,6 +20,7 @@ import { bitbitMcpServer } from './tools.js';
 import { classifyTask, executeWithSkill } from './coordinator.js';
 import { selectModel, type RiskLevel } from './models.js';
 import type { ClaudeCodeWorkerInput } from '../skills/claude-code-worker/index.js';
+import type { CampaignConfig } from '../skills/seo-backlinks/index.js';
 import { isValidSkillType } from '../skills/registry.js';
 import type { SkillType, TaskClassification } from '../skills/types.js';
 import { generateLessonFromTask } from '../memory/lessons.js';
@@ -66,6 +67,9 @@ function determineRiskLevel(skillType: string, actionType?: string): GovernanceR
     case 'gatekeeper':
       return 'medium';
     case 'rd_scout':
+      return 'medium';
+    case 'seo_backlinks':
+      // Publishes to third-party platforms — medium risk by default.
       return 'medium';
     default:
       return 'low';
@@ -214,11 +218,33 @@ export async function processNextTask(): Promise<boolean> {
       };
     }
 
+    // For seo_backlinks, build a CampaignConfig from input_json. Falls
+    // through to JSON parsing in executeBacklinks if not provided.
+    let backlinkInput: CampaignConfig | undefined;
+    if (classification.skillType === 'seo_backlinks') {
+      const targetDomain = input.targetDomain ?? input.target_domain;
+      const keywords = input.keywords;
+      if (targetDomain && Array.isArray(keywords) && keywords.length > 0) {
+        backlinkInput = {
+          targetDomain,
+          targetPage: input.targetPage ?? input.target_page,
+          keywords,
+          clientName: input.clientName ?? input.client_name,
+          campaignId: input.campaignId ?? input.campaign_id,
+          maxPlacements: input.maxPlacements ?? input.max_placements,
+          locale: input.locale,
+          industry: input.industry,
+          dryRun: Boolean(input.dryRun ?? input.dry_run),
+        };
+      }
+    }
+
     const result = await executeWithSkill(
       prompt,
       classification.skillType,
       { bitbit: bitbitMcpServer },
       workerInput,
+      backlinkInput,
     );
 
     if (result.success) {

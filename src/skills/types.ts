@@ -12,6 +12,7 @@
  * - gatekeeper: Content QA, style guide compliance, video analysis
  * - ops_officer: Invoice processing, supplier verification, payment drafts
  * - claude_code_worker: Dispatches headless `claude -p` into a project dir
+ * - seo_backlinks: Off-site SEO — target discovery, article generation, submission, tracking
  * - general: Fallback for unclassified tasks
  */
 export type SkillType =
@@ -19,6 +20,7 @@ export type SkillType =
   | 'gatekeeper'
   | 'ops_officer'
   | 'claude_code_worker'
+  | 'seo_backlinks'
   | 'general';
 
 /**

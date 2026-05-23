@@ -13,6 +13,8 @@ import { startTaskLoop, stopTaskLoop } from './agent/index.js';
 import { isEmailConfigured } from './email/notifier.js';
 import { logClickUpStatus, handleClickUpWebhook } from './integrations/clickup/index.js';
 import { initRDScout } from './skills/rd-scout/index.js';
+import { initSEOBacklinks } from './skills/seo-backlinks/index.js';
+import { initInboxMonitor, stopInboxMonitor } from './inbox-monitor/index.js';
 import { initBriefingScheduler } from './briefing/index.js';
 import { createSafeLogger } from './governance/index.js';
 
@@ -114,6 +116,13 @@ export async function main(): Promise<void> {
   // Initialize R&D Scout skill (if enabled)
   initRDScout();
 
+  // Initialize SEO Backlinks skill (if enabled)
+  initSEOBacklinks();
+
+  // Initialize inbox monitor (if enabled) — polls 5 dedicated IMAP
+  // inboxes and routes each to its downstream pipeline.
+  initInboxMonitor();
+
   // Initialize Briefing scheduler (if enabled)
   initBriefingScheduler();
   logger.info('Briefing scheduler initialized');
@@ -157,6 +166,9 @@ export async function main(): Promise<void> {
     if (enableTaskProcessor) {
       stopTaskLoop();
     }
+
+    // Stop inbox monitor if it's running.
+    stopInboxMonitor();
 
     // Then close HTTP server
     server.close(() => {

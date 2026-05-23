@@ -52,6 +52,26 @@ export {
   type RDScoutConfig,
 } from './rd-scout/index.js';
 
+// SEO Backlinks skill
+export {
+  initSEOBacklinks,
+  getSEOBacklinksDefinition,
+  dispatchBacklinkCampaign,
+  runBacklinkCampaign,
+  buildWeeklyReport,
+  renderReportMarkdown,
+  scheduleBacklinkJobs,
+  runWeeklyReportNow,
+  pickTargetsForCampaign,
+  BACKLINK_TARGETS,
+  type CampaignConfig,
+  type CampaignRunResult,
+  type BacklinkTarget,
+  type GeneratedArticle,
+  type SubmissionResult,
+  type WeeklyBacklinkReport,
+} from './seo-backlinks/index.js';
+
 // Ops Officer skill types
 export {
   InvoiceSchema,

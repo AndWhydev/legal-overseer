@@ -11,3 +11,5 @@ export * from './styleGuide.js';
 export * from './suppliers.js';
 export * from './invoices.js';
 export * from './projects.js';
+export * from './backlinks.js';
+export * from './processedEmails.js';

@@ -24,6 +24,11 @@ import {
   stopOverseerLoop,
 } from '../src/agent/overseer-loop.js';
 import { startTaskLoop, stopTaskLoop } from '../src/agent/processor.js';
+import {
+  initInboxMonitor,
+  stopInboxMonitor,
+  DEFAULT_POLL_INTERVAL_MS as DEFAULT_INBOX_POLL_MS,
+} from '../src/inbox-monitor/index.js';
 
 function ms(envKey: string, def: number): number {
   const raw = process.env[envKey];
@@ -38,16 +43,20 @@ async function main(): Promise<void> {
 
   const overseerInterval = ms('OVERSEER_INTERVAL_MS', 10 * 60 * 1000);
   const processorInterval = ms('PROCESSOR_INTERVAL_MS', 5000);
+  const inboxInterval = ms('INBOX_POLL_INTERVAL_MS', DEFAULT_INBOX_POLL_MS);
 
   console.log('Starting overseer daemon');
   console.log(`  overseer tick:     every ${Math.round(overseerInterval / 1000)}s`);
   console.log(`  processor poll:    every ${Math.round(processorInterval / 1000)}s`);
+  console.log(`  inbox poll:        every ${Math.round(inboxInterval / 1000)}s (when ENABLE_INBOX_MONITOR=true)`);
 
   startTaskLoop(processorInterval);
   startOverseerLoop(overseerInterval);
+  const inboxStarted = initInboxMonitor(inboxInterval);
 
   const shutdown = (signal: string) => {
     console.log(`\n${signal} received; shutting down...`);
+    if (inboxStarted) stopInboxMonitor();
     stopOverseerLoop();
     stopTaskLoop();
     closeDatabase();
