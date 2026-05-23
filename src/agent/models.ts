@@ -17,9 +17,9 @@
  * Maps tier names to SDK model identifiers.
  */
 export const MODELS = {
-  haiku: 'claude-haiku-3-5-20241022',
-  sonnet: 'claude-sonnet-4-20250514',
-  opus: 'claude-opus-4-5-20250514',
+  haiku: 'claude-haiku-4-5',
+  sonnet: 'claude-sonnet-4-6',
+  opus: 'claude-opus-4-7',
 } as const;
 
 /**

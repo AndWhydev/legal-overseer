@@ -44,3 +44,16 @@ export {
   type RiskLevel,
   type ModelSelection,
 } from './models.js';
+
+// Overseer - proactive per-project decision loop
+export {
+  runOverseerTick,
+  startOverseerLoop,
+  stopOverseerLoop,
+  isOverseerRunning,
+  snapshotProject,
+  OVERSEER_AGENT_ID,
+  type OverseerDecision,
+  type OverseerTickResult,
+  type ProjectSnapshot,
+} from './overseer-loop.js';

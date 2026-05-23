@@ -25,6 +25,7 @@ export interface Task {
   completed_at: string | null;
   error_message: string | null;
   retry_count: number;
+  project_id: string | null;
   created_at: string;
 }
 
@@ -41,7 +42,8 @@ export function createTask(
   skillId: string,
   source: string,
   input: string,
-  clickupId?: string
+  clickupId?: string,
+  projectId?: string,
 ): Task {
   const db = getDatabase();
   const id = randomUUID();
@@ -49,12 +51,12 @@ export function createTask(
 
   db.prepare(
     `
-    INSERT INTO tasks (id, skill_id, clickup_id, status, input_json, created_at, retry_count)
-    VALUES (?, ?, ?, 'pending', ?, ?, 0)
+    INSERT INTO tasks (id, skill_id, clickup_id, project_id, status, input_json, created_at, retry_count)
+    VALUES (?, ?, ?, ?, 'pending', ?, ?, 0)
   `
-  ).run(id, skillId, clickupId || null, input, now);
+  ).run(id, skillId, clickupId || null, projectId || null, input, now);
 
-  logger.info(`Task created: ${id} (skill=${skillId}, source=${source})`);
+  logger.info(`Task created: ${id} (skill=${skillId}, source=${source}${projectId ? `, project=${projectId}` : ''})`);
 
   return {
     id,
@@ -67,6 +69,7 @@ export function createTask(
     completed_at: null,
     error_message: null,
     retry_count: 0,
+    project_id: projectId || null,
     created_at: now,
   };
 }

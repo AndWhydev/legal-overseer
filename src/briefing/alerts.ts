@@ -21,7 +21,7 @@ import {
 
 const logger = createSafeLogger('BriefingAlerts');
 import { getTaskStats24h } from '../db/repositories/tasks.js';
-import { sendSystemAlert, type AlertSeverity } from '../telegram/notifications.js';
+import { sendSystemAlert, type AlertSeverity } from '../email/notifier.js';
 
 /**
  * Alert trigger types
@@ -223,25 +223,23 @@ function getAlertAction(trigger: AlertTrigger): string {
     case 'high_failure_rate':
       return 'Review task logs with /tasks command. Check for API or integration issues.';
     case 'approval_backlog':
-      return 'Review pending approvals via Telegram notifications or /status command.';
+      return 'Review pending approvals via the dashboard or approval-token emails.';
     default:
       return 'Contact system administrator.';
   }
 }
 
 /**
- * Dispatch alerts for triggered conditions
+ * Dispatch alerts for triggered conditions.
  *
- * Sends alerts via Telegram for each triggered condition.
- * Respects cooldown period to prevent alert spam.
+ * Sends alerts via email for each triggered condition. Respects
+ * cooldown period to prevent alert spam.
  *
  * @param triggers - Array of alert triggers to dispatch
- * @param chatId - Telegram chat ID to send alerts to
  * @param thresholds - Threshold values used for alert messages
  */
 export async function dispatchAlerts(
   triggers: AlertTrigger[],
-  chatId: number,
   thresholds: AlertThresholds = DEFAULT_ALERT_THRESHOLDS
 ): Promise<void> {
   for (const trigger of triggers) {
@@ -261,7 +259,7 @@ export async function dispatchAlerts(
     // Send alert
     logger.info(`Alert dispatcher: Sending ${severity} alert for ${trigger}`);
 
-    const result = await sendSystemAlert(chatId, {
+    const result = await sendSystemAlert({
       severity,
       title,
       message,
@@ -280,16 +278,14 @@ export async function dispatchAlerts(
 }
 
 /**
- * Run a single alert check cycle
+ * Run a single alert check cycle.
  *
  * Checks for alert conditions and dispatches any triggered alerts.
  * Typically called by a scheduler or polling mechanism.
  *
- * @param chatId - Telegram chat ID to send alerts to
  * @param thresholds - Optional custom thresholds
  */
 export async function runAlertCheck(
-  chatId: number,
   thresholds: AlertThresholds = DEFAULT_ALERT_THRESHOLDS
 ): Promise<void> {
   try {
@@ -297,7 +293,7 @@ export async function runAlertCheck(
 
     if (triggers.length > 0) {
       logger.info(`Alert dispatcher: ${triggers.length} alert condition(s) triggered: ${triggers.join(', ')}`);
-      await dispatchAlerts(triggers, chatId, thresholds);
+      await dispatchAlerts(triggers, thresholds);
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

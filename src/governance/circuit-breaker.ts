@@ -7,7 +7,7 @@
 
 import CircuitBreaker from 'opossum';
 import { createSafeLogger } from './logger.js';
-import { sendSystemAlert } from '../telegram/notifications.js';
+import { sendSystemAlert } from '../email/notifier.js';
 
 const logger = createSafeLogger('CircuitBreaker');
 
@@ -51,11 +51,6 @@ export interface CircuitBreakerStatus {
     latencyMean: number;
   };
 }
-
-/**
- * Admin chat ID for notifications
- */
-const ADMIN_CHAT_ID = parseInt(process.env.TELEGRAM_ADMIN_CHAT_ID || '0', 10);
 
 /**
  * Registry of all circuit breakers
@@ -107,16 +102,14 @@ export function createCircuitBreaker<T>(
   breaker.on('open', async () => {
     logger.error(`${name}: Circuit OPENED - service unavailable`);
 
-    // Notify operator
-    if (ADMIN_CHAT_ID) {
-      await sendSystemAlert(ADMIN_CHAT_ID, {
-        severity: 'error',
-        title: 'Circuit Breaker Opened',
-        message: `Circuit breaker "${name}" has opened due to repeated failures. Service calls will be rejected until recovery.`,
-        component: name,
-        action: `Will attempt recovery in ${config.resetTimeout / 1000}s`,
-      });
-    }
+    // Notify operator via email (no-op if SMTP unconfigured)
+    await sendSystemAlert({
+      severity: 'error',
+      title: 'Circuit Breaker Opened',
+      message: `Circuit breaker "${name}" has opened due to repeated failures. Service calls will be rejected until recovery.`,
+      component: name,
+      action: `Will attempt recovery in ${config.resetTimeout / 1000}s`,
+    });
   });
 
   breaker.on('halfOpen', () => {
@@ -127,14 +120,12 @@ export function createCircuitBreaker<T>(
     logger.info(`${name}: Circuit CLOSED - service recovered`);
 
     // Notify operator of recovery
-    if (ADMIN_CHAT_ID) {
-      await sendSystemAlert(ADMIN_CHAT_ID, {
-        severity: 'warning',
-        title: 'Circuit Breaker Recovered',
-        message: `Circuit breaker "${name}" has recovered. Normal operations resumed.`,
-        component: name,
-      });
-    }
+    await sendSystemAlert({
+      severity: 'warning',
+      title: 'Circuit Breaker Recovered',
+      message: `Circuit breaker "${name}" has recovered. Normal operations resumed.`,
+      component: name,
+    });
   });
 
   breaker.on('fallback', (result: unknown) => {

@@ -2,7 +2,7 @@
  * Briefing Scheduler Module
  *
  * Handles cron-based scheduling for automated daily briefing delivery.
- * Uses node-cron to schedule briefing generation and Telegram delivery.
+ * Uses node-cron to schedule briefing generation and email delivery.
  *
  * Default schedule: 8:00 AM daily (local server time)
  * Can be overridden via BRIEFING_CRON environment variable.
@@ -12,7 +12,7 @@
 
 import cron from 'node-cron';
 import { aggregateDailyBriefing, type DailyBriefing, type BriefingAlert } from './index.js';
-import { sendNotification } from '../telegram/notifications.js';
+import { sendBriefingEmail, isEmailConfigured } from '../email/notifier.js';
 import { createSafeLogger } from '../governance/index.js';
 
 const logger = createSafeLogger('BriefingScheduler');
@@ -36,13 +36,15 @@ export type ScheduledTask = ReturnType<typeof cron.schedule>;
 let scheduledTask: ScheduledTask | null = null;
 
 /**
- * Escape HTML special characters for Telegram HTML parse mode
+ * Escape HTML special characters for safe inclusion in email bodies.
  */
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -130,7 +132,7 @@ function formatDate(isoDate: string | null): string {
 }
 
 /**
- * Format the daily briefing as a Telegram HTML message
+ * Format the daily briefing as an HTML email body.
  */
 export function formatBriefingMessage(briefing: DailyBriefing): string {
   const { systemHealth, taskSummary, rdScout, gatekeeper, opsOfficer, alerts, generatedAt } = briefing;
@@ -139,80 +141,73 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
   const openBreakers = systemHealth.circuitBreakers.filter(cb => cb.state === 'open').length;
   const totalBreakers = systemHealth.circuitBreakers.length;
 
-  // Build message sections
-  const lines: string[] = [];
+  const sections: string[] = [];
 
   // Header
-  lines.push('<b>\uD83D\uDCCA Daily Briefing</b>');
-  lines.push('');
+  sections.push('<h1>\uD83D\uDCCA Daily Briefing</h1>');
 
   // System Status
   const statusEmoji = getStatusEmoji(systemHealth.status);
-  lines.push(`<b>System Status:</b> ${statusEmoji} ${escapeHtml(systemHealth.status)}`);
-  lines.push(`\u2022 Uptime: ${escapeHtml(formatUptime(systemHealth.uptimeMs))}`);
-  lines.push(`\u2022 Circuit Breakers: ${openBreakers}/${totalBreakers} open`);
+  const sysItems: string[] = [
+    `<li>Uptime: ${escapeHtml(formatUptime(systemHealth.uptimeMs))}</li>`,
+    `<li>Circuit Breakers: ${openBreakers}/${totalBreakers} open</li>`,
+  ];
   if (systemHealth.killSwitchActive) {
-    lines.push('\u2022 \u26A0\uFE0F <b>Kill Switch Active</b>');
+    sysItems.push('<li><b>\u26A0\uFE0F Kill Switch Active</b></li>');
   }
   if (systemHealth.disabledAgents.length > 0) {
-    lines.push(`\u2022 Disabled Agents: ${escapeHtml(systemHealth.disabledAgents.join(', '))}`);
+    sysItems.push(`<li>Disabled Agents: ${escapeHtml(systemHealth.disabledAgents.join(', '))}</li>`);
   }
-  lines.push('');
+  sections.push(
+    `<h2>System Status: ${statusEmoji} ${escapeHtml(systemHealth.status)}</h2><ul>${sysItems.join('')}</ul>`,
+  );
 
   // Tasks
-  lines.push(`<b>Tasks (${briefing.timeWindowHours}h):</b>`);
-  lines.push(`\u2022 Pending: ${taskSummary.pending} | Completed: ${taskSummary.completed} | Failed: ${taskSummary.failed}`);
-  lines.push(`\u2022 Awaiting Approval: ${taskSummary.awaitingApproval}`);
-  lines.push('');
+  sections.push(`<h2>Tasks (${briefing.timeWindowHours}h)</h2><ul>` +
+    `<li>Pending: ${taskSummary.pending} | Completed: ${taskSummary.completed} | Failed: ${taskSummary.failed}</li>` +
+    `<li>Awaiting Approval: ${taskSummary.awaitingApproval}</li>` +
+    `</ul>`);
 
   // R&D Scout
-  lines.push('<b>\uD83D\uDD0D R&D Scout:</b>');
-  lines.push(`\u2022 Last Run: ${escapeHtml(formatDate(rdScout.lastRunAt))}`);
-  lines.push(`\u2022 Opportunities: ${rdScout.opportunitiesFound} | Trending: ${rdScout.trendingKeywords.length}`);
-  lines.push(`\u2022 Next Run: ${escapeHtml(formatDate(rdScout.nextRunAt))}`);
-  lines.push('');
+  sections.push(`<h2>\uD83D\uDD0D R&amp;D Scout</h2><ul>` +
+    `<li>Last Run: ${escapeHtml(formatDate(rdScout.lastRunAt))}</li>` +
+    `<li>Opportunities: ${rdScout.opportunitiesFound} | Trending: ${rdScout.trendingKeywords.length}</li>` +
+    `<li>Next Run: ${escapeHtml(formatDate(rdScout.nextRunAt))}</li>` +
+    `</ul>`);
 
   // Gatekeeper
-  lines.push('<b>\u2705 Gatekeeper:</b>');
-  lines.push(`\u2022 Reviews: ${gatekeeper.reviewsProcessed} (Approved: ${gatekeeper.approved}, Flagged: ${gatekeeper.flagged}, Returned: ${gatekeeper.returned})`);
-  lines.push('');
+  sections.push(`<h2>\u2705 Gatekeeper</h2><ul>` +
+    `<li>Reviews: ${gatekeeper.reviewsProcessed} (Approved: ${gatekeeper.approved}, Flagged: ${gatekeeper.flagged}, Returned: ${gatekeeper.returned})</li>` +
+    `</ul>`);
 
   // Ops Officer
-  lines.push('<b>\uD83D\uDCB0 Ops Officer:</b>');
-  lines.push(`\u2022 Invoices: ${opsOfficer.invoicesProcessed} | Total: ${escapeHtml(formatCurrency(opsOfficer.totalAmount, opsOfficer.currency))}`);
-  lines.push(`\u2022 Pending Approvals: ${opsOfficer.pendingApprovals}`);
+  sections.push(`<h2>\uD83D\uDCB0 Ops Officer</h2><ul>` +
+    `<li>Invoices: ${opsOfficer.invoicesProcessed} | Total: ${escapeHtml(formatCurrency(opsOfficer.totalAmount, opsOfficer.currency))}</li>` +
+    `<li>Pending Approvals: ${opsOfficer.pendingApprovals}</li>` +
+    `</ul>`);
 
   // Alerts (if any)
   if (alerts.length > 0) {
-    lines.push('');
-    lines.push('<b>\u26A0\uFE0F Alerts:</b>');
-    for (const alert of alerts) {
-      const emoji = getAlertEmoji(alert.severity);
-      lines.push(`\u2022 ${emoji} ${escapeHtml(alert.message)}`);
-    }
+    const alertItems = alerts
+      .map(a => `<li>${getAlertEmoji(a.severity)} ${escapeHtml(a.message)}</li>`)
+      .join('');
+    sections.push(`<h2>\u26A0\uFE0F Alerts</h2><ul>${alertItems}</ul>`);
   }
 
   // Footer
-  lines.push('');
-  lines.push(`<i>Generated ${escapeHtml(formatDate(generatedAt))}</i>`);
+  sections.push(`<p style="color:#888"><i>Generated ${escapeHtml(formatDate(generatedAt))}</i></p>`);
 
-  return lines.join('\n');
+  return sections.join('\n');
 }
 
 /**
- * Send the scheduled briefing to the configured chat
+ * Send the scheduled briefing as an email to ADMIN_EMAIL.
  */
 export async function sendScheduledBriefing(): Promise<void> {
-  // Get chat ID from environment
-  const chatIdString = process.env.BRIEFING_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
-  if (!chatIdString) {
-    logger.warn('Briefing scheduler: No chat ID configured (BRIEFING_CHAT_ID or TELEGRAM_CHAT_ID)');
-    return;
-  }
-
-  const chatId = parseInt(chatIdString, 10);
-  if (isNaN(chatId)) {
-    logger.error(`Briefing scheduler: Invalid chat ID "${chatIdString}"`);
+  if (!isEmailConfigured()) {
+    logger.warn(
+      'Briefing scheduler: SMTP not configured (need ADMIN_EMAIL, SMTP_HOST, SMTP_USER, SMTP_PASS) — skipping send',
+    );
     return;
   }
 
@@ -222,16 +217,25 @@ export async function sendScheduledBriefing(): Promise<void> {
     // Generate the briefing
     const briefing = await aggregateDailyBriefing();
 
-    // Format as Telegram message
-    const message = formatBriefingMessage(briefing);
+    // Format as HTML email body
+    const html = formatBriefingMessage(briefing);
+    const date = new Date(briefing.generatedAt).toLocaleDateString('en-AU', {
+      timeZone: 'Australia/Sydney',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+    const subject = `[BitBit] Daily briefing — ${date}`;
 
-    // Send via Telegram
-    const messageId = await sendNotification(chatId, message);
+    // Send via email
+    const result = await sendBriefingEmail(subject, html);
 
-    if (messageId) {
-      logger.info(`Briefing scheduler: Daily briefing sent successfully (message ID: ${messageId})`);
+    if (result.success) {
+      logger.info(
+        `Briefing scheduler: Daily briefing sent successfully${result.messageId ? ` (message id: ${result.messageId})` : ''}`,
+      );
     } else {
-      logger.warn('Briefing scheduler: Failed to send daily briefing');
+      logger.warn(`Briefing scheduler: Failed to send daily briefing: ${result.error ?? 'unknown error'}`);
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -249,7 +253,8 @@ export async function sendScheduledBriefing(): Promise<void> {
  * Reads configuration from environment variables:
  * - BRIEFING_ENABLED: "true" to enable (default: disabled)
  * - BRIEFING_CRON: Cron expression (default: "0 8 * * *" = 8:00 AM daily)
- * - BRIEFING_CHAT_ID: Target chat ID (defaults to TELEGRAM_CHAT_ID)
+ *
+ * The briefing is sent via email to ADMIN_EMAIL using the SMTP_* settings.
  */
 export function initBriefingScheduler(): void {
   // Check if briefing is enabled

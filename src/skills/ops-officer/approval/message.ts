@@ -1,11 +1,11 @@
 /**
  * Invoice approval message generator
  *
- * Formats invoice data and anomalies for Telegram HITL approval.
+ * Formats invoice data and anomalies for email-based HITL approval.
  */
 
 import type { Invoice, VerificationResult, AnomalyFlag } from '../types.js';
-import { escapeHtml } from '../../../telegram/notifications.js';
+import { escapeHtml } from '../../../email/notifier.js';
 
 export interface InvoiceApprovalData {
   invoice: Invoice;

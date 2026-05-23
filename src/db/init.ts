@@ -19,6 +19,9 @@ import { migration as migration003 } from './migrations/003_domain_tables.js';
 import { migration as migration004 } from './migrations/004_seed_data.js';
 import { migration as migration005 } from './migrations/005_invoices_table.js';
 import { migration as migration006 } from './migrations/006_key_value_store.js';
+import { migration as migration007 } from './migrations/007_projects.js';
+import { migration as migration008 } from './migrations/008_overseer_skills.js';
+import { migration as migration009 } from './migrations/009_lessons.js';
 
 /**
  * Migration interface for database migrations
@@ -32,7 +35,7 @@ export interface Migration {
  * All migrations in order
  * Add new migrations to this array
  */
-const migrations: Migration[] = [migration001, migration002, migration003, migration004, migration005, migration006];
+const migrations: Migration[] = [migration001, migration002, migration003, migration004, migration005, migration006, migration007, migration008, migration009];
 
 /**
  * Create migrations tracking table if it doesn't exist

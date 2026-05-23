@@ -15,7 +15,7 @@ import {
   type Action as AnomalyAction,
 } from './anomaly-detector.js';
 import { logAuditSafe, createSafeLogger } from './logger.js';
-import { sendSystemAlert } from '../telegram/notifications.js';
+import { sendSystemAlert } from '../email/notifier.js';
 
 const logger = createSafeLogger('ControlPlane');
 
@@ -54,11 +54,6 @@ interface KillSwitchCache {
  * Cache TTL for kill switch checks (5 seconds)
  */
 const KILL_SWITCH_CACHE_TTL = 5000;
-
-/**
- * Admin chat ID for notifications
- */
-const ADMIN_CHAT_ID = parseInt(process.env.TELEGRAM_ADMIN_CHAT_ID || '0', 10);
 
 /**
  * Agent Control Plane singleton
@@ -172,18 +167,16 @@ class AgentControlPlane {
       });
     }
 
-    // Notify operator via Telegram
-    if (ADMIN_CHAT_ID) {
-      await sendSystemAlert(ADMIN_CHAT_ID, {
-        severity: 'critical',
-        title: agentId ? `Agent Emergency Stop: ${agentId}` : 'Global Emergency Stop',
-        message: reason,
-        component: 'ControlPlane',
-        action: agentId
-          ? `Use /resume ${agentId} to re-enable`
-          : 'Use /resume all to re-enable',
-      });
-    }
+    // Notify operator via email (no-op if SMTP unconfigured)
+    await sendSystemAlert({
+      severity: 'critical',
+      title: agentId ? `Agent Emergency Stop: ${agentId}` : 'Global Emergency Stop',
+      message: reason,
+      component: 'ControlPlane',
+      action: agentId
+        ? `Call enableAgent("${agentId}") to re-enable`
+        : 'Call enableAgent("all") to re-enable',
+    });
   }
 
   /**
@@ -216,15 +209,13 @@ class AgentControlPlane {
       });
     }
 
-    // Notify operator
-    if (ADMIN_CHAT_ID) {
-      await sendSystemAlert(ADMIN_CHAT_ID, {
-        severity: 'warning',
-        title: agentId === 'all' ? 'Global Resume' : `Agent Resumed: ${agentId}`,
-        message: 'Operations have been re-enabled',
-        component: 'ControlPlane',
-      });
-    }
+    // Notify operator (email; no-op when SMTP unconfigured)
+    await sendSystemAlert({
+      severity: 'warning',
+      title: agentId === 'all' ? 'Global Resume' : `Agent Resumed: ${agentId}`,
+      message: 'Operations have been re-enabled',
+      component: 'ControlPlane',
+    });
   }
 
   /**
@@ -313,8 +304,8 @@ class AgentControlPlane {
       });
 
       // Notify on high severity
-      if (sequenceResult.severity === 'high' && ADMIN_CHAT_ID) {
-        await sendSystemAlert(ADMIN_CHAT_ID, {
+      if (sequenceResult.severity === 'high') {
+        await sendSystemAlert({
           severity: 'warning',
           title: 'Anomaly Detected',
           message: sequenceResult.reason || 'Unusual behavior pattern detected',

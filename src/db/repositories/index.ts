@@ -10,3 +10,4 @@ export * from './approvals.js';
 export * from './styleGuide.js';
 export * from './suppliers.js';
 export * from './invoices.js';
+export * from './projects.js';

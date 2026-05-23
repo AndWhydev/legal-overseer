@@ -9,7 +9,7 @@ import { scanForInvoices, markInvoiceProcessed, type DetectedInvoice } from './e
 import { extractInvoiceFromPdf } from './extraction/index.js';
 import { verifySupplier } from './verification/supplier.js';
 import { detectAnomalies } from './verification/anomaly.js';
-import { requestInvoiceApproval, getApprovalChatId } from './approval/index.js';
+import { requestInvoiceApproval, isApprovalChannelReady } from './approval/index.js';
 import { createDraftBill, isXeroConfigured } from './payment/index.js';
 import { createInvoiceRecord, updateInvoiceStatus, findInvoiceById } from '../../db/repositories/invoices.js';
 import { getSupplierEmails, findById as findSupplierById } from '../../db/repositories/suppliers.js';
@@ -76,20 +76,19 @@ export async function processInvoice(
   // Always require approval for now (conservative approach)
   const approvalRequired = true;
 
-  // Step 6: Send approval request
-  const chatId = getApprovalChatId();
-  if (!chatId) {
+  // Step 6: Send approval request via email
+  if (!isApprovalChannelReady()) {
     return {
       success: false,
       invoice,
       verification,
       anomalies: allAnomalies,
       approvalRequired: true,
-      error: 'Telegram chat ID not configured'
+      error: 'Email channel not configured (need ADMIN_EMAIL + SMTP_* env vars)'
     };
   }
 
-  const approvalResult = await requestInvoiceApproval(chatId, {
+  const approvalResult = await requestInvoiceApproval({
     invoice,
     verification,
     anomalies: allAnomalies,

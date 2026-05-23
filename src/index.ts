@@ -10,7 +10,7 @@ import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { healthCheck } from './api/health.js';
 import { initializeDatabase, closeDatabase } from './db/index.js';
 import { startTaskLoop, stopTaskLoop } from './agent/index.js';
-import { handleTelegramWebhook, logTelegramStatus, initBot } from './telegram/index.js';
+import { isEmailConfigured } from './email/notifier.js';
 import { logClickUpStatus, handleClickUpWebhook } from './integrations/clickup/index.js';
 import { initRDScout } from './skills/rd-scout/index.js';
 import { initBriefingScheduler } from './briefing/index.js';
@@ -30,13 +30,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
   logger.info(`${method} ${url}`);
 
-  // Route: POST /clickup/webhook (ClickUp webhook - check before Telegram)
+  // Route: POST /clickup/webhook (ClickUp webhook)
   if (await handleClickUpWebhook(req, res)) {
-    return;
-  }
-
-  // Route: POST /telegram/* (Telegram webhook)
-  if (await handleTelegramWebhook(req, res)) {
     return;
   }
 
@@ -104,9 +99,14 @@ export async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Initialize Telegram bot (if configured)
-  logTelegramStatus();
-  await initBot();
+  // Report email notification status
+  if (isEmailConfigured()) {
+    logger.info('Email notifier: SMTP configured');
+  } else {
+    logger.warn(
+      'Email notifier: SMTP not configured (set ADMIN_EMAIL, SMTP_HOST, SMTP_USER, SMTP_PASS to enable)',
+    );
+  }
 
   // Log ClickUp integration status
   logClickUpStatus();

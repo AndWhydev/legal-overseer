@@ -11,9 +11,15 @@
  * - rd_scout: Market research, Alibaba scanning, trend analysis
  * - gatekeeper: Content QA, style guide compliance, video analysis
  * - ops_officer: Invoice processing, supplier verification, payment drafts
+ * - claude_code_worker: Dispatches headless `claude -p` into a project dir
  * - general: Fallback for unclassified tasks
  */
-export type SkillType = 'rd_scout' | 'gatekeeper' | 'ops_officer' | 'general';
+export type SkillType =
+  | 'rd_scout'
+  | 'gatekeeper'
+  | 'ops_officer'
+  | 'claude_code_worker'
+  | 'general';
 
 /**
  * Model tier for cost/capability balancing

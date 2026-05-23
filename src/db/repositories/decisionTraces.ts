@@ -25,7 +25,7 @@ export type HumanFeedback = 'approved' | 'overridden' | 'none';
 export interface DecisionTrace {
   /** ID of the task this decision relates to */
   taskId: string;
-  /** What triggered this decision (e.g., 'clickup_webhook', 'cron_job', 'telegram_command') */
+  /** What triggered this decision (e.g., 'clickup_webhook', 'cron_job', 'overseer_loop') */
   trigger: string;
   /** Input data as JSON string */
   inputsJson: string;

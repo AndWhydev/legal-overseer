@@ -19,6 +19,10 @@ import { logDecision } from '../db/repositories/decisionTraces.js';
 import { bitbitMcpServer } from './tools.js';
 import { classifyTask, executeWithSkill } from './coordinator.js';
 import { selectModel, type RiskLevel } from './models.js';
+import type { ClaudeCodeWorkerInput } from '../skills/claude-code-worker/index.js';
+import { isValidSkillType } from '../skills/registry.js';
+import type { SkillType, TaskClassification } from '../skills/types.js';
+import { generateLessonFromTask } from '../memory/lessons.js';
 import {
   canExecute,
   recordActionResult,
@@ -97,7 +101,21 @@ export async function processNextTask(): Promise<boolean> {
       prompt: prompt.slice(0, 50) + (prompt.length > 50 ? '...' : ''),
     });
 
-    const classification = await classifyTask(prompt);
+    // Skip classification when the caller has already chosen a skill.
+    // The overseer loop and direct project dispatch always supply skill_id
+    // and (for workers) project_id in input_json, so paying for a Haiku
+    // classification round would be wasted.
+    const preselectedSkill: SkillType | null =
+      task.skill_id && isValidSkillType(task.skill_id) ? task.skill_id : null;
+
+    const classification: TaskClassification = preselectedSkill
+      ? {
+          skillType: preselectedSkill,
+          complexity: (input.complexity as TaskClassification['complexity']) || 'standard',
+          requiredTools: [],
+          reasoning: 'Skill preselected by caller (no classification needed)',
+        }
+      : await classifyTask(prompt);
 
     // 2. Determine governance risk level
     const governanceRiskLevel = determineRiskLevel(
@@ -176,7 +194,32 @@ export async function processNextTask(): Promise<boolean> {
     });
 
     // 5. Execute with skill-specific routing
-    const result = await executeWithSkill(prompt, classification.skillType, { bitbit: bitbitMcpServer });
+    // For claude_code_worker, build the worker input from input_json + the
+    // task's project_id column rather than re-parsing the prompt as JSON.
+    let workerInput: ClaudeCodeWorkerInput | undefined;
+    if (classification.skillType === 'claude_code_worker') {
+      const projectId = (input.project_id as string) || task.project_id || null;
+      if (!projectId) {
+        markFailed(task.id, 'claude_code_worker task missing project_id');
+        return true;
+      }
+      workerInput = {
+        project_id: projectId,
+        prompt: input.prompt || prompt,
+        model_tier: input.model_tier,
+        allowed_tools: input.allowed_tools,
+        max_budget_usd: input.max_budget_usd,
+        timeout_ms: input.timeout_ms,
+        extra_context: input.extra_context,
+      };
+    }
+
+    const result = await executeWithSkill(
+      prompt,
+      classification.skillType,
+      { bitbit: bitbitMcpServer },
+      workerInput,
+    );
 
     if (result.success) {
       // Mark task as completed
@@ -192,6 +235,17 @@ export async function processNextTask(): Promise<boolean> {
       });
 
       markCompleted(task.id, outputJson);
+
+      // Extract a lesson from this worker cycle (best-effort, async).
+      // Only worker tasks produce lessons; the generator no-ops for
+      // other skill types.
+      if (classification.skillType === 'claude_code_worker') {
+        generateLessonFromTask(task.id).catch((err) => {
+          logger.warn(
+            `lesson generation failed for task ${task.id}: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        });
+      }
 
       // Update trust metrics (success)
       updateTrustMetrics(
@@ -224,6 +278,16 @@ export async function processNextTask(): Promise<boolean> {
       // Agent returned failure
       const errorMsg = result.error || 'Unknown agent error';
       markFailed(task.id, errorMsg);
+
+      // Learn from failure too — Opus often distills "don't do X" lessons
+      // that are more valuable than success summaries.
+      if (classification.skillType === 'claude_code_worker') {
+        generateLessonFromTask(task.id).catch((err) => {
+          logger.warn(
+            `lesson generation (failure) failed for task ${task.id}: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        });
+      }
 
       // Update trust metrics (failure)
       updateTrustMetrics(
