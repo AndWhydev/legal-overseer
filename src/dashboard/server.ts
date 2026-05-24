@@ -45,6 +45,26 @@ import {
   render404,
 } from './render.js';
 import { renderUsersPage } from './users-view.js';
+import { renderUploadPage } from './upload-view.js';
+import { renderTimelinePage } from './timeline-view.js';
+import {
+  parseMultipart,
+  extractText,
+  storeDocument,
+  listMatterDocuments,
+  getDocument,
+  readDocumentBytes,
+} from '../uploads/index.js';
+import {
+  listMatters,
+  getMatterById,
+  getMatterByNumber,
+  createMatter,
+  nextMatterNumber,
+} from '../db/repositories/matters.js';
+import { buildMatterTimeline } from '../matter-timeline/index.js';
+import { assertCanCreateMatter as enforceMatterCap, LicenceLimitError as TierError } from '../licence/index.js';
+import { appendLegalAudit as audit } from '../compliance/audit.js';
 import {
   resolveSession,
   clientIp,
@@ -238,6 +258,112 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       const detail = buildMatterDetail(matterMatch[1]);
       if (!detail) { html(res, 404, render404('matter')); return; }
       html(res, 200, renderMatterDetail(detail));
+      return;
+    }
+
+    // ---- matter timeline ----
+    const timelineMatch = path.match(/^\/matter\/([0-9a-f-]+)\/timeline$/i);
+    if (method === 'GET' && timelineMatch) {
+      const matter = getMatterById(timelineMatch[1]);
+      if (!matter) { html(res, 404, render404('matter')); return; }
+      const events = buildMatterTimeline(matter.id);
+      html(res, 200, renderTimelinePage({ matter, events, currentEmail: session.user.email, printable: /[?&]print=1/.test(url) }));
+      return;
+    }
+
+    // ---- document download ----
+    const docDownloadMatch = path.match(/^\/matter\/([0-9a-f-]+)\/document\/([0-9a-f-]+)$/i);
+    if (method === 'GET' && docDownloadMatch) {
+      const [, mId, dId] = docDownloadMatch;
+      const doc = getDocument(mId, dId);
+      if (!doc) { html(res, 404, render404('document')); return; }
+      const bytes = readDocumentBytes(doc);
+      res.writeHead(200, {
+        'content-type': doc.contentType || 'application/octet-stream',
+        'content-disposition': `inline; filename="${encodeURIComponent(doc.filename)}"`,
+        'content-length': String(bytes.length),
+      });
+      res.end(bytes);
+      return;
+    }
+
+    // ---- upload portal ----
+    if (method === 'GET' && path === '/upload') {
+      const matters = listMatters();
+      const matterLookup = new Map(matters.map((m) => [m.id, m]));
+      const recent = matters.flatMap((m) => listMatterDocuments(m.id)).slice(0, 25);
+      html(res, 200, renderUploadPage({
+        currentEmail: session.user.email,
+        matters,
+        recent,
+        matterLookup,
+      }));
+      return;
+    }
+    if (method === 'POST' && path === '/upload') {
+      try {
+        const parsed = await parseMultipart(req, { maxBytes: 50 * 1024 * 1024 });
+        const file = parsed.files.find((f) => f.fieldName === 'file');
+        if (!file) { json(res, 400, { error: 'no file' }); return; }
+
+        let matterId = parsed.fields.matter_id?.trim() || null;
+        let matter = matterId ? getMatterById(matterId) : null;
+
+        if (!matter) {
+          try { enforceMatterCap(); }
+          catch (err) {
+            const msg = err instanceof TierError ? err.message : (err as Error).message;
+            json(res, 402, { error: msg });
+            return;
+          }
+          // Create a new matter from the document filename.
+          const number = nextMatterNumber();
+          matter = createMatter({
+            matter_number: number,
+            title: file.filename.slice(0, 100),
+            client_name: '(pending — created from uploaded document)',
+            matter_type: 'unclassified',
+            jurisdiction: process.env.DEFAULT_JURISDICTION ?? 'NSW',
+            responsible_lawyer_email: session.user.email,
+            notes: `Created from document upload by ${session.user.email}`,
+          });
+          matterId = matter.id;
+          audit({
+            matterId: matter.id, actorId: session.user.email,
+            action: 'matter.create_from_upload',
+            detail: file.filename, refTable: 'matters', refId: matter.id,
+          });
+        }
+
+        const extract = await extractText(file.data, file.filename, file.contentType);
+        const stored = storeDocument({
+          matterId: matter!.id,
+          filename: file.filename,
+          contentType: file.contentType,
+          data: file.data,
+          extractedText: extract.text,
+          extractionNote: extract.note,
+          uploadedBy: session.user.email,
+        });
+        audit({
+          matterId: matter!.id, actorId: session.user.email,
+          action: 'document.upload',
+          detail: `${file.filename} (${stored.sizeBytes} bytes, ${stored.extractedChars} chars)`,
+          refTable: 'documents', refId: stored.id,
+          metadata: { kind: extract.kind, note: extract.note },
+        });
+
+        json(res, 200, {
+          ok: true,
+          document_id: stored.id,
+          matter_id: matter!.id,
+          matter_number: matter!.matter_number,
+          extracted_chars: stored.extractedChars,
+          extraction_note: stored.extractionNote,
+        });
+      } catch (err) {
+        json(res, 400, { error: err instanceof Error ? err.message : String(err) });
+      }
       return;
     }
 

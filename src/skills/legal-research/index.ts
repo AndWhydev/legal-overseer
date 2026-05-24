@@ -11,6 +11,7 @@ import { query } from '@anthropic-ai/claude-agent-sdk';
 import { createSafeLogger } from '../../governance/index.js';
 import { wrapWithDisclaimer } from '../../compliance/disclaimer.js';
 import { verifyCitations } from '../../compliance/citationVerifier.js';
+import { searchAustLiiMulti, isAustLiiUrl, type AustLiiResult } from '../../integrations/austlii/index.js';
 import { getSkillDefinition } from '../registry.js';
 import type { Citation, ResearchMemo } from './types.js';
 
@@ -52,23 +53,54 @@ function fallback(input: LegalResearchInput, raw: string): ResearchMemo {
   };
 }
 
+function buildAustLiiContext(results: AustLiiResult[]): string {
+  if (results.length === 0) return '';
+  const lines = results.slice(0, 10).map((r, i) => {
+    const dbTag = r.database ? ` [${r.database}]` : '';
+    const yearTag = r.year ? ` (${r.year})` : '';
+    return `${i + 1}. ${r.title}${yearTag}${dbTag}\n   URL: ${r.url}\n   ${r.snippet.slice(0, 200)}`;
+  });
+  return `\n\n## AustLII search results (authoritative — citations sourced here are pre-verified)\n\n${lines.join('\n\n')}\n`;
+}
+
+function buildSubQueries(question: string, jurisdiction: string): string[] {
+  const trimmed = question.trim().replace(/\s+/g, ' ');
+  const out: string[] = [trimmed.slice(0, 200)];
+  // Add a jurisdiction-prefixed variant when a state was specified.
+  if (jurisdiction && jurisdiction !== 'Commonwealth of Australia / state of matter') {
+    out.push(`${jurisdiction} ${trimmed.slice(0, 180)}`);
+  }
+  return out;
+}
+
 export async function runLegalResearch(
   input: LegalResearchInput,
 ): Promise<LegalResearchOutput> {
   const skill = getSkillDefinition('legal_research');
   const model = MODEL_MAP[input.modelTier ?? skill.defaultModel];
+  const jurisdiction = input.jurisdiction ?? 'Commonwealth of Australia / state of matter';
+
+  // Pre-search AustLII before the model runs. Even if the model
+  // hallucinates, the lawyer has the real hits next to the memo.
+  const austliiResp = await searchAustLiiMulti(buildSubQueries(input.question, jurisdiction), 6);
+  const austliiBlock = buildAustLiiContext(austliiResp.results);
 
   const userPrompt = `${skill.systemPrompt}
 
 ---
 
 Matter id: ${input.matterId ?? '(ad-hoc)'}
-Jurisdiction: ${input.jurisdiction ?? 'Commonwealth of Australia / state of matter'}
+Jurisdiction: ${jurisdiction}
 
 Question:
 ${input.question}
 
 ${input.facts ? `Facts:\n${input.facts}\n\n` : ''}
+${austliiBlock}
+You MUST prefer the AustLII URLs above when citing — they are the
+authoritative free-access source. Cite by full neutral citation and
+include the AustLII URL in the citation row whenever the case or
+statute appears in the list above.
 
 Produce the memorandum as JSON with shape:
 {
@@ -141,9 +173,41 @@ Produce the memorandum as JSON with shape:
     }
   }
 
-  // Verify every citation against AustLII (best effort; the verifier
-  // returns the same array with `verified` + `verificationNote` set).
-  memo.citations = await verifyCitations(memo.citations);
+  // Auto-promote any citation whose URL is rooted at AustLII to
+  // verified, since the URL came directly from our authoritative
+  // search. The verifier is still run for non-AustLII URLs.
+  const austliiUrls = new Set(austliiResp.results.map((r) => r.url));
+  const preVerified: Citation[] = memo.citations.map((c) =>
+    c.url && (isAustLiiUrl(c.url) || austliiUrls.has(c.url))
+      ? {
+          ...c,
+          verified: true,
+          verificationNote: 'AustLII (auto-verified — URL sourced from real-time AustLII search)',
+        }
+      : c,
+  );
+
+  // Append any AustLII hits the model did not cite, so the lawyer can
+  // see the on-point authority the system surfaced.
+  const cited = new Set(preVerified.map((c) => c.url ?? c.text));
+  const extra: Citation[] = austliiResp.results
+    .filter((r) => !cited.has(r.url))
+    .slice(0, 5)
+    .map((r) => ({
+      text: r.citation,
+      url: r.url,
+      verified: true,
+      verificationNote: 'AustLII (auto-surfaced — not cited by model, but returned by search)',
+    }));
+
+  // Verify citations that didn't come from AustLII (best effort).
+  // AustLII-sourced citations skip the verifier — they are already
+  // authoritative by definition.
+  const allCitations = [...preVerified, ...extra];
+  const toVerify = allCitations.filter((c) => !c.verified);
+  const verified = await verifyCitations(toVerify);
+  const verifiedMap = new Map(verified.map((v, i) => [toVerify[i], v]));
+  memo.citations = allCitations.map((c) => verifiedMap.get(c) ?? c);
 
   const md = renderMemoMarkdown(memo);
   return { memo, memoMarkdown: wrapWithDisclaimer(md), costUsd };

@@ -114,6 +114,9 @@ function layout(activePath: string, title: string, body: string): string {
     ${item('/review', 'Review queue')}
     ${item('/calendar', 'Deadlines')}
     ${item('/billing', 'Billing')}
+    ${item('/upload', 'Upload')}
+    ${item('/templates', 'Templates')}
+    ${item('/precedents', 'Precedents')}
   </nav>
 </header>
 <main>${body}</main>
