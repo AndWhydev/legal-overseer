@@ -155,6 +155,7 @@ import {
 import { isSetupComplete, handleOnboardingRoute, isSetupRoute } from '../onboarding/index.js';
 import { appendLegalAudit } from '../compliance/audit.js';
 import { checkRateLimit } from '../governance/index.js';
+import { handleFeatureRoute } from './feature-routes.js';
 
 const logger = createSafeLogger('Dashboard');
 
@@ -318,6 +319,10 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   }
 
   try {
+    // ---- new comprehensive feature routes (sections 1-9) ----
+    const handledByFeatures = await handleFeatureRoute(req, res, path, session);
+    if (handledByFeatures) return;
+
     if (method === 'GET' && (path === '/' || path === '/matters')) {
       html(res, 200, renderMatters(buildMatterSummary()));
       return;

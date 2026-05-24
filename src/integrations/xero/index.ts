@@ -214,7 +214,7 @@ export async function pullPayments(): Promise<{ ok: boolean; count: number; erro
     for (const p of payments) {
       if (!p.Invoice?.InvoiceNumber) continue;
       const invoice = db
-        .prepare('SELECT id FROM invoices WHERE invoice_number = ?')
+        .prepare('SELECT id FROM client_invoices WHERE invoice_number = ?')
         .get(p.Invoice.InvoiceNumber) as { id: string } | undefined;
       if (!invoice) continue;
       const exists = db
@@ -224,7 +224,7 @@ export async function pullPayments(): Promise<{ ok: boolean; count: number; erro
         .get(p.PaymentID);
       if (exists) continue;
       db.prepare(
-        `INSERT INTO invoice_payments (id, invoice_id, amount_aud, payment_date, method, reference, recorded_by)
+        `INSERT INTO client_invoice_payments (id, invoice_id, amount_aud, payment_date, method, reference, recorded_by)
          VALUES (?, ?, ?, ?, 'xero', ?, 'xero-sync')`,
       ).run(randomUUID(), invoice.id, p.Amount, p.Date.slice(0, 10), p.PaymentID);
       db.prepare(

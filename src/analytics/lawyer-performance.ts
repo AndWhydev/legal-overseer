@@ -36,12 +36,12 @@ function realisedFromInvoices(matterIds: string[]): { billed: number; paid: numb
   const db = getDatabase();
   const placeholders = matterIds.map(() => '?').join(',');
   const billed = (db
-    .prepare(`SELECT COALESCE(SUM(total_aud), 0) AS b FROM invoices WHERE matter_id IN (${placeholders})`)
+    .prepare(`SELECT COALESCE(SUM(total_aud), 0) AS b FROM client_invoices WHERE matter_id IN (${placeholders})`)
     .get(...matterIds) as { b: number }).b;
   const paid = (db
     .prepare(
-      `SELECT COALESCE(SUM(amount_aud), 0) AS p FROM invoice_payments p
-       JOIN invoices i ON i.id = p.invoice_id WHERE i.matter_id IN (${placeholders})`,
+      `SELECT COALESCE(SUM(amount_aud), 0) AS p FROM client_invoice_payments p
+       JOIN client_invoices i ON i.id = p.invoice_id WHERE i.matter_id IN (${placeholders})`,
     )
     .get(...matterIds) as { p: number }).p;
   return { billed, paid };

@@ -28,7 +28,7 @@ export function listOverdueInvoices(): OverdueInvoice[] {
   const now = new Date().toISOString().slice(0, 10);
   const rows = db
     .prepare(
-      `SELECT * FROM invoices
+      `SELECT * FROM client_invoices
        WHERE status IN ('sent', 'overdue') AND due_date < ? AND amount_paid_aud < total_aud
        ORDER BY due_date`,
     )
@@ -112,7 +112,7 @@ export function dispatchReminders(acting: string): { drafted: number } {
       metadata: { invoice_id: invoice.id, days_overdue: daysOverdue, kind },
     });
     db.prepare(
-      `UPDATE invoices SET reminder_count = reminder_count + 1, last_reminder_at = ?, status = ? WHERE id = ?`,
+      `UPDATE client_invoices SET reminder_count = reminder_count + 1, last_reminder_at = ?, status = ? WHERE id = ?`,
     ).run(new Date().toISOString(), daysOverdue >= 30 ? 'overdue' : invoice.status, invoice.id);
     appendLegalAudit({
       matterId: invoice.matter_id,
@@ -130,7 +130,7 @@ export function dispatchReminders(acting: string): { drafted: number } {
 
 export function draftPaymentReceipt(invoiceId: string, acting: string): void {
   const db = getDatabase();
-  const inv = db.prepare('SELECT * FROM invoices WHERE id = ?').get(invoiceId) as Invoice | undefined;
+  const inv = db.prepare('SELECT * FROM client_invoices WHERE id = ?').get(invoiceId) as Invoice | undefined;
   if (!inv) return;
   const matter = getMatterById(inv.matter_id);
   if (!matter) return;
@@ -182,7 +182,7 @@ export function ageingReport(): AgeingReport {
   const db = getDatabase();
   const currentRows = db
     .prepare(
-      `SELECT * FROM invoices WHERE status IN ('sent', 'overdue') AND due_date >= ?`,
+      `SELECT * FROM client_invoices WHERE status IN ('sent', 'overdue') AND due_date >= ?`,
     )
     .all(new Date().toISOString().slice(0, 10)) as Invoice[];
   for (const r of currentRows) {

@@ -60,14 +60,14 @@ export interface LineItem {
 function nextInvoiceNumber(): string {
   const db = getDatabase();
   const row = db
-    .prepare(`SELECT next_number FROM invoice_sequence WHERE firm_id = ?`)
+    .prepare(`SELECT next_number FROM client_invoice_sequence WHERE firm_id = ?`)
     .get(FIRM_ID) as { next_number: number } | undefined;
   let n = 1;
   if (row) {
     n = row.next_number;
-    db.prepare(`UPDATE invoice_sequence SET next_number = ? WHERE firm_id = ?`).run(n + 1, FIRM_ID);
+    db.prepare(`UPDATE client_invoice_sequence SET next_number = ? WHERE firm_id = ?`).run(n + 1, FIRM_ID);
   } else {
-    db.prepare(`INSERT INTO invoice_sequence (firm_id, next_number) VALUES (?, ?)`).run(FIRM_ID, 2);
+    db.prepare(`INSERT INTO client_invoice_sequence (firm_id, next_number) VALUES (?, ?)`).run(FIRM_ID, 2);
   }
   const year = new Date().getFullYear();
   return `INV-${year}-${n.toString().padStart(5, '0')}`;
@@ -186,7 +186,7 @@ Thank you for your business.`);
   const db = getDatabase();
   const now = new Date().toISOString();
   db.prepare(
-    `INSERT INTO invoices
+    `INSERT INTO client_invoices
        (id, matter_id, invoice_number, client_id, issue_date, due_date,
         subtotal_aud, gst_aud, total_aud, amount_paid_aud, status,
         review_id, line_items_json, created_by, created_at, updated_at)
@@ -213,20 +213,20 @@ Thank you for your business.`);
 
 export function getInvoice(id: string): Invoice | null {
   const db = getDatabase();
-  return (db.prepare('SELECT * FROM invoices WHERE id = ?').get(id) as Invoice | undefined) ?? null;
+  return (db.prepare('SELECT * FROM client_invoices WHERE id = ?').get(id) as Invoice | undefined) ?? null;
 }
 
 export function listMatterInvoices(matterId: string): Invoice[] {
   const db = getDatabase();
   return db
-    .prepare(`SELECT * FROM invoices WHERE matter_id = ? ORDER BY issue_date DESC`)
+    .prepare(`SELECT * FROM client_invoices WHERE matter_id = ? ORDER BY issue_date DESC`)
     .all(matterId) as Invoice[];
 }
 
 export function markInvoiceSent(id: string, acting: string): Invoice {
   const db = getDatabase();
   const now = new Date().toISOString();
-  db.prepare(`UPDATE invoices SET status = 'sent', sent_at = ?, updated_at = ? WHERE id = ?`).run(
+  db.prepare(`UPDATE client_invoices SET status = 'sent', sent_at = ?, updated_at = ? WHERE id = ?`).run(
     now,
     now,
     id,
@@ -248,15 +248,15 @@ export function recordPayment(invoiceId: string, amountAud: number, method: stri
   const inv = getInvoice(invoiceId);
   if (!inv) throw new Error(`invoice ${invoiceId} not found`);
   db.prepare(
-    `INSERT INTO invoice_payments (id, invoice_id, amount_aud, payment_date, method, recorded_by)
+    `INSERT INTO client_invoice_payments (id, invoice_id, amount_aud, payment_date, method, recorded_by)
      VALUES (?, ?, ?, ?, ?, ?)`,
   ).run(randomUUID(), invoiceId, amountAud, new Date().toISOString().slice(0, 10), method, recordedBy);
   const total = (db
-    .prepare(`SELECT COALESCE(SUM(amount_aud), 0) AS s FROM invoice_payments WHERE invoice_id = ?`)
+    .prepare(`SELECT COALESCE(SUM(amount_aud), 0) AS s FROM client_invoice_payments WHERE invoice_id = ?`)
     .get(invoiceId) as { s: number }).s;
   const status: Invoice['status'] = total >= inv.total_aud - 0.01 ? 'paid' : 'sent';
   db.prepare(
-    `UPDATE invoices SET amount_paid_aud = ?, status = ?, updated_at = ? WHERE id = ?`,
+    `UPDATE client_invoices SET amount_paid_aud = ?, status = ?, updated_at = ? WHERE id = ?`,
   ).run(total, status, new Date().toISOString(), invoiceId);
   appendLegalAudit({
     matterId: inv.matter_id,

@@ -54,8 +54,8 @@ export function profitabilityRows(filters: ProfitabilityFilters = {}): Profitabi
     const billing = summariseMatterBilling(m.id);
     const revenue = (db
       .prepare(
-        `SELECT COALESCE(SUM(amount_aud), 0) AS r FROM invoice_payments p
-         JOIN invoices i ON i.id = p.invoice_id WHERE i.matter_id = ?`,
+        `SELECT COALESCE(SUM(amount_aud), 0) AS r FROM client_invoice_payments p
+         JOIN client_invoices i ON i.id = p.invoice_id WHERE i.matter_id = ?`,
       )
       .get(m.id) as { r: number }).r;
     const lawyerFee = (billing.lawyerSeconds / 3600) * FIRM_RATE_AUD;
@@ -138,7 +138,7 @@ export function revenueTrendByMonth(months = 12): { ym: string; revenueAud: numb
     const ym = `${dt.getFullYear()}-${(dt.getMonth() + 1).toString().padStart(2, '0')}`;
     const r = (db
       .prepare(
-        `SELECT COALESCE(SUM(amount_aud), 0) AS r FROM invoice_payments
+        `SELECT COALESCE(SUM(amount_aud), 0) AS r FROM client_invoice_payments
          WHERE substr(payment_date, 1, 7) = ?`,
       )
       .get(ym) as { r: number }).r;

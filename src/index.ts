@@ -9,6 +9,8 @@
 
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { healthCheck } from './api/health.js';
+import { handleApiRequest } from './api/rest.js';
+import { currentHealthStatus } from './monitoring/index.js';
 import { initializeDatabase, closeDatabase } from './db/index.js';
 import { startTaskLoop, stopTaskLoop } from './agent/index.js';
 import { isEmailConfigured } from './email/notifier.js';
@@ -24,6 +26,11 @@ import { isSetupComplete } from './onboarding/index.js';
 import { initReminderScheduler, stopReminderScheduler } from './reminders/index.js';
 import { initWeeklyBriefingScheduler, stopWeeklyBriefingScheduler } from './weekly-briefing/index.js';
 import { ensureBuiltInTemplatesLoaded } from './templates/index.js';
+import { startBackupScheduler, stopBackupScheduler } from './backup/index.js';
+import { startMonitoringScheduler, stopMonitoringScheduler } from './monitoring/index.js';
+import { ensureSeedBenchmarks } from './intelligence/fee-benchmarking.js';
+import { ensureSeededForAllLawyers } from './compliance/regulatory-calendar.js';
+import { ensureSchedulesForAllOpenMatters } from './compliance/file-review.js';
 
 const logger = createSafeLogger('Main');
 
@@ -71,6 +78,19 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   if (method === 'GET' && url === '/health') {
     healthCheck(req, res);
     return;
+  }
+
+  if (method === 'GET' && url === '/status') {
+    const status = currentHealthStatus();
+    res.writeHead(status.ok ? 200 : 503, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(status, null, 2));
+    return;
+  }
+
+  // REST API (sections 9.6 — /api/v1/*, /api/docs, /api/docs/explorer)
+  if (url.startsWith('/api/v1/') || url === '/api/docs' || url === '/api/docs/explorer') {
+    const handled = await handleApiRequest(req, res);
+    if (handled) return;
   }
 
   if (method === 'GET' && url === '/version') {
@@ -181,6 +201,15 @@ export async function main(): Promise<void> {
   try { ensureBuiltInTemplatesLoaded(); }
   catch (err) { logger.warn(`builtin templates: ${err instanceof Error ? err.message : String(err)}`); }
 
+  // Section 1 / 4 idempotent seeds.
+  try { ensureSeedBenchmarks(); } catch (err) { logger.warn(`fee benchmarks seed: ${err instanceof Error ? err.message : String(err)}`); }
+  try { ensureSeededForAllLawyers(process.env.DEFAULT_JURISDICTION ?? 'NSW'); } catch (err) { logger.warn(`regulatory seed: ${err instanceof Error ? err.message : String(err)}`); }
+  try { ensureSchedulesForAllOpenMatters(); } catch (err) { logger.warn(`file-review seed: ${err instanceof Error ? err.message : String(err)}`); }
+
+  // Section 7 + 9: encrypted backups + uptime monitoring.
+  if (process.env.BACKUP_ENABLED === 'true') startBackupScheduler();
+  if (process.env.MONITORING_ENABLED !== 'false') startMonitoringScheduler();
+
   // Local dashboard (matter list, review queue, calendar, billing, users).
   let dashboard: DashboardServer | null = null;
   if (process.env.ENABLE_DASHBOARD !== 'false') {
@@ -256,6 +285,8 @@ export async function main(): Promise<void> {
     try { stopLicenceRecheck(); } catch { /* ignore */ }
     try { stopReminderScheduler(); } catch { /* ignore */ }
     try { stopWeeklyBriefingScheduler(); } catch { /* ignore */ }
+    try { stopBackupScheduler(); } catch { /* ignore */ }
+    try { stopMonitoringScheduler(); } catch { /* ignore */ }
     try { clearInterval(sessionGc); } catch { /* ignore */ }
     if (dashboard) {
       dashboard.stop().catch(() => undefined);

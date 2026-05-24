@@ -51,8 +51,8 @@ function computePaymentScore(clientId: string): { raw: number; explanation: stri
     .prepare(
       `SELECT i.status, i.due_date, i.total_aud,
               COALESCE(SUM(p.amount_aud), 0) AS paid
-       FROM invoices i
-       LEFT JOIN invoice_payments p ON p.invoice_id = i.id
+       FROM client_invoices i
+       LEFT JOIN client_invoice_payments p ON p.invoice_id = i.id
        WHERE i.client_id = ?
        GROUP BY i.id`,
     )

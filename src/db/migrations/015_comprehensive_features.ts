@@ -785,7 +785,7 @@ export const migration: Migration = {
     // ============================================================
 
     db.exec(`
-      CREATE TABLE invoice_payments (
+      CREATE TABLE client_invoice_payments (
         id TEXT PRIMARY KEY,
         invoice_id TEXT NOT NULL,
         amount_aud REAL NOT NULL,
@@ -796,8 +796,8 @@ export const migration: Migration = {
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )
     `);
-    db.exec(`CREATE INDEX idx_inv_pay_invoice ON invoice_payments(invoice_id)`);
-    logger.info('Created table: invoice_payments');
+    db.exec(`CREATE INDEX idx_cinv_pay_invoice ON client_invoice_payments(invoice_id)`);
+    logger.info('Created table: client_invoice_payments');
 
     db.exec(`
       CREATE TABLE market_intelligence_reports (
@@ -1005,7 +1005,7 @@ export const migration: Migration = {
     logger.info('Created table: document_requests');
 
     db.exec(`
-      CREATE TABLE invoices (
+      CREATE TABLE client_invoices (
         id TEXT PRIMARY KEY,
         matter_id TEXT NOT NULL,
         invoice_number TEXT NOT NULL UNIQUE,
@@ -1032,9 +1032,9 @@ export const migration: Migration = {
         FOREIGN KEY (matter_id) REFERENCES matters(id)
       )
     `);
-    db.exec(`CREATE INDEX idx_inv_matter ON invoices(matter_id)`);
-    db.exec(`CREATE INDEX idx_inv_status ON invoices(status)`);
-    db.exec(`CREATE INDEX idx_inv_due ON invoices(due_date)`);
+    db.exec(`CREATE INDEX idx_cinv_matter ON client_invoices(matter_id)`);
+    db.exec(`CREATE INDEX idx_cinv_status ON client_invoices(status)`);
+    db.exec(`CREATE INDEX idx_cinv_due ON client_invoices(due_date)`);
     logger.info('Created table: invoices');
 
     db.exec(`
