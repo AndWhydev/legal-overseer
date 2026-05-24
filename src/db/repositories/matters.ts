@@ -39,6 +39,10 @@ export interface Matter {
   matter_folder: string | null;
   created_at: string;
   updated_at: string;
+  /** Added by migration 015 — links a matter to a row in `clients`. */
+  client_id?: string | null;
+  /** Added by migration 015 — multi-office support. */
+  office_id?: string | null;
 }
 
 export interface CreateMatterInput {
