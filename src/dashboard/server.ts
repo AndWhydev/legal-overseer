@@ -47,6 +47,28 @@ import {
 import { renderUsersPage } from './users-view.js';
 import { renderUploadPage } from './upload-view.js';
 import { renderBriefingPrefsPage } from './briefing-prefs-view.js';
+import { handleClientPortalRoute, isClientPortalRoute } from '../client-portal/index.js';
+import {
+  isShareLinkLive,
+  grantDocumentVisibility,
+  revokeDocumentVisibility,
+  createShareLink,
+  listMatterShareLinks,
+  revokeShareLink,
+  listClientUsers,
+  createClientUser,
+  grantClientMatter,
+  isDocumentVisibleToClients,
+  type ClientUser as ClientUserType,
+} from '../client-portal/index.js';
+import { renderClientMgmtPage } from './client-mgmt-view.js';
+import { renderShareLandingPage } from '../client-portal/views.js';
+import {
+  handleDictationRoute,
+  isDictationRoute,
+} from '../dictation/index.js';
+import { renderCostEstimatorPage } from './cost-estimator-view.js';
+import { estimateMatterCost, getMatterCostStatus, listMonthlyMatterCosts } from '../cost-estimator/index.js';
 import { renderTimelinePage } from './timeline-view.js';
 import { renderTemplatesList, renderTemplateDetail } from './templates-view.js';
 import {
@@ -183,6 +205,39 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   if (!allowed) return;
 
   const isSecure = isSecureRequest(req);
+
+  // ---- client portal lives at /client-portal/* — separate auth ----
+  if (isClientPortalRoute(path)) {
+    await handleClientPortalRoute(req, res, path, isSecure);
+    return;
+  }
+
+  // ---- shared document landing: GET /share/:token ----
+  const shareLandingMatch = path.match(/^\/share\/([0-9a-f]+)$/i);
+  if (shareLandingMatch) {
+    const link = isShareLinkLive(shareLandingMatch[1]);
+    if (!link) { html(res, 404, render404('share link expired or revoked')); return; }
+    const doc = getDocument(link.matter_id, link.document_id);
+    if (!doc) { html(res, 404, render404('document')); return; }
+    if (method === 'GET' && /[?&]download=1/.test(url)) {
+      const bytes = readDocumentBytes(doc);
+      res.writeHead(200, {
+        'content-type': doc.contentType || 'application/octet-stream',
+        'content-disposition': `attachment; filename="${encodeURIComponent(doc.filename)}"`,
+        'content-length': String(bytes.length),
+      });
+      res.end(bytes);
+      return;
+    }
+    html(res, 200, renderShareLandingPage({
+      filename: doc.filename,
+      expiresAt: link.expires_at,
+      downloadHref: `/share/${shareLandingMatch[1]}?download=1`,
+    }));
+    return;
+  }
+
+  // ---- dictation routes (lives within main dashboard auth) ----
 
   // ---- setup wizard takes priority ----
   if (!isSetupComplete()) {
@@ -414,6 +469,110 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       const payload = getReviewWithMatter(reviewMatch[1]);
       if (!payload) { html(res, 404, render404('review')); return; }
       html(res, 200, renderReviewDetail(payload));
+      return;
+    }
+
+    // ---- dictation portal ----
+    if (isDictationRoute(path)) {
+      const handled = await handleDictationRoute(req, res, path, session);
+      if (handled) return;
+    }
+
+    // ---- cost estimator UI ----
+    if (method === 'GET' && path === '/cost-estimator') {
+      const url2 = new URL(url, 'http://x');
+      const matterType = url2.searchParams.get('matter_type') ?? 'commercial';
+      const complexity = (url2.searchParams.get('complexity') ?? 'medium') as 'simple' | 'medium' | 'complex';
+      const estimate = estimateMatterCost(matterType, complexity);
+      const monthly = listMonthlyMatterCosts(new Date().toISOString().slice(0, 7));
+      html(res, 200, renderCostEstimatorPage({
+        currentEmail: session.user.email,
+        matterType, complexity, estimate, monthly,
+      }));
+      return;
+    }
+    const matterCostMatch = path.match(/^\/matter\/([0-9a-f-]+)\/cost-status\.json$/i);
+    if (method === 'GET' && matterCostMatch) {
+      const status = getMatterCostStatus(matterCostMatch[1]);
+      json(res, 200, status);
+      return;
+    }
+
+    // ---- client management (admin / lawyer) ----
+    if (method === 'GET' && path === '/clients') {
+      const clients = listClientUsers();
+      const matters = listMatters();
+      html(res, 200, renderClientMgmtPage({
+        currentEmail: session.user.email, clients, matters,
+      }));
+      return;
+    }
+    if (method === 'POST' && path === '/clients/create') {
+      const body = await readBody(req);
+      const full_name = (body.get('full_name') ?? '').trim();
+      const email = (body.get('email') ?? '').trim().toLowerCase();
+      const password = body.get('password') ?? '';
+      let flash: { kind: 'ok' | 'error'; msg: string };
+      try {
+        if (!full_name || !email) throw new Error('Name and email required.');
+        if (password.length < 12) throw new Error('Password must be ≥12 characters.');
+        const u = createClientUser({ full_name, email, password });
+        appendLegalAudit({
+          matterId: null, actorId: session.user.email, action: 'client_user.create',
+          detail: email, refTable: 'client_users', refId: u.id,
+        });
+        flash = { kind: 'ok', msg: `Added ${email}.` };
+      } catch (err) {
+        flash = { kind: 'error', msg: err instanceof Error ? err.message : 'Could not add client.' };
+      }
+      const clients = listClientUsers();
+      const matters = listMatters();
+      html(res, 200, renderClientMgmtPage({
+        currentEmail: session.user.email, clients, matters, flash,
+      }));
+      return;
+    }
+    const clientGrantMatch = path.match(/^\/clients\/([0-9a-f-]+)\/grant-matter$/i);
+    if (method === 'POST' && clientGrantMatch) {
+      const clientId = clientGrantMatch[1];
+      const body = await readBody(req);
+      const matterId = (body.get('matter_id') ?? '').trim();
+      if (matterId) {
+        grantClientMatter(clientId, matterId, session.user.email);
+        appendLegalAudit({
+          matterId, actorId: session.user.email, action: 'client_user.grant_matter',
+          detail: `client ${clientId} → matter ${matterId}`,
+          refTable: 'client_user_matters', refId: clientId,
+        });
+      }
+      redirect(res, '/clients');
+      return;
+    }
+
+    // ---- document visibility + share links ----
+    const docVisMatch = path.match(/^\/matter\/([0-9a-f-]+)\/document\/([0-9a-f-]+)\/(share|unshare|sharelink)$/i);
+    if (method === 'POST' && docVisMatch) {
+      const [, mId, dId, action] = docVisMatch;
+      if (action === 'share') {
+        grantDocumentVisibility({ documentId: dId, matterId: mId, grantedBy: session.user.email });
+        appendLegalAudit({ matterId: mId, actorId: session.user.email, action: 'document.share_with_clients', refTable: 'documents', refId: dId });
+      } else if (action === 'unshare') {
+        revokeDocumentVisibility(dId);
+        appendLegalAudit({ matterId: mId, actorId: session.user.email, action: 'document.unshare_from_clients', refTable: 'documents', refId: dId });
+      } else if (action === 'sharelink') {
+        const link = createShareLink({ documentId: dId, matterId: mId, createdBy: session.user.email });
+        appendLegalAudit({ matterId: mId, actorId: session.user.email, action: 'document.share_link_created', detail: link.token, refTable: 'share_links', refId: link.token });
+        json(res, 200, { ok: true, url: `/share/${link.token}`, expires_at: link.expires_at });
+        return;
+      }
+      redirect(res, `/matter/${mId}`);
+      return;
+    }
+    const shareRevokeMatch = path.match(/^\/share-link\/([0-9a-f]+)\/revoke$/i);
+    if (method === 'POST' && shareRevokeMatch) {
+      revokeShareLink(shareRevokeMatch[1]);
+      appendLegalAudit({ matterId: null, actorId: session.user.email, action: 'share_link.revoked', detail: shareRevokeMatch[1], refTable: 'share_links', refId: shareRevokeMatch[1] });
+      redirect(res, req.headers.referer?.toString() ?? '/');
       return;
     }
 
