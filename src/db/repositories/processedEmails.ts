@@ -13,7 +13,14 @@ import { createSafeLogger } from '../../governance/index.js';
 
 const logger = createSafeLogger('ProcessedEmailRepo');
 
-export type InboxType = 'software' | 'seo' | 'design' | 'content' | 'ops';
+/**
+ * Legal Overseer inbox slots:
+ *   - legal_intake — new-matter intake, drives matter creation
+ *   - client       — ongoing client correspondence on existing matters
+ *   - court        — court / tribunal / regulator correspondence
+ *   - internal     — internal firm operations (admin, billing, IT)
+ */
+export type InboxType = 'legal_intake' | 'client' | 'court' | 'internal';
 export type ProcessedEmailStatus = 'routed' | 'failed' | 'skipped';
 
 export interface ProcessedEmail {
@@ -29,7 +36,7 @@ export interface ProcessedEmail {
   attachment_count: number;
   attachments_dir: string | null;
   routed_task_id: string | null;
-  routed_project_id: string | null;
+  routed_matter_id: string | null;
   status: ProcessedEmailStatus;
   error_message: string | null;
   reply_sent: number;
@@ -48,15 +55,12 @@ export interface CreateProcessedEmailInput {
   attachment_count: number;
   attachments_dir?: string | null;
   routed_task_id?: string | null;
-  routed_project_id?: string | null;
+  routed_matter_id?: string | null;
   status: ProcessedEmailStatus;
   error_message?: string | null;
   reply_sent: boolean;
 }
 
-/**
- * Has this (inbox_type, message_id) already been processed?
- */
 export function isEmailProcessed(inboxType: InboxType, messageId: string): boolean {
   const db = getDatabase();
   const row = db
@@ -67,11 +71,6 @@ export function isEmailProcessed(inboxType: InboxType, messageId: string): boole
   return Boolean(row);
 }
 
-/**
- * Insert one processed-email row. Throws on UNIQUE constraint
- * violation — the inbox poller catches that and treats it as a no-op
- * (the message was already routed by another poll cycle).
- */
 export function createProcessedEmail(input: CreateProcessedEmailInput): ProcessedEmail {
   const db = getDatabase();
   const id = randomUUID();
@@ -83,7 +82,7 @@ export function createProcessedEmail(input: CreateProcessedEmailInput): Processe
       id, inbox_type, inbox_address, imap_uid, message_id,
       from_address, from_name, subject, received_at,
       attachment_count, attachments_dir,
-      routed_task_id, routed_project_id, status, error_message,
+      routed_task_id, routed_matter_id, status, error_message,
       reply_sent, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
@@ -100,7 +99,7 @@ export function createProcessedEmail(input: CreateProcessedEmailInput): Processe
     input.attachment_count,
     input.attachments_dir ?? null,
     input.routed_task_id ?? null,
-    input.routed_project_id ?? null,
+    input.routed_matter_id ?? null,
     input.status,
     input.error_message ?? null,
     input.reply_sent ? 1 : 0,
@@ -124,7 +123,7 @@ export function createProcessedEmail(input: CreateProcessedEmailInput): Processe
     attachment_count: input.attachment_count,
     attachments_dir: input.attachments_dir ?? null,
     routed_task_id: input.routed_task_id ?? null,
-    routed_project_id: input.routed_project_id ?? null,
+    routed_matter_id: input.routed_matter_id ?? null,
     status: input.status,
     error_message: input.error_message ?? null,
     reply_sent: input.reply_sent ? 1 : 0,

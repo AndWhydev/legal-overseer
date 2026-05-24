@@ -1,11 +1,11 @@
 /**
- * Skills module for BitBit
+ * Skills module — Legal Overseer.
  *
- * Re-exports types, registry, and helper functions for skill-based
- * task routing and subagent management.
+ * Re-exports the skill registry, per-skill runners, and per-skill
+ * types so the rest of the codebase can import everything from a
+ * single path.
  */
 
-// Type definitions
 export type {
   SkillType,
   ModelTier,
@@ -15,7 +15,6 @@ export type {
   TaskClassification,
 } from './types.js';
 
-// Registry and helpers
 export {
   SKILL_REGISTRY,
   getSkillDefinition,
@@ -24,69 +23,53 @@ export {
   isValidSkillType,
 } from './registry.js';
 
-// Gatekeeper skill functions and types
+// Legal skills (each module exports runX(...) + result types)
 export {
-  getGatekeeperPrompt,
-  fetchGatekeeperTaskContext,
-  parseTaskPayload,
-  type ClickUpTaskPayload,
-  type GatekeeperTaskContext,
-  type MediaMetadata,
-  type AudioLevels,
-  type ValidationResult,
-  type TechnicalValidation,
-  type VisualAnalysis,
-  type QARecommendation,
-  type QAResult,
-} from './gatekeeper/index.js';
+  runContractReview,
+  type ContractReviewInput,
+  type ContractReviewOutput,
+  type ContractReviewResult,
+  type ContractFinding,
+  type RiskSeverity,
+} from './contract-review/index.js';
 
-// R&D Scout skill functions
 export {
-  runResearchPipeline,
-  generateReport,
-  getRDScoutDefinition,
-  DEFAULT_CONFIG as RD_SCOUT_DEFAULT_CONFIG,
-  type ProductOpportunity,
-  type SEOTrendData,
-  type ResearchReport,
-  type RDScoutConfig,
-} from './rd-scout/index.js';
+  runLegalResearch,
+  type LegalResearchInput,
+  type LegalResearchOutput,
+  type ResearchMemo,
+  type Citation,
+} from './legal-research/index.js';
 
-// SEO Backlinks skill
 export {
-  initSEOBacklinks,
-  getSEOBacklinksDefinition,
-  dispatchBacklinkCampaign,
-  runBacklinkCampaign,
-  buildWeeklyReport,
-  renderReportMarkdown,
-  scheduleBacklinkJobs,
-  runWeeklyReportNow,
-  pickTargetsForCampaign,
-  BACKLINK_TARGETS,
-  type CampaignConfig,
-  type CampaignRunResult,
-  type BacklinkTarget,
-  type GeneratedArticle,
-  type SubmissionResult,
-  type WeeklyBacklinkReport,
-} from './seo-backlinks/index.js';
+  runMatterDrafting,
+  type MatterDraftingInput,
+  type MatterDraftingOutput,
+  type DraftedDocument,
+  type DocumentType,
+} from './matter-drafting/index.js';
 
-// Ops Officer skill types
 export {
-  InvoiceSchema,
-  InvoiceLineItemSchema,
-  createTaskContext,
-  withAttachment,
-  withInvoice,
-  withResult,
-  type Invoice,
-  type InvoiceLineItem,
-  type AnomalyType,
-  type AnomalySeverity,
-  type AnomalyFlag,
-  type VerificationResult,
-  type InvoiceProcessingResult,
-  type XeroDraftResult,
-  type OpsOfficerTaskContext,
-} from './ops-officer/index.js';
+  runMatterManagement,
+  type MatterManagementInput,
+  type MatterManagementOutput,
+  type MatterManagementResult,
+  type DeadlineFinding,
+  type DeadlineType,
+} from './matter-management/index.js';
+
+export {
+  runClientComms,
+  type ClientCommsInput,
+  type ClientCommsOutput,
+  type ClientEmailDraft,
+} from './client-comms/index.js';
+
+export {
+  runComplianceMonitor,
+  type ComplianceMonitorInput,
+  type ComplianceMonitorOutput,
+  type ComplianceMonitorResult,
+  type RegulatoryChange,
+  type Urgency,
+} from './compliance-monitor/index.js';

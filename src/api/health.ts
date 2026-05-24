@@ -1,18 +1,20 @@
 /**
- * Health check handler for BitBit
+ * Health check handler for Legal Overseer.
  *
- * Returns system health status for Fly.io health checks
- * and monitoring endpoints.
+ * Returns system health status for load balancers, on-prem monitoring,
+ * and the dashboard /health probe. Also reports legal_audit_log
+ * chain integrity — a hashes-don't-match result flips status to
+ * 'unhealthy' so the operator gets paged.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { getDatabase } from '../db/index.js';
-import { isClickUpConfigured, getClickUpTeamIdPartial } from '../integrations/clickup/index.js';
 import {
   getControlPlaneStatus,
   getAllCircuitBreakerStatuses,
   isGlobalKillActive,
 } from '../governance/index.js';
+import { verifyAuditChain } from '../compliance/audit.js';
 
 const VERSION = '0.1.0';
 const startTime = Date.now();
@@ -27,6 +29,11 @@ export interface GovernanceStatus {
   }>;
 }
 
+export interface AuditStatus {
+  chainOk: boolean;
+  firstBreak: string | null;
+}
+
 export interface HealthResponse {
   status: 'ok' | 'degraded' | 'unhealthy';
   version: string;
@@ -34,66 +41,38 @@ export interface HealthResponse {
   uptime: number;
   uptimeHuman: string;
   database: 'connected' | 'error';
-  clickup: {
-    configured: boolean;
-    teamId: string | null;
-  };
+  audit: AuditStatus;
   governance: GovernanceStatus;
 }
 
-/**
- * Format uptime in human-readable form
- */
 function formatUptime(ms: number): string {
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-
-  if (days > 0) {
-    return `${days}d ${hours % 24}h ${minutes % 60}m`;
-  }
-  if (hours > 0) {
-    return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
-  }
-  if (minutes > 0) {
-    return `${minutes}m ${seconds % 60}s`;
-  }
+  if (days > 0) return `${days}d ${hours % 24}h ${minutes % 60}m`;
+  if (hours > 0) return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+  if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
   return `${seconds}s`;
 }
 
-/**
- * Check database connection status
- */
 function checkDatabase(): 'connected' | 'error' {
   try {
     const db = getDatabase();
-    const result = db.prepare('SELECT 1 as check_val').get() as {
-      check_val: number;
-    };
+    const result = db.prepare('SELECT 1 as check_val').get() as { check_val: number };
     return result?.check_val === 1 ? 'connected' : 'error';
   } catch {
     return 'error';
   }
 }
 
-/**
- * Get governance status for health response
- */
 function getGovernanceStatus(): GovernanceStatus {
   const controlPlane = getControlPlaneStatus();
   const circuitBreakerMap = getAllCircuitBreakerStatuses();
-
-  // Convert Map to array for JSON serialization
   const circuitBreakers: GovernanceStatus['circuitBreakers'] = [];
   for (const [name, status] of circuitBreakerMap) {
-    circuitBreakers.push({
-      name,
-      state: status.state,
-      failures: status.stats.failures,
-    });
+    circuitBreakers.push({ name, state: status.state, failures: status.stats.failures });
   }
-
   return {
     killSwitchActive: controlPlane.globalKillSwitch,
     disabledAgents: controlPlane.disabledAgents,
@@ -101,30 +80,26 @@ function getGovernanceStatus(): GovernanceStatus {
   };
 }
 
-/**
- * Health check endpoint handler
- */
-export function healthCheck(
-  _req: IncomingMessage,
-  res: ServerResponse
-): void {
+export function healthCheck(_req: IncomingMessage, res: ServerResponse): void {
   const uptime = Date.now() - startTime;
   const databaseStatus = checkDatabase();
   const governanceStatus = getGovernanceStatus();
+  const chain = verifyAuditChain();
+  const audit: AuditStatus = { chainOk: chain.ok, firstBreak: chain.ok ? null : chain.firstBreak };
 
-  // Determine overall status
-  let status: 'ok' | 'degraded' | 'unhealthy' = 'ok';
+  let status: HealthResponse['status'] = 'ok';
   let statusCode = 200;
 
   if (databaseStatus !== 'connected') {
     status = 'unhealthy';
     statusCode = 503;
-  } else if (isGlobalKillActive()) {
-    // Kill switch active - service unavailable
+  } else if (!audit.chainOk) {
     status = 'unhealthy';
     statusCode = 503;
-  } else if (governanceStatus.circuitBreakers.some((cb: { state: string }) => cb.state === 'open')) {
-    // Some circuits open - degraded but functional
+  } else if (isGlobalKillActive()) {
+    status = 'unhealthy';
+    statusCode = 503;
+  } else if (governanceStatus.circuitBreakers.some((cb) => cb.state === 'open')) {
     status = 'degraded';
     statusCode = 200;
   }
@@ -136,10 +111,7 @@ export function healthCheck(
     uptime,
     uptimeHuman: formatUptime(uptime),
     database: databaseStatus,
-    clickup: {
-      configured: isClickUpConfigured(),
-      teamId: getClickUpTeamIdPartial(),
-    },
+    audit,
     governance: governanceStatus,
   };
 

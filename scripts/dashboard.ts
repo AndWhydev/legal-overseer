@@ -1,15 +1,12 @@
 /**
- * dashboard.ts — Launch the local CTO dashboard.
+ * dashboard.ts — Launch the local Legal Overseer dashboard.
  *
- * Read-only HTTP UI on 127.0.0.1:$DASHBOARD_PORT (default 3000) that
- * shows the overseer fleet, per-project status, recent tasks, and
- * lessons learned.
+ * HTTP UI on 127.0.0.1:$DASHBOARD_PORT (default 3000) showing matters,
+ * review queue, deadline calendar, and billing tracker.
  *
  * Usage:
  *   npx tsx scripts/dashboard.ts                 # listen on 3000
  *   DASHBOARD_PORT=4000 npx tsx scripts/dashboard.ts
- *
- * Stop with Ctrl-C.
  */
 
 import { initializeDatabase, closeDatabase } from '../src/db/index.js';
@@ -21,10 +18,13 @@ async function main(): Promise<void> {
   const server = await startDashboard();
   console.log(`Dashboard ready: ${server.url}`);
   console.log('Routes:');
-  console.log(`  ${server.url}/                 — fleet view`);
-  console.log(`  ${server.url}/project/<id>     — per-project deep view`);
-  console.log(`  ${server.url}/task/<id>        — task input/output`);
-  console.log(`  ${server.url}/api/fleet.json   — JSON fleet summary`);
+  console.log(`  ${server.url}/                  — matter list`);
+  console.log(`  ${server.url}/matter/<id>       — matter detail`);
+  console.log(`  ${server.url}/review            — review queue`);
+  console.log(`  ${server.url}/review/<id>       — review detail (approve/reject)`);
+  console.log(`  ${server.url}/calendar          — deadline calendar`);
+  console.log(`  ${server.url}/billing           — billing tracker`);
+  console.log(`  ${server.url}/api/matters.json  — JSON matter summary`);
 
   const shutdown = async (signal: string) => {
     console.log(`\n${signal} received; shutting down...`);
@@ -32,12 +32,11 @@ async function main(): Promise<void> {
     closeDatabase();
     process.exit(0);
   };
-  process.on('SIGINT', () => void shutdown('SIGINT'));
-  process.on('SIGTERM', () => void shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
 
 main().catch((err) => {
   console.error('Fatal:', err);
-  closeDatabase();
   process.exit(1);
 });

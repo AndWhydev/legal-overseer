@@ -1,165 +1,100 @@
 /**
- * Daily Briefing Types for BitBit
+ * Daily Briefing — type definitions (Legal Overseer).
  *
- * Type definitions for the daily briefing data aggregation module.
- * These types define the structure of the unified operational snapshot
- * that synthesizes outputs from all skills and system health.
+ * Structure of the daily snapshot the scheduler emails to the
+ * managing partner. Centred on the four legal surfaces:
+ *
+ *   - Matter list      (new / closed / paused since last briefing)
+ *   - Review queue     (pending, stuck-on-lawyer, recently approved)
+ *   - Deadline calendar (next 14 days)
+ *   - Billing tracker  (AI spend + lawyer time totals)
+ *
+ * Plus system health (governance circuit breakers, audit-chain
+ * integrity).
  */
 
-/**
- * System health section of the daily briefing
- */
-export interface SystemHealth {
-  /** Overall system status: healthy, degraded, or critical */
-  status: 'healthy' | 'degraded' | 'critical';
-  /** System uptime in milliseconds */
-  uptimeMs: number;
-  /** Circuit breaker statuses by service name */
-  circuitBreakers: CircuitBreakerSummary[];
-  /** Whether the global kill switch is active */
-  killSwitchActive: boolean;
-  /** List of disabled agents (if any) */
-  disabledAgents: string[];
+export interface BriefingConfig {
+  /** ISO-8601 cron expression for delivery (default 08:00 daily). */
+  cron: string;
+  /** Hours of history to include in the snapshot. */
+  windowHours: number;
+  /** Recipient address (defaults to ADMIN_EMAIL). */
+  to: string | null;
 }
 
-/**
- * Circuit breaker summary for briefing
- */
+export const DEFAULT_BRIEFING_CONFIG: BriefingConfig = {
+  cron: '0 8 * * *',
+  windowHours: 24,
+  to: null,
+};
+
+export type AlertSeverity = 'info' | 'warning' | 'critical';
+
 export interface CircuitBreakerSummary {
   name: string;
   state: 'closed' | 'open' | 'halfOpen';
   failureCount: number;
 }
 
-/**
- * Task summary section of the daily briefing
- */
-export interface TaskSummary {
-  /** Current pending tasks */
+export interface SystemHealth {
+  status: 'healthy' | 'degraded' | 'critical';
+  uptimeMs: number;
+  circuitBreakers: CircuitBreakerSummary[];
+  killSwitchActive: boolean;
+  disabledAgents: string[];
+  /** Whether the legal_audit_log hash chain is intact. */
+  auditChainOk: boolean;
+  /** Description of the first chain break, if any. */
+  auditChainBreak: string | null;
+}
+
+export interface MatterStats {
+  openTotal: number;
+  newInWindow: number;
+  closedInWindow: number;
+  onHold: number;
+}
+
+export interface ReviewQueueStats {
   pending: number;
-  /** Tasks completed in the time window */
-  completed: number;
-  /** Tasks failed in the time window */
-  failed: number;
-  /** Tasks awaiting human approval */
-  awaitingApproval: number;
-  /** Breakdown by skill */
-  bySkill: SkillTaskCounts;
+  /** Pending more than 48h — the lawyer hasn't looked. */
+  stuck: number;
+  approvedInWindow: number;
+  rejectedInWindow: number;
+  sentInWindow: number;
 }
 
-/**
- * Task counts by skill
- */
-export interface SkillTaskCounts {
-  rd_scout: number;
-  gatekeeper: number;
-  ops_officer: number;
-  general: number;
+export interface DeadlineCalendarStats {
+  /** Open deadlines in the next 14 days. */
+  upcomingCount: number;
+  /** Limitation-period deadlines in the next 14 days (worst case). */
+  upcomingLimitations: number;
+  /** Open deadlines already past their due date. */
+  overdueCount: number;
 }
 
-/**
- * R&D Scout section of the daily briefing
- */
-export interface RdScoutSummary {
-  /** When the last pipeline run occurred */
-  lastRunAt: string | null;
-  /** Number of opportunities found in the time window */
-  opportunitiesFound: number;
-  /** Trending keywords from recent runs */
-  trendingKeywords: string[];
-  /** When the next scheduled run will occur */
-  nextRunAt: string | null;
+export interface BillingStats {
+  aiRunsInWindow: number;
+  aiSpendUsdInWindow: number;
+  aiSecondsInWindow: number;
+  lawyerSecondsInWindow: number;
+  /** Open matters with no billing activity in the window. */
+  staleMatters: number;
 }
 
-/**
- * Gatekeeper section of the daily briefing
- */
-export interface GatekeeperSummary {
-  /** Number of reviews processed in the time window */
-  reviewsProcessed: number;
-  /** Number of reviews approved */
-  approved: number;
-  /** Number of reviews flagged for attention */
-  flagged: number;
-  /** Number of reviews returned for revision */
-  returned: number;
-}
-
-/**
- * Ops Officer section of the daily briefing
- */
-export interface OpsOfficerSummary {
-  /** Number of invoices processed in the time window */
-  invoicesProcessed: number;
-  /** Total amount processed */
-  totalAmount: number;
-  /** Currency for totalAmount */
-  currency: string;
-  /** Number of invoices pending approval */
-  pendingApprovals: number;
-}
-
-/**
- * Alert severity levels
- */
-export type AlertSeverity = 'info' | 'warning' | 'error' | 'critical';
-
-/**
- * Alert in the daily briefing
- */
 export interface BriefingAlert {
-  /** Severity of the alert */
   severity: AlertSeverity;
-  /** Alert message */
-  message: string;
-  /** When the alert was generated */
-  timestamp: string;
-  /** Component that generated the alert */
-  component?: string;
+  title: string;
+  detail: string;
 }
 
-/**
- * Complete daily briefing structure
- *
- * This is the unified operational snapshot that provides
- * "Chess Master" visibility across all BitBit operations.
- */
 export interface DailyBriefing {
-  /** When the briefing was generated */
   generatedAt: string;
-  /** Time window for statistics (in hours) */
-  timeWindowHours: number;
-  /** System health overview */
+  windowHours: number;
   systemHealth: SystemHealth;
-  /** Task processing summary */
-  taskSummary: TaskSummary;
-  /** R&D Scout activity */
-  rdScout: RdScoutSummary;
-  /** Gatekeeper activity */
-  gatekeeper: GatekeeperSummary;
-  /** Ops Officer activity */
-  opsOfficer: OpsOfficerSummary;
-  /** Active alerts */
+  matters: MatterStats;
+  reviewQueue: ReviewQueueStats;
+  deadlines: DeadlineCalendarStats;
+  billing: BillingStats;
   alerts: BriefingAlert[];
 }
-
-/**
- * Configuration for briefing generation
- */
-export interface BriefingConfig {
-  /** Time window for statistics in hours (default: 24) */
-  timeWindowHours?: number;
-  /** Whether to include alerts (default: true) */
-  includeAlerts?: boolean;
-  /** Maximum number of alerts to include (default: 10) */
-  maxAlerts?: number;
-}
-
-/**
- * Default briefing configuration
- */
-export const DEFAULT_BRIEFING_CONFIG: Required<BriefingConfig> = {
-  timeWindowHours: 24,
-  includeAlerts: true,
-  maxAlerts: 10,
-};

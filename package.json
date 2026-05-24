@@ -1,34 +1,16 @@
 {
-  "name": "bitbit",
+  "name": "legal-overseer",
   "version": "0.1.0",
   "private": true,
-  "description": "Agentic AI operations platform — deploy autonomous agents to run business operations",
-  "workspaces": [
-    "packages/core",
-    "packages/agents/*",
-    "deployments/*",
-    "personal-assistant",
-    "docs-portal"
-  ],
+  "description": "AI legal operations system for Australian law firms — on-prem agentic platform with mandatory human review",
+  "type": "module",
   "scripts": {
-    "dev": "npm run dev --workspace=personal-assistant",
-    "build": "npm run build --workspace=packages/core && npm run build --workspace=personal-assistant",
-    "dev:awu": "BITBIT_DEPLOYMENT=awu npm run dev --workspace=personal-assistant",
-    "dev:torkay": "BITBIT_DEPLOYMENT=torkay npm run dev --workspace=personal-assistant",
-    "dev:demo": "BITBIT_DEPLOYMENT=demo npm run dev --workspace=personal-assistant",
-    "lint": "npm run lint --workspaces --if-present",
-    "db:migrate": "npm run db:migrate --workspace=packages/core",
-    "db:seed": "npm run db:seed --workspace=packages/core",
-    "agents:list": "node packages/core/src/agent-registry.js",
-    "projects:list": "tsx scripts/register-projects.ts --list",
-    "projects:register": "tsx scripts/register-projects.ts",
-    "worker:dispatch": "tsx scripts/dispatch-worker.ts",
+    "dev": "tsx src/index.ts",
+    "build": "tsc --noEmit",
+    "start": "tsx src/index.ts",
+    "dashboard": "tsx scripts/dashboard.ts",
     "overseer:tick": "tsx scripts/overseer-tick.ts",
     "overseer:start": "tsx scripts/overseer-start.ts",
-    "playbooks:rewrite": "tsx scripts/rewrite-playbooks.ts",
-    "dashboard": "tsx scripts/dashboard.ts",
-    "intake:watch": "tsx scripts/intake-watch.ts",
-    "seo:run": "tsx scripts/seo-run.ts",
     "inbox:monitor": "tsx scripts/inbox-monitor.ts"
   },
   "engines": {
@@ -37,29 +19,26 @@
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.150",
     "@anthropic-ai/sdk": "^0.98.0",
-    "@tailwindcss/postcss": "^4.2.2",
     "better-sqlite3": "^12.10.0",
     "debug": "^4.4.3",
     "file-type": "^22.0.1",
-    "fluent-ffmpeg": "^2.1.3",
     "imapflow": "^1.2.10",
-    "jspdf": "^4.2.1",
-    "lazygit": "^1.0.4",
     "mailparser": "^3.9.8",
     "mammoth": "^1.12.0",
     "nanoid": "^5.1.11",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.13",
     "opossum": "^9.0.0",
-    "puppeteer": "^25.0.4",
     "rate-limiter-flexible": "^11.1.0",
-    "sharp": "^0.34.5",
-    "tailwindcss": "^4.2.2",
-    "xero-node": "^17.0.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/mailparser": "^3.4.6",
-    "@types/nodemailer": "^7.0.11"
+    "@types/node": "^22.10.5",
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^7.0.11",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   }
 }

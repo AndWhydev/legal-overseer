@@ -30,24 +30,19 @@ export interface RouteOutcome {
   markSeen: boolean;
   status: 'routed' | 'failed' | 'skipped';
   taskId?: string;
-  projectId?: string;
+  matterId?: string;
+  matterNumber?: string;
   error?: string;
 }
 
-/**
- * Route one parsed email. Always resolves — failures are reported via
- * the returned RouteOutcome.
- */
 export async function routeEmail(email: IncomingEmail): Promise<RouteOutcome> {
   const inboxType = email.inbox.meta.type;
 
-  // 1. Dedupe.
   if (isEmailProcessed(inboxType, email.messageId)) {
     logger.info(`Inbox ${inboxType} uid=${email.uid}: already processed (msg-id ${email.messageId}); marking seen.`);
     return { markSeen: true, status: 'skipped' };
   }
 
-  // 2. Run the pipeline.
   const handler = getPipelineHandler(inboxType);
   let result;
   try {
@@ -63,28 +58,23 @@ export async function routeEmail(email: IncomingEmail): Promise<RouteOutcome> {
     return { markSeen: false, status: 'failed', error: msg };
   }
 
-  // 3. Send auto-reply (success OR failure — the sender deserves an
-  //    acknowledgment either way; the body is built from the result).
   const replySent = await sendAutoReply(email, result);
 
-  // 4. Persist + return.
   const status = result.success ? 'routed' : 'failed';
   persistProcessed(email, {
     status,
     error: result.error ?? null,
     reply_sent: replySent,
     taskId: result.taskId,
-    projectId: result.projectId,
+    matterId: result.matterId,
   });
 
-  // 5. Only mark seen when the pipeline succeeded. Failed messages
-  //    stay unread so the next poll cycle gets another go after the
-  //    operator fixes the underlying issue.
   return {
     markSeen: result.success,
     status,
     taskId: result.taskId,
-    projectId: result.projectId,
+    matterId: result.matterId,
+    matterNumber: result.matterNumber,
     error: result.error,
   };
 }
@@ -96,7 +86,7 @@ function persistProcessed(
     error: string | null;
     reply_sent: boolean;
     taskId?: string;
-    projectId?: string;
+    matterId?: string;
   },
 ): void {
   try {
@@ -112,15 +102,12 @@ function persistProcessed(
       attachment_count: email.attachments.length,
       attachments_dir: email.attachmentsDir,
       routed_task_id: extras.taskId ?? null,
-      routed_project_id: extras.projectId ?? null,
+      routed_matter_id: extras.matterId ?? null,
       status: extras.status,
       error_message: extras.error,
       reply_sent: extras.reply_sent,
     });
   } catch (err) {
-    // UNIQUE constraint or other DB error — log but don't propagate.
-    // A duplicate row means another poll won the race; we still want
-    // to mark \Seen via the original outcome.
     logger.warn(
       `processed_emails insert failed for ${email.inbox.meta.type} uid=${email.uid}: ${err instanceof Error ? err.message : String(err)}`,
     );

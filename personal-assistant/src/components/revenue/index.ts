@@ -1,6 +1,0 @@
-export { RevenueRadar } from './revenue-radar'
-export { RevenueInsightCard } from './insight-card'
-export { CashFlowBar } from './cashflow-bar'
-export { ClientLeaderboard } from './client-leaderboard'
-export { ScenarioPlannerUI } from './scenario-planner-ui'
-export { RevenueDashboard } from './revenue-dashboard'

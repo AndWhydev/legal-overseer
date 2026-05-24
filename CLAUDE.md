@@ -1,112 +1,149 @@
-# BitBit
+# Legal Overseer
 
-Agentic AI assistant platform. Each user gets a personal BitBit that reads their messages, manages invoices, triages communications, and works autonomously across their connected services.
+AI legal operations system for Australian law firms. Deployed on-prem
+on a firm's own server. Connects to the firm's email inboxes, drafts
+work product (contracts, memos, letters, court documents), tracks
+deadlines and limitation periods, monitors regulatory change, and
+maintains an immutable audit log of every action.
 
-## Workspace Structure
+**Hard product invariant:** every AI output requires admitted-lawyer
+review before it reaches a client or court. The system never sends
+substantive correspondence on its own. See `src/compliance/`.
+
+## Architecture
 
 ```
-personal-assistant/    Main Next.js 16 app (dashboard, API, agent engine)
-docs-portal/           Documentation site (MDX, 3-column layout)
-packages/core/         Shared types and utilities
-deployments/           Fly.io worker configs
-mobile/                React Native mobile app
-conductor/             Product spec, tech decisions, track registry
-.planning/             GSD milestone/phase plans (113 completed, v2.0 in progress)
-docs/                  Architecture docs, ADRs, specs
+src/
+  skills/              Six legal skills (registry + per-skill runners)
+    contract-review/      Read contracts, flag risks
+    legal-research/       AustLII research → research memo
+    matter-drafting/      Letters, memos, contracts, court documents
+    matter-management/    Deadlines, limitation periods, SLAs
+    client-comms/         Client-facing email drafts
+    compliance-monitor/   Regulatory / legislative change scan
+  compliance/          Six hard product constraints
+    reviewGate.ts         Mandatory human review queue
+    disclaimer.ts         AI-DRAFTED disclaimer on every output
+    citationVerifier.ts   AustLII probe for every cited authority
+    privilege.ts          Local redaction before any external model call
+    audit.ts              Append-only hash-chained legal audit log
+    billing.ts            AI time + spend per matter vs lawyer time
+  legal-intake/        New-matter intake pipeline (LEGAL_EMAIL inbox)
+  inbox-monitor/       IMAP poller for LEGAL/CLIENT/COURT/INTERNAL
+    pipelines/            Per-slot handlers (legal-intake, correspondence)
+  dashboard/           Local HTTP UI (matters, review queue, calendar, billing)
+  briefing/            Daily partner briefing (cron-scheduled email)
+  agent/               Classifier + processor + overseer loop
+  governance/          Circuit breakers, control plane, PII redactor, logger
+  memory/              Lessons + playbook surface
+  db/                  SQLite migrations + repositories
+  email/               SMTP notifier (briefings, intake notifications)
+  api/                 /health endpoint
+scripts/
+  overseer-start.ts    Long-running daemon (processor + overseer + inbox)
+  overseer-tick.ts     One-off tick (reminder dispatch)
+  dashboard.ts         Standalone dashboard launcher
+  inbox-monitor.ts     Standalone inbox poller
 ```
 
 ## Tech Stack
 
-- **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS 4, Radix UI
-- **Backend:** Vercel Functions (Fluid Compute), Supabase (Postgres + Auth + Realtime)
-- **AI:** Anthropic Claude (agent engine), dual embeddings (OpenAI + Voyage)
-- **Infrastructure:** Fly.io (bridge machines, workers), Cloudflare (DNS, tunnels)
-- **Testing:** Vitest (unit/integration), Playwright (E2E)
+- **Runtime:** Node 20+, TypeScript, ESM
+- **AI:** Anthropic Claude Agent SDK (Haiku / Sonnet / Opus by skill)
+- **Storage:** SQLite (better-sqlite3) — local file, easy to back up
+- **Email:** IMAP via `imapflow`, SMTP via `nodemailer`
+- **Scheduling:** `node-cron` for the daily briefing
+- **Dashboard:** zero-framework HTML rendered from template literals
 
-## Messaging Bridge Architecture
+## Hard product constraints
 
-BitBit connects to users' messaging accounts via per-user bridge instances:
+These are non-negotiable. Each is enforced in code and audited.
 
-| Protocol | Bridge | Compute | Linking UX |
-|----------|--------|---------|------------|
-| WhatsApp | mautrix-whatsapp via Matrix/Conduit | Fly.io Machine ($1.90/mo) | QR scan |
-| Android Messages | mautrix-gmessages via Matrix/Conduit | Fly.io Machine ($1.90/mo) | QR scan |
-| iMessage | BlueBubbles on macOS Sequoia | LightNode Mac VPS ($7.70/mo) | noVNC Apple ID sign-in |
+1. **Mandatory human review gate** (`compliance/reviewGate.ts`)
+   Every skill output is enqueued into `review_queue` with
+   `status='pending'`. Outbound channels (SMTP send, court filing
+   connector) must call `assertApproved()` against an approved row
+   before shipping. The dashboard `/review` view is where the lawyer
+   approves or rejects.
 
-Key subsystems:
-- `src/lib/bridges/` — provisioners (Fly + Mac VPS), lifecycle, health, warm pool
-- `src/lib/connections/` — provider registry, Envelope normalization, webhook handling
-- `src/lib/connections/providers/` — beeper.ts (WhatsApp/Android), bluebubbles.ts (iMessage)
-- `infra/conduit/` — Matrix homeserver on Fly.io (shared, federation off)
-- `infra/bridges/` — mautrix bridge container
-- `infra/imessage/` — BlueBubbles setup + kiosk lockdown scripts
+2. **AI disclaimer on every output** (`compliance/disclaimer.ts`)
+   `wrapWithDisclaimer()` is called on every skill output before it
+   lands in the queue. `enqueueForReview()` refuses to insert a body
+   missing the disclaimer block.
 
-## Key Patterns
+3. **Citation verification flag** (`compliance/citationVerifier.ts`)
+   Every case / statute citation is flagged `[UNVERIFIED]` by default.
+   The verifier probes AustLII (and the Federal Register of
+   Legislation) and updates the citation to `[VERIFIED]` only when the
+   authoritative source responds 200.
 
-- **Provider Registry:** Runtime-extensible plugins implementing `ProviderPlugin` interface (pull/send/webhookParse/healthCheck)
-- **Envelope:** Universal message format normalized from all providers before entering the pipeline
-- **Warm Pool:** Pre-provisioned Mac VPS instances for instant iMessage provisioning (<5s)
-- **Tiered Lifecycle:** Active -> Suspended (7 days idle, WhatsApp/Android only) -> Destroyed (on disconnect)
-- **TAOR Loop:** Triage -> Assess -> Orient -> Respond (agent decision cycle)
-- **Autonomy Levels:** Observer -> Co-pilot -> Autopilot (per-role user control)
+4. **Privilege protection layer** (`compliance/privilege.ts`)
+   `redactForExternalModel()` runs locally on every document body
+   before it leaves the building. It redacts emails, AU phone numbers,
+   ABN/ACN/TFN, BSB-account numbers, court file numbers, AU street
+   addresses, and title-cased name pairs. The reverse map stays local.
 
-## Context Hierarchy
+5. **Billing transparency log** (`compliance/billing.ts`)
+   Every AI run is logged with skill, model, wall-clock time, spend,
+   and the matter it served. Lawyer time entries land in the same
+   table. The dashboard `/billing` view shows AI vs lawyer time per
+   matter so the firm can disclose the AI share to the client.
 
-1. `conductor/product.md` — what BitBit is and who it's for
-2. `conductor/tech-stack.md` — infrastructure and dependencies
-3. `conductor/tracks.md` — work tracking (completed and active)
-4. `.planning/STATE.md` — current milestone progress
-5. `docs/adr/` — architectural decision records
-6. `personal-assistant/docs/superpowers/specs/` — feature design specs
+6. **Immutable audit trail** (`compliance/audit.ts`)
+   `legal_audit_log` is INSERT-only (enforced by SQLite trigger). Each
+   row carries the SHA-256 of its canonical content plus the prior
+   row's hash. `verifyAuditChain()` re-walks the chain and breaks the
+   `/health` endpoint if any row has been tampered with.
+
+## Pipeline at a glance
+
+```
+LEGAL_EMAIL inbox
+  → legal-intake (matter number, classification, lawyer notification)
+  → matter created in `matters` table
+  → matter folder created on disk
+  → auto-reply with matter number sent to enquirer
+
+Existing matter → skill task created
+  → processor classifies + executes (privilege-redacted)
+  → output wrapped with AI disclaimer
+  → review_queue row inserted (status=pending)
+  → billing_log + legal_audit_log entries appended
+  → lawyer reviews on /review, approves or rejects
+  → outbound channel ships only after assertApproved() passes
+```
 
 ## Development
 
 ```bash
-cd personal-assistant && npm run dev    # Dashboard on localhost:3000
-cd personal-assistant && npm run test   # Vitest (884+ tests)
-cd personal-assistant && npm run build  # Production build
+npm install
+cp .env.example .env       # then fill in firm-specific values
+npm run dev                # starts the main process on :8080 + dashboard on :3000
+npm run dashboard          # dashboard only
+npm run inbox:monitor      # inbox poller only
+npm run overseer:tick      # one overseer tick
+npm run overseer:start     # long-running daemon (processor + overseer + inbox)
 ```
 
-<!-- gitnexus:start -->
-# GitNexus — Code Intelligence
+## Inbox slots (intake)
 
-This project is indexed by GitNexus as **BitBit** (39562 symbols, 58781 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+| Slot      | Env prefix      | Purpose                                            |
+|-----------|-----------------|----------------------------------------------------|
+| legal     | `LEGAL_EMAIL`   | New matter intake — creates a matter on receipt    |
+| client    | `CLIENT_EMAIL`  | Ongoing client correspondence on existing matters  |
+| court     | `COURT_EMAIL`   | Court / tribunal / regulator correspondence        |
+| internal  | `INTERNAL_EMAIL`| Firm admin / billing / IT (triage only)            |
 
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+Configure only the slots the firm actually uses; unconfigured slots
+are skipped silently by the poller.
 
-## Always Do
+## Compliance notes
 
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
-- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
-
-## Never Do
-
-- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
-- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
-- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
-
-## Resources
-
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/BitBit/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/BitBit/clusters` | All functional areas |
-| `gitnexus://repo/BitBit/processes` | All execution flows |
-| `gitnexus://repo/BitBit/process/{name}` | Step-by-step execution trace |
-
-## CLI
-
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
-
-<!-- gitnexus:end -->
+- Designed for Australian jurisdiction (Commonwealth + states).
+- Default jurisdiction is NSW; override per matter or via
+  `DEFAULT_JURISDICTION` env.
+- Citation verifier only marks `[VERIFIED]` against authoritative AU
+  hosts (`austlii.edu.au`, state/Cth legislation registers, court
+  judgment portals). Foreign authority stays `[UNVERIFIED]`.
+- Audit log retention is the firm's call — the system never deletes.
+- Backups: just back up the SQLite file + `MATTER_FOLDERS_ROOT`.

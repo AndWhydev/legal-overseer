@@ -1,16 +1,17 @@
 /**
- * Task processor module for BitBit
+ * Task processor — Legal Overseer.
  *
- * Provides the main task processing loop that reads pending tasks from
- * the database, classifies them with Haiku, selects the appropriate model,
- * executes via skill routing, and updates task state with results.
+ * Polls the tasks table for pending work, classifies (Haiku), runs
+ * the matching legal skill, and wraps every successful output in the
+ * three compliance constraints:
  *
- * Implements the Plan-and-Execute pattern:
- * 1. Check control plane (governance gate)
- * 2. Classify task with Haiku (cheap)
- * 3. Select model based on complexity and risk
- * 4. Execute with appropriate skill and model
- * 5. Update trust scores and log all decisions
+ *   1. enqueueForReview — output lands in review_queue (pending).
+ *   2. recordAiRun      — billing transparency: time + spend.
+ *   3. appendLegalAudit — immutable hash-chained audit entry.
+ *
+ * The processor never sends anything externally. Outbound channels
+ * (SMTP send, court filing) must call assertApproved() against a
+ * review_queue row whose status='approved'.
  */
 
 import { getNextPendingTask, markCompleted, markFailed } from '../db/repositories/tasks.js';
@@ -19,11 +20,8 @@ import { logDecision } from '../db/repositories/decisionTraces.js';
 import { bitbitMcpServer } from './tools.js';
 import { classifyTask, executeWithSkill } from './coordinator.js';
 import { selectModel, type RiskLevel } from './models.js';
-import type { ClaudeCodeWorkerInput } from '../skills/claude-code-worker/index.js';
-import type { CampaignConfig } from '../skills/seo-backlinks/index.js';
 import { isValidSkillType } from '../skills/registry.js';
 import type { SkillType, TaskClassification } from '../skills/types.js';
-import { generateLessonFromTask } from '../memory/lessons.js';
 import {
   canExecute,
   recordActionResult,
@@ -33,82 +31,77 @@ import {
   type Action,
   type RiskLevel as GovernanceRiskLevel,
 } from '../governance/index.js';
+import {
+  appendLegalAudit,
+  enqueueForReview,
+  recordAiRun,
+  wrapWithDisclaimer,
+  type OutputKind,
+} from '../compliance/index.js';
+import { getMatterById } from '../db/repositories/matters.js';
 
 const logger = createSafeLogger('TaskProcessor');
 
-/**
- * Agent identifier for audit logging
- */
-const BITBIT_AGENT_ID = 'bitbit-core-v1';
+const OVERSEER_AGENT_ID = 'legal-overseer-v1';
 
-/**
- * Interval handle for the task processing loop
- */
 let intervalId: ReturnType<typeof setInterval> | null = null;
 
 /**
- * Map skill type to governance risk level
+ * Map skill type to governance risk level. Every legal skill is at
+ * least 'medium' because output may end up in a client / court setting
+ * if the review gate is bypassed.
  */
-function determineRiskLevel(skillType: string, actionType?: string): GovernanceRiskLevel {
-  // Payment-related operations are critical
-  if (skillType === 'ops_officer' && actionType?.includes('payment')) {
-    return 'critical';
-  }
-
-  // Content approval is high risk (publishing decisions)
-  if (skillType === 'gatekeeper' && actionType?.includes('approve')) {
-    return 'high';
-  }
-
-  // Skill-level defaults
+function determineRiskLevel(skillType: string): GovernanceRiskLevel {
   switch (skillType) {
-    case 'ops_officer':
+    case 'contract_review':
+    case 'legal_research':
       return 'high';
-    case 'gatekeeper':
-      return 'medium';
-    case 'rd_scout':
-      return 'medium';
-    case 'seo_backlinks':
-      // Publishes to third-party platforms — medium risk by default.
+    case 'matter_drafting':
+    case 'client_comms':
+      return 'high';
+    case 'matter_management':
+    case 'compliance_monitor':
       return 'medium';
     default:
-      return 'low';
+      return 'medium';
   }
 }
 
 /**
- * Process the next pending task from the database
- *
- * Fetches the next pending task, checks governance, classifies with Haiku,
- * selects the appropriate model, executes via skill routing, and updates
- * the task state. Logs audit events and decision traces.
- *
- * @returns true if a task was processed, false if no pending tasks
+ * Map a skill type to the output_kind used in the review queue.
  */
+function outputKindFor(skillType: SkillType): OutputKind {
+  switch (skillType) {
+    case 'contract_review':    return 'contract_review';
+    case 'legal_research':     return 'research_memo';
+    case 'matter_drafting':    return 'drafted_document';
+    case 'client_comms':       return 'client_email';
+    case 'matter_management':  return 'matter_management';
+    case 'compliance_monitor': return 'regulatory_alert';
+    default:                   return 'drafted_document';
+  }
+}
+
 export async function processNextTask(): Promise<boolean> {
   const task = getNextPendingTask();
+  if (!task) return false;
 
-  if (!task) {
-    return false;
-  }
-
-  // Parse input_json to get the prompt and risk level
   const input = task.input_json ? JSON.parse(task.input_json) : {};
-  const prompt = input.prompt || input.query || JSON.stringify(input);
+  const prompt: string = input.prompt || input.query || JSON.stringify(input);
   const inputRiskLevel: RiskLevel = input.risk_level || 'low';
+  const matterId: string | null = input.matter_id ?? null;
+  const matter = matterId ? getMatterById(matterId) : null;
 
   let traceId: string | undefined;
+  const startedAt = Date.now();
 
   try {
-    // 1. Classify task with Haiku (cheap)
     logger.info(`Processing task ${task.id}`, {
       prompt: prompt.slice(0, 50) + (prompt.length > 50 ? '...' : ''),
+      matter: matter?.matter_number ?? '(none)',
     });
 
     // Skip classification when the caller has already chosen a skill.
-    // The overseer loop and direct project dispatch always supply skill_id
-    // and (for workers) project_id in input_json, so paying for a Haiku
-    // classification round would be wasted.
     const preselectedSkill: SkillType | null =
       task.skill_id && isValidSkillType(task.skill_id) ? task.skill_id : null;
 
@@ -121,134 +114,64 @@ export async function processNextTask(): Promise<boolean> {
         }
       : await classifyTask(prompt);
 
-    // 2. Determine governance risk level
-    const governanceRiskLevel = determineRiskLevel(
-      classification.skillType,
-      input.action_type
-    );
+    const governanceRiskLevel = determineRiskLevel(classification.skillType);
 
-    // 3. Check control plane (governance gate)
+    // Governance gate
     const action: Action = {
       type: `task:${classification.skillType}`,
       riskLevel: governanceRiskLevel,
-      agentId: BITBIT_AGENT_ID,
+      agentId: OVERSEER_AGENT_ID,
       skillId: classification.skillType,
       domain: task.skill_id || 'general',
     };
-
-    const allowed = await canExecute(BITBIT_AGENT_ID, action);
-
+    const allowed = await canExecute(OVERSEER_AGENT_ID, action);
     if (!allowed) {
-      logger.warn('Task blocked by governance', {
-        taskId: task.id,
-        skill: classification.skillType,
-        riskLevel: governanceRiskLevel,
-      });
-
+      logger.warn('Task blocked by governance', { taskId: task.id, skill: classification.skillType });
       markFailed(task.id, 'Blocked by governance controls');
-
       await logAuditSafe({
-        agentId: BITBIT_AGENT_ID,
+        agentId: OVERSEER_AGENT_ID,
         actionType: 'task_blocked',
-        actionDetail: `Task ${task.id} blocked by governance (skill: ${classification.skillType}, risk: ${governanceRiskLevel})`,
+        actionDetail: `Task ${task.id} blocked by governance (skill: ${classification.skillType})`,
         riskLevel: governanceRiskLevel,
         taskId: task.id,
       });
-
       return true;
     }
 
-    // 4. Select model based on complexity and risk
     const modelSelection = selectModel(classification.complexity, inputRiskLevel);
 
-    // Log classification decision
     await logAuditSafe({
-      agentId: BITBIT_AGENT_ID,
+      agentId: OVERSEER_AGENT_ID,
       actionType: 'task_classified',
       actionDetail: `Classified as ${classification.skillType} (${classification.complexity})`,
       riskLevel: 'low',
       taskId: task.id,
-      inputHash: JSON.stringify({
-        skill: classification.skillType,
-        complexity: classification.complexity,
-        model: modelSelection.tier,
-        reason: modelSelection.reason,
-        reasoning: classification.reasoning,
-      }).substring(0, 128),
     });
 
-    // Log task started
     await logAuditSafe({
-      agentId: BITBIT_AGENT_ID,
+      agentId: OVERSEER_AGENT_ID,
       actionType: 'task_started',
       actionDetail: `Started processing task ${task.id} with ${modelSelection.tier}`,
       riskLevel: governanceRiskLevel,
       taskId: task.id,
-      inputHash: prompt.substring(0, 64),
     });
 
-    // Log decision trace for learning
     traceId = logDecision({
       taskId: task.id,
       trigger: 'task_processor',
-      inputsJson: JSON.stringify({ prompt: prompt.substring(0, 500), riskLevel: governanceRiskLevel }),
+      inputsJson: JSON.stringify({ prompt: prompt.substring(0, 500), matterId }),
       reasoning: classification.reasoning,
-      alternativesConsidered: `Skills: ${classification.skillType}, Model: ${modelSelection.tier} (${modelSelection.reason})`,
-      actionTaken: `Execute with ${classification.skillType} skill using ${modelSelection.tier}`,
+      alternativesConsidered: `Skill: ${classification.skillType}, Model: ${modelSelection.tier}`,
+      actionTaken: `Execute with ${classification.skillType} using ${modelSelection.tier}`,
     });
-
-    // 5. Execute with skill-specific routing
-    // For claude_code_worker, build the worker input from input_json + the
-    // task's project_id column rather than re-parsing the prompt as JSON.
-    let workerInput: ClaudeCodeWorkerInput | undefined;
-    if (classification.skillType === 'claude_code_worker') {
-      const projectId = (input.project_id as string) || task.project_id || null;
-      if (!projectId) {
-        markFailed(task.id, 'claude_code_worker task missing project_id');
-        return true;
-      }
-      workerInput = {
-        project_id: projectId,
-        prompt: input.prompt || prompt,
-        model_tier: input.model_tier,
-        allowed_tools: input.allowed_tools,
-        max_budget_usd: input.max_budget_usd,
-        timeout_ms: input.timeout_ms,
-        extra_context: input.extra_context,
-      };
-    }
-
-    // For seo_backlinks, build a CampaignConfig from input_json. Falls
-    // through to JSON parsing in executeBacklinks if not provided.
-    let backlinkInput: CampaignConfig | undefined;
-    if (classification.skillType === 'seo_backlinks') {
-      const targetDomain = input.targetDomain ?? input.target_domain;
-      const keywords = input.keywords;
-      if (targetDomain && Array.isArray(keywords) && keywords.length > 0) {
-        backlinkInput = {
-          targetDomain,
-          targetPage: input.targetPage ?? input.target_page,
-          keywords,
-          clientName: input.clientName ?? input.client_name,
-          campaignId: input.campaignId ?? input.campaign_id,
-          maxPlacements: input.maxPlacements ?? input.max_placements,
-          locale: input.locale,
-          industry: input.industry,
-          dryRun: Boolean(input.dryRun ?? input.dry_run),
-        };
-      }
-    }
 
     const result = await executeWithSkill(
       prompt,
       classification.skillType,
       { bitbit: bitbitMcpServer },
-      workerInput,
-      backlinkInput,
     );
 
     if (result.success) {
-      // Mark task as completed
       const outputJson = JSON.stringify({
         output: result.output,
         toolCalls: result.toolCalls,
@@ -262,37 +185,73 @@ export async function processNextTask(): Promise<boolean> {
 
       markCompleted(task.id, outputJson);
 
-      // Extract a lesson from this worker cycle (best-effort, async).
-      // Only worker tasks produce lessons; the generator no-ops for
-      // other skill types.
-      if (classification.skillType === 'claude_code_worker') {
-        generateLessonFromTask(task.id).catch((err) => {
-          logger.warn(
-            `lesson generation failed for task ${task.id}: ${err instanceof Error ? err.message : String(err)}`,
-          );
+      // ------------------ compliance wrap ------------------
+      try {
+        const title = (input.title as string)
+          || (matter ? `${matter.matter_number} — ${classification.skillType}` : `${classification.skillType} output`);
+
+        const review = enqueueForReview({
+          matterId: matter?.id ?? null,
+          matterNumber: matter?.matter_number ?? null,
+          skillId: classification.skillType,
+          outputKind: outputKindFor(classification.skillType),
+          title,
+          bodyMarkdown: wrapWithDisclaimer(result.output),
+          metadata: {
+            taskId: task.id,
+            complexity: classification.complexity,
+            model: modelSelection.tier,
+            toolCalls: result.toolCalls,
+            reasoning: classification.reasoning,
+          },
+          costUsd: result.costUsd,
+        });
+
+        if (matter) {
+          recordAiRun({
+            matterId: matter.id,
+            skillId: classification.skillType,
+            description: title,
+            durationSeconds: Math.round((Date.now() - startedAt) / 1000),
+            costUsd: result.costUsd ?? 0,
+            reviewId: review.id,
+            taskId: task.id,
+          });
+        }
+      } catch (wrapErr) {
+        // Compliance wrapping failure is itself an audit event — we
+        // don't fail the task (the output is already saved on the
+        // task row) but we make the failure loud.
+        const m = wrapErr instanceof Error ? wrapErr.message : String(wrapErr);
+        logger.error(`compliance wrap failed for task ${task.id}: ${m}`);
+        appendLegalAudit({
+          matterId: matter?.id ?? null,
+          actorId: `skill:${classification.skillType}`,
+          action: 'compliance.wrap_failed',
+          detail: m,
+          refTable: 'tasks',
+          refId: task.id,
+          metadata: null,
         });
       }
+      // ----------------- /compliance wrap ------------------
 
-      // Update trust metrics (success)
       updateTrustMetrics(
-        BITBIT_AGENT_ID,
+        OVERSEER_AGENT_ID,
         classification.skillType,
         task.skill_id || 'general',
         true,
-        false
+        false,
       );
 
-      // Record action result for anomaly tracking
-      recordActionResult(BITBIT_AGENT_ID, `task:${classification.skillType}`, true);
+      recordActionResult(OVERSEER_AGENT_ID, `task:${classification.skillType}`, true);
 
-      // Log task completed
       await logAuditSafe({
-        agentId: BITBIT_AGENT_ID,
+        agentId: OVERSEER_AGENT_ID,
         actionType: 'task_completed',
         actionDetail: `Task ${task.id} completed successfully`,
         riskLevel: governanceRiskLevel,
         taskId: task.id,
-        outputHash: result.output.substring(0, 64),
       });
 
       logger.info(`Task ${task.id} completed`, {
@@ -301,35 +260,21 @@ export async function processNextTask(): Promise<boolean> {
         cost: result.costUsd?.toFixed(4),
       });
     } else {
-      // Agent returned failure
       const errorMsg = result.error || 'Unknown agent error';
       markFailed(task.id, errorMsg);
 
-      // Learn from failure too — Opus often distills "don't do X" lessons
-      // that are more valuable than success summaries.
-      if (classification.skillType === 'claude_code_worker') {
-        generateLessonFromTask(task.id).catch((err) => {
-          logger.warn(
-            `lesson generation (failure) failed for task ${task.id}: ${err instanceof Error ? err.message : String(err)}`,
-          );
-        });
-      }
-
-      // Update trust metrics (failure)
       updateTrustMetrics(
-        BITBIT_AGENT_ID,
+        OVERSEER_AGENT_ID,
         classification.skillType,
         task.skill_id || 'general',
         false,
-        false
+        false,
       );
 
-      // Record action result for anomaly tracking
-      recordActionResult(BITBIT_AGENT_ID, `task:${classification.skillType}`, false);
+      recordActionResult(OVERSEER_AGENT_ID, `task:${classification.skillType}`, false);
 
-      // Log task failed
       await logAuditSafe({
-        agentId: BITBIT_AGENT_ID,
+        agentId: OVERSEER_AGENT_ID,
         actionType: 'task_failed',
         actionDetail: `Task ${task.id} failed: ${errorMsg}`,
         riskLevel: 'medium',
@@ -341,22 +286,19 @@ export async function processNextTask(): Promise<boolean> {
 
     return true;
   } catch (error) {
-    // Execution threw an exception
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     markFailed(task.id, errorMsg);
 
-    // Update trust metrics (failure)
     updateTrustMetrics(
-      BITBIT_AGENT_ID,
+      OVERSEER_AGENT_ID,
       task.skill_id || 'general',
       task.skill_id || 'general',
       false,
-      false
+      false,
     );
 
-    // Log task failed
     await logAuditSafe({
-      agentId: BITBIT_AGENT_ID,
+      agentId: OVERSEER_AGENT_ID,
       actionType: 'task_failed',
       actionDetail: `Task ${task.id} threw exception: ${errorMsg}`,
       riskLevel: 'medium',
@@ -364,63 +306,38 @@ export async function processNextTask(): Promise<boolean> {
     });
 
     logError(error instanceof Error ? error : new Error(errorMsg), `Task ${task.id}`);
-
     return true;
   }
 }
 
-/**
- * Start the task processing loop
- *
- * Polls for pending tasks at the specified interval and processes
- * one task per iteration. Uses setInterval for non-blocking polling.
- *
- * @param intervalMs - Polling interval in milliseconds (default: 5000)
- */
 export function startTaskLoop(intervalMs: number = 5000): void {
   if (intervalId) {
     logger.info('Task processor already running');
     return;
   }
-
   logger.info(`Task processor started (polling every ${intervalMs}ms)`);
-
-  // Log startup audit event
   logAuditSafe({
-    agentId: BITBIT_AGENT_ID,
+    agentId: OVERSEER_AGENT_ID,
     actionType: 'processor_started',
     actionDetail: `Task processor started with ${intervalMs}ms interval`,
     riskLevel: 'low',
   });
-
   intervalId = setInterval(async () => {
     try {
       await processNextTask();
     } catch (error) {
-      logError(
-        error instanceof Error ? error : new Error(String(error)),
-        'Task processor loop'
-      );
+      logError(error instanceof Error ? error : new Error(String(error)), 'Task processor loop');
     }
   }, intervalMs);
 }
 
-/**
- * Stop the task processing loop
- *
- * Gracefully stops the polling interval. Safe to call even if
- * the processor is not running.
- */
 export function stopTaskLoop(): void {
   if (intervalId) {
     clearInterval(intervalId);
     intervalId = null;
-
     logger.info('Task processor stopped');
-
-    // Log shutdown audit event
     logAuditSafe({
-      agentId: BITBIT_AGENT_ID,
+      agentId: OVERSEER_AGENT_ID,
       actionType: 'processor_stopped',
       actionDetail: 'Task processor stopped gracefully',
       riskLevel: 'low',
@@ -428,11 +345,6 @@ export function stopTaskLoop(): void {
   }
 }
 
-/**
- * Check if the task processor is currently running
- *
- * @returns true if the processor is running
- */
 export function isProcessorRunning(): boolean {
   return intervalId !== null;
 }

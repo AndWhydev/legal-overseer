@@ -24,6 +24,7 @@ import { migration as migration008 } from './migrations/008_overseer_skills.js';
 import { migration as migration009 } from './migrations/009_lessons.js';
 import { migration as migration010 } from './migrations/010_backlinks.js';
 import { migration as migration011 } from './migrations/011_processed_emails.js';
+import { migration as migration012 } from './migrations/012_legal_schema.js';
 
 /**
  * Migration interface for database migrations
@@ -37,7 +38,7 @@ export interface Migration {
  * All migrations in order
  * Add new migrations to this array
  */
-const migrations: Migration[] = [migration001, migration002, migration003, migration004, migration005, migration006, migration007, migration008, migration009, migration010, migration011];
+const migrations: Migration[] = [migration001, migration002, migration003, migration004, migration005, migration006, migration007, migration008, migration009, migration010, migration011, migration012];
 
 /**
  * Create migrations tracking table if it doesn't exist

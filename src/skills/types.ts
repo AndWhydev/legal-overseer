@@ -1,107 +1,88 @@
 /**
- * Skill type definitions for BitBit
+ * Skill type definitions for Legal Overseer.
  *
- * Defines the type system for skills and subagents, enabling
- * task routing to specialized agents based on skill type.
+ * Defines the type system for legal-specific skills. Every output a
+ * skill produces is treated as draft-only and lands in the human
+ * review queue before reaching a client or court.
  */
 
 /**
- * Available skill types in BitBit
+ * Available legal skill types.
  *
- * - rd_scout: Market research, Alibaba scanning, trend analysis
- * - gatekeeper: Content QA, style guide compliance, video analysis
- * - ops_officer: Invoice processing, supplier verification, payment drafts
- * - claude_code_worker: Dispatches headless `claude -p` into a project dir
- * - seo_backlinks: Off-site SEO — target discovery, article generation, submission, tracking
- * - general: Fallback for unclassified tasks
+ * - contract_review:    read contracts, flag unusual clauses, missing
+ *                       protections, liability risks
+ * - legal_research:     search AustLII, summarise case law, flag every
+ *                       citation as unverified
+ * - matter_drafting:    draft letters, memos, contracts, court documents
+ * - matter_management:  track deadlines, limitation periods, key dates,
+ *                       send reminders
+ * - client_comms:       draft client update emails and correspondence
+ * - compliance_monitor: monitor regulatory changes relevant to matter
+ *                       types
+ * - general:            fallback for unclassified tasks (still gated
+ *                       behind human review)
  */
 export type SkillType =
-  | 'rd_scout'
-  | 'gatekeeper'
-  | 'ops_officer'
-  | 'claude_code_worker'
-  | 'seo_backlinks'
+  | 'contract_review'
+  | 'legal_research'
+  | 'matter_drafting'
+  | 'matter_management'
+  | 'client_comms'
+  | 'compliance_monitor'
   | 'general';
 
 /**
- * Model tier for cost/capability balancing
+ * Model tier for cost / capability balancing.
  *
- * - haiku: Fast, cheap - routing, classification, simple tasks
- * - sonnet: Balanced - standard execution, most skill work
- * - opus: Powerful, expensive - complex reasoning, reserved for hard problems
+ * Reserved-by-policy: Opus is permitted only for contract_review and
+ * legal_research where the cost of a missed risk dwarfs the model spend.
  */
 export type ModelTier = 'haiku' | 'sonnet' | 'opus';
 
-/**
- * Task complexity levels for model selection
- */
+/** Task complexity buckets used by selectModel(). */
 export type TaskComplexity = 'simple' | 'standard' | 'complex';
 
-/**
- * Definition of a skill in the BitBit system
- *
- * Skills encapsulate domain-specific capabilities including
- * system prompts, tool access, and cost guardrails.
- */
 export interface SkillDefinition {
-  /** Human-readable skill name */
+  /** Human-readable skill name (shown on dashboard + review queue). */
   name: string;
-
-  /** Skill type identifier */
+  /** Skill type identifier (also used as the tasks.skill_id value). */
   type: SkillType;
-
-  /** Brief description of skill capabilities */
+  /** Brief one-line description shown in routing logs. */
   description: string;
-
-  /** System prompt defining skill behavior and constraints */
+  /** System prompt defining skill behaviour and hard constraints. */
   systemPrompt: string;
-
-  /** List of allowed tools for this skill */
+  /** Tools the skill is allowed to call. */
   tools: string[];
-
-  /** Default model tier for this skill's tasks */
+  /** Default model tier for this skill. */
   defaultModel: ModelTier;
-
-  /** Maximum budget in USD per task execution */
+  /** Per-task hard budget in USD (also caps Anthropic spend). */
   maxBudgetUsd: number;
+  /**
+   * If true, every output from this skill MUST land in the review queue
+   * before it can leave the system (be emailed to a client, filed with
+   * the court, etc.). All legal skills default to true.
+   */
+  requiresHumanReview: boolean;
 }
 
 /**
- * Subagent definition compatible with Claude Agent SDK's agents option
- *
- * This interface maps to the SDK's AgentDefinition type for spawning
- * specialized subagents via the Task tool.
+ * Subagent definition compatible with the Claude Agent SDK's agents
+ * option (so a skill can be spawned as a subagent via the Task tool).
  */
 export interface SubagentDefinition {
-  /** Description of what this subagent does */
   description: string;
-
-  /** System prompt for the subagent */
   prompt: string;
-
-  /** Tools available to the subagent */
   tools: string[];
-
-  /** Model tier to use for execution */
   model: ModelTier;
 }
 
 /**
- * Result of classifying a task for routing
- *
- * Contains the determined skill type and metadata used
- * for routing decisions and model selection.
+ * Result of classifying an inbound task for routing.
  */
 export interface TaskClassification {
-  /** The skill type this task should be routed to */
   skillType: SkillType;
-
-  /** Estimated task complexity for model tier selection */
   complexity: TaskComplexity;
-
-  /** Tools likely needed for this task */
   requiredTools: string[];
-
-  /** Brief explanation of classification reasoning */
+  /** Brief explanation of classification reasoning. */
   reasoning: string;
 }

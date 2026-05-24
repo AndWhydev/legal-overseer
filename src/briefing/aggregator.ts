@@ -1,54 +1,42 @@
 /**
- * Daily Briefing Aggregator for BitBit
+ * Daily Briefing aggregator — Legal Overseer.
  *
- * Aggregates data from all skills (R&D Scout, Gatekeeper, Ops Officer)
- * plus system health into a unified daily briefing.
+ * Builds the unified snapshot the scheduler emails to the managing
+ * partner. Reads directly from the database (no model calls) so the
+ * briefing is cheap, repeatable, and safe to render synchronously in
+ * a cron tick.
  */
 
 import {
   getControlPlaneStatus,
   getAllCircuitBreakerStatuses,
   hasOpenCircuit,
-  getOpenCircuits,
-  type CircuitBreakerStatus,
 } from '../governance/index.js';
-import {
-  getTaskStats24h,
-  getCompletedTaskOutputs,
-} from '../db/repositories/tasks.js';
+import { getDatabase } from '../db/connection.js';
+import { verifyAuditChain } from '../compliance/audit.js';
+import { listUpcoming } from '../db/repositories/deadlines.js';
 import type {
-  DailyBriefing,
-  BriefingConfig,
-  SystemHealth,
-  TaskSummary,
-  RdScoutSummary,
-  GatekeeperSummary,
-  OpsOfficerSummary,
+  BillingStats,
   BriefingAlert,
   CircuitBreakerSummary,
-  DEFAULT_BRIEFING_CONFIG,
+  DailyBriefing,
+  DeadlineCalendarStats,
+  MatterStats,
+  ReviewQueueStats,
+  SystemHealth,
 } from './types.js';
 
-/**
- * Aggregate system health status
- */
 function aggregateSystemHealth(): SystemHealth {
   const controlPlane = getControlPlaneStatus();
   const circuitBreakers = getAllCircuitBreakerStatuses();
-
-  // Convert circuit breaker statuses to summaries
   const breakerSummaries: CircuitBreakerSummary[] = [];
   for (const [name, status] of circuitBreakers) {
-    breakerSummaries.push({
-      name,
-      state: status.state,
-      failureCount: status.stats.failures,
-    });
+    breakerSummaries.push({ name, state: status.state, failureCount: status.stats.failures });
   }
 
-  // Determine overall status
-  let status: 'healthy' | 'degraded' | 'critical' = 'healthy';
-  if (controlPlane.globalKillSwitch) {
+  const chain = verifyAuditChain();
+  let status: SystemHealth['status'] = 'healthy';
+  if (controlPlane.globalKillSwitch || !chain.ok) {
     status = 'critical';
   } else if (hasOpenCircuit() || controlPlane.disabledAgents.length > 0) {
     status = 'degraded';
@@ -60,269 +48,191 @@ function aggregateSystemHealth(): SystemHealth {
     circuitBreakers: breakerSummaries,
     killSwitchActive: controlPlane.globalKillSwitch,
     disabledAgents: controlPlane.disabledAgents,
+    auditChainOk: chain.ok,
+    auditChainBreak: chain.ok ? null : chain.firstBreak,
   };
 }
 
-/**
- * Aggregate task summary statistics
- */
-function aggregateTaskSummary(hours: number): TaskSummary {
-  const stats = getTaskStats24h(hours);
+function aggregateMatterStats(windowHours: number): MatterStats {
+  const db = getDatabase();
+  const totals = db
+    .prepare(
+      `SELECT
+         SUM(CASE WHEN status = 'open'    THEN 1 ELSE 0 END) AS openTotal,
+         SUM(CASE WHEN status = 'on_hold' THEN 1 ELSE 0 END) AS onHold
+       FROM matters`,
+    )
+    .get() as { openTotal: number | null; onHold: number | null };
+
+  const windowRows = db
+    .prepare(
+      `SELECT
+         SUM(CASE WHEN opened_at > datetime('now', ?) THEN 1 ELSE 0 END) AS newInWindow,
+         SUM(CASE WHEN closed_at > datetime('now', ?) THEN 1 ELSE 0 END) AS closedInWindow
+       FROM matters`,
+    )
+    .get(`-${windowHours} hours`, `-${windowHours} hours`) as {
+    newInWindow: number | null;
+    closedInWindow: number | null;
+  };
 
   return {
-    pending: stats.byStatus.pending,
-    completed: stats.byStatus.completed,
-    failed: stats.byStatus.failed,
-    awaitingApproval: stats.byStatus.awaitingApproval,
-    bySkill: stats.bySkill,
+    openTotal: totals.openTotal ?? 0,
+    onHold: totals.onHold ?? 0,
+    newInWindow: windowRows.newInWindow ?? 0,
+    closedInWindow: windowRows.closedInWindow ?? 0,
   };
 }
 
-/**
- * Aggregate R&D Scout statistics from task outputs
- */
-function aggregateRdScout(hours: number): RdScoutSummary {
-  const outputs = getCompletedTaskOutputs('rd_scout', hours);
+function aggregateReviewQueue(windowHours: number): ReviewQueueStats {
+  const db = getDatabase();
+  const counts = db
+    .prepare(
+      `SELECT
+         SUM(CASE WHEN status = 'pending'                                              THEN 1 ELSE 0 END) AS pending,
+         SUM(CASE WHEN status = 'pending'  AND created_at < datetime('now', '-48 hours') THEN 1 ELSE 0 END) AS stuck,
+         SUM(CASE WHEN status = 'approved' AND reviewed_at > datetime('now', ?)        THEN 1 ELSE 0 END) AS approvedInWindow,
+         SUM(CASE WHEN status = 'rejected' AND reviewed_at > datetime('now', ?)        THEN 1 ELSE 0 END) AS rejectedInWindow,
+         SUM(CASE WHEN status = 'sent'     AND reviewed_at > datetime('now', ?)        THEN 1 ELSE 0 END) AS sentInWindow
+       FROM review_queue`,
+    )
+    .get(`-${windowHours} hours`, `-${windowHours} hours`, `-${windowHours} hours`) as {
+    pending: number | null;
+    stuck: number | null;
+    approvedInWindow: number | null;
+    rejectedInWindow: number | null;
+    sentInWindow: number | null;
+  };
+  return {
+    pending: counts.pending ?? 0,
+    stuck: counts.stuck ?? 0,
+    approvedInWindow: counts.approvedInWindow ?? 0,
+    rejectedInWindow: counts.rejectedInWindow ?? 0,
+    sentInWindow: counts.sentInWindow ?? 0,
+  };
+}
 
-  let lastRunAt: string | null = null;
-  let opportunitiesFound = 0;
-  const keywordCounts = new Map<string, number>();
-
-  for (const output of outputs) {
-    try {
-      const data = typeof output === 'string' ? JSON.parse(output) : output;
-
-      // Track last run time
-      if (data.completedAt && (!lastRunAt || data.completedAt > lastRunAt)) {
-        lastRunAt = data.completedAt;
-      }
-
-      // Count opportunities
-      if (data.opportunitiesFound !== undefined) {
-        opportunitiesFound += data.opportunitiesFound;
-      } else if (data.opportunities && Array.isArray(data.opportunities)) {
-        opportunitiesFound += data.opportunities.length;
-      }
-
-      // Aggregate keywords
-      if (data.keywords && Array.isArray(data.keywords)) {
-        for (const keyword of data.keywords) {
-          keywordCounts.set(keyword, (keywordCounts.get(keyword) || 0) + 1);
-        }
-      }
-    } catch {
-      // Skip malformed outputs
-    }
-  }
-
-  // Get top 5 trending keywords
-  const trendingKeywords = Array.from(keywordCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([keyword]) => keyword);
+function aggregateDeadlines(): DeadlineCalendarStats {
+  const db = getDatabase();
+  const upcoming = listUpcoming(14);
+  const overdue = db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM deadlines WHERE status = 'open' AND due_date < date('now')`,
+    )
+    .get() as { n: number };
+  const limitations = upcoming.filter((d) => d.deadline_type === 'limitation').length;
 
   return {
-    lastRunAt,
-    opportunitiesFound,
-    trendingKeywords,
-    nextRunAt: null, // Will be populated from scheduler if available
+    upcomingCount: upcoming.length,
+    upcomingLimitations: limitations,
+    overdueCount: overdue.n,
   };
 }
 
-/**
- * Aggregate Gatekeeper statistics from task outputs
- */
-function aggregateGatekeeper(hours: number): GatekeeperSummary {
-  const outputs = getCompletedTaskOutputs('gatekeeper', hours);
+function aggregateBilling(windowHours: number): BillingStats {
+  const db = getDatabase();
+  const row = db
+    .prepare(
+      `SELECT
+         SUM(CASE WHEN kind = 'ai_run' AND created_at > datetime('now', ?) THEN 1 ELSE 0 END) AS aiRunsInWindow,
+         SUM(CASE WHEN kind = 'ai_run' AND created_at > datetime('now', ?) THEN cost_usd ELSE 0 END) AS aiSpendUsdInWindow,
+         SUM(CASE WHEN kind = 'ai_run' AND created_at > datetime('now', ?) THEN duration_seconds ELSE 0 END) AS aiSecondsInWindow,
+         SUM(CASE WHEN kind = 'lawyer_time' AND created_at > datetime('now', ?) THEN duration_seconds ELSE 0 END) AS lawyerSecondsInWindow
+       FROM billing_log`,
+    )
+    .get(
+      `-${windowHours} hours`,
+      `-${windowHours} hours`,
+      `-${windowHours} hours`,
+      `-${windowHours} hours`,
+    ) as {
+    aiRunsInWindow: number | null;
+    aiSpendUsdInWindow: number | null;
+    aiSecondsInWindow: number | null;
+    lawyerSecondsInWindow: number | null;
+  };
 
-  let reviewsProcessed = 0;
-  let approved = 0;
-  let flagged = 0;
-  let returned = 0;
-
-  for (const output of outputs) {
-    try {
-      const data = typeof output === 'string' ? JSON.parse(output) : output;
-
-      reviewsProcessed++;
-
-      if (data.decision === 'approved' || data.approved === true) {
-        approved++;
-      } else if (data.decision === 'flagged' || data.flagged === true) {
-        flagged++;
-      } else if (data.decision === 'returned' || data.returned === true) {
-        returned++;
-      }
-    } catch {
-      // Skip malformed outputs
-    }
-  }
+  const stale = db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM matters m
+       WHERE m.status = 'open'
+         AND NOT EXISTS (
+           SELECT 1 FROM billing_log b
+           WHERE b.matter_id = m.id
+             AND b.created_at > datetime('now', ?)
+         )`,
+    )
+    .get(`-${windowHours} hours`) as { n: number };
 
   return {
-    reviewsProcessed,
-    approved,
-    flagged,
-    returned,
+    aiRunsInWindow: row.aiRunsInWindow ?? 0,
+    aiSpendUsdInWindow: row.aiSpendUsdInWindow ?? 0,
+    aiSecondsInWindow: row.aiSecondsInWindow ?? 0,
+    lawyerSecondsInWindow: row.lawyerSecondsInWindow ?? 0,
+    staleMatters: stale.n,
   };
 }
 
-/**
- * Aggregate Ops Officer statistics from task outputs
- */
-function aggregateOpsOfficer(hours: number): OpsOfficerSummary {
-  const outputs = getCompletedTaskOutputs('ops_officer', hours);
-
-  let invoicesProcessed = 0;
-  let totalAmount = 0;
-  let pendingApprovals = 0;
-  let currency = 'USD';
-
-  for (const output of outputs) {
-    try {
-      const data = typeof output === 'string' ? JSON.parse(output) : output;
-
-      if (data.invoiceProcessed === true || data.type === 'invoice') {
-        invoicesProcessed++;
-
-        if (data.amount !== undefined) {
-          totalAmount += data.amount;
-        }
-
-        if (data.currency) {
-          currency = data.currency;
-        }
-
-        if (data.status === 'pending_approval' || data.awaitingApproval === true) {
-          pendingApprovals++;
-        }
-      }
-    } catch {
-      // Skip malformed outputs
-    }
-  }
-
-  return {
-    invoicesProcessed,
-    totalAmount,
-    currency,
-    pendingApprovals,
-  };
-}
-
-/**
- * Generate alerts based on current system state
- */
-function generateAlerts(
-  systemHealth: SystemHealth,
-  taskSummary: TaskSummary,
-  maxAlerts: number
+function buildAlerts(
+  health: SystemHealth,
+  reviewQueue: ReviewQueueStats,
+  deadlines: DeadlineCalendarStats,
 ): BriefingAlert[] {
   const alerts: BriefingAlert[] = [];
-  const now = new Date().toISOString();
-
-  // Check for critical system issues
-  if (systemHealth.killSwitchActive) {
+  if (!health.auditChainOk) {
     alerts.push({
       severity: 'critical',
-      message: 'Global kill switch is active - all operations halted',
-      timestamp: now,
-      component: 'ControlPlane',
+      title: 'Audit chain break detected',
+      detail: health.auditChainBreak ?? 'Audit chain verification failed.',
     });
   }
-
-  // Check for open circuit breakers
-  const openCircuits = getOpenCircuits();
-  for (const circuit of openCircuits) {
+  if (health.killSwitchActive) {
     alerts.push({
-      severity: 'error',
-      message: `Circuit breaker "${circuit}" is open - service unavailable`,
-      timestamp: now,
-      component: circuit,
+      severity: 'critical',
+      title: 'Global kill switch active',
+      detail: 'All AI execution is currently disabled.',
     });
   }
-
-  // Check for disabled agents
-  for (const agent of systemHealth.disabledAgents) {
+  if (deadlines.upcomingLimitations > 0) {
     alerts.push({
-      severity: 'warning',
-      message: `Agent "${agent}" is disabled`,
-      timestamp: now,
-      component: agent,
+      severity: 'critical',
+      title: `${deadlines.upcomingLimitations} limitation period(s) within 14 days`,
+      detail: 'Review the deadline calendar — a missed limitation is malpractice.',
     });
   }
-
-  // Check for high failure rate
-  const totalTasks = taskSummary.completed + taskSummary.failed;
-  if (totalTasks > 0) {
-    const failureRate = taskSummary.failed / totalTasks;
-    if (failureRate > 0.5) {
-      alerts.push({
-        severity: 'error',
-        message: `High task failure rate: ${(failureRate * 100).toFixed(1)}%`,
-        timestamp: now,
-        component: 'TaskProcessor',
-      });
-    } else if (failureRate > 0.2) {
-      alerts.push({
-        severity: 'warning',
-        message: `Elevated task failure rate: ${(failureRate * 100).toFixed(1)}%`,
-        timestamp: now,
-        component: 'TaskProcessor',
-      });
-    }
-  }
-
-  // Check for tasks awaiting approval
-  if (taskSummary.awaitingApproval > 5) {
+  if (deadlines.overdueCount > 0) {
     alerts.push({
       severity: 'warning',
-      message: `${taskSummary.awaitingApproval} tasks awaiting human approval`,
-      timestamp: now,
-      component: 'ApprovalQueue',
+      title: `${deadlines.overdueCount} deadline(s) overdue`,
+      detail: 'Resolve or waive them on the deadline calendar.',
     });
   }
-
-  // Limit alerts
-  return alerts.slice(0, maxAlerts);
+  if (reviewQueue.stuck > 0) {
+    alerts.push({
+      severity: 'warning',
+      title: `${reviewQueue.stuck} review queue item(s) pending > 48h`,
+      detail: 'Outputs are waiting on a lawyer to approve or reject.',
+    });
+  }
+  return alerts;
 }
 
-/**
- * Aggregate daily briefing from all sources
- *
- * @param config - Optional configuration for the briefing
- * @returns Complete daily briefing
- */
-export async function aggregateDailyBriefing(
-  config: BriefingConfig = {}
-): Promise<DailyBriefing> {
-  const mergedConfig = {
-    timeWindowHours: config.timeWindowHours ?? 24,
-    includeAlerts: config.includeAlerts ?? true,
-    maxAlerts: config.maxAlerts ?? 10,
-  };
-
-  const hours = mergedConfig.timeWindowHours;
-
-  // Aggregate all sections
+export function aggregateDailyBriefing(windowHours = 24): DailyBriefing {
   const systemHealth = aggregateSystemHealth();
-  const taskSummary = aggregateTaskSummary(hours);
-  const rdScout = aggregateRdScout(hours);
-  const gatekeeper = aggregateGatekeeper(hours);
-  const opsOfficer = aggregateOpsOfficer(hours);
-
-  // Generate alerts if enabled
-  const alerts = mergedConfig.includeAlerts
-    ? generateAlerts(systemHealth, taskSummary, mergedConfig.maxAlerts)
-    : [];
+  const matters = aggregateMatterStats(windowHours);
+  const reviewQueue = aggregateReviewQueue(windowHours);
+  const deadlines = aggregateDeadlines();
+  const billing = aggregateBilling(windowHours);
+  const alerts = buildAlerts(systemHealth, reviewQueue, deadlines);
 
   return {
     generatedAt: new Date().toISOString(),
-    timeWindowHours: hours,
+    windowHours,
     systemHealth,
-    taskSummary,
-    rdScout,
-    gatekeeper,
-    opsOfficer,
+    matters,
+    reviewQueue,
+    deadlines,
+    billing,
     alerts,
   };
 }

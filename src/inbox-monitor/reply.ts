@@ -59,42 +59,51 @@ function shouldSkipReply(email: IncomingEmail): string | null {
 
 function buildReply(email: IncomingEmail, result: PipelineResult): { subject: string; text: string; html: string } {
   const subjectBase = email.subject || '(no subject)';
-  const subject = /^re:\s*/i.test(subjectBase) ? subjectBase : `Re: ${subjectBase}`;
+  const baseSubject = /^re:\s*/i.test(subjectBase) ? subjectBase : `Re: ${subjectBase}`;
+  // Prefix the matter number when the pipeline allocated one — clients
+  // can quote it back on every subsequent email so the correspondence
+  // pipeline can match the thread.
+  const subject = result.matterNumber && !subjectBase.includes(result.matterNumber)
+    ? `[${result.matterNumber}] ${baseSubject}`
+    : baseSubject;
 
   const inboxLabel = email.inbox.meta.label;
-  const taskLine = result.taskId
-    ? `Internal reference: ${result.taskId}`
-    : result.projectId
-      ? `Internal reference: project ${result.projectId}`
-      : 'Internal reference: pending';
+  const matterLine = result.matterNumber
+    ? `Your matter number is ${result.matterNumber}. Please quote it on any future correspondence.`
+    : 'Your message has been logged and routed to the responsible lawyer.';
 
   const attachmentNote = email.attachments.length
-    ? `We received ${email.attachments.length} attachment(s) and they have been filed with the brief.`
+    ? `We received ${email.attachments.length} attachment(s) and they have been filed with the matter.`
     : 'No attachments were attached to your email.';
 
+  const greeting = email.fromName ? `Dear ${email.fromName.split(' ')[0]},` : 'Dear Sir / Madam,';
+
   const text = [
-    `Hi${email.fromName ? ` ${email.fromName.split(' ')[0]}` : ''},`,
+    greeting,
     '',
-    `Thanks — your ${inboxLabel.toLowerCase()} brief has landed and we've started work on it.`,
+    `Thank you for contacting our firm via our ${inboxLabel.toLowerCase()} channel.`,
+    'This is an automated acknowledgement that we have received your message.',
     '',
-    `Brief summary: ${result.summary}`,
+    matterLine,
+    '',
+    `Summary: ${result.summary}`,
     attachmentNote,
     '',
-    'We will follow up directly with progress updates and any clarifying questions.',
+    'A lawyer will review your enquiry and respond directly. Nothing in',
+    'this acknowledgement constitutes legal advice or creates a',
+    'solicitor–client relationship.',
     '',
-    taskLine,
-    '',
-    '— Automated confirmation; replies to this thread will reach the team.',
+    '— Automated acknowledgement only.',
   ].join('\n');
 
   const html = [
-    `<p>Hi${email.fromName ? ` ${escapeHtml(email.fromName.split(' ')[0])}` : ''},</p>`,
-    `<p>Thanks — your <b>${escapeHtml(inboxLabel.toLowerCase())}</b> brief has landed and we've started work on it.</p>`,
-    `<p><b>Brief summary:</b> ${escapeHtml(result.summary)}</p>`,
+    `<p>${escapeHtml(greeting)}</p>`,
+    `<p>Thank you for contacting our firm via our <b>${escapeHtml(inboxLabel.toLowerCase())}</b> channel. This is an automated acknowledgement that we have received your message.</p>`,
+    `<p><b>${escapeHtml(matterLine)}</b></p>`,
+    `<p><b>Summary:</b> ${escapeHtml(result.summary)}</p>`,
     `<p>${escapeHtml(attachmentNote)}</p>`,
-    `<p>We will follow up directly with progress updates and any clarifying questions.</p>`,
-    `<p style="color:#666"><i>${escapeHtml(taskLine)}</i></p>`,
-    `<p style="color:#888;font-size:12px"><i>Automated confirmation; replies to this thread will reach the team.</i></p>`,
+    `<p>A lawyer will review your enquiry and respond directly. Nothing in this acknowledgement constitutes legal advice or creates a solicitor–client relationship.</p>`,
+    `<p style="color:#888;font-size:12px"><i>Automated acknowledgement only.</i></p>`,
   ].join('\n');
 
   return { subject, text, html };

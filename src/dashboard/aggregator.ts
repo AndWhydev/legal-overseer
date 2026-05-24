@@ -1,303 +1,317 @@
 /**
- * Dashboard data aggregator.
+ * Dashboard data aggregator — Legal Overseer.
  *
- * Reads directly from the SQLite database to assemble the per-project
- * and fleet-wide views the dashboard renders. Everything here is
- * read-only so the dashboard can never accidentally mutate state.
+ * Reads the SQLite database (read-only) and assembles the four views
+ * the dashboard renders:
+ *
+ *   - Matter list:     every matter with status, lawyer, deadlines.
+ *   - Review queue:    every AI output awaiting lawyer approval.
+ *   - Deadline calendar: every open deadline in the next 30 days.
+ *   - Billing tracker: AI time + spend vs lawyer time per matter.
+ *
+ * Everything here is read-only — the dashboard never mutates state.
+ * Mutations (approve / reject) go through src/compliance/reviewGate.
  */
 
 import { getDatabase } from '../db/connection.js';
+import { listMatters, type Matter, type MatterStatus } from '../db/repositories/matters.js';
 import {
-  getAllProjects,
-  getProjectById,
-  type Project,
-} from '../db/repositories/projects.js';
-import { getById as getTaskById } from '../db/repositories/tasks.js';
+  listUpcoming,
+  listDeadlinesForMatter,
+  type Deadline,
+} from '../db/repositories/deadlines.js';
 import {
-  countLessons,
-  getLessonsByProject,
-  type Lesson,
-} from '../db/repositories/lessons.js';
-import { getPlaybookStatus } from '../memory/playbook.js';
+  listPendingReviews,
+  listReviewsByStatus,
+  type ReviewQueueRow,
+  type ReviewStatus,
+} from '../compliance/reviewGate.js';
+import {
+  summariseMatterBilling,
+  listMatterBilling,
+  type BillingEntry,
+  type MatterBillingSummary,
+} from '../compliance/billing.js';
+import { listAuditForMatter, type LegalAuditEntry } from '../compliance/audit.js';
 
-export type FleetHealth = 'green' | 'amber' | 'red';
+export type MatterHealth = 'green' | 'amber' | 'red';
 
-export interface ProjectFleetRow {
-  project: Project;
-  health: FleetHealth;
-  pendingTasks: number;
-  runningTasks: number;
-  iterationsLast24h: number;
-  iterationsCap: number;
-  lastWorkerStatus: string | null;
-  lastWorkerAt: string | null;
-  lastEscalationAt: string | null;
-  lessonsCount: number;
-  costLast24hUsd: number;
+export interface MatterRow {
+  matter: Matter;
+  health: MatterHealth;
+  openDeadlines: number;
+  /** Days until the most urgent open deadline (null when none). */
+  daysToMostUrgent: number | null;
+  pendingReviews: number;
+  billing: MatterBillingSummary;
 }
 
-export interface FleetSummary {
-  rows: ProjectFleetRow[];
+export interface MatterSummary {
+  rows: MatterRow[];
   totals: {
-    projects: number;
-    active: number;
-    paused: number;
+    matters: number;
+    open: number;
+    onHold: number;
+    closed: number;
     archived: number;
-    pendingTasks: number;
-    runningTasks: number;
-    lessons: number;
-    costLast24hUsd: number;
+    pendingReviews: number;
+    upcomingDeadlines30d: number;
+    aiCostUsdTotal: number;
   };
   generatedAt: string;
 }
 
-export interface RecentTaskRow {
-  id: string;
-  projectId: string | null;
-  projectName: string | null;
-  skillId: string;
-  status: string;
-  createdAt: string;
-  completedAt: string | null;
-  costUsd: number | null;
+export interface MatterDetail {
+  matter: Matter;
+  row: MatterRow;
+  deadlines: Deadline[];
+  reviews: ReviewQueueRow[];
+  billing: BillingEntry[];
+  billingSummary: MatterBillingSummary;
+  audit: LegalAuditEntry[];
 }
 
-export interface ProjectDetail {
-  project: Project;
-  fleetRow: ProjectFleetRow;
-  recentTasks: RecentTaskRow[];
-  recentLessons: Lesson[];
-  playbook: {
-    exists: boolean;
-    path: string;
-    sizeBytes: number;
-  };
+function daysFromNow(iso: string): number {
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.round(ms / (1000 * 60 * 60 * 24));
 }
 
-/**
- * Decide the health colour for one project. Rules:
- *  - red    : last 2+ worker tasks failed, or the project is paused
- *             with no recent successful work, or status=archived
- *  - amber  : an escalation in the last 24h, or there's an awaiting
- *             approval task, or any task is currently running while the
- *             daily cap has already been hit
- *  - green  : everything else (active + recent progress, or just idle)
- */
-function deriveHealth(p: Project, row: Omit<ProjectFleetRow, 'health'>): FleetHealth {
-  if (p.status === 'archived') return 'red';
-  if (p.status === 'paused') return 'amber';
-  if (row.lastEscalationAt) {
-    const ageHrs =
-      (Date.now() - new Date(row.lastEscalationAt).getTime()) / (1000 * 60 * 60);
-    if (ageHrs <= 24) return 'amber';
+function deriveHealth(matter: Matter, deadlines: Deadline[], pendingReviews: number): MatterHealth {
+  if (matter.status === 'closed' || matter.status === 'archived') return 'green';
+
+  // RED: any limitation deadline within 7 days.
+  for (const d of deadlines) {
+    if (d.deadline_type === 'limitation') {
+      const days = daysFromNow(d.due_date);
+      if (days <= 7) return 'red';
+    }
   }
-  if (row.iterationsLast24h >= row.iterationsCap) return 'amber';
-  // Two-in-a-row failure check
-  const db = getDatabase();
-  const recent = db
-    .prepare(
-      `SELECT status FROM tasks
-       WHERE project_id = ? AND skill_id = 'claude_code_worker'
-       ORDER BY created_at DESC LIMIT 2`,
-    )
-    .all(p.id) as { status: string }[];
-  if (recent.length >= 2 && recent.every((r) => r.status === 'failed')) {
-    return 'red';
+  // RED: any pending review older than 7 days (lawyer hasn't looked).
+  // (cheap upstream check; richer check happens in the review-queue view)
+
+  // AMBER: any deadline within 14 days, or any pending review.
+  for (const d of deadlines) {
+    const days = daysFromNow(d.due_date);
+    if (days <= 14) return 'amber';
   }
+  if (pendingReviews > 0) return 'amber';
+
   return 'green';
 }
 
-/**
- * Build the fleet summary used by the home page.
- */
-export function buildFleetSummary(): FleetSummary {
-  const db = getDatabase();
-  const projects = getAllProjects();
-  const rows: ProjectFleetRow[] = [];
+export function buildMatterSummary(): MatterSummary {
+  const matters = listMatters();
+  const upcoming = listUpcoming(30);
 
-  let totalPending = 0;
-  let totalRunning = 0;
   let totalCost = 0;
+  let pendingReviewsTotal = 0;
+  const rows: MatterRow[] = [];
 
-  for (const p of projects) {
-    const counts = db
-      .prepare(
-        `SELECT
-           SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending,
-           SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) AS running
-         FROM tasks WHERE project_id = ?`,
-      )
-      .get(p.id) as { pending: number | null; running: number | null };
+  for (const m of matters) {
+    const matterDeadlines = upcoming.filter((d) => d.matter_id === m.id);
+    const pendingReviews = countPendingReviewsForMatter(m.id);
+    const billing = summariseMatterBilling(m.id);
 
-    const iterRow = db
-      .prepare(
-        `SELECT COUNT(*) AS n FROM tasks
-         WHERE project_id = ? AND skill_id = 'claude_code_worker'
-           AND created_at > datetime('now', '-24 hours')`,
-      )
-      .get(p.id) as { n: number };
+    const sortedDeadlines = matterDeadlines.sort((a, b) =>
+      a.due_date.localeCompare(b.due_date),
+    );
+    const mostUrgent = sortedDeadlines[0];
 
-    const lastWorker = db
-      .prepare(
-        `SELECT status, COALESCE(completed_at, started_at, created_at) AS at
-         FROM tasks
-         WHERE project_id = ? AND skill_id = 'claude_code_worker'
-         ORDER BY created_at DESC LIMIT 1`,
-      )
-      .get(p.id) as { status: string; at: string } | undefined;
+    rows.push({
+      matter: m,
+      health: deriveHealth(m, matterDeadlines, pendingReviews),
+      openDeadlines: matterDeadlines.length,
+      daysToMostUrgent: mostUrgent ? daysFromNow(mostUrgent.due_date) : null,
+      pendingReviews,
+      billing,
+    });
 
-    const lastEscalation = db
-      .prepare(
-        `SELECT created_at FROM tasks
-         WHERE project_id = ? AND skill_id = 'overseer_decision'
-           AND output_json LIKE '%"action":"escalate"%'
-         ORDER BY created_at DESC LIMIT 1`,
-      )
-      .get(p.id) as { created_at: string } | undefined;
-
-    // Sum cost from completed worker tasks in the last 24h.
-    const costRows = db
-      .prepare(
-        `SELECT output_json FROM tasks
-         WHERE project_id = ? AND skill_id = 'claude_code_worker'
-           AND status = 'completed'
-           AND completed_at > datetime('now', '-24 hours')`,
-      )
-      .all(p.id) as { output_json: string }[];
-    let costLast24h = 0;
-    for (const r of costRows) {
-      try {
-        const parsed = JSON.parse(r.output_json) as { costUsd?: number };
-        if (typeof parsed.costUsd === 'number') costLast24h += parsed.costUsd;
-      } catch {
-        // ignore unparseable rows
-      }
-    }
-    totalCost += costLast24h;
-
-    const lessonsCount = countLessons(p.id);
-    const partial: Omit<ProjectFleetRow, 'health'> = {
-      project: p,
-      pendingTasks: counts.pending ?? 0,
-      runningTasks: counts.running ?? 0,
-      iterationsLast24h: iterRow.n,
-      iterationsCap: p.max_iterations_per_day,
-      lastWorkerStatus: lastWorker?.status ?? null,
-      lastWorkerAt: lastWorker?.at ?? null,
-      lastEscalationAt: lastEscalation?.created_at ?? null,
-      lessonsCount,
-      costLast24hUsd: costLast24h,
-    };
-    rows.push({ ...partial, health: deriveHealth(p, partial) });
-
-    totalPending += partial.pendingTasks;
-    totalRunning += partial.runningTasks;
+    totalCost += billing.aiCostUsd;
+    pendingReviewsTotal += pendingReviews;
   }
 
-  const statusCounts = db
-    .prepare(
-      `SELECT
-         SUM(CASE WHEN status = 'active'   THEN 1 ELSE 0 END) AS active,
-         SUM(CASE WHEN status = 'paused'   THEN 1 ELSE 0 END) AS paused,
-         SUM(CASE WHEN status = 'archived' THEN 1 ELSE 0 END) AS archived
-       FROM projects`,
-    )
-    .get() as { active: number | null; paused: number | null; archived: number | null };
-
+  const counts = countMattersByStatus();
   return {
     rows,
     totals: {
-      projects: projects.length,
-      active: statusCounts.active ?? 0,
-      paused: statusCounts.paused ?? 0,
-      archived: statusCounts.archived ?? 0,
-      pendingTasks: totalPending,
-      runningTasks: totalRunning,
-      lessons: countLessons(),
-      costLast24hUsd: totalCost,
+      matters: matters.length,
+      open: counts.open,
+      onHold: counts.on_hold,
+      closed: counts.closed,
+      archived: counts.archived,
+      pendingReviews: pendingReviewsTotal,
+      upcomingDeadlines30d: upcoming.length,
+      aiCostUsdTotal: totalCost,
     },
     generatedAt: new Date().toISOString(),
   };
 }
 
-/**
- * Per-project deep view used by the detail page.
- */
-export function buildProjectDetail(projectId: string): ProjectDetail | null {
-  const project = getProjectById(projectId);
-  if (!project) return null;
-
-  const fleet = buildFleetSummary();
-  const fleetRow = fleet.rows.find((r) => r.project.id === projectId);
-  if (!fleetRow) return null;
-
+function countMattersByStatus(): Record<MatterStatus, number> {
   const db = getDatabase();
   const rows = db
+    .prepare(`SELECT status, COUNT(*) AS n FROM matters GROUP BY status`)
+    .all() as { status: MatterStatus; n: number }[];
+  const out: Record<MatterStatus, number> = { open: 0, on_hold: 0, closed: 0, archived: 0 };
+  for (const r of rows) out[r.status] = r.n;
+  return out;
+}
+
+function countPendingReviewsForMatter(matterId: string): number {
+  const db = getDatabase();
+  const row = db
     .prepare(
-      `SELECT id, project_id, skill_id, status, created_at, completed_at, output_json
-       FROM tasks
-       WHERE project_id = ?
-       ORDER BY created_at DESC
-       LIMIT 25`,
+      `SELECT COUNT(*) AS n FROM review_queue
+       WHERE matter_id = ? AND status = 'pending'`,
     )
-    .all(projectId) as Array<{
-      id: string;
-      project_id: string;
-      skill_id: string;
-      status: string;
-      created_at: string;
-      completed_at: string | null;
-      output_json: string | null;
-    }>;
+    .get(matterId) as { n: number };
+  return row.n;
+}
 
-  const recentTasks: RecentTaskRow[] = rows.map((r) => {
-    let costUsd: number | null = null;
-    if (r.output_json) {
-      try {
-        const parsed = JSON.parse(r.output_json) as { costUsd?: number };
-        if (typeof parsed.costUsd === 'number') costUsd = parsed.costUsd;
-      } catch {
-        // ignore
-      }
-    }
-    return {
-      id: r.id,
-      projectId: r.project_id,
-      projectName: project.name,
-      skillId: r.skill_id,
-      status: r.status,
-      createdAt: r.created_at,
-      completedAt: r.completed_at,
-      costUsd,
-    };
-  });
+export function buildMatterDetail(matterId: string): MatterDetail | null {
+  const db = getDatabase();
+  const matter = db
+    .prepare(`SELECT * FROM matters WHERE id = ?`)
+    .get(matterId) as Matter | undefined;
+  if (!matter) return null;
 
+  const deadlines = listDeadlinesForMatter(matterId);
+  const reviews = db
+    .prepare(
+      `SELECT * FROM review_queue WHERE matter_id = ?
+       ORDER BY created_at DESC LIMIT 50`,
+    )
+    .all(matterId) as ReviewQueueRow[];
+  const billing = listMatterBilling(matterId);
+  const billingSummary = summariseMatterBilling(matterId);
+  const audit = listAuditForMatter(matterId, 100);
+
+  const openDeadlines = deadlines.filter((d) => d.status === 'open');
+  const pendingReviews = reviews.filter((r) => r.status === 'pending').length;
+
+  const row: MatterRow = {
+    matter,
+    health: deriveHealth(matter, openDeadlines, pendingReviews),
+    openDeadlines: openDeadlines.length,
+    daysToMostUrgent: openDeadlines[0] ? daysFromNow(openDeadlines[0].due_date) : null,
+    pendingReviews,
+    billing: billingSummary,
+  };
+
+  return { matter, row, deadlines, reviews, billing, billingSummary, audit };
+}
+
+// --------------------- review queue ---------------------
+
+export interface ReviewQueueView {
+  pending: ReviewQueueRow[];
+  approved: ReviewQueueRow[];
+  rejected: ReviewQueueRow[];
+  sent: ReviewQueueRow[];
+  generatedAt: string;
+}
+
+export function buildReviewQueueView(): ReviewQueueView {
   return {
-    project,
-    fleetRow,
-    recentTasks,
-    recentLessons: getLessonsByProject(projectId, 10),
-    playbook: getPlaybookStatus(project),
+    pending: listPendingReviews(200),
+    approved: listReviewsByStatus('approved', 50),
+    rejected: listReviewsByStatus('rejected', 50),
+    sent: listReviewsByStatus('sent', 50),
+    generatedAt: new Date().toISOString(),
   };
 }
 
-/**
- * Fetch one task with its parsed input/output for the task detail view.
- */
-export function getTaskWithParsed(taskId: string): {
-  task: ReturnType<typeof getTaskById>;
-  inputObj: unknown;
-  outputObj: unknown;
+export function getReviewWithMatter(reviewId: string): {
+  review: ReviewQueueRow;
+  matter: Matter | null;
 } | null {
-  const task = getTaskById(taskId);
-  if (!task) return null;
-  let inputObj: unknown = null;
-  let outputObj: unknown = null;
-  if (task.input_json) {
-    try { inputObj = JSON.parse(task.input_json); } catch { inputObj = task.input_json; }
+  const db = getDatabase();
+  const review = db
+    .prepare(`SELECT * FROM review_queue WHERE id = ?`)
+    .get(reviewId) as ReviewQueueRow | undefined;
+  if (!review) return null;
+  const matter = review.matter_id
+    ? (db.prepare(`SELECT * FROM matters WHERE id = ?`).get(review.matter_id) as Matter | undefined)
+    : undefined;
+  return { review, matter: matter ?? null };
+}
+
+// --------------------- deadline calendar ---------------------
+
+export interface CalendarEntry {
+  date: string;
+  deadlines: Array<{ deadline: Deadline; matter: Matter | null }>;
+}
+
+export interface CalendarView {
+  entries: CalendarEntry[];
+  windowDays: number;
+  generatedAt: string;
+}
+
+export function buildCalendarView(windowDays = 30): CalendarView {
+  const deadlines = listUpcoming(windowDays);
+  const db = getDatabase();
+
+  // Group by date.
+  const byDate = new Map<string, Array<{ deadline: Deadline; matter: Matter | null }>>();
+  for (const d of deadlines) {
+    const matter = d.matter_id
+      ? (db.prepare(`SELECT * FROM matters WHERE id = ?`).get(d.matter_id) as Matter | undefined)
+      : undefined;
+    const bucket = byDate.get(d.due_date) ?? [];
+    bucket.push({ deadline: d, matter: matter ?? null });
+    byDate.set(d.due_date, bucket);
   }
-  if (task.output_json) {
-    try { outputObj = JSON.parse(task.output_json); } catch { outputObj = task.output_json; }
+
+  const entries: CalendarEntry[] = Array.from(byDate.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, items]) => ({ date, deadlines: items }));
+
+  return { entries, windowDays, generatedAt: new Date().toISOString() };
+}
+
+// --------------------- billing tracker ---------------------
+
+export interface BillingTrackerRow {
+  matter: Matter;
+  summary: MatterBillingSummary;
+  ratioAiToLawyer: number | null;
+}
+
+export interface BillingTrackerView {
+  rows: BillingTrackerRow[];
+  totals: {
+    aiSeconds: number;
+    aiCostUsd: number;
+    lawyerSeconds: number;
+  };
+  generatedAt: string;
+}
+
+export function buildBillingTrackerView(): BillingTrackerView {
+  const matters = listMatters();
+  const rows: BillingTrackerRow[] = [];
+  let aiSeconds = 0;
+  let aiCost = 0;
+  let lawyerSeconds = 0;
+
+  for (const m of matters) {
+    const summary = summariseMatterBilling(m.id);
+    rows.push({
+      matter: m,
+      summary,
+      ratioAiToLawyer: summary.lawyerSeconds > 0 ? summary.aiSeconds / summary.lawyerSeconds : null,
+    });
+    aiSeconds += summary.aiSeconds;
+    aiCost += summary.aiCostUsd;
+    lawyerSeconds += summary.lawyerSeconds;
   }
-  return { task, inputObj, outputObj };
+
+  rows.sort((a, b) => b.summary.aiCostUsd - a.summary.aiCostUsd);
+  return {
+    rows,
+    totals: { aiSeconds, aiCostUsd: aiCost, lawyerSeconds },
+    generatedAt: new Date().toISOString(),
+  };
 }

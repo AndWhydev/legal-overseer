@@ -1,21 +1,19 @@
 /**
  * Pipeline router lookup.
  *
- * Maps an InboxType to its handler. The handler signature is the same
- * for all five pipelines so the poller can call them uniformly.
+ * Maps an InboxType to its handler. All handlers share the same
+ * signature so the poller can call them uniformly.
  */
 
 import type { IncomingEmail, InboxType, PipelineHandler, PipelineResult } from '../types.js';
-import { runSoftwarePipeline } from './software.js';
-import { runSEOPipeline } from './seo.js';
-import { runGenericPipeline } from './generic.js';
+import { runLegalIntakePipeline } from './legal-intake.js';
+import { runCorrespondencePipeline } from './correspondence.js';
 
 const HANDLERS: Record<InboxType, PipelineHandler> = {
-  software: (email: IncomingEmail) => runSoftwarePipeline(email),
-  seo: (email: IncomingEmail) => runSEOPipeline(email),
-  design: (email: IncomingEmail) => Promise.resolve(runGenericPipeline(email, 'design')),
-  content: (email: IncomingEmail) => Promise.resolve(runGenericPipeline(email, 'content')),
-  ops: (email: IncomingEmail) => Promise.resolve(runGenericPipeline(email, 'ops')),
+  legal_intake: (email: IncomingEmail) => runLegalIntakePipeline(email),
+  client: (email: IncomingEmail) => Promise.resolve(runCorrespondencePipeline(email, 'client')),
+  court: (email: IncomingEmail) => Promise.resolve(runCorrespondencePipeline(email, 'court')),
+  internal: (email: IncomingEmail) => Promise.resolve(runCorrespondencePipeline(email, 'internal')),
 };
 
 export function getPipelineHandler(type: InboxType): PipelineHandler {

@@ -1,37 +1,30 @@
 /**
- * Briefing module index
+ * Briefing module — Legal Overseer.
  *
  * Single import point for daily briefing functionality:
- * - Types for briefing structure
- * - Aggregation for unified operational snapshot
- * - Scheduler for automated briefing delivery
- * - Alerts for proactive notifications
- *
- * Usage:
- * import { aggregateDailyBriefing, initBriefingScheduler, checkAlertConditions } from './briefing/index.js';
+ *   - types.ts:      type shapes for the briefing payload
+ *   - aggregator.ts: build the snapshot from the database
+ *   - scheduler.ts:  cron-driven email delivery
+ *   - alerts.ts:     proactive alert checks (governance-derived)
  */
 
-// Types
 export type {
   DailyBriefing,
   BriefingConfig,
   SystemHealth,
-  TaskSummary,
-  RdScoutSummary,
-  GatekeeperSummary,
-  OpsOfficerSummary,
+  CircuitBreakerSummary,
+  MatterStats,
+  ReviewQueueStats,
+  DeadlineCalendarStats,
+  BillingStats,
   BriefingAlert,
   AlertSeverity,
-  CircuitBreakerSummary,
-  SkillTaskCounts,
 } from './types.js';
 
 export { DEFAULT_BRIEFING_CONFIG } from './types.js';
 
-// Aggregation
 export { aggregateDailyBriefing } from './aggregator.js';
 
-// Scheduler
 export {
   initBriefingScheduler,
   stopBriefingScheduler,
@@ -41,7 +34,6 @@ export {
   DEFAULT_BRIEFING_CRON,
 } from './scheduler.js';
 
-// Alerts
 export {
   checkAlertConditions,
   dispatchAlerts,

@@ -1,9 +1,0 @@
-{
-  "name": "Technical Blog Writing",
-  "description": "Write developer-focused technical blog posts with runnable code examples and correct explanation depth.",
-  "tags": ["writing", "technical", "developer", "engineering", "blog"],
-  "triggerKeywords": ["technical blog", "dev blog", "engineering blog", "technical writing", "developer tutorial", "tech post", "code tutorial", "programming blog", "developer content", "technical article", "engineering post", "coding tutorial", "technical content"],
-  "roleAffinity": ["comms", "operations"],
-  "estimatedTokens": 2200,
-  "planGate": "growth"
-}

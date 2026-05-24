@@ -1,29 +1,41 @@
 /**
- * Minimal HTTP dashboard for the overseer.
+ * Minimal HTTP dashboard for Legal Overseer.
  *
  * Routes:
- *   GET /                  → fleet overview
- *   GET /project/:id       → per-project deep view
- *   GET /task/:id          → task detail (input/output JSON)
- *   GET /api/fleet.json    → JSON fleet summary (for tooling)
+ *   GET  /                         → matter list
+ *   GET  /matter/:id               → per-matter deep view
+ *   GET  /review                   → review queue (pending + recents)
+ *   GET  /review/:id               → per-review detail (approve/reject)
+ *   POST /review/:id/approve       → approve a pending review
+ *   POST /review/:id/reject        → reject a pending review
+ *   GET  /calendar                 → deadline calendar (30d window)
+ *   GET  /billing                  → billing tracker
+ *   GET  /api/matters.json         → JSON matter summary (for tooling)
+ *   GET  /api/review.json          → JSON review queue (for tooling)
  *
- * No external deps beyond what's already in the repo. Runs on
- * DASHBOARD_PORT (default 3000) and binds to 127.0.0.1 — local only.
+ * Runs on DASHBOARD_PORT (default 3000) bound to 127.0.0.1 only.
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { createSafeLogger } from '../governance/index.js';
 import {
-  buildFleetSummary,
-  buildProjectDetail,
-  getTaskWithParsed,
+  buildMatterSummary,
+  buildMatterDetail,
+  buildReviewQueueView,
+  buildCalendarView,
+  buildBillingTrackerView,
+  getReviewWithMatter,
 } from './aggregator.js';
 import {
-  renderFleet,
-  renderProject,
-  renderTask,
+  renderMatters,
+  renderMatterDetail,
+  renderReviewQueue,
+  renderReviewDetail,
+  renderCalendar,
+  renderBilling,
   render404,
 } from './render.js';
+import { approveReview, rejectReview } from '../compliance/reviewGate.js';
 
 const logger = createSafeLogger('Dashboard');
 
@@ -37,34 +49,88 @@ function json(res: ServerResponse, status: number, body: unknown): void {
   res.end(JSON.stringify(body, null, 2));
 }
 
-function handle(req: IncomingMessage, res: ServerResponse): void {
+function redirect(res: ServerResponse, to: string): void {
+  res.writeHead(303, { location: to });
+  res.end();
+}
+
+async function readBody(req: IncomingMessage): Promise<URLSearchParams> {
+  const chunks: Buffer[] = [];
+  for await (const c of req) chunks.push(c as Buffer);
+  return new URLSearchParams(Buffer.concat(chunks).toString('utf8'));
+}
+
+async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = req.url ?? '/';
-  // Strip trailing slash (except for root) for consistent matching.
+  const method = req.method ?? 'GET';
   const path = url === '/' ? url : url.replace(/\/+$/, '').split('?')[0];
 
   try {
-    if (path === '/' || path === '/fleet') {
-      html(res, 200, renderFleet(buildFleetSummary()));
+    // ----- GET pages -----
+    if (method === 'GET' && (path === '/' || path === '/matters')) {
+      html(res, 200, renderMatters(buildMatterSummary()));
       return;
     }
-    if (path === '/api/fleet.json') {
-      json(res, 200, buildFleetSummary());
+    if (method === 'GET' && path === '/review') {
+      html(res, 200, renderReviewQueue(buildReviewQueueView()));
       return;
     }
-    const projectMatch = path.match(/^\/project\/([0-9a-f-]+)$/i);
-    if (projectMatch) {
-      const detail = buildProjectDetail(projectMatch[1]);
-      if (!detail) { html(res, 404, render404('project')); return; }
-      html(res, 200, renderProject(detail));
+    if (method === 'GET' && path === '/calendar') {
+      html(res, 200, renderCalendar(buildCalendarView(30)));
       return;
     }
-    const taskMatch = path.match(/^\/task\/([0-9a-f-]+)$/i);
-    if (taskMatch) {
-      const info = getTaskWithParsed(taskMatch[1]);
-      if (!info || !info.task) { html(res, 404, render404('task')); return; }
-      html(res, 200, renderTask({ task: info.task, inputObj: info.inputObj, outputObj: info.outputObj }));
+    if (method === 'GET' && path === '/billing') {
+      html(res, 200, renderBilling(buildBillingTrackerView()));
       return;
     }
+
+    // ----- JSON APIs -----
+    if (method === 'GET' && path === '/api/matters.json') {
+      json(res, 200, buildMatterSummary());
+      return;
+    }
+    if (method === 'GET' && path === '/api/review.json') {
+      json(res, 200, buildReviewQueueView());
+      return;
+    }
+
+    // ----- matter detail -----
+    const matterMatch = path.match(/^\/matter\/([0-9a-f-]+)$/i);
+    if (method === 'GET' && matterMatch) {
+      const detail = buildMatterDetail(matterMatch[1]);
+      if (!detail) { html(res, 404, render404('matter')); return; }
+      html(res, 200, renderMatterDetail(detail));
+      return;
+    }
+
+    // ----- review detail + actions -----
+    const reviewActionMatch = path.match(/^\/review\/([0-9a-f-]+)\/(approve|reject)$/i);
+    if (method === 'POST' && reviewActionMatch) {
+      const [, id, action] = reviewActionMatch;
+      const body = await readBody(req);
+      const reviewer = body.get('reviewer') ?? '';
+      const note = body.get('note') ?? undefined;
+      if (!reviewer) {
+        html(res, 400, render404('reviewer required'));
+        return;
+      }
+      if (action === 'approve') {
+        approveReview({ reviewId: id, reviewer, note });
+      } else {
+        rejectReview({ reviewId: id, reviewer, note });
+      }
+      redirect(res, `/review/${id}`);
+      return;
+    }
+
+    const reviewMatch = path.match(/^\/review\/([0-9a-f-]+)$/i);
+    if (method === 'GET' && reviewMatch) {
+      const payload = getReviewWithMatter(reviewMatch[1]);
+      if (!payload) { html(res, 404, render404('review')); return; }
+      html(res, 200, renderReviewDetail(payload));
+      return;
+    }
+
     html(res, 404, render404('page'));
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -79,15 +145,17 @@ export interface DashboardServer {
   stop(): Promise<void>;
 }
 
-/**
- * Start the dashboard HTTP server. Binds to 127.0.0.1 only.
- *
- * @param port - port to listen on (default $DASHBOARD_PORT or 3000)
- * @returns handle with stop()
- */
 export async function startDashboard(port?: number): Promise<DashboardServer> {
   const listenPort = port ?? Number.parseInt(process.env.DASHBOARD_PORT ?? '3000', 10);
-  const server = createServer(handle);
+  const server = createServer((req, res) => {
+    handle(req, res).catch((err) => {
+      logger.error(`handler crash: ${err instanceof Error ? err.message : String(err)}`);
+      if (!res.headersSent) {
+        res.writeHead(500, { 'content-type': 'text/plain' });
+        res.end('internal error');
+      }
+    });
+  });
 
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);

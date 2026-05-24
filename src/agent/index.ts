@@ -1,11 +1,10 @@
 /**
- * Agent module for BitBit
+ * Agent module — Legal Overseer.
  *
- * Re-exports agent execution utilities, types, MCP tools, coordinator,
- * processor, and model selection functions.
+ * Re-exports the SDK executor, MCP tools, classifier/coordinator,
+ * task processor, model selection, and proactive overseer loop.
  */
 
-// Executor - low-level query execution
 export {
   executeQuery,
   executeQueryWithTimeout,
@@ -13,10 +12,8 @@ export {
   type QueryResult,
 } from './executor.js';
 
-// Tools - MCP server configuration
 export { bitbitMcpServer, tools } from './tools.js';
 
-// Coordinator - task classification and skill routing
 export {
   classifyTask,
   executeWithSkill,
@@ -24,7 +21,6 @@ export {
   type SkillExecutionResult,
 } from './coordinator.js';
 
-// Processor - task processing loop
 export {
   processNextTask,
   startTaskLoop,
@@ -32,7 +28,6 @@ export {
   isProcessorRunning,
 } from './processor.js';
 
-// Models - model selection and cost estimation
 export {
   MODELS,
   MODEL_COSTS,
@@ -45,15 +40,10 @@ export {
   type ModelSelection,
 } from './models.js';
 
-// Overseer - proactive per-project decision loop
 export {
   runOverseerTick,
   startOverseerLoop,
   stopOverseerLoop,
-  isOverseerRunning,
-  snapshotProject,
-  OVERSEER_AGENT_ID,
-  type OverseerDecision,
-  type OverseerTickResult,
-  type ProjectSnapshot,
+  isOverseerLoopRunning,
+  getTaskById,
 } from './overseer-loop.js';

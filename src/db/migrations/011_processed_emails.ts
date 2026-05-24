@@ -28,7 +28,7 @@ export const migration: Migration = {
         id TEXT PRIMARY KEY,
         inbox_type TEXT NOT NULL
           CHECK (inbox_type IN (
-            'software', 'seo', 'design', 'content', 'ops'
+            'legal_intake', 'client', 'court', 'internal'
           )),
         inbox_address TEXT NOT NULL,
         imap_uid INTEGER NOT NULL,
@@ -40,7 +40,7 @@ export const migration: Migration = {
         attachment_count INTEGER NOT NULL DEFAULT 0,
         attachments_dir TEXT,
         routed_task_id TEXT,
-        routed_project_id TEXT,
+        routed_matter_id TEXT,
         status TEXT NOT NULL DEFAULT 'routed'
           CHECK (status IN ('routed', 'failed', 'skipped')),
         error_message TEXT,
@@ -57,6 +57,7 @@ export const migration: Migration = {
     db.exec(`CREATE INDEX idx_processed_emails_status ON processed_emails(status)`);
     db.exec(`CREATE INDEX idx_processed_emails_received ON processed_emails(received_at)`);
     db.exec(`CREATE INDEX idx_processed_emails_task ON processed_emails(routed_task_id)`);
+    db.exec(`CREATE INDEX idx_processed_emails_matter ON processed_emails(routed_matter_id)`);
 
     logger.info('Created table: processed_emails');
   },
