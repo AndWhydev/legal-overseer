@@ -21,6 +21,9 @@ import { getLicenceState, startLicenceRecheck, stopLicenceRecheck, TIER_LIMITS }
 import { startUpdateChecks, stopUpdateChecks, getCurrentVersion, getUpdateState } from './updater/index.js';
 import { purgeExpiredSessions } from './users/session.js';
 import { isSetupComplete } from './onboarding/index.js';
+import { initReminderScheduler, stopReminderScheduler } from './reminders/index.js';
+import { initWeeklyBriefingScheduler, stopWeeklyBriefingScheduler } from './weekly-briefing/index.js';
+import { ensureBuiltInTemplatesLoaded } from './templates/index.js';
 
 const logger = createSafeLogger('Main');
 
@@ -168,6 +171,16 @@ export async function main(): Promise<void> {
   initBriefingScheduler();
   logger.info('Briefing scheduler initialized');
 
+  // Deadline reminder dispatcher (30/14/7/1 day + overdue).
+  initReminderScheduler();
+
+  // Weekly per-lawyer intelligence briefing.
+  initWeeklyBriefingScheduler();
+
+  // Built-in templates — load on first boot, idempotent.
+  try { ensureBuiltInTemplatesLoaded(); }
+  catch (err) { logger.warn(`builtin templates: ${err instanceof Error ? err.message : String(err)}`); }
+
   // Local dashboard (matter list, review queue, calendar, billing, users).
   let dashboard: DashboardServer | null = null;
   if (process.env.ENABLE_DASHBOARD !== 'false') {
@@ -241,6 +254,8 @@ export async function main(): Promise<void> {
     try { stopInboxMonitor(); } catch { /* ignore */ }
     try { stopUpdateChecks(); } catch { /* ignore */ }
     try { stopLicenceRecheck(); } catch { /* ignore */ }
+    try { stopReminderScheduler(); } catch { /* ignore */ }
+    try { stopWeeklyBriefingScheduler(); } catch { /* ignore */ }
     try { clearInterval(sessionGc); } catch { /* ignore */ }
     if (dashboard) {
       dashboard.stop().catch(() => undefined);

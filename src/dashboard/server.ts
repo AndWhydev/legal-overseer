@@ -46,7 +46,31 @@ import {
 } from './render.js';
 import { renderUsersPage } from './users-view.js';
 import { renderUploadPage } from './upload-view.js';
+import { renderBriefingPrefsPage } from './briefing-prefs-view.js';
 import { renderTimelinePage } from './timeline-view.js';
+import { renderTemplatesList, renderTemplateDetail } from './templates-view.js';
+import {
+  listTemplates,
+  getTemplateBySlug,
+  upsertTemplate,
+  listTemplateVersions,
+  type TemplateCategory,
+} from '../templates/index.js';
+import {
+  getConflictCheckById,
+  getConflictCheckForMatter,
+  listPendingConflictChecks,
+  resolveConflictCheck,
+} from '../compliance/conflicts.js';
+import {
+  listRecentReminders,
+  snoozeDeadline as snoozeDeadlineHelper,
+  dismissDeadline as dismissDeadlineHelper,
+} from '../reminders/index.js';
+import {
+  getBriefingPreferences,
+  setBriefingPreferences,
+} from '../weekly-briefing/index.js';
 import {
   parseMultipart,
   extractText,
@@ -390,6 +414,128 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       const payload = getReviewWithMatter(reviewMatch[1]);
       if (!payload) { html(res, 404, render404('review')); return; }
       html(res, 200, renderReviewDetail(payload));
+      return;
+    }
+
+    // ---- templates ----
+    if (method === 'GET' && path === '/templates') {
+      const templates = listTemplates();
+      html(res, 200, renderTemplatesList({ templates, currentEmail: session.user.email }));
+      return;
+    }
+    if (method === 'POST' && path === '/templates/create') {
+      const body = await readBody(req);
+      let flash: { kind: 'ok' | 'error'; msg: string };
+      try {
+        const slug = (body.get('slug') ?? '').trim();
+        const title = (body.get('title') ?? '').trim();
+        const category = (body.get('category') ?? 'other') as TemplateCategory;
+        const bodyMd = body.get('body_markdown') ?? '';
+        if (!slug || !title || !bodyMd) throw new Error('slug, title, and body are required');
+        upsertTemplate({
+          slug, title, category,
+          description: body.get('description') ?? '',
+          body_markdown: bodyMd,
+          source: 'firm',
+          author_email: session.user.email,
+          change_note: 'initial firm version',
+        });
+        flash = { kind: 'ok', msg: `Template "${title}" added.` };
+      } catch (err) {
+        flash = { kind: 'error', msg: err instanceof Error ? err.message : 'Could not add template.' };
+      }
+      const templates = listTemplates();
+      html(res, 200, renderTemplatesList({ templates, currentEmail: session.user.email, flash }));
+      return;
+    }
+    const tplSlugMatch = path.match(/^\/templates\/([a-z0-9-]+)$/i);
+    if (method === 'GET' && tplSlugMatch) {
+      const tpl = getTemplateBySlug(tplSlugMatch[1]);
+      if (!tpl) { html(res, 404, render404('template')); return; }
+      const versions = listTemplateVersions(tpl.id);
+      html(res, 200, renderTemplateDetail({ template: tpl, versions, currentEmail: session.user.email }));
+      return;
+    }
+    const tplUpdateMatch = path.match(/^\/templates\/([a-z0-9-]+)\/update$/i);
+    if (method === 'POST' && tplUpdateMatch) {
+      const tpl = getTemplateBySlug(tplUpdateMatch[1]);
+      if (!tpl) { html(res, 404, render404('template')); return; }
+      const body = await readBody(req);
+      let flash: { kind: 'ok' | 'error'; msg: string };
+      try {
+        upsertTemplate({
+          slug: tpl.slug,
+          title: (body.get('title') ?? tpl.title).trim(),
+          category: tpl.category,
+          description: body.get('description') ?? tpl.description ?? '',
+          body_markdown: body.get('body_markdown') ?? tpl.body_markdown,
+          source: tpl.source,
+          author_email: session.user.email,
+          change_note: body.get('change_note') ?? 'updated via dashboard',
+        });
+        flash = { kind: 'ok', msg: 'New version saved.' };
+      } catch (err) {
+        flash = { kind: 'error', msg: err instanceof Error ? err.message : 'Could not save.' };
+      }
+      const fresh = getTemplateBySlug(tpl.slug);
+      const versions = fresh ? listTemplateVersions(fresh.id) : [];
+      html(res, 200, renderTemplateDetail({ template: fresh ?? tpl, versions, currentEmail: session.user.email, flash }));
+      return;
+    }
+
+    // ---- conflict check resolution ----
+    const conflictResolveMatch = path.match(/^\/conflict\/([0-9a-f-]+)\/(clear|block|override)$/i);
+    if (method === 'POST' && conflictResolveMatch) {
+      const [, conflictId, action] = conflictResolveMatch;
+      const body = await readBody(req);
+      const note = body.get('note') ?? undefined;
+      const decision = action === 'clear' ? 'cleared' : action === 'block' ? 'blocked' : 'override';
+      try {
+        const c = resolveConflictCheck({ conflictId, by: session.user.email, decision, note });
+        redirect(res, `/matter/${c.matter_id}`);
+      } catch (err) {
+        html(res, 400, render404(err instanceof Error ? err.message : 'conflict not found'));
+      }
+      return;
+    }
+
+    // ---- weekly briefing preferences ----
+    if (method === 'GET' && path === '/me/briefing') {
+      const prefs = getBriefingPreferences(session.user.id);
+      html(res, 200, renderBriefingPrefsPage(prefs, session.user.email));
+      return;
+    }
+    if (method === 'POST' && path === '/me/briefing') {
+      const body = await readBody(req);
+      setBriefingPreferences({
+        user_id: session.user.id,
+        weekly_enabled: body.get('weekly_enabled') === 'on',
+        section_matters: body.get('section_matters') === 'on',
+        section_deadlines: body.get('section_deadlines') === 'on',
+        section_overdue: body.get('section_overdue') === 'on',
+        section_regulatory: body.get('section_regulatory') === 'on',
+        section_precedents: body.get('section_precedents') === 'on',
+        practice_areas: (body.get('practice_areas') ?? '')
+          .split(',').map((s) => s.trim()).filter(Boolean),
+      });
+      redirect(res, '/me/briefing');
+      return;
+    }
+
+    // ---- deadline snooze / dismiss ----
+    const snoozeMatch = path.match(/^\/deadline\/([0-9a-f-]+)\/snooze$/i);
+    if (method === 'POST' && snoozeMatch) {
+      const body = await readBody(req);
+      const days = Math.max(1, Math.min(30, Number.parseInt(body.get('days') ?? '7', 10) || 7));
+      const until = new Date(Date.now() + days * 86400000).toISOString();
+      snoozeDeadlineHelper(snoozeMatch[1], until, session.user.email);
+      redirect(res, '/calendar');
+      return;
+    }
+    const dismissMatch = path.match(/^\/deadline\/([0-9a-f-]+)\/dismiss$/i);
+    if (method === 'POST' && dismissMatch) {
+      dismissDeadlineHelper(dismissMatch[1], session.user.email);
+      redirect(res, '/calendar');
       return;
     }
 

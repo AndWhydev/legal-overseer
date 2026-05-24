@@ -28,6 +28,8 @@ import { sendNotification } from '../email/notifier.js';
 import { createMatter, nextMatterNumber, type Matter } from '../db/repositories/matters.js';
 import { appendLegalAudit } from '../compliance/audit.js';
 import { redactForExternalModel } from '../compliance/privilege.js';
+import { runConflictCheck, isMatterBlockedByConflict } from '../compliance/conflicts.js';
+import { estimateMatterCost, saveMatterCostEstimate } from '../cost-estimator/index.js';
 import { assertCanCreateMatter, LicenceLimitError } from '../licence/index.js';
 import type { IncomingEmail, PipelineResult } from '../inbox-monitor/types.js';
 
@@ -251,6 +253,39 @@ export async function runLegalIntake(email: IncomingEmail): Promise<PipelineResu
   // 4. Stage attachments.
   const staged = stageAttachments(email, folder);
 
+  // 4a. Conflict-of-interest check (hard rule — every new matter).
+  //     Any match becomes a pending conflict that a lawyer must
+  //     clear before the matter proceeds.
+  let conflictStatus = 'cleared';
+  let conflictCount = 0;
+  try {
+    const conflict = runConflictCheck({
+      matterId: matter.id,
+      newClientName: classification.clientName,
+      newClientEmail: classification.clientEmail,
+    });
+    conflictStatus = conflict.status;
+    conflictCount = conflict.match_count;
+  } catch (err) {
+    logger.warn(`conflict check failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  // 4b. Cost estimate (matter-type-driven baseline so the lawyer sees
+  //     the expected AI spend on the dashboard).
+  try {
+    const est = estimateMatterCost(classification.matterType, 'medium');
+    saveMatterCostEstimate({
+      matterId: matter.id,
+      matterType: classification.matterType,
+      complexity: 'medium',
+      estimatedAiUsd: est.estimatedAiUsd,
+      estimatedLawyerHours: est.estimatedLawyerHours,
+      notes: 'auto-estimated at intake',
+    });
+  } catch (err) {
+    logger.warn(`cost estimate failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   // 5. Audit.
   appendLegalAudit({
     matterId: matter.id,
@@ -263,6 +298,8 @@ export async function runLegalIntake(email: IncomingEmail): Promise<PipelineResu
       classification,
       intakeMessageId: email.messageId,
       stagedAttachments: staged.length,
+      conflictStatus,
+      conflictMatchCount: conflictCount,
     },
   });
 
@@ -273,10 +310,18 @@ export async function runLegalIntake(email: IncomingEmail): Promise<PipelineResu
   }
 
   // 7. Result for the inbox-monitor auto-reply.
+  //     A pending conflict suppresses the auto-reply — we don't want
+  //     to confirm receipt to someone we may be acting against.
+  const blocked = isMatterBlockedByConflict(matter.id);
+  if (blocked) {
+    logger.warn(`Auto-reply suppressed for matter ${matter.matter_number}: pending conflict-of-interest check`);
+  }
   return {
     success: true,
     matterId: matter.id,
     matterNumber: matter.matter_number,
-    summary: `Matter ${matter.matter_number} ("${matter.title}", ${matter.matter_type}, ${matter.jurisdiction}) created and the responsible lawyer has been notified.`,
+    summary: blocked
+      ? `Matter ${matter.matter_number} created. Auto-reply SUPPRESSED — pending conflict-of-interest check (${conflictCount} potential match(es)). A lawyer must clear the conflict before correspondence resumes.`
+      : `Matter ${matter.matter_number} ("${matter.title}", ${matter.matter_type}, ${matter.jurisdiction}) created and the responsible lawyer has been notified.`,
   };
 }
