@@ -1,0 +1,82 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "version": "1.0.0",
+  "id": "00000000-0000-4000-8000-legaloverseer",
+  "developer": {
+    "name": "Legal Overseer",
+    "websiteUrl": "https://legaloverseer.com.au",
+    "privacyUrl": "https://legaloverseer.com.au/privacy",
+    "termsOfUseUrl": "https://legaloverseer.com.au/terms"
+  },
+  "name": {
+    "short": "Legal Overseer",
+    "full": "Legal Overseer Outlook Add-in"
+  },
+  "description": {
+    "short": "File emails to matters, request AI analysis, create tasks.",
+    "full": "Legal Overseer Outlook add-in for Australian law firms. File client emails to the right matter, create matters from emails, request AI analysis, and turn email content into action items, deadlines and tasks."
+  },
+  "icons": {
+    "outline": "outline.png",
+    "color": "color.png"
+  },
+  "accentColor": "#0050b3",
+  "composeExtensions": [
+    {
+      "botId": "00000000-0000-4000-8000-legaloverseer",
+      "commands": [
+        {
+          "id": "fileEmail",
+          "title": "File to matter",
+          "description": "File this email to a Legal Overseer matter.",
+          "type": "action",
+          "context": [
+            "compose",
+            "commandBox"
+          ],
+          "fetchTask": true,
+          "parameters": [
+            {
+              "name": "matterNumber",
+              "title": "Matter number",
+              "description": "Matter number (e.g. 2026-0042)",
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "createMatter",
+          "title": "Create matter",
+          "description": "Open a new matter from the selected email.",
+          "type": "action",
+          "context": ["commandBox"],
+          "fetchTask": true,
+          "parameters": [
+            {
+              "name": "title",
+              "title": "Matter title",
+              "inputType": "text"
+            }
+          ]
+        },
+        {
+          "id": "createTask",
+          "title": "Create task",
+          "description": "Turn email content into a Legal Overseer action item.",
+          "type": "action",
+          "context": ["message"],
+          "fetchTask": true,
+          "parameters": []
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "*.legaloverseer.com.au"
+  ]
+}
