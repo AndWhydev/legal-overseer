@@ -8,6 +8,8 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import { createSafeLogger } from '../../governance/index.js';
 import { wrapWithDisclaimer } from '../../compliance/disclaimer.js';
+import { pickBestPrecedent } from '../../precedents/index.js';
+import { pickBestTemplate } from '../../templates/index.js';
 import { getSkillDefinition } from '../registry.js';
 import type { DocumentType, DraftedDocument } from './types.js';
 
@@ -46,6 +48,30 @@ export async function runMatterDrafting(
   const skill = getSkillDefinition('matter_drafting');
   const model = MODEL_MAP[input.modelTier ?? skill.defaultModel];
 
+  // Consult the firm's precedent library first; fall back to built-in
+  // templates if there's nothing in the library that matches.
+  const precedent = pickBestPrecedent({ documentType: input.documentType });
+  const fallbackTemplate = precedent ? null : pickBestTemplate({ documentType: input.documentType });
+
+  const precedentBlock = precedent
+    ? `\n## Firm precedent (PREFER THIS over generic templates)
+Title: ${precedent.title}
+Category: ${precedent.category}
+
+\`\`\`
+${precedent.body_markdown.slice(0, 8000)}
+\`\`\`
+`
+    : fallbackTemplate
+      ? `\n## Built-in template (use as a starting point)
+Title: ${fallbackTemplate.title}
+
+\`\`\`
+${fallbackTemplate.body_markdown.slice(0, 8000)}
+\`\`\`
+`
+      : '';
+
   const userPrompt = `${skill.systemPrompt}
 
 ---
@@ -58,7 +84,7 @@ Audience: ${input.audience}
 Brief:
 ${input.brief}
 
-${input.templateHints ? `Template hints:\n${input.templateHints}\n\n` : ''}
+${input.templateHints ? `Template hints:\n${input.templateHints}\n\n` : ''}${precedentBlock}
 
 Produce the full document body in Markdown. Use [CONFIRM: ...]
 placeholders wherever a fact must be checked. End with the AI

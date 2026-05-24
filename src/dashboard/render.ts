@@ -115,8 +115,12 @@ function layout(activePath: string, title: string, body: string): string {
     ${item('/calendar', 'Deadlines')}
     ${item('/billing', 'Billing')}
     ${item('/upload', 'Upload')}
+    ${item('/dictate', 'Dictate')}
     ${item('/templates', 'Templates')}
     ${item('/precedents', 'Precedents')}
+    ${item('/cost-estimator', 'Cost est.')}
+    ${item('/clients', 'Clients')}
+    ${item('/integrations', 'Integrations')}
   </nav>
 </header>
 <main>${body}</main>
@@ -315,7 +319,8 @@ export function renderReviewDetail(payload: { review: ReviewQueueRow; matter: Ma
          <input name="note" placeholder="reason" required style="padding:6px;background:#1f232b;color:#e6e9ee;border:1px solid #2a2f3a;border-radius:4px;margin-left:8px">
          <button type="submit" style="padding:6px 12px;background:#f07178;color:#0f1115;border:none;border-radius:4px;margin-left:8px;cursor:pointer">Reject</button>
        </form>`
-    : `<p class="muted">Already ${escapeHtml(review.status)} by ${escapeHtml(review.reviewed_by ?? 'unknown')} on ${escapeHtml(review.reviewed_at ?? 'unknown')}.${review.review_note ? ` Note: ${escapeHtml(review.review_note)}` : ''}</p>`;
+    : `<p class="muted">Already ${escapeHtml(review.status)} by ${escapeHtml(review.reviewed_by ?? 'unknown')} on ${escapeHtml(review.reviewed_at ?? 'unknown')}.${review.review_note ? ` Note: ${escapeHtml(review.review_note)}` : ''}</p>
+       ${review.status === 'approved' ? `<p style="margin-top:12px"><a href="/precedents/from-review/${escapeHtml(review.id)}"><button type="button" style="background:#6dd29b;color:#0f1115;border:none;border-radius:4px;padding:8px 14px;font-weight:600;cursor:pointer">Add to precedent library →</button></a></p>` : ''}`;
 
   const body = `
     <h2>${escapeHtml(review.title)}</h2>

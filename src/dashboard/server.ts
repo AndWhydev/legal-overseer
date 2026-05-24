@@ -69,6 +69,17 @@ import {
 } from '../dictation/index.js';
 import { renderCostEstimatorPage } from './cost-estimator-view.js';
 import { estimateMatterCost, getMatterCostStatus, listMonthlyMatterCosts } from '../cost-estimator/index.js';
+import {
+  renderPrecedentsList,
+  renderPrecedentDetail,
+  renderPrecedentOfferForm,
+} from './precedents-view.js';
+import {
+  addPrecedent,
+  getPrecedentById,
+  searchPrecedents,
+} from '../precedents/index.js';
+import { getReviewById } from '../compliance/reviewGate.js';
 import { renderTimelinePage } from './timeline-view.js';
 import { renderTemplatesList, renderTemplateDetail } from './templates-view.js';
 import {
@@ -469,6 +480,101 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       const payload = getReviewWithMatter(reviewMatch[1]);
       if (!payload) { html(res, 404, render404('review')); return; }
       html(res, 200, renderReviewDetail(payload));
+      return;
+    }
+
+    // ---- precedents ----
+    if (method === 'GET' && path === '/precedents') {
+      const u2 = new URL(url, 'http://x');
+      const q = u2.searchParams.get('q') ?? '';
+      const matterType = u2.searchParams.get('matter_type') ?? '';
+      const documentType = u2.searchParams.get('document_type') ?? '';
+      const results = searchPrecedents({
+        query: q || undefined,
+        matterType: matterType || undefined,
+        documentType: documentType || undefined,
+      });
+      html(res, 200, renderPrecedentsList({
+        currentEmail: session.user.email,
+        results, query: q, matterType, documentType,
+      }));
+      return;
+    }
+    const precDetailMatch = path.match(/^\/precedents\/([0-9a-f-]+)$/i);
+    if (method === 'GET' && precDetailMatch) {
+      const p = getPrecedentById(precDetailMatch[1]);
+      if (!p) { html(res, 404, render404('precedent')); return; }
+      html(res, 200, renderPrecedentDetail({ currentEmail: session.user.email, precedent: p }));
+      return;
+    }
+    const precOfferMatch = path.match(/^\/precedents\/from-review\/([0-9a-f-]+)$/i);
+    if (method === 'GET' && precOfferMatch) {
+      const review = getReviewById(precOfferMatch[1]);
+      if (!review) { html(res, 404, render404('review')); return; }
+      if (review.status !== 'approved') {
+        html(res, 400, render404('only approved reviews can become precedents'));
+        return;
+      }
+      html(res, 200, renderPrecedentOfferForm({
+        currentEmail: session.user.email,
+        reviewId: review.id,
+        defaultTitle: review.title,
+        defaultCategory: review.output_kind === 'drafted_document' ? 'letter' : 'other',
+        defaultMatterType: null,
+        defaultDocumentType: review.output_kind,
+        bodyMarkdown: review.body_markdown,
+      }));
+      return;
+    }
+    if (method === 'POST' && precOfferMatch) {
+      const review = getReviewById(precOfferMatch[1]);
+      if (!review || review.status !== 'approved') { html(res, 400, render404('approval required first')); return; }
+      const body = await readBody(req);
+      const title = (body.get('title') ?? review.title).trim();
+      const category = (body.get('category') ?? 'other').trim();
+      const matter_type = (body.get('matter_type') ?? '').trim() || null;
+      const document_type = (body.get('document_type') ?? '').trim() || null;
+      const tags = (body.get('tags') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+      const p = addPrecedent({
+        title, category, matter_type, document_type,
+        body_markdown: review.body_markdown,
+        source_review_id: review.id,
+        source_matter_id: review.matter_id,
+        added_by: session.user.email,
+        tags,
+      });
+      appendLegalAudit({
+        matterId: review.matter_id, actorId: session.user.email,
+        action: 'precedent.add',
+        detail: `from review ${review.id}: ${title}`,
+        refTable: 'precedents', refId: p.id,
+      });
+      redirect(res, `/precedents/${p.id}`);
+      return;
+    }
+
+    // ---- LEAP + Clio: sync triggers ----
+    if (method === 'POST' && path === '/integrations/leap/sync') {
+      const { syncLeap } = await import('../integrations/leap/index.js');
+      const result = await syncLeap({ triggeredBy: session.user.email });
+      json(res, 200, result);
+      return;
+    }
+    if (method === 'POST' && path === '/integrations/clio/sync') {
+      const { syncClio } = await import('../integrations/clio/index.js');
+      const result = await syncClio({ triggeredBy: session.user.email });
+      json(res, 200, result);
+      return;
+    }
+    if (method === 'GET' && path === '/integrations') {
+      const { renderIntegrationsPage } = await import('./integrations-view.js');
+      const { isLeapConfigured } = await import('../integrations/leap/index.js');
+      const { isClioConfigured } = await import('../integrations/clio/index.js');
+      html(res, 200, renderIntegrationsPage({
+        currentEmail: session.user.email,
+        leapConfigured: isLeapConfigured(),
+        clioConfigured: isClioConfigured(),
+      }));
       return;
     }
 
