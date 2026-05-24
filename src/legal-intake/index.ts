@@ -28,6 +28,7 @@ import { sendNotification } from '../email/notifier.js';
 import { createMatter, nextMatterNumber, type Matter } from '../db/repositories/matters.js';
 import { appendLegalAudit } from '../compliance/audit.js';
 import { redactForExternalModel } from '../compliance/privilege.js';
+import { assertCanCreateMatter, LicenceLimitError } from '../licence/index.js';
 import type { IncomingEmail, PipelineResult } from '../inbox-monitor/types.js';
 
 const logger = createSafeLogger('LegalIntake');
@@ -199,6 +200,23 @@ function escapeHtml(s: string): string {
 
 export async function runLegalIntake(email: IncomingEmail): Promise<PipelineResult> {
   logger.info(`Intake from ${email.fromAddress}: "${email.subject.slice(0, 60)}"`);
+
+  // 0. Licence gate — refuse new intake when the firm is over its
+  //    plan or the licence has expired. Existing matters remain
+  //    accessible; only NEW matter creation is blocked.
+  try {
+    assertCanCreateMatter();
+  } catch (err) {
+    if (err instanceof LicenceLimitError) {
+      logger.warn(`Intake blocked by licence limit: ${err.message}`);
+      return {
+        success: false,
+        summary: `Intake declined: ${err.message}`,
+        error: err.message,
+      };
+    }
+    throw err;
+  }
 
   // 1 + 2. Allocate number + classify.
   const matterNumber = nextMatterNumber();

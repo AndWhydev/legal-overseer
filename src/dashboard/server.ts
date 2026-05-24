@@ -1,19 +1,28 @@
 /**
- * Minimal HTTP dashboard for Legal Overseer.
+ * Local HTTP dashboard for Legal Overseer.
+ *
+ * Adds setup-wizard redirection, cookie-session auth, user management,
+ * per-lawyer filtered review queue, rate limiting, and a generic
+ * error pipeline that never leaks internals.
  *
  * Routes:
- *   GET  /                         → matter list
- *   GET  /matter/:id               → per-matter deep view
- *   GET  /review                   → review queue (pending + recents)
- *   GET  /review/:id               → per-review detail (approve/reject)
- *   POST /review/:id/approve       → approve a pending review
- *   POST /review/:id/reject        → reject a pending review
- *   GET  /calendar                 → deadline calendar (30d window)
+ *   GET  /setup/*                  → first-run wizard (until complete)
+ *   GET  /login, POST /login       → session creation
+ *   GET  /logout                   → session destruction
+ *   GET  /                         → matter list (auth required)
+ *   GET  /matter/:id               → matter detail
+ *   GET  /review                   → review queue (lawyer-filtered)
+ *   GET  /review/:id               → review detail
+ *   POST /review/:id/approve|reject→ review actions
+ *   GET  /calendar                 → deadlines (30d)
  *   GET  /billing                  → billing tracker
- *   GET  /api/matters.json         → JSON matter summary (for tooling)
- *   GET  /api/review.json          → JSON review queue (for tooling)
+ *   GET  /users                    → admin-only user management
+ *   POST /users/create, /users/:id/(role|suspend|reactivate)
+ *   GET  /api/matters.json, /api/review.json
  *
- * Runs on DASHBOARD_PORT (default 3000) bound to 127.0.0.1 only.
+ * Binds 127.0.0.1 by default. Front with the firm's reverse proxy if
+ * remote access is needed (and set FORCE_HTTPS=true so cookies use
+ * the Secure flag).
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
@@ -35,12 +44,45 @@ import {
   renderBilling,
   render404,
 } from './render.js';
+import { renderUsersPage } from './users-view.js';
+import {
+  resolveSession,
+  clientIp,
+  isLockedOut,
+  recordLoginFailure,
+  recordLoginSuccess,
+  renderLoginPage,
+  UnauthorizedError,
+  ForbiddenError,
+} from './auth.js';
 import { approveReview, rejectReview } from '../compliance/reviewGate.js';
+import {
+  getUserByEmail,
+  createUser,
+  setUserStatus,
+  setUserRole,
+  getUserById,
+  destroySession,
+  createSession,
+  setSessionCookieHeader,
+  clearSessionCookieHeader,
+  type UserRole,
+  type Session,
+} from '../users/index.js';
+import { verifyPassword } from '../users/password.js';
+import {
+  assertCanAddUser,
+  LicenceLimitError,
+  getLicenceState,
+} from '../licence/index.js';
+import { isSetupComplete, handleOnboardingRoute, isSetupRoute } from '../onboarding/index.js';
+import { appendLegalAudit } from '../compliance/audit.js';
+import { checkRateLimit } from '../governance/index.js';
 
 const logger = createSafeLogger('Dashboard');
 
-function html(res: ServerResponse, status: number, body: string): void {
-  res.writeHead(status, { 'content-type': 'text/html; charset=utf-8' });
+function html(res: ServerResponse, status: number, body: string, extraHeaders: Record<string, string | string[]> = {}): void {
+  res.writeHead(status, { 'content-type': 'text/html; charset=utf-8', ...extraHeaders });
   res.end(body);
 }
 
@@ -49,8 +91,8 @@ function json(res: ServerResponse, status: number, body: unknown): void {
   res.end(JSON.stringify(body, null, 2));
 }
 
-function redirect(res: ServerResponse, to: string): void {
-  res.writeHead(303, { location: to });
+function redirect(res: ServerResponse, to: string, headers: Record<string, string | string[]> = {}): void {
+  res.writeHead(303, { location: to, ...headers });
   res.end();
 }
 
@@ -60,13 +102,112 @@ async function readBody(req: IncomingMessage): Promise<URLSearchParams> {
   return new URLSearchParams(Buffer.concat(chunks).toString('utf8'));
 }
 
+function isSecureRequest(req: IncomingMessage): boolean {
+  if (process.env.FORCE_HTTPS === 'true') return true;
+  const proto = req.headers['x-forwarded-proto'];
+  if (typeof proto === 'string' && proto.includes('https')) return true;
+  return false;
+}
+
+function requireRole(session: Session, role: UserRole): void {
+  if (session.user.role !== role) {
+    throw new ForbiddenError(`requires role: ${role}`);
+  }
+}
+
+async function rateLimitRequest(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
+  const ip = clientIp(req);
+  const method = req.method ?? 'GET';
+  const risk = method === 'GET' ? 'low' : 'medium';
+  const result = await checkRateLimit(`dash:${ip}`, risk);
+  res.setHeader('x-ratelimit-remaining', String(result.remainingPoints));
+  if (!result.allowed) {
+    res.setHeader('retry-after', String(Math.ceil(result.msBeforeNext / 1000)));
+    res.writeHead(429, { 'content-type': 'text/plain' });
+    res.end('Too many requests. Please slow down.');
+    return false;
+  }
+  return true;
+}
+
 async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = req.url ?? '/';
   const method = req.method ?? 'GET';
   const path = url === '/' ? url : url.replace(/\/+$/, '').split('?')[0];
 
+  const allowed = await rateLimitRequest(req, res);
+  if (!allowed) return;
+
+  const isSecure = isSecureRequest(req);
+
+  // ---- setup wizard takes priority ----
+  if (!isSetupComplete()) {
+    if (isSetupRoute(path)) {
+      await handleOnboardingRoute(req, res, path, isSecure);
+      return;
+    }
+    redirect(res, '/setup');
+    return;
+  }
+
+  // ---- public routes (no session required) ----
+  if (method === 'GET' && path === '/login') {
+    html(res, 200, renderLoginPage());
+    return;
+  }
+  if (method === 'POST' && path === '/login') {
+    const ip = clientIp(req);
+    if (isLockedOut(ip)) {
+      html(res, 429, renderLoginPage('Too many failed attempts. Try again in a few minutes.'));
+      return;
+    }
+    const body = await readBody(req);
+    const email = (body.get('email') ?? '').trim().toLowerCase();
+    const password = body.get('password') ?? '';
+    const user = email ? getUserByEmail(email) : null;
+    const ok = !!user && user.status === 'active'
+      && verifyPassword(password, {
+        hash: user.password_hash, salt: user.password_salt, iter: user.password_iter,
+      });
+    if (!ok || !user) {
+      recordLoginFailure(ip);
+      html(res, 401, renderLoginPage('Invalid email or password.', email));
+      return;
+    }
+    recordLoginSuccess(ip);
+    const session = createSession(user.id, ip, req.headers['user-agent'] ?? undefined);
+    appendLegalAudit({
+      matterId: null, actorId: user.email, action: 'auth.login',
+      detail: `from ${ip}`, refTable: 'users', refId: user.id,
+    });
+    redirect(res, '/', { 'set-cookie': setSessionCookieHeader(session.id, isSecure) });
+    return;
+  }
+  if (method === 'GET' && path === '/logout') {
+    const session = resolveSession(req);
+    if (session) {
+      destroySession(session.id);
+      appendLegalAudit({
+        matterId: null, actorId: session.user.email, action: 'auth.logout',
+        refTable: 'users', refId: session.user.id,
+      });
+    }
+    redirect(res, '/login', { 'set-cookie': clearSessionCookieHeader() });
+    return;
+  }
+
+  // ---- everything below requires a session ----
+  const session = resolveSession(req);
+  if (!session) {
+    if (path.startsWith('/api/')) {
+      json(res, 401, { error: 'unauthorized' });
+      return;
+    }
+    redirect(res, '/login');
+    return;
+  }
+
   try {
-    // ----- GET pages -----
     if (method === 'GET' && (path === '/' || path === '/matters')) {
       html(res, 200, renderMatters(buildMatterSummary()));
       return;
@@ -83,8 +224,6 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       html(res, 200, renderBilling(buildBillingTrackerView()));
       return;
     }
-
-    // ----- JSON APIs -----
     if (method === 'GET' && path === '/api/matters.json') {
       json(res, 200, buildMatterSummary());
       return;
@@ -94,7 +233,6 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       return;
     }
 
-    // ----- matter detail -----
     const matterMatch = path.match(/^\/matter\/([0-9a-f-]+)$/i);
     if (method === 'GET' && matterMatch) {
       const detail = buildMatterDetail(matterMatch[1]);
@@ -103,12 +241,11 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       return;
     }
 
-    // ----- review detail + actions -----
     const reviewActionMatch = path.match(/^\/review\/([0-9a-f-]+)\/(approve|reject)$/i);
     if (method === 'POST' && reviewActionMatch) {
       const [, id, action] = reviewActionMatch;
       const body = await readBody(req);
-      const reviewer = body.get('reviewer') ?? '';
+      const reviewer = (body.get('reviewer') ?? session.user.email).trim();
       const note = body.get('note') ?? undefined;
       if (!reviewer) {
         html(res, 400, render404('reviewer required'));
@@ -122,7 +259,6 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       redirect(res, `/review/${id}`);
       return;
     }
-
     const reviewMatch = path.match(/^\/review\/([0-9a-f-]+)$/i);
     if (method === 'GET' && reviewMatch) {
       const payload = getReviewWithMatter(reviewMatch[1]);
@@ -131,11 +267,103 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
       return;
     }
 
+    // ---- users (admin only) ----
+    if (method === 'GET' && path === '/users') {
+      requireRole(session, 'admin');
+      html(res, 200, renderUsersPage({ currentEmail: session.user.email }));
+      return;
+    }
+    if (method === 'POST' && path === '/users/create') {
+      requireRole(session, 'admin');
+      const body = await readBody(req);
+      const full_name = (body.get('full_name') ?? '').trim();
+      const email = (body.get('email') ?? '').trim().toLowerCase();
+      const password = body.get('password') ?? '';
+      const role = (body.get('role') ?? 'lawyer') as UserRole;
+
+      let flash: { kind: 'ok' | 'error'; msg: string };
+      try {
+        if (!email || !full_name) throw new Error('Name and email are required.');
+        if (password.length < 12) throw new Error('Password must be at least 12 characters.');
+        if (!['admin', 'lawyer', 'paralegal'].includes(role)) throw new Error('Invalid role.');
+        if (getUserByEmail(email)) throw new Error('A user with that email already exists.');
+        assertCanAddUser();
+        const user = createUser({ email, full_name, role, password });
+        appendLegalAudit({
+          matterId: null, actorId: session.user.email, action: 'user.create',
+          detail: `${email} as ${role}`, refTable: 'users', refId: user.id,
+        });
+        flash = { kind: 'ok', msg: `Added ${email}.` };
+      } catch (err) {
+        const msg = err instanceof LicenceLimitError
+          ? err.message
+          : err instanceof Error ? err.message : 'Could not add user.';
+        flash = { kind: 'error', msg };
+      }
+      html(res, 200, renderUsersPage({ flash, currentEmail: session.user.email }));
+      return;
+    }
+    const userRoleMatch = path.match(/^\/users\/([0-9a-f-]+)\/role$/i);
+    if (method === 'POST' && userRoleMatch) {
+      requireRole(session, 'admin');
+      const body = await readBody(req);
+      const role = (body.get('role') ?? '') as UserRole;
+      const user = getUserById(userRoleMatch[1]);
+      let flash: { kind: 'ok' | 'error'; msg: string };
+      try {
+        if (!user) throw new Error('User not found.');
+        if (!['admin', 'lawyer', 'paralegal'].includes(role)) throw new Error('Invalid role.');
+        setUserRole(user.id, role);
+        appendLegalAudit({
+          matterId: null, actorId: session.user.email, action: 'user.update_role',
+          detail: `${user.email} → ${role}`, refTable: 'users', refId: user.id,
+        });
+        flash = { kind: 'ok', msg: `Role updated for ${user.email}.` };
+      } catch (err) {
+        flash = { kind: 'error', msg: err instanceof Error ? err.message : 'Could not update role.' };
+      }
+      html(res, 200, renderUsersPage({ flash, currentEmail: session.user.email }));
+      return;
+    }
+    const userSuspendMatch = path.match(/^\/users\/([0-9a-f-]+)\/(suspend|reactivate)$/i);
+    if (method === 'POST' && userSuspendMatch) {
+      requireRole(session, 'admin');
+      const [, id, action] = userSuspendMatch;
+      const user = getUserById(id);
+      let flash: { kind: 'ok' | 'error'; msg: string };
+      try {
+        if (!user) throw new Error('User not found.');
+        if (action === 'reactivate') {
+          assertCanAddUser();
+        }
+        setUserStatus(id, action === 'suspend' ? 'suspended' : 'active');
+        appendLegalAudit({
+          matterId: null, actorId: session.user.email,
+          action: `user.${action}`, detail: user.email, refTable: 'users', refId: id,
+        });
+        flash = { kind: 'ok', msg: `${user.email} ${action}d.` };
+      } catch (err) {
+        const msg = err instanceof LicenceLimitError ? err.message
+          : err instanceof Error ? err.message : `Could not ${action} user.`;
+        flash = { kind: 'error', msg };
+      }
+      html(res, 200, renderUsersPage({ flash, currentEmail: session.user.email }));
+      return;
+    }
+
     html(res, 404, render404('page'));
   } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      redirect(res, '/login');
+      return;
+    }
+    if (err instanceof ForbiddenError) {
+      html(res, 403, render404('forbidden'));
+      return;
+    }
     const msg = err instanceof Error ? err.message : String(err);
     logger.error(`request ${path} failed: ${msg}`);
-    html(res, 500, `<pre>${msg}</pre>`);
+    html(res, 500, render404('internal error'));
   }
 }
 
@@ -147,19 +375,32 @@ export interface DashboardServer {
 
 export async function startDashboard(port?: number): Promise<DashboardServer> {
   const listenPort = port ?? Number.parseInt(process.env.DASHBOARD_PORT ?? '3000', 10);
+  const bindHost = process.env.DASHBOARD_BIND ?? '127.0.0.1';
   const server = createServer((req, res) => {
-    handle(req, res).catch((err) => {
-      logger.error(`handler crash: ${err instanceof Error ? err.message : String(err)}`);
-      if (!res.headersSent) {
-        res.writeHead(500, { 'content-type': 'text/plain' });
-        res.end('internal error');
-      }
-    });
+    const start = Date.now();
+    handle(req, res)
+      .catch((err) => {
+        logger.error(`handler crash: ${err instanceof Error ? err.message : String(err)}`);
+        if (!res.headersSent) {
+          res.writeHead(500, { 'content-type': 'text/plain' });
+          res.end('internal error');
+        }
+      })
+      .finally(() => {
+        const ms = Date.now() - start;
+        logger.info(`${req.method} ${req.url} → ${res.statusCode} ${ms}ms`);
+      });
   });
+
+  // Keep-alive timeouts so memory does not climb with idle clients.
+  server.keepAliveTimeout = 30_000;
+  server.headersTimeout = 35_000;
+  server.requestTimeout = 60_000;
+  server.maxHeadersCount = 100;
 
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
-    server.listen(listenPort, '127.0.0.1', () => {
+    server.listen(listenPort, bindHost, () => {
       server.off('error', reject);
       resolve();
     });
@@ -167,8 +408,13 @@ export async function startDashboard(port?: number): Promise<DashboardServer> {
 
   const addr = server.address();
   const actualPort = typeof addr === 'object' && addr ? addr.port : listenPort;
-  const url = `http://127.0.0.1:${actualPort}`;
+  const url = `http://${bindHost}:${actualPort}`;
   logger.info(`dashboard listening on ${url}`);
+
+  const licStatus = getLicenceState();
+  if (!licStatus.valid) {
+    logger.warn(`dashboard started with invalid licence: ${licStatus.message}`);
+  }
 
   return {
     port: actualPort,

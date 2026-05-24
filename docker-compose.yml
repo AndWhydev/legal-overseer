@@ -1,0 +1,61 @@
+# Legal Overseer — single-host deployment.
+#
+# Usage on the firm's server:
+#
+#   1. cp .env.example .env  &&  edit .env
+#   2. place your licence key at ./data/licence.key
+#   3. docker compose up -d
+#   4. open http://<server>:3000  → setup wizard runs on first boot
+#
+# Data persists in the ./data volume, which sits OUTSIDE the container.
+# Back up that directory and you have backed up the system.
+
+services:
+  legal-overseer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: legal-overseer:latest
+    container_name: legal-overseer
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_PATH: /data/legal-overseer.db
+      MATTER_FOLDERS_ROOT: /data/matters
+      INBOX_MONITOR_ATTACHMENTS_DIR: /data/inbox-monitor
+      LICENCE_FILE: /data/licence.key
+    ports:
+      # Health / API endpoint.
+      - "127.0.0.1:8080:8080"
+      # Dashboard. Bind to 127.0.0.1 by default — front with your reverse proxy.
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "5", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 8s
+      retries: 3
+      start_period: 20s
+    # Run with reasonable resource caps. Override for larger firms.
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+    # Hard-cap log rotation so a busy day doesn't fill the disk.
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: false
+    tmpfs:
+      - /tmp:size=64M

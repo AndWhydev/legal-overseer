@@ -15,8 +15,10 @@ import {
   isGlobalKillActive,
 } from '../governance/index.js';
 import { verifyAuditChain } from '../compliance/audit.js';
+import { getLicenceState } from '../licence/index.js';
+import { getUpdateState, getCurrentVersion } from '../updater/index.js';
+import { isSetupComplete } from '../onboarding/index.js';
 
-const VERSION = '0.1.0';
 const startTime = Date.now();
 
 export interface GovernanceStatus {
@@ -34,6 +36,22 @@ export interface AuditStatus {
   firstBreak: string | null;
 }
 
+export interface LicenceHealth {
+  valid: boolean;
+  readOnly: boolean;
+  tier: string | null;
+  expiresAt: string | null;
+  daysUntilExpiry: number | null;
+}
+
+export interface UpdateHealth {
+  current: string;
+  latest: string | null;
+  updateAvailable: boolean;
+  unsupported: boolean;
+  lastCheckedAt: string | null;
+}
+
 export interface HealthResponse {
   status: 'ok' | 'degraded' | 'unhealthy';
   version: string;
@@ -43,6 +61,9 @@ export interface HealthResponse {
   database: 'connected' | 'error';
   audit: AuditStatus;
   governance: GovernanceStatus;
+  licence: LicenceHealth;
+  update: UpdateHealth;
+  setupComplete: boolean;
 }
 
 function formatUptime(ms: number): string {
@@ -86,6 +107,23 @@ export function healthCheck(_req: IncomingMessage, res: ServerResponse): void {
   const governanceStatus = getGovernanceStatus();
   const chain = verifyAuditChain();
   const audit: AuditStatus = { chainOk: chain.ok, firstBreak: chain.ok ? null : chain.firstBreak };
+  const licenceState = getLicenceState();
+  const update = getUpdateState();
+
+  const licence: LicenceHealth = {
+    valid: licenceState.valid,
+    readOnly: licenceState.readOnly,
+    tier: licenceState.payload?.tier ?? null,
+    expiresAt: licenceState.payload?.expires_at ?? null,
+    daysUntilExpiry: licenceState.daysUntilExpiry,
+  };
+  const updateHealth: UpdateHealth = {
+    current: update.current,
+    latest: update.latest,
+    updateAvailable: update.updateAvailable,
+    unsupported: update.unsupported,
+    lastCheckedAt: update.lastCheckedAt,
+  };
 
   let status: HealthResponse['status'] = 'ok';
   let statusCode = 200;
@@ -102,17 +140,26 @@ export function healthCheck(_req: IncomingMessage, res: ServerResponse): void {
   } else if (governanceStatus.circuitBreakers.some((cb) => cb.state === 'open')) {
     status = 'degraded';
     statusCode = 200;
+  } else if (!licence.valid) {
+    status = 'degraded';
+    statusCode = 200;
+  } else if (updateHealth.unsupported) {
+    status = 'degraded';
+    statusCode = 200;
   }
 
   const response: HealthResponse = {
     status,
-    version: VERSION,
+    version: getCurrentVersion(),
     timestamp: new Date().toISOString(),
     uptime,
     uptimeHuman: formatUptime(uptime),
     database: databaseStatus,
     audit,
     governance: governanceStatus,
+    licence,
+    update: updateHealth,
+    setupComplete: isSetupComplete(),
   };
 
   res.writeHead(statusCode, { 'Content-Type': 'application/json' });

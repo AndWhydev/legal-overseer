@@ -1,0 +1,45 @@
+# Build artefacts and local junk that must not enter the image.
+node_modules/
+dist/
+*.tsbuildinfo
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# Local environments + secrets.
+.env
+.env.*
+!.env.example
+
+# Local data (DB, matter folders, inbox spool).
+data/
+
+# IDE / editor.
+.vscode/
+.idea/
+.cursor/
+.claude/
+.auto-claude/
+
+# Docs that don't need to land in the image.
+*.md
+!CLAUDE.md
+!install/*.md
+
+# OS noise.
+.DS_Store
+Thumbs.db
+
+# Test / coverage artefacts.
+coverage/
+test-results/
+playwright-report/
+
+# Tool caches.
+.npm/
+.cache/
+
+# Logs.
+*.log
+logs/

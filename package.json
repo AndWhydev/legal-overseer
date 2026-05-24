@@ -11,7 +11,10 @@
     "dashboard": "tsx scripts/dashboard.ts",
     "overseer:tick": "tsx scripts/overseer-tick.ts",
     "overseer:start": "tsx scripts/overseer-start.ts",
-    "inbox:monitor": "tsx scripts/inbox-monitor.ts"
+    "inbox:monitor": "tsx scripts/inbox-monitor.ts",
+    "licence:generate": "tsx scripts/generate-licence.ts",
+    "update": "bash scripts/update.sh",
+    "update:check": "tsx -e \"import('./src/updater/index.js').then(async m => { const s = await m.runUpdateCheck(); console.log(JSON.stringify(s, null, 2)); })\""
   },
   "engines": {
     "node": ">=20"
