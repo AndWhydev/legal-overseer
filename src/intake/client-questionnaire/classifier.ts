@@ -38,6 +38,8 @@ const KEYWORD_RULES: KeywordRule[] = [
       'workers comp',
       'workers compensation',
       'injured at work',
+      'injured me at work',
+      'hurt me at work',
       'workplace injury',
       'hurt at work',
       'injury at work',
@@ -172,7 +174,7 @@ const KEYWORD_RULES: KeywordRule[] = [
   // Commercial (broad — listed last)
   {
     matterType: 'commercial-dispute',
-    keywords: ['breach of contract', 'commercial dispute', 'partnership dispute', 'shareholder dispute', 'misleading conduct', 'business dispute'],
+    keywords: ['breach of contract', 'commercial dispute', 'partnership dispute', 'shareholder dispute', 'misleading conduct', 'business dispute', 'business partner', 'ripped me off', 'rip off', 'ripped off'],
   },
 ];
 

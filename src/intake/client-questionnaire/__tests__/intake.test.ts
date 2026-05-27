@@ -34,13 +34,15 @@ import type { MatterType } from '../types.js';
 initializeDatabase();
 
 // ── Task verification 4: classifier identifies matter types ──────────
-test('classifier identifies matter types from five test phrases', () => {
+test('classifier identifies matter types from plain English phrases', () => {
   const cases: Array<[string, MatterType]> = [
-    ['I was fired last week after 3 years', 'unfair-dismissal'],
-    ["My tenant hasn't paid rent in 2 months", 'residential-tenancy'],
+    ['I was fired last week', 'unfair-dismissal'],
+    ["My tenant hasn't paid rent", 'residential-tenancy'],
     ['Someone posted lies about me on Facebook', 'defamation'],
-    ['I am buying a house in Brisbane', 'conveyancing-purchase'],
-    ['My employer owes me for a broken leg at work', 'workers-compensation'],
+    ["I'm buying a house in Brisbane", 'conveyancing-purchase'],
+    ['My boss injured me at work', 'workers-compensation'],
+    ['I need help with my will', 'will-and-estate'],
+    ['My business partner ripped me off', 'commercial-dispute'],
   ];
   for (const [phrase, expected] of cases) {
     const result = classifyByKeywords(phrase);
@@ -70,6 +72,14 @@ test('defamation urgencyCheck flags urgent within 30 days of expiry', () => {
   const result = defamation.urgencyCheck({ publication_date: published.toISOString() });
   assert.equal(result.urgent, true);
   assert.ok((result.daysRemaining ?? 99) <= 30);
+});
+
+test('will and estate death 13 months ago in NSW → expired', () => {
+  const trigger = addMonths(new Date(), -13);
+  const lp = getLimitationPeriod('will-and-estate', 'NSW', trigger);
+  // NSW family provision window is 12 months from death → expired.
+  assert.ok(lp.daysRemaining < 0, `expected expired, daysRemaining=${lp.daysRemaining}`);
+  assert.equal(lp.urgent, true);
 });
 
 test('debt recovery acknowledgement 7 years ago → expired', () => {
