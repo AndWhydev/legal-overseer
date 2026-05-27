@@ -48,6 +48,7 @@ import { renderUsersPage } from './users-view.js';
 import { renderUploadPage } from './upload-view.js';
 import { renderBriefingPrefsPage } from './briefing-prefs-view.js';
 import { handleClientPortalRoute, isClientPortalRoute } from '../client-portal/index.js';
+import { handleIntakePortalRoute, isIntakePortalRoute } from '../intake/client-questionnaire/portal.js';
 import {
   isShareLinkLive,
   grantDocumentVisibility,
@@ -222,6 +223,12 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   if (isClientPortalRoute(path)) {
     await handleClientPortalRoute(req, res, path, isSecure);
     return;
+  }
+
+  // ---- public client intake portal at /intake/:sessionId (no auth) ----
+  if (isIntakePortalRoute(path)) {
+    const handled = await handleIntakePortalRoute(req, res, path);
+    if (handled) return;
   }
 
   // ---- shared document landing: GET /share/:token ----

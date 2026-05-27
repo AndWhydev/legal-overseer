@@ -58,7 +58,7 @@ export async function routeEmail(email: IncomingEmail): Promise<RouteOutcome> {
     return { markSeen: false, status: 'failed', error: msg };
   }
 
-  const replySent = await sendAutoReply(email, result);
+  const replySent = result.suppressAutoReply ? false : await sendAutoReply(email, result);
 
   const status = result.success ? 'routed' : 'failed';
   persistProcessed(email, {

@@ -10,20 +10,22 @@
 
 import { initializeDatabase, closeDatabase } from '../src/db/index.js';
 import { runOverseerTick } from '../src/agent/overseer-loop.js';
+import { dispatchIntakeFollowUps } from '../src/intake/client-questionnaire/index.js';
 
-function main(): void {
+async function main(): Promise<void> {
   initializeDatabase();
   const start = Date.now();
   const result = runOverseerTick();
+  // Sweep stale client-intake sessions: 24h reminder, 48h abandonment.
+  const intake = await dispatchIntakeFollowUps();
   const ms = Date.now() - start;
   console.log(`Overseer tick complete in ${ms}ms`);
   console.log(`Reminders dispatched: ${result.remindersDispatched}`);
+  console.log(`Intake reminders: ${intake.remindersSent}, abandoned: ${intake.abandoned}`);
   closeDatabase();
 }
 
-try {
-  main();
-} catch (err) {
+main().catch((err) => {
   console.error('Fatal:', err);
   process.exit(1);
-}
+});

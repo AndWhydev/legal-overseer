@@ -76,6 +76,11 @@ export interface PipelineResult {
   summary: string;
   /** Set when success=false. */
   error?: string;
+  /**
+   * When true, the router skips the generic auto-reply. Used by the
+   * intake pipeline, which sends its own tailored first-question email.
+   */
+  suppressAutoReply?: boolean;
 }
 
 export type PipelineHandler = (email: IncomingEmail) => Promise<PipelineResult>;

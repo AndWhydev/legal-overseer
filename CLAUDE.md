@@ -93,6 +93,16 @@ src/
     outlook/                 Outlook add-in API + manifest
     zapier/                  Outbound + inbound webhooks (HMAC)
     calendar-sync.ts         Google / Outlook OAuth + ICS feed
+  intake/                 Client intake intelligence layer (pre-matter)
+    client-questionnaire/
+      intake-agent.ts        Conversational flow, urgency alerts, sweeps
+      classifier.ts          Keyword + Haiku matter-type classification
+      context-builder.ts     Facts → structured context + AustLII queries
+      brief-generator.ts     Research + brief + matter + review-queue + email
+      portal.ts              Public /intake/:id web questionnaire (no auth)
+      repo.ts                intake_sessions + client_briefs persistence
+      question-sets/         15 practice-area question sets + registry
+      jurisdiction/          Limitation periods, court registry, rules
   legal-intake/           New-matter intake pipeline (LEGAL_EMAIL inbox)
   inbox-monitor/          IMAP poller for LEGAL/CLIENT/COURT/INTERNAL
     pipelines/               Per-slot handlers (legal-intake, correspondence)
@@ -218,11 +228,28 @@ These are non-negotiable. Each is enforced in code and audited.
 - Multi-office support
 - Uptime monitoring + alerting
 
+## Client intake intelligence (pre-matter)
+
+Sits BEFORE matter creation. A new client emailing `LEGAL_EMAIL` no
+longer gets a matter created immediately — instead the intake layer
+(`src/intake/client-questionnaire`) classifies the enquiry, runs a
+matter-type-specific questionnaire across 15 Australian practice areas,
+calculates limitation-period urgency, researches AustLII, and generates
+a structured brief for the lawyer (matter created + brief enqueued for
+review) before the first consultation. A returning client (subject quotes
+a matter number, or the sender already has a matter) routes to the legacy
+matter handling. See `INTAKE-SETUP.md`. Public questionnaire portal:
+`/intake/:session-id`. Dashboard: `/intake` and `/matter/:id/intake`.
+Tables: `intake_sessions`, `client_briefs` (migration `016`).
+
 ## Pipeline at a glance
 
 ```
 LEGAL_EMAIL inbox
-  → legal-intake (matter number, classification, lawyer notification)
+  → NEW enquiry → client intake (classify → questionnaire → urgency →
+                  AustLII research → brief → matter + review-queue + email)
+  → returning client / existing matter →
+    legal-intake (matter number, classification, lawyer notification)
   → matter created in `matters` table
   → matter folder created on disk
   → auto-reply with matter number sent to enquirer

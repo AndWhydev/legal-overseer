@@ -88,6 +88,15 @@ import { listRecentEvents as listMonitoringEvents, currentHealthStatus } from '.
 import { appendLegalAudit } from '../compliance/audit.js';
 import { getMatterById, listMatters } from '../db/repositories/matters.js';
 
+// Client intake intelligence layer
+import {
+  listIntakeSessions,
+  getIntakeSession,
+  getBriefByMatter,
+  nextQuestion as nextIntakeQuestion,
+} from '../intake/client-questionnaire/index.js';
+import type { IntakeSession, ClientBrief } from '../intake/client-questionnaire/index.js';
+
 function html(res: ServerResponse, status: number, body: string): void {
   res.writeHead(status, { 'content-type': 'text/html; charset=utf-8' });
   res.end(body);
@@ -122,12 +131,132 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
 function shell(title: string, body: string): string {
   const b = getBranding();
   return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)} — ${escapeHtml(b.firm_name)}</title>${brandingStyle()}
-<style>body{font:14px/1.5 -apple-system, BlinkMacSystemFont, sans-serif;background:#0f1115;color:#e6e9ee;margin:0;padding:24px;max-width:1200px;margin:0 auto}h1,h2,h3{color:var(--brand-primary)}table{width:100%;border-collapse:collapse;background:#181b22;border-radius:6px;overflow:hidden;margin:16px 0}th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #2a2f3a}th{background:#1f232b;color:#8a93a4;text-transform:uppercase;font-size:11px}a{color:var(--brand-primary)}.btn{background:var(--brand-primary);color:#0f1115;padding:6px 12px;border-radius:4px;border:0;text-decoration:none;display:inline-block;cursor:pointer}.flash-ok{background:#1f4a2f;padding:8px 12px;border-radius:4px}.flash-err{background:#5a1f1f;padding:8px 12px;border-radius:4px}pre{background:#181b22;padding:12px;border-radius:6px;overflow:auto}.card{background:#181b22;padding:16px;border-radius:6px;margin:12px 0}form{margin:12px 0}label{display:block;margin:8px 0 4px}input,textarea,select{width:100%;padding:8px;background:#0f1115;border:1px solid #2a2f3a;color:#e6e9ee;border-radius:4px;box-sizing:border-box}textarea{min-height:120px;font-family:ui-monospace,monospace}</style>
+<style>body{font:14px/1.5 -apple-system, BlinkMacSystemFont, sans-serif;background:#0f1115;color:#e6e9ee;margin:0;padding:24px;max-width:1200px;margin:0 auto}h1,h2,h3{color:var(--brand-primary)}table{width:100%;border-collapse:collapse;background:#181b22;border-radius:6px;overflow:hidden;margin:16px 0}th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #2a2f3a}th{background:#1f232b;color:#8a93a4;text-transform:uppercase;font-size:11px}a{color:var(--brand-primary)}.btn{background:var(--brand-primary);color:#0f1115;padding:6px 12px;border-radius:4px;border:0;text-decoration:none;display:inline-block;cursor:pointer}.flash-ok{background:#1f4a2f;padding:8px 12px;border-radius:4px}.flash-err{background:#5a1f1f;padding:8px 12px;border-radius:4px}pre{background:#181b22;padding:12px;border-radius:6px;overflow:auto}.card{background:#181b22;padding:16px;border-radius:6px;margin:12px 0}form{margin:12px 0}label{display:block;margin:8px 0 4px}input,textarea,select{width:100%;padding:8px;background:#0f1115;border:1px solid #2a2f3a;color:#e6e9ee;border-radius:4px;box-sizing:border-box}textarea{min-height:120px;font-family:ui-monospace,monospace}.muted{color:#8a93a4}ul,ol{margin:8px 0}</style>
 </head><body>${body}</body></html>`;
 }
 
 function nav(): string {
-  return `<nav style="margin-bottom:16px"><a href="/">Matters</a> · <a href="/review">Review</a> · <a href="/calendar">Calendar</a> · <a href="/billing">Billing</a> · <a href="/search">Search</a> · <a href="/knowledge">KB</a> · <a href="/clauses">Clauses</a> · <a href="/redline">Redline</a> · <a href="/analytics/profitability">Analytics</a> · <a href="/compliance/aml">AML</a> · <a href="/compliance/regulatory">Regulatory</a> · <a href="/admin/integrations">Integrations</a></nav>`;
+  return `<nav style="margin-bottom:16px"><a href="/">Matters</a> · <a href="/intake">Intake</a> · <a href="/review">Review</a> · <a href="/calendar">Calendar</a> · <a href="/billing">Billing</a> · <a href="/search">Search</a> · <a href="/knowledge">KB</a> · <a href="/clauses">Clauses</a> · <a href="/redline">Redline</a> · <a href="/analytics/profitability">Analytics</a> · <a href="/compliance/aml">AML</a> · <a href="/compliance/regulatory">Regulatory</a> · <a href="/admin/integrations">Integrations</a></nav>`;
+}
+
+const INTAKE_TYPE_LABEL = (t: string): string => t.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+function timeSince(date: Date): string {
+  const ms = Date.now() - date.getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+function intakeProgress(session: IntakeSession): string {
+  if (session.matterType === 'unknown') return '—';
+  const step = nextIntakeQuestion(session);
+  if (!step) return 'complete';
+  return `${step.answered}/${step.total}`;
+}
+
+function renderIntakeDashboard(): string {
+  const active = listIntakeSessions('in-progress');
+  const complete = listIntakeSessions('complete');
+  const abandoned = listIntakeSessions('abandoned');
+  const escalated = listIntakeSessions('escalated');
+
+  const urgentBadge = (s: IntakeSession) =>
+    s.urgencyFlag ? `<span style="background:#5a1f1f;padding:2px 6px;border-radius:4px">URGENT</span>` : '';
+
+  const activeRows = active.length
+    ? active
+        .map(
+          (s) => `<tr>
+        <td>${escapeHtml(s.clientName || s.clientEmail)}</td>
+        <td>${escapeHtml(INTAKE_TYPE_LABEL(s.matterType))}</td>
+        <td>${intakeProgress(s)}</td>
+        <td>${timeSince(s.startedAt)}</td>
+        <td>${urgentBadge(s)} ${s.urgencyReason ? escapeHtml(s.urgencyReason) : ''}</td>
+        <td><a href="/intake/${escapeHtml(s.id)}" target="_blank">portal</a></td>
+      </tr>`,
+        )
+        .join('')
+    : `<tr><td colspan="6" class="muted">No active intakes.</td></tr>`;
+
+  const completeRows = complete.length
+    ? complete
+        .map(
+          (s) => `<tr>
+        <td>${escapeHtml(s.clientName || s.clientEmail)}</td>
+        <td>${escapeHtml(INTAKE_TYPE_LABEL(s.matterType))}</td>
+        <td>${escapeHtml(s.state)}</td>
+        <td>${urgentBadge(s)}</td>
+        <td>${s.matterId ? `<a href="/matter/${escapeHtml(s.matterId)}/intake">open brief</a>` : 'no brief'}</td>
+      </tr>`,
+        )
+        .join('')
+    : `<tr><td colspan="5" class="muted">No completed intakes awaiting review.</td></tr>`;
+
+  const followUpRows = [...abandoned, ...escalated].length
+    ? [...abandoned, ...escalated]
+        .map(
+          (s) => `<tr>
+        <td>${escapeHtml(s.clientName || s.clientEmail)}</td>
+        <td>${escapeHtml(INTAKE_TYPE_LABEL(s.matterType))}</td>
+        <td>${escapeHtml(s.status)}</td>
+        <td>${timeSince(s.startedAt)}</td>
+      </tr>`,
+        )
+        .join('')
+    : `<tr><td colspan="4" class="muted">Nothing needing follow-up.</td></tr>`;
+
+  return `<h1>Client intake</h1>
+  <h2>Active sessions</h2>
+  <table><tr><th>Client</th><th>Matter type</th><th>Answered</th><th>Started</th><th>Urgency</th><th></th></tr>${activeRows}</table>
+  <h2>Completed — brief ready for review</h2>
+  <table><tr><th>Client</th><th>Matter type</th><th>State</th><th>Urgency</th><th></th></tr>${completeRows}</table>
+  <h2>Needs human follow-up (abandoned / escalated)</h2>
+  <table><tr><th>Client</th><th>Matter type</th><th>Status</th><th>Age</th></tr>${followUpRows}</table>`;
+}
+
+function renderMatterIntakeView(matterId: string): string | null {
+  const matter = getMatterById(matterId);
+  if (!matter) return null;
+  const brief: ClientBrief | null = getBriefByMatter(matterId);
+  if (!brief) {
+    return `<h1>Intake — ${escapeHtml(matter.title)}</h1><p class="muted">No intake brief is linked to this matter.</p><p><a href="/matter/${escapeHtml(matterId)}">Back to matter</a></p>`;
+  }
+  const session = getIntakeSession(brief.sessionId);
+
+  const transcript = (session ? brief.fullTranscript : brief.fullTranscript)
+    .map((t) => `<div class="card"><b>${escapeHtml(t.question)}</b><br>${escapeHtml(t.answer)}</div>`)
+    .join('');
+
+  const cases = brief.relevantCases.length
+    ? brief.relevantCases
+        .map((c) => `<li><b>${escapeHtml(c.citation)}</b> (${escapeHtml(c.court)}) — ${escapeHtml(c.summary)}</li>`)
+        .join('')
+    : '<li class="muted">None surfaced.</li>';
+  const legislation = brief.applicableLegislation.map((l) => `<li>${escapeHtml(l)}</li>`).join('');
+  const steps = brief.recommendedFirstSteps.map((s) => `<li>${escapeHtml(s)}</li>`).join('');
+  const risks = brief.riskFlags.length
+    ? brief.riskFlags.map((r) => `<li>${escapeHtml(r)}</li>`).join('')
+    : '<li class="muted">None.</li>';
+
+  const briefHtml = `<h2>Generated brief</h2>
+    ${brief.urgencyFlag ? `<div class="flash-err"><b>URGENT:</b> ${escapeHtml(brief.urgencyReason ?? '')}${brief.daysUntilLimitationPeriod !== undefined ? ` — ${brief.daysUntilLimitationPeriod} day(s) remaining` : ''}</div>` : ''}
+    <div class="card"><b>Limitation period:</b> ${escapeHtml(brief.limitationPeriod)}</div>
+    <div class="card"><b>Estimated cost:</b> ${escapeHtml(brief.estimatedCostRange)}</div>
+    <h3>Fact summary</h3><div class="card" style="white-space:pre-wrap">${escapeHtml(brief.factSummary)}</div>
+    <h3>Applicable legislation</h3><ul>${legislation}</ul>
+    <h3>Relevant authority</h3><ul>${cases}</ul>
+    <h3>Recommended first steps</h3><ol>${steps}</ol>
+    <h3>Risk flags</h3><ul>${risks}</ul>`;
+
+  return `<h1>Intake — ${escapeHtml(matter.title)} <span class="muted">(${escapeHtml(matter.matter_number)})</span></h1>
+  <p><a href="/matter/${escapeHtml(matterId)}">← Back to matter</a></p>
+  <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+    <div style="flex:1;min-width:320px"><h2>Intake transcript</h2>${transcript}</div>
+    <div style="flex:1;min-width:320px">${briefHtml}</div>
+  </div>`;
 }
 
 export async function handleFeatureRoute(
@@ -1214,6 +1343,21 @@ export async function handleFeatureRoute(
   if (path === '/status' && method === 'GET') {
     const status = currentHealthStatus();
     json(res, 200, status);
+    return true;
+  }
+
+  // ============================================================
+  // Client intake intelligence layer
+  // ============================================================
+  if (path === '/intake' && method === 'GET') {
+    html(res, 200, shell('Client intake', nav() + renderIntakeDashboard()));
+    return true;
+  }
+  m = path.match(/^\/matter\/([0-9a-f-]+)\/intake$/i);
+  if (m && method === 'GET') {
+    const body = renderMatterIntakeView(m[1]);
+    if (!body) { html(res, 404, shell('Not found', nav() + '<h1>Matter not found</h1>')); return true; }
+    html(res, 200, shell('Matter intake', nav() + body));
     return true;
   }
 

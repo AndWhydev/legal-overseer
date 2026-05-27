@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc --noEmit",
+    "test": "node --import tsx --test src/intake/client-questionnaire/__tests__/*.test.ts",
     "start": "tsx src/index.ts",
     "dashboard": "tsx scripts/dashboard.ts",
     "overseer:tick": "tsx scripts/overseer-tick.ts",

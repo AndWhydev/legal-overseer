@@ -185,6 +185,21 @@ export function getMatterById(id: string): Matter | null {
   return row ?? null;
 }
 
+/**
+ * Find the most recent matter for a given client email. Used by the
+ * intake pipeline to tell a returning client from a brand-new enquiry.
+ */
+export function getMatterByClientEmail(clientEmail: string): Matter | null {
+  const db = getDatabase();
+  const row = db
+    .prepare(
+      `SELECT * FROM matters WHERE lower(client_email) = lower(?)
+       ORDER BY opened_at DESC LIMIT 1`,
+    )
+    .get(clientEmail) as Matter | undefined;
+  return row ?? null;
+}
+
 export function getMatterByNumber(matterNumber: string): Matter | null {
   const db = getDatabase();
   const row = db

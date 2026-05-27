@@ -25,7 +25,15 @@ import { join } from 'node:path';
 import { query } from '@anthropic-ai/claude-agent-sdk';
 import { createSafeLogger } from '../governance/index.js';
 import { sendNotification } from '../email/notifier.js';
-import { createMatter, nextMatterNumber, type Matter } from '../db/repositories/matters.js';
+import {
+  createMatter,
+  nextMatterNumber,
+  getMatterByNumber,
+  getMatterByClientEmail,
+  type Matter,
+} from '../db/repositories/matters.js';
+import { startIntake, submitAnswer, deliverReplyByEmail, getActiveSessionByEmail } from '../intake/client-questionnaire/index.js';
+import { getIntakeSession } from '../intake/client-questionnaire/repo.js';
 import { appendLegalAudit } from '../compliance/audit.js';
 import { redactForExternalModel } from '../compliance/privilege.js';
 import { runConflictCheck, isMatterBlockedByConflict } from '../compliance/conflicts.js';
@@ -200,8 +208,83 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
+/** Subject lines carry a matter number like "2026-0042" once allocated. */
+const MATTER_NUMBER_RE = /\b(20\d{2}-\d{4})\b/;
+
+/**
+ * Decide whether this email is a brand-new enquiry (→ intake flow) or a
+ * reply on an existing matter (→ legacy matter handling).
+ *
+ * A reply is recognised when the subject quotes a known matter number,
+ * or the sender's address already belongs to a matter.
+ */
+function findExistingMatter(email: IncomingEmail): Matter | null {
+  const numberMatch = email.subject.match(MATTER_NUMBER_RE);
+  if (numberMatch) {
+    const byNumber = getMatterByNumber(numberMatch[1]);
+    if (byNumber) return byNumber;
+  }
+  return getMatterByClientEmail(email.fromAddress);
+}
+
+/**
+ * New-client intake. Classifies the enquiry, opens an intake session,
+ * and emails the first question. No matter is created yet — that
+ * happens once the questionnaire completes and the brief is generated.
+ */
+async function startClientIntake(email: IncomingEmail): Promise<PipelineResult> {
+  // If the sender already has an in-progress session, treat this email
+  // as their answer to the current question.
+  const active = getActiveSessionByEmail(email.fromAddress);
+  try {
+    if (active) {
+      const reply = await submitAnswer(active.id, email.bodyText.trim());
+      const session = getIntakeSession(active.id);
+      if (session) await deliverReplyByEmail(session, reply);
+      return {
+        success: true,
+        summary: reply.done
+          ? `Intake complete for ${email.fromAddress}; brief generated for the lawyer.`
+          : `Recorded answer for intake session ${active.id} and sent the next question.`,
+        suppressAutoReply: true,
+        matterId: reply.matterId,
+      };
+    }
+
+    const initialMessage = `${email.subject}\n\n${email.bodyText}`.slice(0, 6000);
+    const reply = await startIntake({
+      clientEmail: email.fromAddress,
+      clientName: email.fromName || email.fromAddress,
+      initialMessage,
+    });
+    const session = getIntakeSession(reply.sessionId);
+    if (session) await deliverReplyByEmail(session, reply);
+    return {
+      success: true,
+      summary: `Started client intake for ${email.fromAddress} (session ${reply.sessionId}); first question sent.`,
+      suppressAutoReply: true,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.error(`Intake flow failed for ${email.fromAddress}: ${msg}; falling back to matter creation.`);
+    return runLegacyMatterIntake(email);
+  }
+}
+
 export async function runLegalIntake(email: IncomingEmail): Promise<PipelineResult> {
   logger.info(`Intake from ${email.fromAddress}: "${email.subject.slice(0, 60)}"`);
+
+  // Returning client / existing matter → legacy handling, as before.
+  // Brand-new enquiry (or an in-progress intake) → intake intelligence flow.
+  const existing = findExistingMatter(email);
+  if (existing) {
+    logger.info(`Sender ${email.fromAddress} matches existing matter ${existing.matter_number}; using legacy intake.`);
+    return runLegacyMatterIntake(email);
+  }
+  return startClientIntake(email);
+}
+
+async function runLegacyMatterIntake(email: IncomingEmail): Promise<PipelineResult> {
 
   // 0. Licence gate — refuse new intake when the firm is over its
   //    plan or the licence has expired. Existing matters remain
